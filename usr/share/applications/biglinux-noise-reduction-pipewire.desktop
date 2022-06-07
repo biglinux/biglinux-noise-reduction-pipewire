@@ -1,0 +1,10 @@
+[Desktop Entry]
+Categories=AudioVideo;
+Exec=biglinux-noise-reduction-pipewire
+Icon=/usr/share/bigbashview/bcc/apps/biglinux-noise-reduction-pipewire/icon.png
+Name[pt]=Reduzir ruídos do microfone
+Name[es]=Reducir el ruido del micrófono
+Name=Reduce microphone noise
+StartupNotify=true
+Terminal=false
+Type=Application

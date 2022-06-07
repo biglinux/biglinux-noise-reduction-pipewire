@@ -1,0 +1,14 @@
+#!/bin/bash
+
+mic_name=$"Microfone sem ruídos"
+
+if [ ! -e "$HOME/.config/pipewire/source-rnnoise.conf" ]; then
+
+    mkdir -p ~/.config/pipewire
+    cp -f /usr/share/pipewire/filter-chain/source-rnnoise.conf ~/.config/pipewire/source-rnnoise.conf
+    sed -i "s|node.description =.*|node.description = \"$mic_name\"|g" ~/.config/pipewire/source-rnnoise.conf
+fi
+
+pipewire-noise-move-mic &
+
+/usr/bin/pipewire -c "$HOME/.config/pipewire/source-rnnoise.conf"

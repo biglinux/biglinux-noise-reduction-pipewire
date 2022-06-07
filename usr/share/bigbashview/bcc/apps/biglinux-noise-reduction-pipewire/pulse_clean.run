@@ -1,0 +1,24 @@
+#!/bin/bash
+#kdialog --msgbox "pluse_clean.run"
+#Translation
+export TEXTDOMAINDIR="/usr/share/locale"
+export TEXTDOMAIN=biglinux-themes
+
+windowID="$(xprop -root '\t$0' _NET_ACTIVE_WINDOW | cut -f 2)"
+
+
+kdialog --attach="$windowID" --title $"Configuração de áudio." \
+        --yesno $"Confirma a remoção das personalizações na configuração de áudio?"
+
+if [ "$?" = "0" ]; then
+
+	rm -Rf ~/.config/pulse/
+	pulseaudio -k
+
+	kdialog --title $"Configuração de áudio" --attach="$windowID" --msgbox $"Configuração de áudio restaurada.
+
+Os programas em execução no momento podem precisar ser fechados
+e abertos novamente para o áudio funcionar corretamente."
+else
+	kdialog --title $"Configuração de áudio" --attach="$windowID" --msgbox $"Cancelado, nenhuma configuração foi removida!"
+fi

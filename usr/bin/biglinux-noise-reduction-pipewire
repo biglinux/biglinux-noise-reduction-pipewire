@@ -1,0 +1,11 @@
+#!/bin/bash
+
+#Translation
+export TEXTDOMAINDIR="/usr/share/locale"
+export TEXTDOMAIN=biglinux-remove-noise-mic-pipewire
+
+TITLE=$"Reduzir ruídos do microfone"
+
+
+cd /usr/share/bigbashview/bcc/apps/biglinux-noise-reduction-pipewire/
+QTWEBENGINE_CHROMIUM_FLAGS="--autoplay-policy=no-user-gesture-required" QT_QPA_PLATFORM=xcb SDL_VIDEODRIVER=x11 WINIT_UNIX_BACKEND=x11 GDK_BACKEND=x11 bigbashview -s 1028x540 -n "$TITLE" -i icon.png index.sh.htm

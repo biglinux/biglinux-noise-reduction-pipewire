@@ -1,0 +1,8 @@
+#!/bin/bash
+#kdialog --msgbox "volume_config.run"
+if [ -e "/usr/bin/pavucontrol-qt" ]; then
+    pavucontrol-qt
+else
+    pavucontrol
+fi
+

@@ -1,0 +1,24 @@
+#!/bin/sh
+
+
+if [ "$(pactl list sources  | grep -e Sink: -e node.name -e media.name | grep -A1 -B1 'Noise Canceling source' | grep 'node.name =' | cut -f2 -d'"')" = "" ]; then
+    sleep 2
+    if [ "$(pactl list sources  | grep -e Sink: -e node.name -e media.name | grep -A1 -B1 'Noise Canceling source' | grep 'node.name =' | cut -f2 -d'"')" = "" ]; then
+        sleep 2
+    fi
+fi
+
+
+# node.name to filter
+NODENAME="$(pactl list sources  | grep -e Sink: -e node.name -e media.name | grep -A1 -B1 'Noise Canceling source' | grep 'node.name =' | cut -f2 -d'"')"
+
+# Change all sources to rnnoise
+for i in $(pactl list source-outputs short | cut -f1); do
+    pactl move-source-output $i effect_output.rnnoise
+    pactl move-source-output $i $NODENAME
+
+done
+
+# Change default source to rnnoise
+pactl set-default-source effect_output.rnnoise
+pactl set-default-source $NODENAME

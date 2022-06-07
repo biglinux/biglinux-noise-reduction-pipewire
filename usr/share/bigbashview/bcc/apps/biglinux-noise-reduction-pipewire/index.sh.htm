@@ -1,0 +1,190 @@
+#!/bin/bash
+
+#Translation
+export TEXTDOMAINDIR="/usr/share/locale"
+export TEXTDOMAIN=biglinux-remove-noise-mic-pipewire
+
+# Don't group windows
+xprop -id "$(xprop -root '\t$0' _NET_ACTIVE_WINDOW | cut -f 2)" -f WM_CLASS 8s -set WM_CLASS "$$"
+
+FOLDER_CONFIG="$HOME/.config/biglinux-noise-reduction"
+mkdir -p ~/.config/biglinux-noise-reduction
+
+#############
+# First Run
+#############
+
+
+
+if [ "$active" = "0" ]
+then
+	systemctl --user start noise-reduction-pipewire
+fi
+
+if [ "$active" = "1" ]
+then
+    systemctl --user stop noise-reduction-pipewire
+fi
+
+
+if [ "$autostart" = "0" ]
+then
+	systemctl --user enable noise-reduction-pipewire
+fi
+if [ "$autostart" = "1" ]
+then
+    systemctl --user disable noise-reduction-pipewire
+fi
+
+
+if [ "$(systemctl --user is-active noise-reduction-pipewire)" = "active" ]
+then
+	checked_active="checked"
+	active=1
+else
+    active=0
+fi
+
+if [ "$(systemctl --user is-enabled noise-reduction-pipewire)" = "enabled" ]
+then
+	checked_autostart="checked"
+	autostart=1
+else
+    autostart=0
+fi
+
+
+# Import BigControlCenter base modules / Importa os módulos básicos do BigControlCenter
+# That's include jquery and materialize / Isso inclui o jquery e o materialize
+# http://materializecss.com/
+. /usr/share/bigbashview/bcc/shell/base.sh
+
+cat << EOF
+
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+
+EOF
+ 
+    echo '<title>' $"Reduzir ruídos do microfone" '</title>'
+
+cat << EOF
+
+  <link rel="stylesheet" href="./style.css">
+  <script src="/usr/share/bigbashview/bcc/materialize/js/jquery.js"></script>
+  <script src="/usr/share/bigbashview/bcc/js/big.js"></script>
+</head>
+EOF
+
+# Get body tag with color light or not
+/usr/share/bigbashview/bcc/shell/getbgcolor.sh
+
+
+
+active_text=$"Filtro de ruído"
+autostart_text=$"Iniciar automaticamente"
+OIFS=$IFS
+IFS=$'\n'
+
+cat << EOF
+
+<div class="dark-light">
+  <svg viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5" fill="none" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M21 12.79A9 9 0 1111.21 3 7 7 0 0021 12.79z" />
+  </svg>
+</div>
+
+<div class="login">
+  <div class="wrap">
+    <div class="user">
+
+      <div class="logo">
+        <img src="logo-big-trans-branco.png" alt="logo" class="logo-biglinux"/>
+      </div>
+
+      <div class="user">
+        <div class="form-wrap"> 
+<!--          <div class="form-wrap tabs-content">
+          
+EOF
+  echo '<h2>'
+  echo $"Reduzir ruídos do microfone"
+  echo '</h2>'
+cat << EOF             
+          
+          </div> -->
+          <!-- TABS -->
+          
+
+          <!-- TABS CONTENT -->
+          <div class="tabs-content">
+            <!-- INICIO TABS CONTENT ADD -->
+            <div id="add-tab-content" class="fc-card active">
+
+              <div id="desc">
+
+                  <div class="content-section-title" style="text-align: left;">Este filtro utiliza técnicas de redes neurais para remover ruídos e sons do ambiente que atrapalham gravações e chamadas online.<br></div>
+                  
+                  <div class="biglinux-left-panel" style="width: 500px; height: 300px;">
+                    
+                    <form class="login-form" action="" method="post">
+                      <ul style="ist-style-type:none; margin: 10px;">
+                      
+                        <li style="padding-top: 2px;">                          
+                          <div class="switch">
+                            <input onchange="parent.location='index.sh.htm?active=$active'" id="s0" type="checkbox" class="switch" style="display: inline-block; float: left;" $checked_active>
+                            <label for="s0" id="add-tab-content" style="text-align: left;display: inline;align-items: left;justify-content: left;">$active_text<small></small></label>
+                          </div>
+                        </li>                      
+                        
+                        <li style="padding-top: 2px;">
+                          <div class="switch">
+                            <input onchange="parent.location='index.sh.htm?autostart=$autostart'" id="s1" type="checkbox" class="switch" style="display: inline-block;float: left;" $checked_autostart>
+                            <label for="s1" id="add-tab-content" style="text-align:left; display: flex; align-items: left; justify-content: left;">$autostart_text<small></small></label>
+                          </div>
+                        </li>
+                      </ul>
+                    </form>
+                    <div class="svg-center">
+                      <input onclick="_run('./volume_config.run')" type="submit" class="button svg-center" value="Gerenciador de Áudio">
+                    </div>
+                      <div class="content-section-title" style="text-align: center;"><br>Frequências sonoras:<br></div> 
+                        
+                      <main>
+                        
+<!--                        <button class="button-mic" onclick="init()">
+                          <svg class="svg-color" viewBox="0 0 352 512">
+                            <defs>
+                              <linearGradient id="gradient">
+                                <stop offset="5%" stop-color="#91f4f8" />
+                                <stop offset="95%" stop-color="#1b68cb" />
+                              </linearGradient>
+                            </defs>      
+                            <path fill="url(#gradient)" d="M176 352c53.02 0 96-42.98 96-96V96c0-53.02-42.98-96-96-96S80 42.98 80 96v160c0 53.02 42.98 96 96 96zm160-160h-16c-8.84 0-16 7.16-16 16v48c0 74.8-64.49 134.82-140.79 127.38C96.71 376.89 48 317.11 48 250.3V208c0-8.84-7.16-16-16-16H16c-8.84 0-16 7.16-16 16v40.16c0 89.64 63.97 169.55 152 181.69V464H96c-8.84 0-16 7.16-16 16v16c0 8.84 7.16 16 16 16h160c8.84 0 16-7.16 16-16v-16c0-8.84-7.16-16-16-16h-56v-33.77C285.71 418.47 352 344.9 352 256v-48c0-8.84-7.16-16-16-16z"/></svg>
+                        </button>-->
+                      </main>
+                    
+                  </div>
+                  
+                  
+              </div> 
+            </div>
+            <!-- FIM TABS CONTENT ADD -->
+          </div>
+          <!-- FIM TABS CONTENT LIST -->
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+EOF
+cat << EOF
+<!-- partial -->
+  <script src="./script.js" onload="init()"></script>
+</body>
+</html>
+EOF
+IFS=$OIFS
