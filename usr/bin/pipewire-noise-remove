@@ -1,5 +1,9 @@
 #!/bin/bash
 
+#Translation
+export TEXTDOMAINDIR="/usr/share/locale"
+export TEXTDOMAIN=biglinux-noise-reduction-pipewire
+
 mic_name=$"Microfone sem ruídos"
 
 if [ ! -e "$HOME/.config/pipewire/source-rnnoise.conf" ]; then

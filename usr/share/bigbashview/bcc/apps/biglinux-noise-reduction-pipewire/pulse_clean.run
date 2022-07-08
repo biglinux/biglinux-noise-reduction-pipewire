@@ -2,7 +2,7 @@
 #kdialog --msgbox "pluse_clean.run"
 #Translation
 export TEXTDOMAINDIR="/usr/share/locale"
-export TEXTDOMAIN=biglinux-themes
+export TEXTDOMAIN=biglinux-noise-reduction-pipewire
 
 windowID="$(xprop -root '\t$0' _NET_ACTIVE_WINDOW | cut -f 2)"
 
