@@ -1,8 +1,13 @@
-  #!/bin/bash
+#!/bin/bash
 
 #Translation
 export TEXTDOMAINDIR="/usr/share/locale"
 export TEXTDOMAIN=biglinux-noise-reduction-pipewire
+
+
+FilterDesc=$"Este filtro utiliza técnicas de redes neurais para remover ruídos e sons do ambiente que atrapalham gravações e chamadas online."
+AudioManager=$"Gerenciador de Áudio"
+AudioFreqs=$"Frequências sonoras:"
 
 # Don't group windows
 xprop -id "$(xprop -root '\t$0' _NET_ACTIVE_WINDOW | cut -f 2)" -f WM_CLASS 8s -set WM_CLASS "$$"
@@ -113,9 +118,7 @@ EOF
   echo $"Reduzir ruídos do microfone"
   echo '</h2>'
   
-  FilterDesc=$"Este filtro utiliza técnicas de redes neurais para remover ruídos e sons do ambiente que atrapalham gravações e chamadas online."
-  AudioManager=$"Gerenciador de Áudio"
-  AudioFreqs=$"Frequências sonoras:"
+
 cat << EOF             
           
           </div> -->
