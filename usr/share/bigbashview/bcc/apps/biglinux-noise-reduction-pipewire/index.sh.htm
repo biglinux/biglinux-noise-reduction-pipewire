@@ -1,4 +1,4 @@
-#!/bin/bash
+  #!/bin/bash
 
 #Translation
 export TEXTDOMAINDIR="/usr/share/locale"
@@ -112,6 +112,10 @@ EOF
   echo '<h2>'
   echo $"Reduzir ruídos do microfone"
   echo '</h2>'
+  
+  FilterDesc=$"Este filtro utiliza técnicas de redes neurais para remover ruídos e sons do ambiente que atrapalham gravações e chamadas online."
+  AudioManager=$"Gerenciador de Áudio"
+  AudioFreqs=$"Frequências sonoras:"
 cat << EOF             
           
           </div> -->
@@ -125,7 +129,7 @@ cat << EOF
 
               <div id="desc">
 
-                  <div class="content-section-title" style="text-align: left;">Este filtro utiliza técnicas de redes neurais para remover ruídos e sons do ambiente que atrapalham gravações e chamadas online.<br></div>
+                  <div class="content-section-title" style="text-align: left;">$FilterDesc<br></div>
                   
                   <div class="biglinux-left-panel" style="width: 500px; height: 300px;">
                     
@@ -148,9 +152,9 @@ cat << EOF
                       </ul>
                     </form>
                     <div class="svg-center">
-                      <input onclick="_run('./volume_config.run')" type="submit" class="button svg-center" value="Gerenciador de Áudio">
+                      <input onclick="_run('./volume_config.run')" type="submit" class="button svg-center" value="$AudioManager">
                     </div>
-                      <div class="content-section-title" style="text-align: center;"><br>Frequências sonoras:<br></div> 
+                      <div class="content-section-title" style="text-align: center;"><br>$AudioFreqs<br></div> 
                         
                       <main>
                         
