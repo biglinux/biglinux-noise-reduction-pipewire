@@ -1,0 +1,81 @@
+# SOME DESCRIPTIVE TITLE.
+# Copyright (C) YEAR THE PACKAGE'S COPYRIGHT HOLDER
+# This file is distributed under the same license as the biglinux-noise-reduction-pipewire package.
+# FIRST AUTHOR <EMAIL@ADDRESS>, YEAR.
+#
+#, fuzzy
+msgid ""
+msgstr ""
+"Project-Id-Version: biglinux-noise-reduction-pipewire\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2022-08-01 06:12-0300\n"
+"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"Language-Team: LANGUAGE <LL@li.org>\n"
+"Language: no\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+
+msgid "Ativando"
+msgstr "aktiverer"
+
+msgid "Cancelado, nenhuma configuração foi removida!"
+msgstr "Avbrutt, ingen innstillinger ble fjernet!"
+
+msgid "Configuração aplicada"
+msgstr "Konfigurasjon brukt"
+
+msgid "Configuração de áudio"
+msgstr "Audio oppsett"
+
+msgid ""
+"Configuração de áudio restaurada.\n"
+"\n"
+"Os programas em execução no momento podem precisar ser fechados\n"
+"e abertos novamente para o áudio funcionar corretamente."
+msgstr ""
+"Lydinnstilling gjenopprettet.\n"
+"\n"
+"Foreløpig kjører programmer må kanskje lukkes\n"
+"og åpnet igjen for at lyden skal fungere riktig."
+
+msgid "Configuração de áudio."
+msgstr "Audio oppsett."
+
+msgid "Confirma a remoção das personalizações na configuração de áudio?"
+msgstr "Bekrefter du fjerning av tilpasninger i lydkonfigurasjonen?"
+
+msgid "Desativando"
+msgstr "Deaktivering"
+
+msgid ""
+"Este filtro utiliza técnicas de redes neurais para remover ruídos e sons do "
+"ambiente que atrapalham gravações e chamadas online."
+msgstr ""
+"Dette filteret bruker nevrale nettverksteknikker for å fjerne "
+"omgivelseslyder og lyder som forstyrrer online opptak og samtaler."
+
+msgid "Filtro de ruído"
+msgstr "Støy filter"
+
+msgid "Filtro do Microfone"
+msgstr "mikrofon Filter"
+
+msgid "Frequências sonoras:"
+msgstr "Lydfrekvenser:"
+
+msgid "Gerenciador de Áudio"
+msgstr "Audio Manager"
+
+msgid "Iniciar automaticamente"
+msgstr "Start automatisk"
+
+msgid "Microfone"
+msgstr "mikrofon"
+
+msgid "Microfone sem ruídos"
+msgstr "Lydløs mikrofon"
+
+msgid "Reduzir ruídos do microfone"
+msgstr "Reduser mikrofonstøy"

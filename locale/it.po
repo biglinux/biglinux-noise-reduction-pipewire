@@ -1,0 +1,83 @@
+# SOME DESCRIPTIVE TITLE.
+# Copyright (C) YEAR THE PACKAGE'S COPYRIGHT HOLDER
+# This file is distributed under the same license as the biglinux-noise-reduction-pipewire package.
+# FIRST AUTHOR <EMAIL@ADDRESS>, YEAR.
+#
+#, fuzzy
+msgid ""
+msgstr ""
+"Project-Id-Version: biglinux-noise-reduction-pipewire\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2022-08-01 06:12-0300\n"
+"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"Language-Team: LANGUAGE <LL@li.org>\n"
+"Language: it\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+
+msgid "Ativando"
+msgstr "Attivazione"
+
+msgid "Cancelado, nenhuma configuração foi removida!"
+msgstr "Annullato, nessuna configurazione è stata rimossa!"
+
+msgid "Configuração aplicada"
+msgstr "Configurazione applicata"
+
+msgid "Configuração de áudio"
+msgstr "Configurazione audio"
+
+msgid ""
+"Configuração de áudio restaurada.\n"
+"\n"
+"Os programas em execução no momento podem precisar ser fechados\n"
+"e abertos novamente para o áudio funcionar corretamente."
+msgstr ""
+"La configurazione audio è stata ripristinata.\n"
+"\n"
+"I programmi attualmente in esecuzione potrebbero dover essere chiusi\n"
+"e riaprire per far funzionare correttamente l'audio."
+
+msgid "Configuração de áudio."
+msgstr "Configurazione audio."
+
+msgid "Confirma a remoção das personalizações na configuração de áudio?"
+msgstr ""
+"Può confermare la rimozione delle personalizzazioni nella configurazione "
+"audio?"
+
+msgid "Desativando"
+msgstr "Disattivare"
+
+msgid ""
+"Este filtro utiliza técnicas de redes neurais para remover ruídos e sons do "
+"ambiente que atrapalham gravações e chamadas online."
+msgstr ""
+"Questo filtro utilizza tecniche di rete neurale per rimuovere il rumore "
+"ambientale e i suoni che disturbano le registrazioni e le chiamate online."
+
+msgid "Filtro de ruído"
+msgstr "Filtro antirumore"
+
+msgid "Filtro do Microfone"
+msgstr "Filtro del microfono"
+
+msgid "Frequências sonoras:"
+msgstr "Frequenze sonore:"
+
+msgid "Gerenciador de Áudio"
+msgstr "Responsabile audio"
+
+msgid "Iniciar automaticamente"
+msgstr "Avvio automatico"
+
+msgid "Microfone"
+msgstr "Microfono"
+
+msgid "Microfone sem ruídos"
+msgstr "Microfono senza rumore"
+
+msgid "Reduzir ruídos do microfone"
+msgstr "Ridurre il rumore del microfono"

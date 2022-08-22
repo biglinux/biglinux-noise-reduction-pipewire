@@ -1,0 +1,81 @@
+# SOME DESCRIPTIVE TITLE.
+# Copyright (C) YEAR THE PACKAGE'S COPYRIGHT HOLDER
+# This file is distributed under the same license as the biglinux-noise-reduction-pipewire package.
+# FIRST AUTHOR <EMAIL@ADDRESS>, YEAR.
+#
+#, fuzzy
+msgid ""
+msgstr ""
+"Project-Id-Version: biglinux-noise-reduction-pipewire\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2022-08-01 06:12-0300\n"
+"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"Language-Team: LANGUAGE <LL@li.org>\n"
+"Language: ru\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+
+msgid "Ativando"
+msgstr "Aктивация"
+
+msgid "Cancelado, nenhuma configuração foi removida!"
+msgstr "Отменено, никакие настройки не удалены!"
+
+msgid "Configuração aplicada"
+msgstr "Применяемая конфигурация"
+
+msgid "Configuração de áudio"
+msgstr "Hастройка звука"
+
+msgid ""
+"Configuração de áudio restaurada.\n"
+"\n"
+"Os programas em execução no momento podem precisar ser fechados\n"
+"e abertos novamente para o áudio funcionar corretamente."
+msgstr ""
+"Конфигурация звука восстановлена. \n"
+"\n"
+"Для правильной работы звука может потребоваться закрыть и снова открыть "
+"запущенные в данный момент программы."
+
+msgid "Configuração de áudio."
+msgstr "Настройка звука."
+
+msgid "Confirma a remoção das personalizações na configuração de áudio?"
+msgstr "Подтвердить удаление настроек в аудио конфигурации?"
+
+msgid "Desativando"
+msgstr "деактивация"
+
+msgid ""
+"Este filtro utiliza técnicas de redes neurais para remover ruídos e sons do "
+"ambiente que atrapalham gravações e chamadas online."
+msgstr ""
+"Этот фильтр использует методы нейронной сети для удаления окружающего шума и "
+"звуков, которые нарушают онлайн-записи и звонки."
+
+msgid "Filtro de ruído"
+msgstr "фильтр шума"
+
+msgid "Filtro do Microfone"
+msgstr "Микрофонный фильтр"
+
+msgid "Frequências sonoras:"
+msgstr "Звуковые частоты:"
+
+msgid "Gerenciador de Áudio"
+msgstr "Аудио-менеджер"
+
+msgid "Iniciar automaticamente"
+msgstr "Aвтоматический старт"
+
+msgid "Microfone"
+msgstr "Mикрофон"
+
+msgid "Microfone sem ruídos"
+msgstr "Бесшумный микрофон"
+
+msgid "Reduzir ruídos do microfone"
+msgstr "Уменьшить шум микрофона"

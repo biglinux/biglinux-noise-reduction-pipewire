@@ -1,0 +1,84 @@
+# SOME DESCRIPTIVE TITLE.
+# Copyright (C) YEAR THE PACKAGE'S COPYRIGHT HOLDER
+# This file is distributed under the same license as the biglinux-noise-reduction-pipewire package.
+# FIRST AUTHOR <EMAIL@ADDRESS>, YEAR.
+#
+#, fuzzy
+msgid ""
+msgstr ""
+"Project-Id-Version: biglinux-noise-reduction-pipewire\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2022-08-01 06:12-0300\n"
+"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"Language-Team: LANGUAGE <LL@li.org>\n"
+"Language: el\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+
+msgid "Ativando"
+msgstr "Ενεργοποίηση"
+
+msgid "Cancelado, nenhuma configuração foi removida!"
+msgstr "Ακυρώθηκε, δεν έχει αφαιρεθεί καμία διαμόρφωση!"
+
+msgid "Configuração aplicada"
+msgstr "Εφαρμοσμένη διαμόρφωση"
+
+msgid "Configuração de áudio"
+msgstr "Διαμόρφωση ήχου"
+
+msgid ""
+"Configuração de áudio restaurada.\n"
+"\n"
+"Os programas em execução no momento podem precisar ser fechados\n"
+"e abertos novamente para o áudio funcionar corretamente."
+msgstr ""
+"Επαναφορά των ρυθμίσεων ήχου.\n"
+"\n"
+"Τα τρέχοντα προγράμματα μπορεί να χρειαστεί να κλείσουν\n"
+"και να ανοίξει ξανά για να λειτουργήσει σωστά ο ήχος."
+
+msgid "Configuração de áudio."
+msgstr "Διαμόρφωση ήχου."
+
+msgid "Confirma a remoção das personalizações na configuração de áudio?"
+msgstr ""
+"Μπορείτε να επιβεβαιώσετε την αφαίρεση των προσαρμογών στη ρύθμιση "
+"παραμέτρων ήχου"
+
+msgid "Desativando"
+msgstr "Απενεργοποίηση του"
+
+msgid ""
+"Este filtro utiliza técnicas de redes neurais para remover ruídos e sons do "
+"ambiente que atrapalham gravações e chamadas online."
+msgstr ""
+"Αυτό το φίλτρο χρησιμοποιεί τεχνικές νευρωνικού δικτύου για την αφαίρεση του "
+"θορύβου περιβάλλοντος και των ήχων που διαταράσσουν τις online εγγραφές και "
+"κλήσεις."
+
+msgid "Filtro de ruído"
+msgstr "Φίλτρο θορύβου"
+
+msgid "Filtro do Microfone"
+msgstr "Φίλτρο μικροφώνου"
+
+msgid "Frequências sonoras:"
+msgstr "Ηχητικές συχνότητες:"
+
+msgid "Gerenciador de Áudio"
+msgstr "Διαχειριστής ήχου"
+
+msgid "Iniciar automaticamente"
+msgstr "Ξεκινήστε αυτόματα"
+
+msgid "Microfone"
+msgstr "Μικρόφωνο"
+
+msgid "Microfone sem ruídos"
+msgstr "Μικρόφωνο χωρίς θόρυβο"
+
+msgid "Reduzir ruídos do microfone"
+msgstr "Μείωση του θορύβου του μικροφώνου"
