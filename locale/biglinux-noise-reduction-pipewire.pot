@@ -7,8 +7,6 @@
 msgid   ""
 msgstr  "Project-Id-Version: biglinux-noise-reduction-pipewire\n"
         "Report-Msgid-Bugs-To: \n"
-        "POT-Creation-Date: 2022-08-01 06:12-0300\n"
-        "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
         "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
         "Language-Team: LANGUAGE <LL@li.org>\n"
         "Language: \n"
@@ -16,19 +14,16 @@ msgstr  "Project-Id-Version: biglinux-noise-reduction-pipewire\n"
         "Content-Type: text/plain; charset=UTF-8\n"
         "Content-Transfer-Encoding: 8bit\n"
 
-msgid   "Reduzir ruídos do microfone"
+msgid   "Microfone sem ruídos"
 msgstr  ""
 
-msgid   "Microfone sem ruídos"
+msgid   "Reduzir ruídos do microfone"
 msgstr  ""
 
 msgid   "Desativando"
 msgstr  ""
 
 msgid   "Filtro do Microfone"
-msgstr  ""
-
-msgid   "Ativando"
 msgstr  ""
 
 msgid   "Este filtro utiliza técnicas de redes neurais para remover ruídos e "
@@ -45,6 +40,9 @@ msgid   "Filtro de ruído"
 msgstr  ""
 
 msgid   "Iniciar automaticamente"
+msgstr  ""
+
+msgid   "Ativando"
 msgstr  ""
 
 msgid   "Configuração aplicada"
