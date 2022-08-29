@@ -6,13 +6,13 @@ export TEXTDOMAIN=biglinux-noise-reduction-pipewire
 
 mic_name=$"Microfone sem ruídos"
 
-if [ ! -e "$HOME/.config/pipewire/source-rnnoise.conf" ]; then
+if [ ! -e "$HOME/.config/pipewire/filter-chain.conf.d/source-rnnoise.conf" ]; then
 
-    mkdir -p ~/.config/pipewire
-    cp -f /usr/share/pipewire/filter-chain/source-rnnoise.conf ~/.config/pipewire/source-rnnoise.conf
-    sed -i "s|node.description =.*|node.description = \"$mic_name\"|g" ~/.config/pipewire/source-rnnoise.conf
+    mkdir -p ~/.config/pipewire/filter-chain.conf.d
+    cp -f /usr/share/pipewire/filter-chain/source-rnnoise.conf ~/.config/pipewire/filter-chain.conf.d/source-rnnoise.conf
+    sed -i "s|node.description =.*|node.description = \"$mic_name\"|g" ~/.config/pipewire/filter-chain.conf.d/source-rnnoise.conf
 fi
 
 pipewire-noise-move-mic &
 
-/usr/bin/pipewire -c "$HOME/.config/pipewire/source-rnnoise.conf"
+/usr/bin/pipewire -c filter-chain.conf
