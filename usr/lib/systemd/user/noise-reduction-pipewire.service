@@ -5,6 +5,8 @@ BindsTo=pipewire.service
 
 [Service]
 ExecStart=/usr/bin/pipewire-noise-remove
+ExecStartPost=/usr/bin/pipewire-noise-remove start
+ExecStopPost=/usr/bin/pipewire-noise-remove stop
 Type=simple
 Restart=on-failure
 

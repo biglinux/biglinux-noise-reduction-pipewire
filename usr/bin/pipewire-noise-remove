@@ -4,6 +4,16 @@
 export TEXTDOMAINDIR="/usr/share/locale"
 export TEXTDOMAIN=biglinux-noise-reduction-pipewire
 
+if [ "$1" = "start" ];then
+    notify-send $"Ativado!" --app-name=$"Microfone sem ruídos"
+    exit
+fi
+
+if [ "$1" = "stop" ];then
+    notify-send $"Desativado!" --app-name=$"Microfone sem ruídos"
+    exit
+fi
+
 mic_name=$"Microfone sem ruídos"
 
 if [ ! -e "$HOME/.config/pipewire/filter-chain.conf.d/source-rnnoise.conf" ]; then
