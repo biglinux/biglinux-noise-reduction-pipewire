@@ -14,7 +14,13 @@ msgstr  "Project-Id-Version: biglinux-noise-reduction-pipewire\n"
         "Content-Type: text/plain; charset=UTF-8\n"
         "Content-Transfer-Encoding: 8bit\n"
 
+msgid   "Ativado!"
+msgstr  ""
+
 msgid   "Microfone sem ruídos"
+msgstr  ""
+
+msgid   "Desativado!"
 msgstr  ""
 
 msgid   "Reduzir ruídos do microfone"

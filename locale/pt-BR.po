@@ -15,8 +15,14 @@ msgstr ""
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 
+msgid "Ativado!"
+msgstr "Ativado!"
+
 msgid "Microfone sem ruídos"
 msgstr "Microfone sem ruídos"
+
+msgid "Desativado!"
+msgstr "Desativado!"
 
 msgid "Reduzir ruídos do microfone"
 msgstr "Reduzir ruídos do microfone"
