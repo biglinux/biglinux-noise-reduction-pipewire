@@ -2,7 +2,7 @@
 # Copyright (C) YEAR THE PACKAGE'S COPYRIGHT HOLDER
 # This file is distributed under the same license as the biglinux-noise-reduction-pipewire package.
 # FIRST AUTHOR <EMAIL@ADDRESS>, YEAR.
-#
+# 
 #, fuzzy
 msgid ""
 msgstr ""
@@ -12,17 +12,52 @@ msgstr ""
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: bg\n"
 "MIME-Version: 1.0\n"
-"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Type: text/plain; charset=utf-8\n"
 "Content-Transfer-Encoding: 8bit\n"
+"X-Generator: attranslate\n"
 
-msgid "Ativando"
-msgstr "Активиране на"
+msgid "Reduzir ruídos do microfone"
+msgstr "Намаляване на шума от микрофона"
 
-msgid "Cancelado, nenhuma configuração foi removida!"
-msgstr "Отменено, не е премахната конфигурация!"
+msgid "Ativado!"
+msgstr "Активизирам!"
 
-msgid "Configuração aplicada"
-msgstr "Приложена конфигурация"
+msgid "Microfone sem ruídos"
+msgstr "Безшумен микрофон"
+
+msgid "Desativado!"
+msgstr "Деактивира!"
+
+msgid ""
+"Este filtro utiliza técnicas de redes neurais para remover ruídos e sons do ambiente que atrapalham "
+"gravações e chamadas online."
+msgstr ""
+"Този филтър използва техники на невронни мрежи, за да премахва околния шум и звуците, които пречат "
+"на онлайн записите и обажданията."
+
+msgid "Gerenciador de Áudio"
+msgstr "Аудио мениджър"
+
+msgid "Frequências sonoras:"
+msgstr "Звукови честоти:"
+
+msgid "Filtro de ruído"
+msgstr "Шумов филтър"
+
+msgid "Iniciar automaticamente"
+msgstr "Стартирайте автоматично"
+
+msgid "Desativando"
+msgstr "Деактивиране на"
+
+msgid "Filtro do Microfone"
+msgstr "Микрофонен филтър"
+
+msgid "Configuração de áudio."
+msgstr "Аудио конфигурация."
+
+msgid "Confirma a remoção das personalizações na configuração de áudio?"
+msgstr "Можете ли да потвърдите премахването на персонализациите в конфигурацията на звука?"
 
 msgid "Configuração de áudio"
 msgstr "Аудио конфигурация"
@@ -38,44 +73,14 @@ msgstr ""
 "Възможно е да се наложи затваряне на текущо работещи програми\n"
 "и се отвори отново, за да работи аудиото правилно."
 
-msgid "Configuração de áudio."
-msgstr "Аудио конфигурация."
+msgid "Cancelado, nenhuma configuração foi removida!"
+msgstr "Отменено, не е премахната конфигурация!"
 
-msgid "Confirma a remoção das personalizações na configuração de áudio?"
-msgstr ""
-"Можете ли да потвърдите премахването на персонализациите в конфигурацията на "
-"звука?"
-
-msgid "Desativando"
-msgstr "Деактивиране на"
-
-msgid ""
-"Este filtro utiliza técnicas de redes neurais para remover ruídos e sons do "
-"ambiente que atrapalham gravações e chamadas online."
-msgstr ""
-"Този филтър използва техники на невронни мрежи, за да премахва околния шум и "
-"звуците, които пречат на онлайн записите и обажданията."
-
-msgid "Filtro de ruído"
-msgstr "Шумов филтър"
-
-msgid "Filtro do Microfone"
-msgstr "Микрофонен филтър"
-
-msgid "Frequências sonoras:"
-msgstr "Звукови честоти:"
-
-msgid "Gerenciador de Áudio"
-msgstr "Аудио мениджър"
-
-msgid "Iniciar automaticamente"
-msgstr "Стартирайте автоматично"
+msgid "Configuração aplicada"
+msgstr "Приложена конфигурация"
 
 msgid "Microfone"
 msgstr "Микрофон"
 
-msgid "Microfone sem ruídos"
-msgstr "Безшумен микрофон"
-
-msgid "Reduzir ruídos do microfone"
-msgstr "Намаляване на шума от микрофона"
+msgid "Ativando"
+msgstr "Активиране на"

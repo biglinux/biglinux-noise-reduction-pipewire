@@ -2,7 +2,7 @@
 # Copyright (C) YEAR THE PACKAGE'S COPYRIGHT HOLDER
 # This file is distributed under the same license as the biglinux-noise-reduction-pipewire package.
 # FIRST AUTHOR <EMAIL@ADDRESS>, YEAR.
-#
+# 
 #, fuzzy
 msgid ""
 msgstr ""
@@ -12,17 +12,52 @@ msgstr ""
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: el\n"
 "MIME-Version: 1.0\n"
-"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Type: text/plain; charset=utf-8\n"
 "Content-Transfer-Encoding: 8bit\n"
+"X-Generator: attranslate\n"
 
-msgid "Ativando"
-msgstr "Ενεργοποίηση"
+msgid "Reduzir ruídos do microfone"
+msgstr "Μείωση του θορύβου του μικροφώνου"
 
-msgid "Cancelado, nenhuma configuração foi removida!"
-msgstr "Ακυρώθηκε, δεν έχει αφαιρεθεί καμία διαμόρφωση!"
+msgid "Ativado!"
+msgstr "Ενεργοποιηθεί!"
 
-msgid "Configuração aplicada"
-msgstr "Εφαρμοσμένη διαμόρφωση"
+msgid "Microfone sem ruídos"
+msgstr "Μικρόφωνο χωρίς θόρυβο"
+
+msgid "Desativado!"
+msgstr "Απενεργοποιηθεί!"
+
+msgid ""
+"Este filtro utiliza técnicas de redes neurais para remover ruídos e sons do ambiente que atrapalham "
+"gravações e chamadas online."
+msgstr ""
+"Αυτό το φίλτρο χρησιμοποιεί τεχνικές νευρωνικού δικτύου για την αφαίρεση του θορύβου περιβάλλοντος "
+"και των ήχων που διαταράσσουν τις online εγγραφές και κλήσεις."
+
+msgid "Gerenciador de Áudio"
+msgstr "Διαχειριστής ήχου"
+
+msgid "Frequências sonoras:"
+msgstr "Ηχητικές συχνότητες:"
+
+msgid "Filtro de ruído"
+msgstr "Φίλτρο θορύβου"
+
+msgid "Iniciar automaticamente"
+msgstr "Ξεκινήστε αυτόματα"
+
+msgid "Desativando"
+msgstr "Απενεργοποίηση του"
+
+msgid "Filtro do Microfone"
+msgstr "Φίλτρο μικροφώνου"
+
+msgid "Configuração de áudio."
+msgstr "Διαμόρφωση ήχου."
+
+msgid "Confirma a remoção das personalizações na configuração de áudio?"
+msgstr "Μπορείτε να επιβεβαιώσετε την αφαίρεση των προσαρμογών στη ρύθμιση παραμέτρων ήχου"
 
 msgid "Configuração de áudio"
 msgstr "Διαμόρφωση ήχου"
@@ -38,45 +73,14 @@ msgstr ""
 "Τα τρέχοντα προγράμματα μπορεί να χρειαστεί να κλείσουν\n"
 "και να ανοίξει ξανά για να λειτουργήσει σωστά ο ήχος."
 
-msgid "Configuração de áudio."
-msgstr "Διαμόρφωση ήχου."
+msgid "Cancelado, nenhuma configuração foi removida!"
+msgstr "Ακυρώθηκε, δεν έχει αφαιρεθεί καμία διαμόρφωση!"
 
-msgid "Confirma a remoção das personalizações na configuração de áudio?"
-msgstr ""
-"Μπορείτε να επιβεβαιώσετε την αφαίρεση των προσαρμογών στη ρύθμιση "
-"παραμέτρων ήχου"
-
-msgid "Desativando"
-msgstr "Απενεργοποίηση του"
-
-msgid ""
-"Este filtro utiliza técnicas de redes neurais para remover ruídos e sons do "
-"ambiente que atrapalham gravações e chamadas online."
-msgstr ""
-"Αυτό το φίλτρο χρησιμοποιεί τεχνικές νευρωνικού δικτύου για την αφαίρεση του "
-"θορύβου περιβάλλοντος και των ήχων που διαταράσσουν τις online εγγραφές και "
-"κλήσεις."
-
-msgid "Filtro de ruído"
-msgstr "Φίλτρο θορύβου"
-
-msgid "Filtro do Microfone"
-msgstr "Φίλτρο μικροφώνου"
-
-msgid "Frequências sonoras:"
-msgstr "Ηχητικές συχνότητες:"
-
-msgid "Gerenciador de Áudio"
-msgstr "Διαχειριστής ήχου"
-
-msgid "Iniciar automaticamente"
-msgstr "Ξεκινήστε αυτόματα"
+msgid "Configuração aplicada"
+msgstr "Εφαρμοσμένη διαμόρφωση"
 
 msgid "Microfone"
 msgstr "Μικρόφωνο"
 
-msgid "Microfone sem ruídos"
-msgstr "Μικρόφωνο χωρίς θόρυβο"
-
-msgid "Reduzir ruídos do microfone"
-msgstr "Μείωση του θορύβου του μικροφώνου"
+msgid "Ativando"
+msgstr "Ενεργοποίηση"

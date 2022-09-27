@@ -2,7 +2,7 @@
 # Copyright (C) YEAR THE PACKAGE'S COPYRIGHT HOLDER
 # This file is distributed under the same license as the biglinux-noise-reduction-pipewire package.
 # FIRST AUTHOR <EMAIL@ADDRESS>, YEAR.
-#
+# 
 #, fuzzy
 msgid ""
 msgstr ""
@@ -12,17 +12,52 @@ msgstr ""
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: sv\n"
 "MIME-Version: 1.0\n"
-"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Type: text/plain; charset=utf-8\n"
 "Content-Transfer-Encoding: 8bit\n"
+"X-Generator: attranslate\n"
 
-msgid "Ativando"
-msgstr "Aktivera"
+msgid "Reduzir ruídos do microfone"
+msgstr "Minska mikrofonljudet"
 
-msgid "Cancelado, nenhuma configuração foi removida!"
-msgstr "Avbokad, ingen konfiguration har tagits bort!"
+msgid "Ativado!"
+msgstr "Aktiverat!"
 
-msgid "Configuração aplicada"
-msgstr "Konfigurationen tillämpas"
+msgid "Microfone sem ruídos"
+msgstr "Brusfri mikrofon"
+
+msgid "Desativado!"
+msgstr "Inaktiveras!"
+
+msgid ""
+"Este filtro utiliza técnicas de redes neurais para remover ruídos e sons do ambiente que atrapalham "
+"gravações e chamadas online."
+msgstr ""
+"Det här filtret använder neurala nätverkstekniker för att ta bort omgivande ljud och ljud som stör "
+"inspelningar och samtal online."
+
+msgid "Gerenciador de Áudio"
+msgstr "Ljudansvarig"
+
+msgid "Frequências sonoras:"
+msgstr "Ljudfrekvenser:"
+
+msgid "Filtro de ruído"
+msgstr "Brusfilter"
+
+msgid "Iniciar automaticamente"
+msgstr "Starta automatiskt"
+
+msgid "Desativando"
+msgstr "Inaktivering av"
+
+msgid "Filtro do Microfone"
+msgstr "Mikrofonfilter"
+
+msgid "Configuração de áudio."
+msgstr "Ljudkonfiguration."
+
+msgid "Confirma a remoção das personalizações na configuração de áudio?"
+msgstr "Kan du bekräfta att anpassningarna i ljudkonfigurationen har tagits bort?"
 
 msgid "Configuração de áudio"
 msgstr "Ljudkonfiguration"
@@ -38,43 +73,14 @@ msgstr ""
 "Program som pågår kan behöva stängas\n"
 "och öppnas igen för att ljudet ska fungera korrekt."
 
-msgid "Configuração de áudio."
-msgstr "Ljudkonfiguration."
+msgid "Cancelado, nenhuma configuração foi removida!"
+msgstr "Avbokad, ingen konfiguration har tagits bort!"
 
-msgid "Confirma a remoção das personalizações na configuração de áudio?"
-msgstr ""
-"Kan du bekräfta att anpassningarna i ljudkonfigurationen har tagits bort?"
-
-msgid "Desativando"
-msgstr "Inaktivering av"
-
-msgid ""
-"Este filtro utiliza técnicas de redes neurais para remover ruídos e sons do "
-"ambiente que atrapalham gravações e chamadas online."
-msgstr ""
-"Det här filtret använder neurala nätverkstekniker för att ta bort omgivande "
-"ljud och ljud som stör inspelningar och samtal online."
-
-msgid "Filtro de ruído"
-msgstr "Brusfilter"
-
-msgid "Filtro do Microfone"
-msgstr "Mikrofonfilter"
-
-msgid "Frequências sonoras:"
-msgstr "Ljudfrekvenser:"
-
-msgid "Gerenciador de Áudio"
-msgstr "Ljudansvarig"
-
-msgid "Iniciar automaticamente"
-msgstr "Starta automatiskt"
+msgid "Configuração aplicada"
+msgstr "Konfigurationen tillämpas"
 
 msgid "Microfone"
 msgstr "Mikrofon"
 
-msgid "Microfone sem ruídos"
-msgstr "Brusfri mikrofon"
-
-msgid "Reduzir ruídos do microfone"
-msgstr "Minska mikrofonljudet"
+msgid "Ativando"
+msgstr "Aktivera"

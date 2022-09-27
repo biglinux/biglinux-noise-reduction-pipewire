@@ -2,7 +2,7 @@
 # Copyright (C) YEAR THE PACKAGE'S COPYRIGHT HOLDER
 # This file is distributed under the same license as the biglinux-noise-reduction-pipewire package.
 # FIRST AUTHOR <EMAIL@ADDRESS>, YEAR.
-#
+# 
 #, fuzzy
 msgid ""
 msgstr ""
@@ -12,17 +12,52 @@ msgstr ""
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: de\n"
 "MIME-Version: 1.0\n"
-"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Type: text/plain; charset=utf-8\n"
 "Content-Transfer-Encoding: 8bit\n"
+"X-Generator: attranslate\n"
 
-msgid "Ativando"
-msgstr "Aktivieren"
+msgid "Reduzir ruídos do microfone"
+msgstr "Reduzieren Sie das Mikrofonrauschen"
 
-msgid "Cancelado, nenhuma configuração foi removida!"
-msgstr "Abgebrochen, es wurden keine Einstellungen entfernt!"
+msgid "Ativado!"
+msgstr "Aktiviert!"
 
-msgid "Configuração aplicada"
-msgstr "Angewandte Konfiguration"
+msgid "Microfone sem ruídos"
+msgstr "Geräuschloses Mikrofon"
+
+msgid "Desativado!"
+msgstr "Deaktiviert!"
+
+msgid ""
+"Este filtro utiliza técnicas de redes neurais para remover ruídos e sons do ambiente que atrapalham "
+"gravações e chamadas online."
+msgstr ""
+"Dieser Filter verwendet neuronale Netzwerktechniken, um Umgebungsgeräusche und Klänge zu entfernen, "
+"die Online-Aufnahmen und Anrufe stören."
+
+msgid "Gerenciador de Áudio"
+msgstr "Audio Manager"
+
+msgid "Frequências sonoras:"
+msgstr "Tonfrequenzen:"
+
+msgid "Filtro de ruído"
+msgstr "Rauschfilter"
+
+msgid "Iniciar automaticamente"
+msgstr "Auto-Start"
+
+msgid "Desativando"
+msgstr "Deaktivieren"
+
+msgid "Filtro do Microfone"
+msgstr "Mikrofonfilter"
+
+msgid "Configuração de áudio."
+msgstr "Audio-Setup."
+
+msgid "Confirma a remoção das personalizações na configuração de áudio?"
+msgstr "Bestätigen Sie das Entfernen von Anpassungen in der Audiokonfiguration?"
 
 msgid "Configuração de áudio"
 msgstr "Audio-Setup"
@@ -33,47 +68,17 @@ msgid ""
 "Os programas em execução no momento podem precisar ser fechados\n"
 "e abertos novamente para o áudio funcionar corretamente."
 msgstr ""
-"Audiokonfiguration wiederhergestellt. Derzeit laufende Programme müssen "
-"möglicherweise geschlossen und erneut geöffnet werden, damit Audio "
-"ordnungsgemäß funktioniert."
+"Audiokonfiguration wiederhergestellt. Derzeit laufende Programme müssen möglicherweise geschlossen "
+"und erneut geöffnet werden, damit Audio ordnungsgemäß funktioniert."
 
-msgid "Configuração de áudio."
-msgstr "Audio-Setup."
+msgid "Cancelado, nenhuma configuração foi removida!"
+msgstr "Abgebrochen, es wurden keine Einstellungen entfernt!"
 
-msgid "Confirma a remoção das personalizações na configuração de áudio?"
-msgstr ""
-"Bestätigen Sie das Entfernen von Anpassungen in der Audiokonfiguration?"
-
-msgid "Desativando"
-msgstr "Deaktivieren"
-
-msgid ""
-"Este filtro utiliza técnicas de redes neurais para remover ruídos e sons do "
-"ambiente que atrapalham gravações e chamadas online."
-msgstr ""
-"Dieser Filter verwendet neuronale Netzwerktechniken, um Umgebungsgeräusche "
-"und Klänge zu entfernen, die Online-Aufnahmen und Anrufe stören."
-
-msgid "Filtro de ruído"
-msgstr "Rauschfilter"
-
-msgid "Filtro do Microfone"
-msgstr "Mikrofonfilter"
-
-msgid "Frequências sonoras:"
-msgstr "Tonfrequenzen:"
-
-msgid "Gerenciador de Áudio"
-msgstr "Audio Manager"
-
-msgid "Iniciar automaticamente"
-msgstr "Auto-Start"
+msgid "Configuração aplicada"
+msgstr "Angewandte Konfiguration"
 
 msgid "Microfone"
 msgstr "MIC"
 
-msgid "Microfone sem ruídos"
-msgstr "Geräuschloses Mikrofon"
-
-msgid "Reduzir ruídos do microfone"
-msgstr "Reduzieren Sie das Mikrofonrauschen"
+msgid "Ativando"
+msgstr "Aktivieren"

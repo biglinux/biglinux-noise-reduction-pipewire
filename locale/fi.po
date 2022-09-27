@@ -2,7 +2,7 @@
 # Copyright (C) YEAR THE PACKAGE'S COPYRIGHT HOLDER
 # This file is distributed under the same license as the biglinux-noise-reduction-pipewire package.
 # FIRST AUTHOR <EMAIL@ADDRESS>, YEAR.
-#
+# 
 #, fuzzy
 msgid ""
 msgstr ""
@@ -12,17 +12,52 @@ msgstr ""
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: fi\n"
 "MIME-Version: 1.0\n"
-"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Type: text/plain; charset=utf-8\n"
 "Content-Transfer-Encoding: 8bit\n"
+"X-Generator: attranslate\n"
 
-msgid "Ativando"
-msgstr "Aktivointi"
+msgid "Reduzir ruídos do microfone"
+msgstr "Vähennä mikrofonin melua"
 
-msgid "Cancelado, nenhuma configuração foi removida!"
-msgstr "Peruttu, mitään kokoonpanoa ei ole poistettu!"
+msgid "Ativado!"
+msgstr "Aktivoitu!"
 
-msgid "Configuração aplicada"
-msgstr "Sovellettu konfiguraatio"
+msgid "Microfone sem ruídos"
+msgstr "Meluton mikrofoni"
+
+msgid "Desativado!"
+msgstr "Poistettu käytöstä!"
+
+msgid ""
+"Este filtro utiliza técnicas de redes neurais para remover ruídos e sons do ambiente que atrapalham "
+"gravações e chamadas online."
+msgstr ""
+"Tämä suodatin käyttää neuroverkkotekniikoita poistaakseen ympäristömelun ja äänet, jotka "
+"häiritsevät verkkotallenteita ja puheluita."
+
+msgid "Gerenciador de Áudio"
+msgstr "Audio Manager"
+
+msgid "Frequências sonoras:"
+msgstr "Äänitaajuudet:"
+
+msgid "Filtro de ruído"
+msgstr "Kohinasuodatin"
+
+msgid "Iniciar automaticamente"
+msgstr "Käynnistyy automaattisesti"
+
+msgid "Desativando"
+msgstr "Deaktivointi"
+
+msgid "Filtro do Microfone"
+msgstr "Mikrofonisuodatin"
+
+msgid "Configuração de áudio."
+msgstr "Äänikokoonpano."
+
+msgid "Confirma a remoção das personalizações na configuração de áudio?"
+msgstr "Voitko vahvistaa, että mukautukset on poistettu äänikokoonpanosta?"
 
 msgid "Configuração de áudio"
 msgstr "Äänen konfigurointi"
@@ -38,42 +73,14 @@ msgstr ""
 "Tällä hetkellä käynnissä olevat ohjelmat on ehkä suljettava\n"
 "ja avattiin uudelleen, jotta ääni toimisi oikein."
 
-msgid "Configuração de áudio."
-msgstr "Äänikokoonpano."
+msgid "Cancelado, nenhuma configuração foi removida!"
+msgstr "Peruttu, mitään kokoonpanoa ei ole poistettu!"
 
-msgid "Confirma a remoção das personalizações na configuração de áudio?"
-msgstr "Voitko vahvistaa, että mukautukset on poistettu äänikokoonpanosta?"
-
-msgid "Desativando"
-msgstr "Deaktivointi"
-
-msgid ""
-"Este filtro utiliza técnicas de redes neurais para remover ruídos e sons do "
-"ambiente que atrapalham gravações e chamadas online."
-msgstr ""
-"Tämä suodatin käyttää neuroverkkotekniikoita poistaakseen ympäristömelun ja "
-"äänet, jotka häiritsevät verkkotallenteita ja puheluita."
-
-msgid "Filtro de ruído"
-msgstr "Kohinasuodatin"
-
-msgid "Filtro do Microfone"
-msgstr "Mikrofonisuodatin"
-
-msgid "Frequências sonoras:"
-msgstr "Äänitaajuudet:"
-
-msgid "Gerenciador de Áudio"
-msgstr "Audio Manager"
-
-msgid "Iniciar automaticamente"
-msgstr "Käynnistyy automaattisesti"
+msgid "Configuração aplicada"
+msgstr "Sovellettu konfiguraatio"
 
 msgid "Microfone"
 msgstr "Mikrofoni"
 
-msgid "Microfone sem ruídos"
-msgstr "Meluton mikrofoni"
-
-msgid "Reduzir ruídos do microfone"
-msgstr "Vähennä mikrofonin melua"
+msgid "Ativando"
+msgstr "Aktivointi"

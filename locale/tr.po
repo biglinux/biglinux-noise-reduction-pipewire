@@ -2,7 +2,7 @@
 # Copyright (C) YEAR THE PACKAGE'S COPYRIGHT HOLDER
 # This file is distributed under the same license as the biglinux-noise-reduction-pipewire package.
 # FIRST AUTHOR <EMAIL@ADDRESS>, YEAR.
-#
+# 
 #, fuzzy
 msgid ""
 msgstr ""
@@ -12,17 +12,52 @@ msgstr ""
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: tr\n"
 "MIME-Version: 1.0\n"
-"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Type: text/plain; charset=utf-8\n"
 "Content-Transfer-Encoding: 8bit\n"
+"X-Generator: attranslate\n"
 
-msgid "Ativando"
-msgstr "Etkinleştirme"
+msgid "Reduzir ruídos do microfone"
+msgstr "Mikrofon gürültüsünü azaltın"
 
-msgid "Cancelado, nenhuma configuração foi removida!"
-msgstr "İptal edildi, hiçbir yapılandırma kaldırılmadı!"
+msgid "Ativado!"
+msgstr "Aktif!"
 
-msgid "Configuração aplicada"
-msgstr "Uygulanan konfigürasyon"
+msgid "Microfone sem ruídos"
+msgstr "Gürültüsüz mikrofon"
+
+msgid "Desativado!"
+msgstr "Devre dışı!"
+
+msgid ""
+"Este filtro utiliza técnicas de redes neurais para remover ruídos e sons do ambiente que atrapalham "
+"gravações e chamadas online."
+msgstr ""
+"Bu filtre, çevrimiçi kayıtları ve aramaları bozan ortam gürültüsünü ve sesleri gidermek için sinir "
+"ağı tekniklerini kullanır."
+
+msgid "Gerenciador de Áudio"
+msgstr "Ses Yöneticisi"
+
+msgid "Frequências sonoras:"
+msgstr "Ses frekansları:"
+
+msgid "Filtro de ruído"
+msgstr "Gürültü filtresi"
+
+msgid "Iniciar automaticamente"
+msgstr "Otomatik olarak başlat"
+
+msgid "Desativando"
+msgstr "Devre dışı bırakma"
+
+msgid "Filtro do Microfone"
+msgstr "Mikrofon Filtresi"
+
+msgid "Configuração de áudio."
+msgstr "Ses yapılandırması."
+
+msgid "Confirma a remoção das personalizações na configuração de áudio?"
+msgstr "Ses yapılandırmasındaki özelleştirmelerin kaldırıldığını onaylayabilir misiniz?"
 
 msgid "Configuração de áudio"
 msgstr "Ses yapılandırması"
@@ -38,44 +73,14 @@ msgstr ""
 "Halihazırda çalışan programların kapatılması gerekebilir\n"
 "ve sesin düzgün çalışması için tekrar açılmalıdır."
 
-msgid "Configuração de áudio."
-msgstr "Ses yapılandırması."
+msgid "Cancelado, nenhuma configuração foi removida!"
+msgstr "İptal edildi, hiçbir yapılandırma kaldırılmadı!"
 
-msgid "Confirma a remoção das personalizações na configuração de áudio?"
-msgstr ""
-"Ses yapılandırmasındaki özelleştirmelerin kaldırıldığını onaylayabilir "
-"misiniz?"
-
-msgid "Desativando"
-msgstr "Devre dışı bırakma"
-
-msgid ""
-"Este filtro utiliza técnicas de redes neurais para remover ruídos e sons do "
-"ambiente que atrapalham gravações e chamadas online."
-msgstr ""
-"Bu filtre, çevrimiçi kayıtları ve aramaları bozan ortam gürültüsünü ve "
-"sesleri gidermek için sinir ağı tekniklerini kullanır."
-
-msgid "Filtro de ruído"
-msgstr "Gürültü filtresi"
-
-msgid "Filtro do Microfone"
-msgstr "Mikrofon Filtresi"
-
-msgid "Frequências sonoras:"
-msgstr "Ses frekansları:"
-
-msgid "Gerenciador de Áudio"
-msgstr "Ses Yöneticisi"
-
-msgid "Iniciar automaticamente"
-msgstr "Otomatik olarak başlat"
+msgid "Configuração aplicada"
+msgstr "Uygulanan konfigürasyon"
 
 msgid "Microfone"
 msgstr "Mikrofon"
 
-msgid "Microfone sem ruídos"
-msgstr "Gürültüsüz mikrofon"
-
-msgid "Reduzir ruídos do microfone"
-msgstr "Mikrofon gürültüsünü azaltın"
+msgid "Ativando"
+msgstr "Etkinleştirme"
