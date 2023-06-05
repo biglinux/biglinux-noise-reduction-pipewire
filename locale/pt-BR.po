@@ -27,30 +27,17 @@ msgstr "Microfone sem ruídos"
 msgid "Desativado!"
 msgstr "Desativado!"
 
-msgid ""
-"Este filtro utiliza técnicas de redes neurais para remover ruídos e sons do "
-"ambiente que atrapalham gravações e chamadas online."
-msgstr ""
-"Este filtro utiliza técnicas de redes neurais para remover ruídos e sons do "
-"ambiente que atrapalham gravações e chamadas online."
-
-msgid "Gerenciador de Áudio"
-msgstr "Gerenciador de Áudio"
-
-msgid "Frequências sonoras:"
-msgstr "Frequências sonoras:"
-
-msgid "Filtro de ruído"
-msgstr "Filtro de ruído"
-
-msgid "Iniciar automaticamente"
-msgstr "Iniciar automaticamente"
-
 msgid "Desativando"
 msgstr "Desativando"
 
 msgid "Filtro do Microfone"
 msgstr "Filtro do Microfone"
+
+msgid "Configuração aplicada"
+msgstr "Configuração aplicada"
+
+msgid "Microfone"
+msgstr "Microfone"
 
 msgid "Configuração de áudio."
 msgstr "Configuração de áudio."
@@ -75,11 +62,24 @@ msgstr ""
 msgid "Cancelado, nenhuma configuração foi removida!"
 msgstr "Cancelado, nenhuma configuração foi removida!"
 
-msgid "Configuração aplicada"
-msgstr "Configuração aplicada"
-
-msgid "Microfone"
-msgstr "Microfone"
-
 msgid "Ativando"
 msgstr "Ativando"
+
+msgid ""
+"Este filtro utiliza técnicas de redes neurais para remover ruídos e sons do "
+"ambiente que atrapalham gravações e chamadas online."
+msgstr ""
+"Este filtro utiliza técnicas de redes neurais para remover ruídos e sons do "
+"ambiente que atrapalham gravações e chamadas online."
+
+msgid "Gerenciador de Áudio"
+msgstr "Gerenciador de Áudio"
+
+msgid "Frequências sonoras:"
+msgstr "Frequências sonoras:"
+
+msgid "Filtro de ruído"
+msgstr "Filtro de ruído"
+
+msgid "Iniciar automaticamente"
+msgstr "Iniciar automaticamente"
