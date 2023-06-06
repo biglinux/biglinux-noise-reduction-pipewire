@@ -22,3 +22,6 @@ done
 # Change default source to rnnoise
 pactl set-default-source effect_output.rnnoise
 pactl set-default-source $NODENAME
+
+# Unmute filtered output
+pactl set-source-mute effect_output.rnnoise 0
