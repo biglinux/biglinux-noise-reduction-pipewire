@@ -14,9 +14,6 @@ msgstr  "Project-Id-Version: biglinux-noise-reduction-pipewire\n"
         "Content-Type: text/plain; charset=UTF-8\n"
         "Content-Transfer-Encoding: 8bit\n"
 
-msgid   "Reduzir ruídos do microfone"
-msgstr  ""
-
 msgid   "Ativado!"
 msgstr  ""
 
@@ -26,16 +23,7 @@ msgstr  ""
 msgid   "Desativado!"
 msgstr  ""
 
-msgid   "Desativando"
-msgstr  ""
-
-msgid   "Filtro do Microfone"
-msgstr  ""
-
-msgid   "Configuração aplicada"
-msgstr  ""
-
-msgid   "Microfone"
+msgid   "Reduzir ruídos do microfone"
 msgstr  ""
 
 msgid   "Configuração de áudio."
@@ -56,9 +44,6 @@ msgstr  ""
 msgid   "Cancelado, nenhuma configuração foi removida!"
 msgstr  ""
 
-msgid   "Ativando"
-msgstr  ""
-
 msgid   "Este filtro utiliza técnicas de redes neurais para remover ruídos e "
         "sons do ambiente que atrapalham gravações e chamadas online."
 msgstr  ""
@@ -73,4 +58,19 @@ msgid   "Filtro de ruído"
 msgstr  ""
 
 msgid   "Iniciar automaticamente"
+msgstr  ""
+
+msgid   "Configuração aplicada"
+msgstr  ""
+
+msgid   "Microfone"
+msgstr  ""
+
+msgid   "Ativando"
+msgstr  ""
+
+msgid   "Filtro do Microfone"
+msgstr  ""
+
+msgid   "Desativando"
 msgstr  ""
