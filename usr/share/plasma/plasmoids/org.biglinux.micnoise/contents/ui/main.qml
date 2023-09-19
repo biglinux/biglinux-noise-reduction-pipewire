@@ -13,77 +13,77 @@ import org.kde.plasma.components 2.0 as PlasmaComponent
 Item {
     id: root
 
-	PlasmaCore.DataSource {
-		id: executable
-		engine: "executable"
-		connectedSources: []
-		onNewData: {
-			var exitCode = data["exit code"]
-			var exitStatus = data["exit status"]
-			var stdout = data["stdout"]
-			var stderr = data["stderr"]
-			exited(sourceName, exitCode, exitStatus, stdout, stderr)
-			disconnectSource(sourceName) // cmd finished
-		}
-		function exec(cmd) {
-			if (cmd) {
-				connectSource(cmd)
-			}
-		}
-		signal exited(string cmd, int exitCode, int exitStatus, string stdout, string stderr)
-	}
+    // Properties
+    property string outputText: ''
 
-	property string outputText: ''
-	Connections {
-		target: executable
-		onExited: {
-			outputText = stdout
-			timer.restart()
-		}
-	}
+    // Constants
+    readonly property int defaultInterval: 7000
+    readonly property int toggleInterval: 500
 
-	function runCommand() {
-		
-		// Change to run your command
-		executable.exec('ps -x | grep "/bin/bash /usr/bin/[p]ipewire-noise-remove"')
-	}
+    // Data source for running executable commands
+    PlasmaCore.DataSource {
+        id: executable
+        engine: "executable"
+        connectedSources: []
 
-	Timer {
-		id: timer
-		
-		// Wait in ms
-		interval: 7000
-		onTriggered: runCommand()
-		Component.onCompleted: {
-			triggered()
-		}
-	}
+        function exec(cmd) {
+            if (cmd) {
+                connectSource(cmd)
+            }
+        }
 
-    Plasmoid.icon: outputText ? 'big-noise-reduction-on' : 'big-noise-reduction-off'
-    Plasmoid.preferredRepresentation: Plasmoid.compactRepresentation
+        onNewData: {
+            var exitCode = data["exit code"]
+            var exitStatus = data["exit status"]
+            var stdout = data["stdout"]
+            var stderr = data["stderr"]
+            exited(sourceName, exitCode, exitStatus, stdout, stderr)
+            disconnectSource(sourceName)  // Command finished
+        }
 
-    // Active = in systray and Passive in notification area
-    Plasmoid.status: {
-        //return PlasmaCore.Types.ActiveStatus;
-        return PlasmaCore.Types.PassiveStatus;
-     }
+        signal exited(string cmd, int exitCode, int exitStatus, string stdout, string stderr)
+    }
 
-    function toggle() {
-        if (outputText) {
-            
-            executable.exec('systemctl --user stop noise-reduction-pipewire')
-            timer.interval = 500
-        } else {
-            executable.exec('systemctl --user start noise-reduction-pipewire')
-            timer.interval = 500
+    // Connection to the executable DataSource
+    Connections {
+        target: executable
+        onExited: {
+            outputText = stdout
+            timer.restart()
         }
     }
 
+    // Function to run the command
+    function runCommand() {
+        executable.exec('ps -x | grep "/bin/bash /usr/bin/[p]ipewire-noise-remove"')
+    }
 
+    // Timer to periodically run the command
+    Timer {
+        id: timer
+        interval: defaultInterval
+        onTriggered: runCommand()
+        Component.onCompleted: {
+            triggered()
+        }
+    }
+
+    Plasmoid.icon: outputText ? 'big-noise-reduction-on' : 'big-noise-reduction-off'
+    Plasmoid.preferredRepresentation: Plasmoid.compactRepresentation
+    Plasmoid.status: PlasmaCore.Types.PassiveStatus
+
+    // Function to toggle the noise reduction
+    function toggle() {
+        var command = outputText ? 'stop' : 'start'
+        executable.exec('systemctl --user ' + command + ' noise-reduction-pipewire')
+        timer.interval = toggleInterval  // Shorten the interval for quick feedback
+    }
+
+    // Compact representation of the plasmoid
     Plasmoid.compactRepresentation: PlasmaCore.IconItem {
         active: compactMouseArea.containsMouse
         source: plasmoid.icon
-        
+
         MouseArea {
             id: compactMouseArea
             anchors.fill: parent
@@ -92,6 +92,4 @@ Item {
             onClicked: toggle()
         }
     }
-
-
 }
