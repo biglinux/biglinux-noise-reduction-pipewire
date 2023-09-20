@@ -16,43 +16,6 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "X-Generator: attranslate\n"
 
-msgid "Reduzir ruídos do microfone"
-msgstr "Draga úr hávaða hljóðnema"
-
-msgid "Ativado!"
-msgstr "Virkja!"
-
-msgid "Microfone sem ruídos"
-msgstr "Hljóðlaus hljóðnemi"
-
-msgid "Desativado!"
-msgstr "Óvirkur!"
-
-msgid ""
-"Este filtro utiliza técnicas de redes neurais para remover ruídos e sons do ambiente que atrapalham "
-"gravações e chamadas online."
-msgstr ""
-"Þessi sía notar taugakerfi tækni til að fjarlægja umhverfishljóð og hljóð sem trufla upptökur og "
-"símtöl á netinu."
-
-msgid "Gerenciador de Áudio"
-msgstr "Audio Manager"
-
-msgid "Frequências sonoras:"
-msgstr "Hljóð tíðni:"
-
-msgid "Filtro de ruído"
-msgstr "Hávaði sía"
-
-msgid "Iniciar automaticamente"
-msgstr "Byrjaðu sjálfkrafa"
-
-msgid "Desativando"
-msgstr "Afvirkja"
-
-msgid "Filtro do Microfone"
-msgstr "Hljóðnemi Sía"
-
 msgid "Configuração de áudio."
 msgstr "Audio skipulag."
 
@@ -76,6 +39,28 @@ msgstr ""
 msgid "Cancelado, nenhuma configuração foi removida!"
 msgstr "Hætt við, engar stillingar voru fjarlægðar!"
 
+msgid ""
+"Este filtro utiliza técnicas de redes neurais para remover ruídos e sons do ambiente que atrapalham "
+"gravações e chamadas online."
+msgstr ""
+"Þessi sía notar taugakerfi tækni til að fjarlægja umhverfishljóð og hljóð sem trufla upptökur og "
+"símtöl á netinu."
+
+msgid "Gerenciador de Áudio"
+msgstr "Audio Manager"
+
+msgid "Frequências sonoras:"
+msgstr "Hljóð tíðni:"
+
+msgid "Reduzir ruídos do microfone"
+msgstr "Draga úr hávaða hljóðnema"
+
+msgid "Filtro de ruído"
+msgstr "Hávaði sía"
+
+msgid "Iniciar automaticamente"
+msgstr "Byrjaðu sjálfkrafa"
+
 msgid "Configuração aplicada"
 msgstr "Stillingar beitt"
 
@@ -84,3 +69,9 @@ msgstr "Hljóðnemi"
 
 msgid "Ativando"
 msgstr "virkja"
+
+msgid "Filtro do Microfone"
+msgstr "Hljóðnemi Sía"
+
+msgid "Desativando"
+msgstr "Afvirkja"

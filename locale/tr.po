@@ -16,43 +16,6 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "X-Generator: attranslate\n"
 
-msgid "Reduzir ruídos do microfone"
-msgstr "Mikrofon gürültüsünü azaltın"
-
-msgid "Ativado!"
-msgstr "Aktif!"
-
-msgid "Microfone sem ruídos"
-msgstr "Gürültüsüz mikrofon"
-
-msgid "Desativado!"
-msgstr "Devre dışı!"
-
-msgid ""
-"Este filtro utiliza técnicas de redes neurais para remover ruídos e sons do ambiente que atrapalham "
-"gravações e chamadas online."
-msgstr ""
-"Bu filtre, çevrimiçi kayıtları ve aramaları bozan ortam gürültüsünü ve sesleri gidermek için sinir "
-"ağı tekniklerini kullanır."
-
-msgid "Gerenciador de Áudio"
-msgstr "Ses Yöneticisi"
-
-msgid "Frequências sonoras:"
-msgstr "Ses frekansları:"
-
-msgid "Filtro de ruído"
-msgstr "Gürültü filtresi"
-
-msgid "Iniciar automaticamente"
-msgstr "Otomatik olarak başlat"
-
-msgid "Desativando"
-msgstr "Devre dışı bırakma"
-
-msgid "Filtro do Microfone"
-msgstr "Mikrofon Filtresi"
-
 msgid "Configuração de áudio."
 msgstr "Ses yapılandırması."
 
@@ -76,6 +39,28 @@ msgstr ""
 msgid "Cancelado, nenhuma configuração foi removida!"
 msgstr "İptal edildi, hiçbir yapılandırma kaldırılmadı!"
 
+msgid ""
+"Este filtro utiliza técnicas de redes neurais para remover ruídos e sons do ambiente que atrapalham "
+"gravações e chamadas online."
+msgstr ""
+"Bu filtre, çevrimiçi kayıtları ve aramaları bozan ortam gürültüsünü ve sesleri gidermek için sinir "
+"ağı tekniklerini kullanır."
+
+msgid "Gerenciador de Áudio"
+msgstr "Ses Yöneticisi"
+
+msgid "Frequências sonoras:"
+msgstr "Ses frekansları:"
+
+msgid "Reduzir ruídos do microfone"
+msgstr "Mikrofon gürültüsünü azaltın"
+
+msgid "Filtro de ruído"
+msgstr "Gürültü filtresi"
+
+msgid "Iniciar automaticamente"
+msgstr "Otomatik olarak başlat"
+
 msgid "Configuração aplicada"
 msgstr "Uygulanan konfigürasyon"
 
@@ -84,3 +69,9 @@ msgstr "Mikrofon"
 
 msgid "Ativando"
 msgstr "Etkinleştirme"
+
+msgid "Filtro do Microfone"
+msgstr "Mikrofon Filtresi"
+
+msgid "Desativando"
+msgstr "Devre dışı bırakma"

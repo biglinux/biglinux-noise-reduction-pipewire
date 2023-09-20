@@ -16,43 +16,6 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "X-Generator: attranslate\n"
 
-msgid "Reduzir ruídos do microfone"
-msgstr "Reducir el ruido del micrófono"
-
-msgid "Ativado!"
-msgstr "¡Activado!"
-
-msgid "Microfone sem ruídos"
-msgstr "Micrófono silencioso"
-
-msgid "Desativado!"
-msgstr "¡Desactivado!"
-
-msgid ""
-"Este filtro utiliza técnicas de redes neurais para remover ruídos e sons do ambiente que atrapalham "
-"gravações e chamadas online."
-msgstr ""
-"Este filtro utiliza técnicas de redes neuronales para eliminar el ruido ambiental y los sonidos que "
-"perturban las grabaciones y las llamadas en línea."
-
-msgid "Gerenciador de Áudio"
-msgstr "Gestor de audio"
-
-msgid "Frequências sonoras:"
-msgstr "Frecuencias de sonido:"
-
-msgid "Filtro de ruído"
-msgstr "Filtro de ruido"
-
-msgid "Iniciar automaticamente"
-msgstr "Autoencendido"
-
-msgid "Desativando"
-msgstr "Desactivando"
-
-msgid "Filtro do Microfone"
-msgstr "Filtro de micrófono"
-
 msgid "Configuração de áudio."
 msgstr "Configuración de audio."
 
@@ -76,6 +39,28 @@ msgstr ""
 msgid "Cancelado, nenhuma configuração foi removida!"
 msgstr "¡Cancelado, no se eliminó ninguna configuración!"
 
+msgid ""
+"Este filtro utiliza técnicas de redes neurais para remover ruídos e sons do ambiente que atrapalham "
+"gravações e chamadas online."
+msgstr ""
+"Este filtro utiliza técnicas de redes neuronales para eliminar el ruido ambiental y los sonidos que "
+"perturban las grabaciones y las llamadas en línea."
+
+msgid "Gerenciador de Áudio"
+msgstr "Gestor de audio"
+
+msgid "Frequências sonoras:"
+msgstr "Frecuencias de sonido:"
+
+msgid "Reduzir ruídos do microfone"
+msgstr "Reducir el ruido del micrófono"
+
+msgid "Filtro de ruído"
+msgstr "Filtro de ruido"
+
+msgid "Iniciar automaticamente"
+msgstr "Autoencendido"
+
 msgid "Configuração aplicada"
 msgstr "Configuración aplicada"
 
@@ -84,3 +69,9 @@ msgstr "Micrófono"
 
 msgid "Ativando"
 msgstr "Activando"
+
+msgid "Filtro do Microfone"
+msgstr "Filtro de micrófono"
+
+msgid "Desativando"
+msgstr "Desactivando"

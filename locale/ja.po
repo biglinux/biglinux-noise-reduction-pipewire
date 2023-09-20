@@ -16,41 +16,6 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "X-Generator: attranslate\n"
 
-msgid "Reduzir ruídos do microfone"
-msgstr "マイクノイズの低減"
-
-msgid "Ativado!"
-msgstr "アクティブ！"
-
-msgid "Microfone sem ruídos"
-msgstr "ノイズのないマイク"
-
-msgid "Desativado!"
-msgstr "非 アクティブ！"
-
-msgid ""
-"Este filtro utiliza técnicas de redes neurais para remover ruídos e sons do ambiente que atrapalham "
-"gravações e chamadas online."
-msgstr "ニューラルネットワーク技術により、オンライン録音や通話を妨害する環境音やノイズを除去するフィルターです。"
-
-msgid "Gerenciador de Áudio"
-msgstr "オーディオ・マネージャー"
-
-msgid "Frequências sonoras:"
-msgstr "音の周波数。"
-
-msgid "Filtro de ruído"
-msgstr "ノイズフィルター"
-
-msgid "Iniciar automaticamente"
-msgstr "自動スタート"
-
-msgid "Desativando"
-msgstr "非アクティブ化"
-
-msgid "Filtro do Microfone"
-msgstr "マイクフィルター"
-
 msgid "Configuração de áudio."
 msgstr "オーディオ設定。"
 
@@ -73,6 +38,26 @@ msgstr ""
 msgid "Cancelado, nenhuma configuração foi removida!"
 msgstr "キャンセルされました。設定は削除されませんでした。"
 
+msgid ""
+"Este filtro utiliza técnicas de redes neurais para remover ruídos e sons do ambiente que atrapalham "
+"gravações e chamadas online."
+msgstr "ニューラルネットワーク技術により、オンライン録音や通話を妨害する環境音やノイズを除去するフィルターです。"
+
+msgid "Gerenciador de Áudio"
+msgstr "オーディオ・マネージャー"
+
+msgid "Frequências sonoras:"
+msgstr "音の周波数。"
+
+msgid "Reduzir ruídos do microfone"
+msgstr "マイクノイズの低減"
+
+msgid "Filtro de ruído"
+msgstr "ノイズフィルター"
+
+msgid "Iniciar automaticamente"
+msgstr "自動スタート"
+
 msgid "Configuração aplicada"
 msgstr "適用された構成"
 
@@ -81,3 +66,9 @@ msgstr "MIC"
 
 msgid "Ativando"
 msgstr "アクティベート"
+
+msgid "Filtro do Microfone"
+msgstr "マイクフィルター"
+
+msgid "Desativando"
+msgstr "非アクティブ化"

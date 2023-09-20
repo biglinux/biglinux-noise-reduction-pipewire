@@ -16,43 +16,6 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "X-Generator: attranslate\n"
 
-msgid "Reduzir ruídos do microfone"
-msgstr "Vähennä mikrofonin melua"
-
-msgid "Ativado!"
-msgstr "Aktivoitu!"
-
-msgid "Microfone sem ruídos"
-msgstr "Meluton mikrofoni"
-
-msgid "Desativado!"
-msgstr "Poistettu käytöstä!"
-
-msgid ""
-"Este filtro utiliza técnicas de redes neurais para remover ruídos e sons do ambiente que atrapalham "
-"gravações e chamadas online."
-msgstr ""
-"Tämä suodatin käyttää neuroverkkotekniikoita poistaakseen ympäristömelun ja äänet, jotka "
-"häiritsevät verkkotallenteita ja puheluita."
-
-msgid "Gerenciador de Áudio"
-msgstr "Audio Manager"
-
-msgid "Frequências sonoras:"
-msgstr "Äänitaajuudet:"
-
-msgid "Filtro de ruído"
-msgstr "Kohinasuodatin"
-
-msgid "Iniciar automaticamente"
-msgstr "Käynnistyy automaattisesti"
-
-msgid "Desativando"
-msgstr "Deaktivointi"
-
-msgid "Filtro do Microfone"
-msgstr "Mikrofonisuodatin"
-
 msgid "Configuração de áudio."
 msgstr "Äänikokoonpano."
 
@@ -76,6 +39,28 @@ msgstr ""
 msgid "Cancelado, nenhuma configuração foi removida!"
 msgstr "Peruttu, mitään kokoonpanoa ei ole poistettu!"
 
+msgid ""
+"Este filtro utiliza técnicas de redes neurais para remover ruídos e sons do ambiente que atrapalham "
+"gravações e chamadas online."
+msgstr ""
+"Tämä suodatin käyttää neuroverkkotekniikoita poistaakseen ympäristömelun ja äänet, jotka "
+"häiritsevät verkkotallenteita ja puheluita."
+
+msgid "Gerenciador de Áudio"
+msgstr "Audio Manager"
+
+msgid "Frequências sonoras:"
+msgstr "Äänitaajuudet:"
+
+msgid "Reduzir ruídos do microfone"
+msgstr "Vähennä mikrofonin melua"
+
+msgid "Filtro de ruído"
+msgstr "Kohinasuodatin"
+
+msgid "Iniciar automaticamente"
+msgstr "Käynnistyy automaattisesti"
+
 msgid "Configuração aplicada"
 msgstr "Sovellettu konfiguraatio"
 
@@ -84,3 +69,9 @@ msgstr "Mikrofoni"
 
 msgid "Ativando"
 msgstr "Aktivointi"
+
+msgid "Filtro do Microfone"
+msgstr "Mikrofonisuodatin"
+
+msgid "Desativando"
+msgstr "Deaktivointi"

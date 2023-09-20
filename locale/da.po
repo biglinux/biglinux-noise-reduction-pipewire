@@ -16,43 +16,6 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "X-Generator: attranslate\n"
 
-msgid "Reduzir ruídos do microfone"
-msgstr "Reducer mikrofonstøj"
-
-msgid "Ativado!"
-msgstr "Aktiveret!"
-
-msgid "Microfone sem ruídos"
-msgstr "Støjfri mikrofon"
-
-msgid "Desativado!"
-msgstr "Deaktiveret!"
-
-msgid ""
-"Este filtro utiliza técnicas de redes neurais para remover ruídos e sons do ambiente que atrapalham "
-"gravações e chamadas online."
-msgstr ""
-"Dette filter bruger neurale netværksteknikker til at fjerne omgivende støj og lyde, der forstyrrer "
-"onlineoptagelser og opkald."
-
-msgid "Gerenciador de Áudio"
-msgstr "Audio Manager"
-
-msgid "Frequências sonoras:"
-msgstr "Lydfrekvenser:"
-
-msgid "Filtro de ruído"
-msgstr "Støjfilter"
-
-msgid "Iniciar automaticamente"
-msgstr "Start automatisk"
-
-msgid "Desativando"
-msgstr "Deaktivering af"
-
-msgid "Filtro do Microfone"
-msgstr "Mikrofonfilter"
-
 msgid "Configuração de áudio."
 msgstr "Lydkonfiguration."
 
@@ -76,6 +39,28 @@ msgstr ""
 msgid "Cancelado, nenhuma configuração foi removida!"
 msgstr "Annulleret, ingen konfiguration er blevet fjernet!"
 
+msgid ""
+"Este filtro utiliza técnicas de redes neurais para remover ruídos e sons do ambiente que atrapalham "
+"gravações e chamadas online."
+msgstr ""
+"Dette filter bruger neurale netværksteknikker til at fjerne omgivende støj og lyde, der forstyrrer "
+"onlineoptagelser og opkald."
+
+msgid "Gerenciador de Áudio"
+msgstr "Audio Manager"
+
+msgid "Frequências sonoras:"
+msgstr "Lydfrekvenser:"
+
+msgid "Reduzir ruídos do microfone"
+msgstr "Reducer mikrofonstøj"
+
+msgid "Filtro de ruído"
+msgstr "Støjfilter"
+
+msgid "Iniciar automaticamente"
+msgstr "Start automatisk"
+
 msgid "Configuração aplicada"
 msgstr "Anvendt konfiguration"
 
@@ -84,3 +69,9 @@ msgstr "Mikrofon"
 
 msgid "Ativando"
 msgstr "Aktivering af"
+
+msgid "Filtro do Microfone"
+msgstr "Mikrofonfilter"
+
+msgid "Desativando"
+msgstr "Deaktivering af"

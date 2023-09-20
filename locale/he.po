@@ -16,41 +16,6 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "X-Generator: attranslate\n"
 
-msgid "Reduzir ruídos do microfone"
-msgstr "הפחת רעשי מיקרופון"
-
-msgid "Ativado!"
-msgstr "מופעל!"
-
-msgid "Microfone sem ruídos"
-msgstr "מיקרופון ללא רעש"
-
-msgid "Desativado!"
-msgstr "בוטלה!"
-
-msgid ""
-"Este filtro utiliza técnicas de redes neurais para remover ruídos e sons do ambiente que atrapalham "
-"gravações e chamadas online."
-msgstr "מסנן זה משתמש בטכניקות רשת עצביות כדי להסיר רעשי סביבה וצלילים המשבשים הקלטות ושיחות מקוונות."
-
-msgid "Gerenciador de Áudio"
-msgstr "מנהל אודיו"
-
-msgid "Frequências sonoras:"
-msgstr "תדרי קול:"
-
-msgid "Filtro de ruído"
-msgstr "מסנן רעש"
-
-msgid "Iniciar automaticamente"
-msgstr "התחל באופן אוטומטי"
-
-msgid "Desativando"
-msgstr "ביטול הפעלה"
-
-msgid "Filtro do Microfone"
-msgstr "מסנן מיקרופון"
-
 msgid "Configuração de áudio."
 msgstr "הגדרת שמע."
 
@@ -74,6 +39,26 @@ msgstr ""
 msgid "Cancelado, nenhuma configuração foi removida!"
 msgstr "בוטל, לא הוסרו הגדרות!"
 
+msgid ""
+"Este filtro utiliza técnicas de redes neurais para remover ruídos e sons do ambiente que atrapalham "
+"gravações e chamadas online."
+msgstr "מסנן זה משתמש בטכניקות רשת עצביות כדי להסיר רעשי סביבה וצלילים המשבשים הקלטות ושיחות מקוונות."
+
+msgid "Gerenciador de Áudio"
+msgstr "מנהל אודיו"
+
+msgid "Frequências sonoras:"
+msgstr "תדרי קול:"
+
+msgid "Reduzir ruídos do microfone"
+msgstr "הפחת רעשי מיקרופון"
+
+msgid "Filtro de ruído"
+msgstr "מסנן רעש"
+
+msgid "Iniciar automaticamente"
+msgstr "התחל באופן אוטומטי"
+
 msgid "Configuração aplicada"
 msgstr "תצורה הוחלה"
 
@@ -82,3 +67,9 @@ msgstr "מיקרופון"
 
 msgid "Ativando"
 msgstr "מפעיל"
+
+msgid "Filtro do Microfone"
+msgstr "מסנן מיקרופון"
+
+msgid "Desativando"
+msgstr "ביטול הפעלה"

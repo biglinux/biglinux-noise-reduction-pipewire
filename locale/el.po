@@ -16,43 +16,6 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "X-Generator: attranslate\n"
 
-msgid "Reduzir ruídos do microfone"
-msgstr "Μείωση του θορύβου του μικροφώνου"
-
-msgid "Ativado!"
-msgstr "Ενεργοποιηθεί!"
-
-msgid "Microfone sem ruídos"
-msgstr "Μικρόφωνο χωρίς θόρυβο"
-
-msgid "Desativado!"
-msgstr "Απενεργοποιηθεί!"
-
-msgid ""
-"Este filtro utiliza técnicas de redes neurais para remover ruídos e sons do ambiente que atrapalham "
-"gravações e chamadas online."
-msgstr ""
-"Αυτό το φίλτρο χρησιμοποιεί τεχνικές νευρωνικού δικτύου για την αφαίρεση του θορύβου περιβάλλοντος "
-"και των ήχων που διαταράσσουν τις online εγγραφές και κλήσεις."
-
-msgid "Gerenciador de Áudio"
-msgstr "Διαχειριστής ήχου"
-
-msgid "Frequências sonoras:"
-msgstr "Ηχητικές συχνότητες:"
-
-msgid "Filtro de ruído"
-msgstr "Φίλτρο θορύβου"
-
-msgid "Iniciar automaticamente"
-msgstr "Ξεκινήστε αυτόματα"
-
-msgid "Desativando"
-msgstr "Απενεργοποίηση του"
-
-msgid "Filtro do Microfone"
-msgstr "Φίλτρο μικροφώνου"
-
 msgid "Configuração de áudio."
 msgstr "Διαμόρφωση ήχου."
 
@@ -76,6 +39,28 @@ msgstr ""
 msgid "Cancelado, nenhuma configuração foi removida!"
 msgstr "Ακυρώθηκε, δεν έχει αφαιρεθεί καμία διαμόρφωση!"
 
+msgid ""
+"Este filtro utiliza técnicas de redes neurais para remover ruídos e sons do ambiente que atrapalham "
+"gravações e chamadas online."
+msgstr ""
+"Αυτό το φίλτρο χρησιμοποιεί τεχνικές νευρωνικού δικτύου για την αφαίρεση του θορύβου περιβάλλοντος "
+"και των ήχων που διαταράσσουν τις online εγγραφές και κλήσεις."
+
+msgid "Gerenciador de Áudio"
+msgstr "Διαχειριστής ήχου"
+
+msgid "Frequências sonoras:"
+msgstr "Ηχητικές συχνότητες:"
+
+msgid "Reduzir ruídos do microfone"
+msgstr "Μείωση του θορύβου του μικροφώνου"
+
+msgid "Filtro de ruído"
+msgstr "Φίλτρο θορύβου"
+
+msgid "Iniciar automaticamente"
+msgstr "Ξεκινήστε αυτόματα"
+
 msgid "Configuração aplicada"
 msgstr "Εφαρμοσμένη διαμόρφωση"
 
@@ -84,3 +69,9 @@ msgstr "Μικρόφωνο"
 
 msgid "Ativando"
 msgstr "Ενεργοποίηση"
+
+msgid "Filtro do Microfone"
+msgstr "Φίλτρο μικροφώνου"
+
+msgid "Desativando"
+msgstr "Απενεργοποίηση του"

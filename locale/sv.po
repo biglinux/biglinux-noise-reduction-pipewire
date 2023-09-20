@@ -16,43 +16,6 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "X-Generator: attranslate\n"
 
-msgid "Reduzir ruídos do microfone"
-msgstr "Minska mikrofonljudet"
-
-msgid "Ativado!"
-msgstr "Aktiverat!"
-
-msgid "Microfone sem ruídos"
-msgstr "Brusfri mikrofon"
-
-msgid "Desativado!"
-msgstr "Inaktiveras!"
-
-msgid ""
-"Este filtro utiliza técnicas de redes neurais para remover ruídos e sons do ambiente que atrapalham "
-"gravações e chamadas online."
-msgstr ""
-"Det här filtret använder neurala nätverkstekniker för att ta bort omgivande ljud och ljud som stör "
-"inspelningar och samtal online."
-
-msgid "Gerenciador de Áudio"
-msgstr "Ljudansvarig"
-
-msgid "Frequências sonoras:"
-msgstr "Ljudfrekvenser:"
-
-msgid "Filtro de ruído"
-msgstr "Brusfilter"
-
-msgid "Iniciar automaticamente"
-msgstr "Starta automatiskt"
-
-msgid "Desativando"
-msgstr "Inaktivering av"
-
-msgid "Filtro do Microfone"
-msgstr "Mikrofonfilter"
-
 msgid "Configuração de áudio."
 msgstr "Ljudkonfiguration."
 
@@ -76,6 +39,28 @@ msgstr ""
 msgid "Cancelado, nenhuma configuração foi removida!"
 msgstr "Avbokad, ingen konfiguration har tagits bort!"
 
+msgid ""
+"Este filtro utiliza técnicas de redes neurais para remover ruídos e sons do ambiente que atrapalham "
+"gravações e chamadas online."
+msgstr ""
+"Det här filtret använder neurala nätverkstekniker för att ta bort omgivande ljud och ljud som stör "
+"inspelningar och samtal online."
+
+msgid "Gerenciador de Áudio"
+msgstr "Ljudansvarig"
+
+msgid "Frequências sonoras:"
+msgstr "Ljudfrekvenser:"
+
+msgid "Reduzir ruídos do microfone"
+msgstr "Minska mikrofonljudet"
+
+msgid "Filtro de ruído"
+msgstr "Brusfilter"
+
+msgid "Iniciar automaticamente"
+msgstr "Starta automatiskt"
+
 msgid "Configuração aplicada"
 msgstr "Konfigurationen tillämpas"
 
@@ -84,3 +69,9 @@ msgstr "Mikrofon"
 
 msgid "Ativando"
 msgstr "Aktivera"
+
+msgid "Filtro do Microfone"
+msgstr "Mikrofonfilter"
+
+msgid "Desativando"
+msgstr "Inaktivering av"

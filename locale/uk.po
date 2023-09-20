@@ -16,43 +16,6 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "X-Generator: attranslate\n"
 
-msgid "Reduzir ruídos do microfone"
-msgstr "Зменшити шум мікрофона"
-
-msgid "Ativado!"
-msgstr "Активована!"
-
-msgid "Microfone sem ruídos"
-msgstr "Безшумний мікрофон"
-
-msgid "Desativado!"
-msgstr "Деактивовано!"
-
-msgid ""
-"Este filtro utiliza técnicas de redes neurais para remover ruídos e sons do ambiente que atrapalham "
-"gravações e chamadas online."
-msgstr ""
-"Цей фільтр використовує методи нейронної мережі для видалення шумів навколишнього середовища та "
-"звуків, які порушують онлайн-записи та дзвінки."
-
-msgid "Gerenciador de Áudio"
-msgstr "Аудіо менеджер"
-
-msgid "Frequências sonoras:"
-msgstr "Звукові частоти:"
-
-msgid "Filtro de ruído"
-msgstr "шумовий фільтр"
-
-msgid "Iniciar automaticamente"
-msgstr "авто старт"
-
-msgid "Desativando"
-msgstr "деактивація"
-
-msgid "Filtro do Microfone"
-msgstr "Мікрофонний фільтр"
-
 msgid "Configuração de áudio."
 msgstr "Налаштування звуку."
 
@@ -76,6 +39,28 @@ msgstr ""
 msgid "Cancelado, nenhuma configuração foi removida!"
 msgstr "Скасовано, ніяких налаштувань не було видалено!"
 
+msgid ""
+"Este filtro utiliza técnicas de redes neurais para remover ruídos e sons do ambiente que atrapalham "
+"gravações e chamadas online."
+msgstr ""
+"Цей фільтр використовує методи нейронної мережі для видалення шумів навколишнього середовища та "
+"звуків, які порушують онлайн-записи та дзвінки."
+
+msgid "Gerenciador de Áudio"
+msgstr "Аудіо менеджер"
+
+msgid "Frequências sonoras:"
+msgstr "Звукові частоти:"
+
+msgid "Reduzir ruídos do microfone"
+msgstr "Зменшити шум мікрофона"
+
+msgid "Filtro de ruído"
+msgstr "шумовий фільтр"
+
+msgid "Iniciar automaticamente"
+msgstr "авто старт"
+
 msgid "Configuração aplicada"
 msgstr "Застосована конфігурація"
 
@@ -84,3 +69,9 @@ msgstr "MIC"
 
 msgid "Ativando"
 msgstr "активація"
+
+msgid "Filtro do Microfone"
+msgstr "Мікрофонний фільтр"
+
+msgid "Desativando"
+msgstr "деактивація"

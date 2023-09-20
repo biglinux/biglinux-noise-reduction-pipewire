@@ -16,43 +16,6 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "X-Generator: attranslate\n"
 
-msgid "Reduzir ruídos do microfone"
-msgstr "Намаляване на шума от микрофона"
-
-msgid "Ativado!"
-msgstr "Активизирам!"
-
-msgid "Microfone sem ruídos"
-msgstr "Безшумен микрофон"
-
-msgid "Desativado!"
-msgstr "Деактивира!"
-
-msgid ""
-"Este filtro utiliza técnicas de redes neurais para remover ruídos e sons do ambiente que atrapalham "
-"gravações e chamadas online."
-msgstr ""
-"Този филтър използва техники на невронни мрежи, за да премахва околния шум и звуците, които пречат "
-"на онлайн записите и обажданията."
-
-msgid "Gerenciador de Áudio"
-msgstr "Аудио мениджър"
-
-msgid "Frequências sonoras:"
-msgstr "Звукови честоти:"
-
-msgid "Filtro de ruído"
-msgstr "Шумов филтър"
-
-msgid "Iniciar automaticamente"
-msgstr "Стартирайте автоматично"
-
-msgid "Desativando"
-msgstr "Деактивиране на"
-
-msgid "Filtro do Microfone"
-msgstr "Микрофонен филтър"
-
 msgid "Configuração de áudio."
 msgstr "Аудио конфигурация."
 
@@ -76,6 +39,28 @@ msgstr ""
 msgid "Cancelado, nenhuma configuração foi removida!"
 msgstr "Отменено, не е премахната конфигурация!"
 
+msgid ""
+"Este filtro utiliza técnicas de redes neurais para remover ruídos e sons do ambiente que atrapalham "
+"gravações e chamadas online."
+msgstr ""
+"Този филтър използва техники на невронни мрежи, за да премахва околния шум и звуците, които пречат "
+"на онлайн записите и обажданията."
+
+msgid "Gerenciador de Áudio"
+msgstr "Аудио мениджър"
+
+msgid "Frequências sonoras:"
+msgstr "Звукови честоти:"
+
+msgid "Reduzir ruídos do microfone"
+msgstr "Намаляване на шума от микрофона"
+
+msgid "Filtro de ruído"
+msgstr "Шумов филтър"
+
+msgid "Iniciar automaticamente"
+msgstr "Стартирайте автоматично"
+
 msgid "Configuração aplicada"
 msgstr "Приложена конфигурация"
 
@@ -84,3 +69,9 @@ msgstr "Микрофон"
 
 msgid "Ativando"
 msgstr "Активиране на"
+
+msgid "Filtro do Microfone"
+msgstr "Микрофонен филтър"
+
+msgid "Desativando"
+msgstr "Деактивиране на"

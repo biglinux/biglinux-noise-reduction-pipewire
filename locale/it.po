@@ -16,43 +16,6 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "X-Generator: attranslate\n"
 
-msgid "Reduzir ruídos do microfone"
-msgstr "Ridurre il rumore del microfono"
-
-msgid "Ativado!"
-msgstr "Attivante!"
-
-msgid "Microfone sem ruídos"
-msgstr "Microfono senza rumore"
-
-msgid "Desativado!"
-msgstr "Disattivato!"
-
-msgid ""
-"Este filtro utiliza técnicas de redes neurais para remover ruídos e sons do ambiente que atrapalham "
-"gravações e chamadas online."
-msgstr ""
-"Questo filtro utilizza tecniche di rete neurale per rimuovere il rumore ambientale e i suoni che "
-"disturbano le registrazioni e le chiamate online."
-
-msgid "Gerenciador de Áudio"
-msgstr "Responsabile audio"
-
-msgid "Frequências sonoras:"
-msgstr "Frequenze sonore:"
-
-msgid "Filtro de ruído"
-msgstr "Filtro antirumore"
-
-msgid "Iniciar automaticamente"
-msgstr "Avvio automatico"
-
-msgid "Desativando"
-msgstr "Disattivare"
-
-msgid "Filtro do Microfone"
-msgstr "Filtro del microfono"
-
 msgid "Configuração de áudio."
 msgstr "Configurazione audio."
 
@@ -76,6 +39,28 @@ msgstr ""
 msgid "Cancelado, nenhuma configuração foi removida!"
 msgstr "Annullato, nessuna configurazione è stata rimossa!"
 
+msgid ""
+"Este filtro utiliza técnicas de redes neurais para remover ruídos e sons do ambiente que atrapalham "
+"gravações e chamadas online."
+msgstr ""
+"Questo filtro utilizza tecniche di rete neurale per rimuovere il rumore ambientale e i suoni che "
+"disturbano le registrazioni e le chiamate online."
+
+msgid "Gerenciador de Áudio"
+msgstr "Responsabile audio"
+
+msgid "Frequências sonoras:"
+msgstr "Frequenze sonore:"
+
+msgid "Reduzir ruídos do microfone"
+msgstr "Ridurre il rumore del microfono"
+
+msgid "Filtro de ruído"
+msgstr "Filtro antirumore"
+
+msgid "Iniciar automaticamente"
+msgstr "Avvio automatico"
+
 msgid "Configuração aplicada"
 msgstr "Configurazione applicata"
 
@@ -84,3 +69,9 @@ msgstr "Microfono"
 
 msgid "Ativando"
 msgstr "Attivazione"
+
+msgid "Filtro do Microfone"
+msgstr "Filtro del microfono"
+
+msgid "Desativando"
+msgstr "Disattivare"

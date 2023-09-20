@@ -16,41 +16,6 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "X-Generator: attranslate\n"
 
-msgid "Reduzir ruídos do microfone"
-msgstr "減少麥克風噪音"
-
-msgid "Ativado!"
-msgstr "激活！"
-
-msgid "Microfone sem ruídos"
-msgstr "無噪音麥克風"
-
-msgid "Desativado!"
-msgstr "关闭！"
-
-msgid ""
-"Este filtro utiliza técnicas de redes neurais para remover ruídos e sons do ambiente que atrapalham "
-"gravações e chamadas online."
-msgstr "这个过滤器使用神经网络技术来去除环境噪音和干扰在线录音和通话的声音。"
-
-msgid "Gerenciador de Áudio"
-msgstr "音频经理"
-
-msgid "Frequências sonoras:"
-msgstr "声音的频率。"
-
-msgid "Filtro de ruído"
-msgstr "噪聲濾波器"
-
-msgid "Iniciar automaticamente"
-msgstr "自動開啟"
-
-msgid "Desativando"
-msgstr "停用"
-
-msgid "Filtro do Microfone"
-msgstr "麥克風過濾器"
-
 msgid "Configuração de áudio."
 msgstr "音頻設置。"
 
@@ -74,6 +39,26 @@ msgstr ""
 msgid "Cancelado, nenhuma configuração foi removida!"
 msgstr "已取消，未刪除任何設置！"
 
+msgid ""
+"Este filtro utiliza técnicas de redes neurais para remover ruídos e sons do ambiente que atrapalham "
+"gravações e chamadas online."
+msgstr "这个过滤器使用神经网络技术来去除环境噪音和干扰在线录音和通话的声音。"
+
+msgid "Gerenciador de Áudio"
+msgstr "音频经理"
+
+msgid "Frequências sonoras:"
+msgstr "声音的频率。"
+
+msgid "Reduzir ruídos do microfone"
+msgstr "減少麥克風噪音"
+
+msgid "Filtro de ruído"
+msgstr "噪聲濾波器"
+
+msgid "Iniciar automaticamente"
+msgstr "自動開啟"
+
 msgid "Configuração aplicada"
 msgstr "應用配置"
 
@@ -82,3 +67,9 @@ msgstr "麥克風"
 
 msgid "Ativando"
 msgstr "激活"
+
+msgid "Filtro do Microfone"
+msgstr "麥克風過濾器"
+
+msgid "Desativando"
+msgstr "停用"

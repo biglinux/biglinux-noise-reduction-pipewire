@@ -15,18 +15,6 @@ msgstr ""
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 
-msgid "Microfone sem ruídos"
-msgstr "Microfone sem ruídos"
-
-msgid "Ativado!"
-msgstr "Ativado!"
-
-msgid "Desativado!"
-msgstr "Desativado!"
-
-msgid "Reduzir ruídos do microfone"
-msgstr "Reduzir ruídos do microfone"
-
 msgid "Configuração de áudio."
 msgstr "Configuração de áudio."
 
@@ -62,6 +50,9 @@ msgstr "Gerenciador de Áudio"
 
 msgid "Frequências sonoras:"
 msgstr "Frequências sonoras:"
+
+msgid "Reduzir ruídos do microfone"
+msgstr "Reduzir ruídos do microfone"
 
 msgid "Filtro de ruído"
 msgstr "Filtro de ruído"

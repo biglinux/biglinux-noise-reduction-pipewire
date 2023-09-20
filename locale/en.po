@@ -16,43 +16,6 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "X-Generator: attranslate\n"
 
-msgid "Reduzir ruídos do microfone"
-msgstr "Reducing Microphone Noise"
-
-msgid "Ativado!"
-msgstr "Activated!"
-
-msgid "Microfone sem ruídos"
-msgstr "Noise-free microphone"
-
-msgid "Desativado!"
-msgstr "Deactivated!"
-
-msgid ""
-"Este filtro utiliza técnicas de redes neurais para remover ruídos e sons do ambiente que atrapalham "
-"gravações e chamadas online."
-msgstr ""
-"This filter uses neural network techniques to remove ambient noise and sounds that disturb "
-"recordings and online calls."
-
-msgid "Gerenciador de Áudio"
-msgstr "Audio Manager"
-
-msgid "Frequências sonoras:"
-msgstr "Sound frequencies:"
-
-msgid "Filtro de ruído"
-msgstr "Noise filter"
-
-msgid "Iniciar automaticamente"
-msgstr "Start automatically"
-
-msgid "Desativando"
-msgstr "Deactivating"
-
-msgid "Filtro do Microfone"
-msgstr "Microphone Filter"
-
 msgid "Configuração de áudio."
 msgstr "Audio Configuration."
 
@@ -76,6 +39,28 @@ msgstr ""
 msgid "Cancelado, nenhuma configuração foi removida!"
 msgstr "Cancelled, no settings removed!"
 
+msgid ""
+"Este filtro utiliza técnicas de redes neurais para remover ruídos e sons do ambiente que atrapalham "
+"gravações e chamadas online."
+msgstr ""
+"This filter uses neural network techniques to remove ambient noise and sounds that disturb "
+"recordings and online calls."
+
+msgid "Gerenciador de Áudio"
+msgstr "Audio Manager"
+
+msgid "Frequências sonoras:"
+msgstr "Sound frequencies:"
+
+msgid "Reduzir ruídos do microfone"
+msgstr "Reducing Microphone Noise"
+
+msgid "Filtro de ruído"
+msgstr "Noise filter"
+
+msgid "Iniciar automaticamente"
+msgstr "Start automatically"
+
 msgid "Configuração aplicada"
 msgstr "Configuration applied"
 
@@ -84,3 +69,9 @@ msgstr "Microphone"
 
 msgid "Ativando"
 msgstr "Activating"
+
+msgid "Filtro do Microfone"
+msgstr "Microphone Filter"
+
+msgid "Desativando"
+msgstr "Deactivating"

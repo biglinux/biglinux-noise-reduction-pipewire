@@ -16,43 +16,6 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "X-Generator: attranslate\n"
 
-msgid "Reduzir ruídos do microfone"
-msgstr "Microfoonruis verminderen"
-
-msgid "Ativado!"
-msgstr "Geactiveerd!"
-
-msgid "Microfone sem ruídos"
-msgstr "Ruisvrije microfoon"
-
-msgid "Desativado!"
-msgstr "Gedeactiveerd!"
-
-msgid ""
-"Este filtro utiliza técnicas de redes neurais para remover ruídos e sons do ambiente que atrapalham "
-"gravações e chamadas online."
-msgstr ""
-"Dit filter gebruikt neurale netwerktechnieken om omgevingsgeluiden en geluiden te verwijderen die "
-"online opnamen en gesprekken verstoren."
-
-msgid "Gerenciador de Áudio"
-msgstr "Audiobeheerder"
-
-msgid "Frequências sonoras:"
-msgstr "Geluidsfrequenties:"
-
-msgid "Filtro de ruído"
-msgstr "Ruisfilter"
-
-msgid "Iniciar automaticamente"
-msgstr "Automatisch starten"
-
-msgid "Desativando"
-msgstr "Deactiveren van"
-
-msgid "Filtro do Microfone"
-msgstr "Microfoonfilter"
-
 msgid "Configuração de áudio."
 msgstr "Audio configuratie."
 
@@ -76,6 +39,28 @@ msgstr ""
 msgid "Cancelado, nenhuma configuração foi removida!"
 msgstr "Geannuleerd, er is geen configuratie verwijderd!"
 
+msgid ""
+"Este filtro utiliza técnicas de redes neurais para remover ruídos e sons do ambiente que atrapalham "
+"gravações e chamadas online."
+msgstr ""
+"Dit filter gebruikt neurale netwerktechnieken om omgevingsgeluiden en geluiden te verwijderen die "
+"online opnamen en gesprekken verstoren."
+
+msgid "Gerenciador de Áudio"
+msgstr "Audiobeheerder"
+
+msgid "Frequências sonoras:"
+msgstr "Geluidsfrequenties:"
+
+msgid "Reduzir ruídos do microfone"
+msgstr "Microfoonruis verminderen"
+
+msgid "Filtro de ruído"
+msgstr "Ruisfilter"
+
+msgid "Iniciar automaticamente"
+msgstr "Automatisch starten"
+
 msgid "Configuração aplicada"
 msgstr "Toegepaste configuratie"
 
@@ -84,3 +69,9 @@ msgstr "Microfoon"
 
 msgid "Ativando"
 msgstr "Activeren"
+
+msgid "Filtro do Microfone"
+msgstr "Microfoonfilter"
+
+msgid "Desativando"
+msgstr "Deactiveren van"

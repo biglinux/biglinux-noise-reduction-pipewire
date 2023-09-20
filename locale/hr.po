@@ -16,43 +16,6 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "X-Generator: attranslate\n"
 
-msgid "Reduzir ruídos do microfone"
-msgstr "Smanjiti šum mikrofona"
-
-msgid "Ativado!"
-msgstr "Aktiviran!"
-
-msgid "Microfone sem ruídos"
-msgstr "Bešumni mikrofon"
-
-msgid "Desativado!"
-msgstr "Deaktiviran!"
-
-msgid ""
-"Este filtro utiliza técnicas de redes neurais para remover ruídos e sons do ambiente que atrapalham "
-"gravações e chamadas online."
-msgstr ""
-"Ovaj filtar koristi tehnike neuronske mreže za uklanjanje ambijentalnih zvukova i zvukova koji "
-"ometaju mrežne snimke i pozive."
-
-msgid "Gerenciador de Áudio"
-msgstr "Audio Manager"
-
-msgid "Frequências sonoras:"
-msgstr "Frekvencije zvuka:"
-
-msgid "Filtro de ruído"
-msgstr "Filter buke"
-
-msgid "Iniciar automaticamente"
-msgstr "Pokrenite automatski"
-
-msgid "Desativando"
-msgstr "Deaktiviranje"
-
-msgid "Filtro do Microfone"
-msgstr "Filter za mikrofon"
-
 msgid "Configuração de áudio."
 msgstr "Postavljanje zvuka."
 
@@ -76,6 +39,28 @@ msgstr ""
 msgid "Cancelado, nenhuma configuração foi removida!"
 msgstr "Otkazano, postavke nisu uklonjene!"
 
+msgid ""
+"Este filtro utiliza técnicas de redes neurais para remover ruídos e sons do ambiente que atrapalham "
+"gravações e chamadas online."
+msgstr ""
+"Ovaj filtar koristi tehnike neuronske mreže za uklanjanje ambijentalnih zvukova i zvukova koji "
+"ometaju mrežne snimke i pozive."
+
+msgid "Gerenciador de Áudio"
+msgstr "Audio Manager"
+
+msgid "Frequências sonoras:"
+msgstr "Frekvencije zvuka:"
+
+msgid "Reduzir ruídos do microfone"
+msgstr "Smanjiti šum mikrofona"
+
+msgid "Filtro de ruído"
+msgstr "Filter buke"
+
+msgid "Iniciar automaticamente"
+msgstr "Pokrenite automatski"
+
 msgid "Configuração aplicada"
 msgstr "Primijenjena konfiguracija"
 
@@ -84,3 +69,9 @@ msgstr "Mikrofon"
 
 msgid "Ativando"
 msgstr "aktiviranje"
+
+msgid "Filtro do Microfone"
+msgstr "Filter za mikrofon"
+
+msgid "Desativando"
+msgstr "Deaktiviranje"

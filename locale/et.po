@@ -16,43 +16,6 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "X-Generator: attranslate\n"
 
-msgid "Reduzir ruídos do microfone"
-msgstr "Mikrofoni müra vähendamine"
-
-msgid "Ativado!"
-msgstr "Aktiveeritud!"
-
-msgid "Microfone sem ruídos"
-msgstr "Müravaba mikrofon"
-
-msgid "Desativado!"
-msgstr "Desaktiveeritud!"
-
-msgid ""
-"Este filtro utiliza técnicas de redes neurais para remover ruídos e sons do ambiente que atrapalham "
-"gravações e chamadas online."
-msgstr ""
-"See filter kasutab neuronivõrgu tehnikat, et eemaldada ümbritsev müra ja helid, mis häirivad "
-"võrgusalvestusi ja kõnesid."
-
-msgid "Gerenciador de Áudio"
-msgstr "Audio Manager"
-
-msgid "Frequências sonoras:"
-msgstr "Helisagedused:"
-
-msgid "Filtro de ruído"
-msgstr "Mürafilter"
-
-msgid "Iniciar automaticamente"
-msgstr "Käivitub automaatselt"
-
-msgid "Desativando"
-msgstr "Deaktiveerimine"
-
-msgid "Filtro do Microfone"
-msgstr "Mikrofoni filter"
-
 msgid "Configuração de áudio."
 msgstr "Helikonfiguratsioon."
 
@@ -76,6 +39,28 @@ msgstr ""
 msgid "Cancelado, nenhuma configuração foi removida!"
 msgstr "Tühistatud, ühtegi konfiguratsiooni ei ole eemaldatud!"
 
+msgid ""
+"Este filtro utiliza técnicas de redes neurais para remover ruídos e sons do ambiente que atrapalham "
+"gravações e chamadas online."
+msgstr ""
+"See filter kasutab neuronivõrgu tehnikat, et eemaldada ümbritsev müra ja helid, mis häirivad "
+"võrgusalvestusi ja kõnesid."
+
+msgid "Gerenciador de Áudio"
+msgstr "Audio Manager"
+
+msgid "Frequências sonoras:"
+msgstr "Helisagedused:"
+
+msgid "Reduzir ruídos do microfone"
+msgstr "Mikrofoni müra vähendamine"
+
+msgid "Filtro de ruído"
+msgstr "Mürafilter"
+
+msgid "Iniciar automaticamente"
+msgstr "Käivitub automaatselt"
+
 msgid "Configuração aplicada"
 msgstr "Rakendatud konfiguratsioon"
 
@@ -84,3 +69,9 @@ msgstr "Mikrofon"
 
 msgid "Ativando"
 msgstr "Aktiveerimine"
+
+msgid "Filtro do Microfone"
+msgstr "Mikrofoni filter"
+
+msgid "Desativando"
+msgstr "Deaktiveerimine"
