@@ -22,7 +22,7 @@ if [ "$1" = "start" ]; then
         cp -f /usr/share/pipewire/filter-chain/source-rnnoise.conf "$config_path"
 
         # Update the microphone name in the configuration file
-        sed -i "s|node.description =.*|node.description = \"$mic_name\"|g" "$config_path"
+        sed -i "s|node.description =.*|node.description = \"$mic_name\"|g;s|audio.position|#audio.position|g;s|noise_suppressor_stereo|noise_suppressor_mono|g" "$config_path"
     fi
 
     # Start the noise reduction services
