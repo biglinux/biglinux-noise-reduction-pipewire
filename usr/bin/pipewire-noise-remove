@@ -4,25 +4,26 @@
 export TEXTDOMAINDIR="/usr/share/locale"
 export TEXTDOMAIN=biglinux-noise-reduction-pipewire
 
+mic_name=$"Microfone sem ruídos"
+
 if [ "$1" = "start" ];then
     notify-send $"Ativado!" --app-name=$"Microfone sem ruídos"
-    exit
+
+    if [ ! -e "$HOME/.config/pipewire/filter-chain.conf.d/source-rnnoise.conf" ]; then
+        mkdir -p ~/.config/pipewire/filter-chain.conf.d
+        cp -f /usr/share/pipewire/filter-chain/source-rnnoise.conf ~/.config/pipewire/filter-chain.conf.d/source-rnnoise.conf
+        sed -i "s|node.description =.*|node.description = \"$mic_name\"|g" ~/.config/pipewire/filter-chain.conf.d/source-rnnoise.conf
+    fi
+    pipewire-noise-move-mic &
+    /usr/bin/pipewire -c filter-chain.conf
 fi
 
 if [ "$1" = "stop" ];then
     notify-send $"Desativado!" --app-name=$"Microfone sem ruídos"
-    exit
+    rm -f  ~/.config/pipewire/filter-chain.conf.d/source-rnnoise.conf
+   
+    pipewirePidFiltered=$(ps -aux | grep '/usr/bin/pipewire -c filter-chain.conf' | awk '{ print $2 }')
+    for pid in $pipewirePidFiltered; do
+        kill $pid
+    done
 fi
-
-mic_name=$"Microfone sem ruídos"
-
-if [ ! -e "$HOME/.config/pipewire/filter-chain.conf.d/source-rnnoise.conf" ]; then
-
-    mkdir -p ~/.config/pipewire/filter-chain.conf.d
-    cp -f /usr/share/pipewire/filter-chain/source-rnnoise.conf ~/.config/pipewire/filter-chain.conf.d/source-rnnoise.conf
-    sed -i "s|node.description =.*|node.description = \"$mic_name\"|g" ~/.config/pipewire/filter-chain.conf.d/source-rnnoise.conf
-fi
-
-pipewire-noise-move-mic &
-
-/usr/bin/pipewire -c filter-chain.conf
