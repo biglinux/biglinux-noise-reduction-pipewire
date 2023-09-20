@@ -12,8 +12,11 @@ kdialog --attach="$windowID" --title $"Configuração de áudio." \
 
 if [ "$?" = "0" ]; then
 
+	systemctl --user stop pipewire pipewire-pulse wireplumber
 	rm -Rf ~/.config/pipewire/
-	systemctl --user restart pipewire pipewire-pulse wireplumber
+	rm -Rf ~/.local/state/wireplumber/
+	rm -Rf ~/.local/state/pipewire/
+	systemctl --user start pipewire pipewire-pulse wireplumber
 
 	kdialog --title $"Configuração de áudio" --attach="$windowID" --msgbox $"Configuração de áudio restaurada.
 
