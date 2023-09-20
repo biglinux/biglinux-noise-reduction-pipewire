@@ -27,7 +27,7 @@ if [ "$1" = "start" ]; then
 
     # Start the noise reduction services
     pipewire-noise-move-mic &
-    /usr/bin/pipewire -c filter-chain.conf &
+    /usr/bin/pipewire -c filter-chain.conf
 
 elif [ "$1" = "stop" ]; then
     # Send a notification to indicate deactivation

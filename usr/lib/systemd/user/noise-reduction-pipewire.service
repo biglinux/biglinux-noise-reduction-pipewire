@@ -12,7 +12,7 @@ BindsTo=pipewire.service
 
 [Service]
 # Command to execute after the service starts
-ExecStartPost=/usr/bin/pipewire-noise-remove start
+ExecStart=/usr/bin/pipewire-noise-remove start
 
 # Command to execute after the service stops
 ExecStopPost=/usr/bin/pipewire-noise-remove stop

@@ -1,7 +1,7 @@
 [Desktop Entry]
 Categories=AudioVideo;
 Exec=biglinux-noise-reduction-pipewire
-Icon=/usr/share/bigbashview/bcc/apps/biglinux-noise-reduction-pipewire/icon.png
+Icon=biglinux-noise-reduction-pipewire
 Name=Reduce microphone noise
 Name[bg]=Намаляване на шума от микрофона
 Name[cs]=Snižte šum mikrofonu
