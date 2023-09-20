@@ -1,27 +1,20 @@
 #!/bin/sh
 
+# Espera para inicialização completa do sistema de áudio
+sleep 2
 
-if [ "$(pactl list sources  | grep -e Sink: -e node.name -e media.name | grep -A1 -B1 'Noise Canceling source' | grep 'node.name =' | cut -f2 -d'"')" = "" ]; then
-    sleep 2
-    if [ "$(pactl list sources  | grep -e Sink: -e node.name -e media.name | grep -A1 -B1 'Noise Canceling source' | grep 'node.name =' | cut -f2 -d'"')" = "" ]; then
-        sleep 2
-    fi
-fi
-
-
-# node.name to filter
+# Obtém o nome do nó para o filtro de cancelamento de ruído, se disponível
 NODENAME="$(pactl list sources  | grep -e Sink: -e node.name -e media.name | grep -A1 -B1 'Noise Canceling source' | grep 'node.name =' | cut -f2 -d'"')"
 
-# Change all sources to rnnoise
-for i in $(pactl list source-outputs short | cut -f1); do
-    pactl move-source-output $i effect_output.rnnoise
-    pactl move-source-output $i $NODENAME
+# Se o NODENAME ainda não estiver disponível, tente novamente após alguns segundos
+if [ -z "$NODENAME" ]; then
+    sleep 2
+    NODENAME="$(pactl list sources  | grep -e Sink: -e node.name -e media.name | grep -A1 -B1 'Noise Canceling source' | grep 'node.name =' | cut -f2 -d'"')"
+fi
 
+micList=$(pw-dump | jq -r '.[].info.props | select(.["media.class"] == "Audio/Source") | .["node.name"]' | grep -v 'effect_output.rnnoise')
+
+# Direct all mics to rnnoise
+for mic in $micList; do
+    pw-link $mic effect_input.rnnoise
 done
-
-# Change default source to rnnoise
-pactl set-default-source effect_output.rnnoise
-pactl set-default-source $NODENAME
-
-# Unmute filtered output
-pactl set-source-mute effect_output.rnnoise 0
