@@ -1,29 +1,47 @@
 #!/bin/bash
 
-#Translation
+# Set localization environment variables
 export TEXTDOMAINDIR="/usr/share/locale"
 export TEXTDOMAIN=biglinux-noise-reduction-pipewire
 
-mic_name=$"Microfone sem ruídos"
+# Define the name of the noise-free microphone
+mic_name="Microfone sem ruídos"
 
-if [ "$1" = "start" ];then
-    notify-send $"Ativado!" --app-name=$"Microfone sem ruídos"
+# Check for the first argument to determine the action (start or stop)
+if [ "$1" = "start" ]; then
+    # Send a notification to indicate activation
+    notify-send "Ativado!" --app-name="$mic_name"
 
-    if [ ! -e "$HOME/.config/pipewire/filter-chain.conf.d/source-rnnoise.conf" ]; then
+    # Check if the configuration file exists
+    config_path="$HOME/.config/pipewire/filter-chain.conf.d/source-rnnoise.conf"
+    if [ ! -e "$config_path" ]; then
+        # Create the directory if it doesn't exist
         mkdir -p ~/.config/pipewire/filter-chain.conf.d
-        cp -f /usr/share/pipewire/filter-chain/source-rnnoise.conf ~/.config/pipewire/filter-chain.conf.d/source-rnnoise.conf
-        sed -i "s|node.description =.*|node.description = \"$mic_name\"|g" ~/.config/pipewire/filter-chain.conf.d/source-rnnoise.conf
-    fi
-    pipewire-noise-move-mic &
-    /usr/bin/pipewire -c filter-chain.conf
-fi
 
-if [ "$1" = "stop" ];then
-    notify-send $"Desativado!" --app-name=$"Microfone sem ruídos"
-    rm -f  ~/.config/pipewire/filter-chain.conf.d/source-rnnoise.conf
-   
+        # Copy the configuration file
+        cp -f /usr/share/pipewire/filter-chain/source-rnnoise.conf "$config_path"
+
+        # Update the microphone name in the configuration file
+        sed -i "s|node.description =.*|node.description = \"$mic_name\"|g" "$config_path"
+    fi
+
+    # Start the noise reduction services
+    pipewire-noise-move-mic &
+    /usr/bin/pipewire -c filter-chain.conf &
+
+elif [ "$1" = "stop" ]; then
+    # Send a notification to indicate deactivation
+    notify-send "Desativado!" --app-name="$mic_name"
+
+    # Remove the configuration file
+    rm -f ~/.config/pipewire/filter-chain.conf.d/source-rnnoise.conf
+
+    # Find and kill the pipewire process
     pipewirePidFiltered=$(ps -aux | grep '/usr/bin/pipewire -c filter-chain.conf' | awk '{ print $2 }')
     for pid in $pipewirePidFiltered; do
         kill $pid
     done
+else
+    # Print usage information if no valid argument is provided
+    echo "Usage: $0 {start|stop}"
 fi

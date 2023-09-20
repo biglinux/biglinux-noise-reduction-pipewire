@@ -1,20 +1,20 @@
-#!/bin/sh
+#!/bin/bash
 
-# Espera para inicialização completa do sistema de áudio
-sleep 2
+# Verify if rnnoise is already running, and only wait one second to try again, if it is not after 10 seconds go ahead
+for i in {1..10}; do
+    if pw-cli ls | grep -q effect_output.rnnoise; then
+        break
+    else
+        sleep 1
+    fi
+done
 
-# Obtém o nome do nó para o filtro de cancelamento de ruído, se disponível
-NODENAME="$(pactl list sources  | grep -e Sink: -e node.name -e media.name | grep -A1 -B1 'Noise Canceling source' | grep 'node.name =' | cut -f2 -d'"')"
+# Get the list of microphones that are not already linked to rnnoise
+micList=$(pw-dump \
+            | jq -r '.[].info.props | select(.["media.class"] == "Audio/Source") | .["node.name"]' \
+            | grep -v 'effect_output.rnnoise')
 
-# Se o NODENAME ainda não estiver disponível, tente novamente após alguns segundos
-if [ -z "$NODENAME" ]; then
-    sleep 2
-    NODENAME="$(pactl list sources  | grep -e Sink: -e node.name -e media.name | grep -A1 -B1 'Noise Canceling source' | grep 'node.name =' | cut -f2 -d'"')"
-fi
-
-micList=$(pw-dump | jq -r '.[].info.props | select(.["media.class"] == "Audio/Source") | .["node.name"]' | grep -v 'effect_output.rnnoise')
-
-# Direct all mics to rnnoise
+# Direct all microphones to rnnoise
 for mic in $micList; do
     pw-link $mic effect_input.rnnoise
 done

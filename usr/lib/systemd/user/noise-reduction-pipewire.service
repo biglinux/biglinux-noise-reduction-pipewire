@@ -1,14 +1,28 @@
 [Unit]
+# Description of the service
 Description=PipeWire Input Filter Chain
+
+# Define the order in which this service starts
+# Starts after the pipewire.service is up and running
 After=pipewire.service
+
+# The service is bound to pipewire.service
+# This means if pipewire.service stops or restarts, this service will too
 BindsTo=pipewire.service
 
 [Service]
-ExecStart=/usr/bin/pipewire-noise-remove
+# Command to execute after the service starts
 ExecStartPost=/usr/bin/pipewire-noise-remove start
+
+# Command to execute after the service stops
 ExecStopPost=/usr/bin/pipewire-noise-remove stop
+
+# Service type: simple (foreground service)
 Type=simple
+
+# Restart policy: restart on failure
 Restart=on-failure
 
 [Install]
+# Define the target that this service is wanted by (pipewire.service)
 WantedBy=pipewire.service
