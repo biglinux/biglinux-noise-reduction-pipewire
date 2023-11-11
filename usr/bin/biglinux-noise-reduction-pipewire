@@ -16,4 +16,4 @@ QT_QPA_PLATFORM=xcb \
 SDL_VIDEODRIVER=x11 \
 WINIT_UNIX_BACKEND=x11 \
 GDK_BACKEND=x11 \
-bigbashview -s 1028x540 -n "$TITLE" -i icon.png index.sh.htm
+bigbashview -n "$TITLE" -s 720x400 -c transparent index.sh.htm -i /usr/share/bigbashview/bcc/apps/biglinux-noise-reduction-pipewire/icon/biglinux-noise-reduction-pipewire.svg
