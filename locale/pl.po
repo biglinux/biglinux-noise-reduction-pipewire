@@ -16,6 +16,21 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "X-Generator: attranslate\n"
 
+msgid "Desativando"
+msgstr "Dezaktywacja"
+
+msgid "Filtro do Microfone"
+msgstr "Filtr mikrofonowy"
+
+msgid "Configuração aplicada"
+msgstr "Zastosowana konfiguracja"
+
+msgid "Microfone"
+msgstr "Mikrofon"
+
+msgid "Ativando"
+msgstr "Aktywacja"
+
 msgid "Configuração de áudio."
 msgstr "Konfiguracja audio."
 
@@ -46,32 +61,14 @@ msgstr ""
 "Filtr ten wykorzystuje techniki sieci neuronowych do usuwania szumów otoczenia i dźwięków, które "
 "zakłócają nagrania i rozmowy online."
 
-msgid "Gerenciador de Áudio"
-msgstr "Audio Manager"
+msgid "GERENCIADOR DE ÁUDIO"
+msgstr "MENEDŻER AUDIO"
 
 msgid "Frequências sonoras:"
 msgstr "Częstotliwości dźwięku:"
 
-msgid "Reduzir ruídos do microfone"
-msgstr "Redukcja szumu mikrofonu"
-
 msgid "Filtro de ruído"
 msgstr "Filtr szumów"
 
-msgid "Iniciar automaticamente"
-msgstr "Uruchomić automatycznie"
-
-msgid "Configuração aplicada"
-msgstr "Zastosowana konfiguracja"
-
-msgid "Microfone"
-msgstr "Mikrofon"
-
-msgid "Ativando"
-msgstr "Aktywacja"
-
-msgid "Filtro do Microfone"
-msgstr "Filtr mikrofonowy"
-
-msgid "Desativando"
-msgstr "Dezaktywacja"
+msgid "INICIAR AUTOMATICAMENTE"
+msgstr "URUCHAMIAJ AUTOMATYCZNIE"

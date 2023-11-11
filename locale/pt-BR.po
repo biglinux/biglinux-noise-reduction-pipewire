@@ -15,6 +15,21 @@ msgstr ""
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 
+msgid "Desativando"
+msgstr "Desativando"
+
+msgid "Filtro do Microfone"
+msgstr "Filtro do Microfone"
+
+msgid "Configuração aplicada"
+msgstr "Configuração aplicada"
+
+msgid "Microfone"
+msgstr "Microfone"
+
+msgid "Ativando"
+msgstr "Ativando"
+
 msgid "Configuração de áudio."
 msgstr "Configuração de áudio."
 
@@ -45,32 +60,14 @@ msgstr ""
 "Este filtro utiliza técnicas de redes neurais para remover ruídos e sons do "
 "ambiente que atrapalham gravações e chamadas online."
 
-msgid "Gerenciador de Áudio"
-msgstr "Gerenciador de Áudio"
+msgid "GERENCIADOR DE ÁUDIO"
+msgstr "GERENCIADOR DE ÁUDIO"
 
 msgid "Frequências sonoras:"
 msgstr "Frequências sonoras:"
 
-msgid "Reduzir ruídos do microfone"
-msgstr "Reduzir ruídos do microfone"
-
 msgid "Filtro de ruído"
 msgstr "Filtro de ruído"
 
-msgid "Iniciar automaticamente"
-msgstr "Iniciar automaticamente"
-
-msgid "Configuração aplicada"
-msgstr "Configuração aplicada"
-
-msgid "Microfone"
-msgstr "Microfone"
-
-msgid "Ativando"
-msgstr "Ativando"
-
-msgid "Filtro do Microfone"
-msgstr "Filtro do Microfone"
-
-msgid "Desativando"
-msgstr "Desativando"
+msgid "INICIAR AUTOMATICAMENTE"
+msgstr "INICIAR AUTOMATICAMENTE"

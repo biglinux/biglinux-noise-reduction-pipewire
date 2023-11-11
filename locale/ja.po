@@ -16,6 +16,21 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "X-Generator: attranslate\n"
 
+msgid "Desativando"
+msgstr "非アクティブ化"
+
+msgid "Filtro do Microfone"
+msgstr "マイクフィルター"
+
+msgid "Configuração aplicada"
+msgstr "適用された構成"
+
+msgid "Microfone"
+msgstr "MIC"
+
+msgid "Ativando"
+msgstr "アクティベート"
+
 msgid "Configuração de áudio."
 msgstr "オーディオ設定。"
 
@@ -43,32 +58,14 @@ msgid ""
 "gravações e chamadas online."
 msgstr "ニューラルネットワーク技術により、オンライン録音や通話を妨害する環境音やノイズを除去するフィルターです。"
 
-msgid "Gerenciador de Áudio"
-msgstr "オーディオ・マネージャー"
+msgid "GERENCIADOR DE ÁUDIO"
+msgstr "オーディオマネージャー"
 
 msgid "Frequências sonoras:"
 msgstr "音の周波数。"
 
-msgid "Reduzir ruídos do microfone"
-msgstr "マイクノイズの低減"
-
 msgid "Filtro de ruído"
 msgstr "ノイズフィルター"
 
-msgid "Iniciar automaticamente"
-msgstr "自動スタート"
-
-msgid "Configuração aplicada"
-msgstr "適用された構成"
-
-msgid "Microfone"
-msgstr "MIC"
-
-msgid "Ativando"
-msgstr "アクティベート"
-
-msgid "Filtro do Microfone"
-msgstr "マイクフィルター"
-
-msgid "Desativando"
-msgstr "非アクティブ化"
+msgid "INICIAR AUTOMATICAMENTE"
+msgstr "自動的に開始"

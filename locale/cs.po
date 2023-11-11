@@ -16,6 +16,21 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "X-Generator: attranslate\n"
 
+msgid "Desativando"
+msgstr "Deaktivace"
+
+msgid "Filtro do Microfone"
+msgstr "Mikrofonní filtr"
+
+msgid "Configuração aplicada"
+msgstr "Použitá konfigurace"
+
+msgid "Microfone"
+msgstr "Mikrofon"
+
+msgid "Ativando"
+msgstr "Aktivace"
+
 msgid "Configuração de áudio."
 msgstr "Konfigurace zvuku."
 
@@ -46,32 +61,14 @@ msgstr ""
 "Tento filtr využívá techniky neuronových sítí k odstranění okolního hluku a zvuků, které ruší "
 "online nahrávky a hovory."
 
-msgid "Gerenciador de Áudio"
-msgstr "Správce zvuku"
+msgid "GERENCIADOR DE ÁUDIO"
+msgstr "SPRÁVCE ZVUKU"
 
 msgid "Frequências sonoras:"
 msgstr "Zvukové frekvence:"
 
-msgid "Reduzir ruídos do microfone"
-msgstr "Snížení hluku mikrofonu"
-
 msgid "Filtro de ruído"
 msgstr "Šumový filtr"
 
-msgid "Iniciar automaticamente"
-msgstr "Automatické spuštění"
-
-msgid "Configuração aplicada"
-msgstr "Použitá konfigurace"
-
-msgid "Microfone"
-msgstr "Mikrofon"
-
-msgid "Ativando"
-msgstr "Aktivace"
-
-msgid "Filtro do Microfone"
-msgstr "Mikrofonní filtr"
-
-msgid "Desativando"
-msgstr "Deaktivace"
+msgid "INICIAR AUTOMATICAMENTE"
+msgstr "SPUSTIT AUTOMATICKY"

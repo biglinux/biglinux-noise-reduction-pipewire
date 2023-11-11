@@ -16,6 +16,21 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "X-Generator: attranslate\n"
 
+msgid "Desativando"
+msgstr "Deaktivering af"
+
+msgid "Filtro do Microfone"
+msgstr "Mikrofonfilter"
+
+msgid "Configuração aplicada"
+msgstr "Anvendt konfiguration"
+
+msgid "Microfone"
+msgstr "Mikrofon"
+
+msgid "Ativando"
+msgstr "Aktivering af"
+
 msgid "Configuração de áudio."
 msgstr "Lydkonfiguration."
 
@@ -46,32 +61,14 @@ msgstr ""
 "Dette filter bruger neurale netværksteknikker til at fjerne omgivende støj og lyde, der forstyrrer "
 "onlineoptagelser og opkald."
 
-msgid "Gerenciador de Áudio"
-msgstr "Audio Manager"
+msgid "GERENCIADOR DE ÁUDIO"
+msgstr "LYDHÅNDTERING"
 
 msgid "Frequências sonoras:"
 msgstr "Lydfrekvenser:"
 
-msgid "Reduzir ruídos do microfone"
-msgstr "Reducer mikrofonstøj"
-
 msgid "Filtro de ruído"
 msgstr "Støjfilter"
 
-msgid "Iniciar automaticamente"
-msgstr "Start automatisk"
-
-msgid "Configuração aplicada"
-msgstr "Anvendt konfiguration"
-
-msgid "Microfone"
-msgstr "Mikrofon"
-
-msgid "Ativando"
-msgstr "Aktivering af"
-
-msgid "Filtro do Microfone"
-msgstr "Mikrofonfilter"
-
-msgid "Desativando"
-msgstr "Deaktivering af"
+msgid "INICIAR AUTOMATICAMENTE"
+msgstr "START AUTOMATISK"

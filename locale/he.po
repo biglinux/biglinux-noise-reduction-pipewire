@@ -16,6 +16,21 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "X-Generator: attranslate\n"
 
+msgid "Desativando"
+msgstr "ביטול הפעלה"
+
+msgid "Filtro do Microfone"
+msgstr "מסנן מיקרופון"
+
+msgid "Configuração aplicada"
+msgstr "תצורה הוחלה"
+
+msgid "Microfone"
+msgstr "מיקרופון"
+
+msgid "Ativando"
+msgstr "מפעיל"
+
 msgid "Configuração de áudio."
 msgstr "הגדרת שמע."
 
@@ -44,32 +59,14 @@ msgid ""
 "gravações e chamadas online."
 msgstr "מסנן זה משתמש בטכניקות רשת עצביות כדי להסיר רעשי סביבה וצלילים המשבשים הקלטות ושיחות מקוונות."
 
-msgid "Gerenciador de Áudio"
-msgstr "מנהל אודיו"
+msgid "GERENCIADOR DE ÁUDIO"
+msgstr "מנהל שמע"
 
 msgid "Frequências sonoras:"
 msgstr "תדרי קול:"
 
-msgid "Reduzir ruídos do microfone"
-msgstr "הפחת רעשי מיקרופון"
-
 msgid "Filtro de ruído"
 msgstr "מסנן רעש"
 
-msgid "Iniciar automaticamente"
-msgstr "התחל באופן אוטומטי"
-
-msgid "Configuração aplicada"
-msgstr "תצורה הוחלה"
-
-msgid "Microfone"
-msgstr "מיקרופון"
-
-msgid "Ativando"
-msgstr "מפעיל"
-
-msgid "Filtro do Microfone"
-msgstr "מסנן מיקרופון"
-
-msgid "Desativando"
-msgstr "ביטול הפעלה"
+msgid "INICIAR AUTOMATICAMENTE"
+msgstr "הפעלה אוטומטית"

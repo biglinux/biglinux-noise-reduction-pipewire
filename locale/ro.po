@@ -16,6 +16,21 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "X-Generator: attranslate\n"
 
+msgid "Desativando"
+msgstr "Dezactivarea"
+
+msgid "Filtro do Microfone"
+msgstr "Filtru de microfon"
+
+msgid "Configuração aplicada"
+msgstr "Configurație aplicată"
+
+msgid "Microfone"
+msgstr "Microfon"
+
+msgid "Ativando"
+msgstr "Activarea"
+
 msgid "Configuração de áudio."
 msgstr "Configurație audio."
 
@@ -46,32 +61,14 @@ msgstr ""
 "Acest filtru utilizează tehnici de rețele neuronale pentru a elimina zgomotul ambiental și sunetele "
 "care perturbă înregistrările și apelurile online."
 
-msgid "Gerenciador de Áudio"
-msgstr "Manager audio"
+msgid "GERENCIADOR DE ÁUDIO"
+msgstr "AUDIO MANAGER"
 
 msgid "Frequências sonoras:"
 msgstr "Frecvențe sonore:"
 
-msgid "Reduzir ruídos do microfone"
-msgstr "Reduceți zgomotul microfonului"
-
 msgid "Filtro de ruído"
 msgstr "Filtru de zgomot"
 
-msgid "Iniciar automaticamente"
-msgstr "Porniți automat"
-
-msgid "Configuração aplicada"
-msgstr "Configurație aplicată"
-
-msgid "Microfone"
-msgstr "Microfon"
-
-msgid "Ativando"
-msgstr "Activarea"
-
-msgid "Filtro do Microfone"
-msgstr "Filtru de microfon"
-
-msgid "Desativando"
-msgstr "Dezactivarea"
+msgid "INICIAR AUTOMATICAMENTE"
+msgstr "PORNIȚI AUTOMAT"

@@ -16,6 +16,21 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "X-Generator: attranslate\n"
 
+msgid "Desativando"
+msgstr "Deaktivointi"
+
+msgid "Filtro do Microfone"
+msgstr "Mikrofonisuodatin"
+
+msgid "Configuração aplicada"
+msgstr "Sovellettu konfiguraatio"
+
+msgid "Microfone"
+msgstr "Mikrofoni"
+
+msgid "Ativando"
+msgstr "Aktivointi"
+
 msgid "Configuração de áudio."
 msgstr "Äänikokoonpano."
 
@@ -46,32 +61,14 @@ msgstr ""
 "Tämä suodatin käyttää neuroverkkotekniikoita poistaakseen ympäristömelun ja äänet, jotka "
 "häiritsevät verkkotallenteita ja puheluita."
 
-msgid "Gerenciador de Áudio"
-msgstr "Audio Manager"
+msgid "GERENCIADOR DE ÁUDIO"
+msgstr "ÄÄNENHALLINTA"
 
 msgid "Frequências sonoras:"
 msgstr "Äänitaajuudet:"
 
-msgid "Reduzir ruídos do microfone"
-msgstr "Vähennä mikrofonin melua"
-
 msgid "Filtro de ruído"
 msgstr "Kohinasuodatin"
 
-msgid "Iniciar automaticamente"
-msgstr "Käynnistyy automaattisesti"
-
-msgid "Configuração aplicada"
-msgstr "Sovellettu konfiguraatio"
-
-msgid "Microfone"
-msgstr "Mikrofoni"
-
-msgid "Ativando"
-msgstr "Aktivointi"
-
-msgid "Filtro do Microfone"
-msgstr "Mikrofonisuodatin"
-
-msgid "Desativando"
-msgstr "Deaktivointi"
+msgid "INICIAR AUTOMATICAMENTE"
+msgstr "KÄYNNISTÄ AUTOMAATTISESTI"

@@ -16,6 +16,21 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "X-Generator: attranslate\n"
 
+msgid "Desativando"
+msgstr "Απενεργοποίηση του"
+
+msgid "Filtro do Microfone"
+msgstr "Φίλτρο μικροφώνου"
+
+msgid "Configuração aplicada"
+msgstr "Εφαρμοσμένη διαμόρφωση"
+
+msgid "Microfone"
+msgstr "Μικρόφωνο"
+
+msgid "Ativando"
+msgstr "Ενεργοποίηση"
+
 msgid "Configuração de áudio."
 msgstr "Διαμόρφωση ήχου."
 
@@ -46,32 +61,14 @@ msgstr ""
 "Αυτό το φίλτρο χρησιμοποιεί τεχνικές νευρωνικού δικτύου για την αφαίρεση του θορύβου περιβάλλοντος "
 "και των ήχων που διαταράσσουν τις online εγγραφές και κλήσεις."
 
-msgid "Gerenciador de Áudio"
-msgstr "Διαχειριστής ήχου"
+msgid "GERENCIADOR DE ÁUDIO"
+msgstr "ΔΙΑΧΕΙΡΙΣΗ ΗΧΟΥ"
 
 msgid "Frequências sonoras:"
 msgstr "Ηχητικές συχνότητες:"
 
-msgid "Reduzir ruídos do microfone"
-msgstr "Μείωση του θορύβου του μικροφώνου"
-
 msgid "Filtro de ruído"
 msgstr "Φίλτρο θορύβου"
 
-msgid "Iniciar automaticamente"
-msgstr "Ξεκινήστε αυτόματα"
-
-msgid "Configuração aplicada"
-msgstr "Εφαρμοσμένη διαμόρφωση"
-
-msgid "Microfone"
-msgstr "Μικρόφωνο"
-
-msgid "Ativando"
-msgstr "Ενεργοποίηση"
-
-msgid "Filtro do Microfone"
-msgstr "Φίλτρο μικροφώνου"
-
-msgid "Desativando"
-msgstr "Απενεργοποίηση του"
+msgid "INICIAR AUTOMATICAMENTE"
+msgstr "ΑΥΤΌΜΑΤΗ ΕΚΚΊΝΗΣΗ"

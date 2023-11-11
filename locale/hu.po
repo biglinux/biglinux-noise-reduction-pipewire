@@ -16,6 +16,21 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "X-Generator: attranslate\n"
 
+msgid "Desativando"
+msgstr "A  deaktiválása"
+
+msgid "Filtro do Microfone"
+msgstr "Mikrofon szűrő"
+
+msgid "Configuração aplicada"
+msgstr "Alkalmazott konfiguráció"
+
+msgid "Microfone"
+msgstr "Mikrofon"
+
+msgid "Ativando"
+msgstr "A  aktiválása"
+
 msgid "Configuração de áudio."
 msgstr "Hangkonfiguráció."
 
@@ -46,32 +61,14 @@ msgstr ""
 "Ez a szűrő neurális hálózati technikákat használ a környezeti zajok és az online felvételeket és "
 "hívásokat zavaró hangok eltávolítására."
 
-msgid "Gerenciador de Áudio"
-msgstr "Audio Manager"
+msgid "GERENCIADOR DE ÁUDIO"
+msgstr "HANGKEZELŐ"
 
 msgid "Frequências sonoras:"
 msgstr "Hangfrekvenciák:"
 
-msgid "Reduzir ruídos do microfone"
-msgstr "Mikrofonzaj csökkentése"
-
 msgid "Filtro de ruído"
 msgstr "Zajszűrő"
 
-msgid "Iniciar automaticamente"
-msgstr "Automatikus indítás"
-
-msgid "Configuração aplicada"
-msgstr "Alkalmazott konfiguráció"
-
-msgid "Microfone"
-msgstr "Mikrofon"
-
-msgid "Ativando"
-msgstr "A  aktiválása"
-
-msgid "Filtro do Microfone"
-msgstr "Mikrofon szűrő"
-
-msgid "Desativando"
-msgstr "A  deaktiválása"
+msgid "INICIAR AUTOMATICAMENTE"
+msgstr "AUTOMATIKUS INDÍTÁS"

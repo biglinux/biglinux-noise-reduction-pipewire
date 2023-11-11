@@ -16,6 +16,21 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "X-Generator: attranslate\n"
 
+msgid "Desativando"
+msgstr "Desactivando"
+
+msgid "Filtro do Microfone"
+msgstr "Filtro de micrófono"
+
+msgid "Configuração aplicada"
+msgstr "Configuración aplicada"
+
+msgid "Microfone"
+msgstr "Micrófono"
+
+msgid "Ativando"
+msgstr "Activando"
+
 msgid "Configuração de áudio."
 msgstr "Configuración de audio."
 
@@ -46,32 +61,14 @@ msgstr ""
 "Este filtro utiliza técnicas de redes neuronales para eliminar el ruido ambiental y los sonidos que "
 "perturban las grabaciones y las llamadas en línea."
 
-msgid "Gerenciador de Áudio"
-msgstr "Gestor de audio"
+msgid "GERENCIADOR DE ÁUDIO"
+msgstr "GESTOR DE AUDIO"
 
 msgid "Frequências sonoras:"
 msgstr "Frecuencias de sonido:"
 
-msgid "Reduzir ruídos do microfone"
-msgstr "Reducir el ruido del micrófono"
-
 msgid "Filtro de ruído"
 msgstr "Filtro de ruido"
 
-msgid "Iniciar automaticamente"
-msgstr "Autoencendido"
-
-msgid "Configuração aplicada"
-msgstr "Configuración aplicada"
-
-msgid "Microfone"
-msgstr "Micrófono"
-
-msgid "Ativando"
-msgstr "Activando"
-
-msgid "Filtro do Microfone"
-msgstr "Filtro de micrófono"
-
-msgid "Desativando"
-msgstr "Desactivando"
+msgid "INICIAR AUTOMATICAMENTE"
+msgstr "INICIAR AUTOMÁTICAMENTE"

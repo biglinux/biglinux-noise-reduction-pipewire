@@ -16,6 +16,21 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "X-Generator: attranslate\n"
 
+msgid "Desativando"
+msgstr "Deactivating"
+
+msgid "Filtro do Microfone"
+msgstr "Microphone Filter"
+
+msgid "Configuração aplicada"
+msgstr "Configuration applied"
+
+msgid "Microfone"
+msgstr "Microphone"
+
+msgid "Ativando"
+msgstr "Activating"
+
 msgid "Configuração de áudio."
 msgstr "Audio Configuration."
 
@@ -46,32 +61,14 @@ msgstr ""
 "This filter uses neural network techniques to remove ambient noise and sounds that disturb "
 "recordings and online calls."
 
-msgid "Gerenciador de Áudio"
-msgstr "Audio Manager"
+msgid "GERENCIADOR DE ÁUDIO"
+msgstr "AUDIO MANAGER"
 
 msgid "Frequências sonoras:"
 msgstr "Sound frequencies:"
 
-msgid "Reduzir ruídos do microfone"
-msgstr "Reducing Microphone Noise"
-
 msgid "Filtro de ruído"
 msgstr "Noise filter"
 
-msgid "Iniciar automaticamente"
-msgstr "Start automatically"
-
-msgid "Configuração aplicada"
-msgstr "Configuration applied"
-
-msgid "Microfone"
-msgstr "Microphone"
-
-msgid "Ativando"
-msgstr "Activating"
-
-msgid "Filtro do Microfone"
-msgstr "Microphone Filter"
-
-msgid "Desativando"
-msgstr "Deactivating"
+msgid "INICIAR AUTOMATICAMENTE"
+msgstr "START AUTOMATICALLY"

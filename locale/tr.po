@@ -16,6 +16,21 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "X-Generator: attranslate\n"
 
+msgid "Desativando"
+msgstr "Devre dışı bırakma"
+
+msgid "Filtro do Microfone"
+msgstr "Mikrofon Filtresi"
+
+msgid "Configuração aplicada"
+msgstr "Uygulanan konfigürasyon"
+
+msgid "Microfone"
+msgstr "Mikrofon"
+
+msgid "Ativando"
+msgstr "Etkinleştirme"
+
 msgid "Configuração de áudio."
 msgstr "Ses yapılandırması."
 
@@ -46,32 +61,14 @@ msgstr ""
 "Bu filtre, çevrimiçi kayıtları ve aramaları bozan ortam gürültüsünü ve sesleri gidermek için sinir "
 "ağı tekniklerini kullanır."
 
-msgid "Gerenciador de Áudio"
-msgstr "Ses Yöneticisi"
+msgid "GERENCIADOR DE ÁUDIO"
+msgstr "SES YÖNETICISI"
 
 msgid "Frequências sonoras:"
 msgstr "Ses frekansları:"
 
-msgid "Reduzir ruídos do microfone"
-msgstr "Mikrofon gürültüsünü azaltın"
-
 msgid "Filtro de ruído"
 msgstr "Gürültü filtresi"
 
-msgid "Iniciar automaticamente"
-msgstr "Otomatik olarak başlat"
-
-msgid "Configuração aplicada"
-msgstr "Uygulanan konfigürasyon"
-
-msgid "Microfone"
-msgstr "Mikrofon"
-
-msgid "Ativando"
-msgstr "Etkinleştirme"
-
-msgid "Filtro do Microfone"
-msgstr "Mikrofon Filtresi"
-
-msgid "Desativando"
-msgstr "Devre dışı bırakma"
+msgid "INICIAR AUTOMATICAMENTE"
+msgstr "OTOMATIK OLARAK BAŞLAT"

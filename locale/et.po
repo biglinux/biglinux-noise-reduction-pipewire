@@ -16,6 +16,21 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "X-Generator: attranslate\n"
 
+msgid "Desativando"
+msgstr "Deaktiveerimine"
+
+msgid "Filtro do Microfone"
+msgstr "Mikrofoni filter"
+
+msgid "Configuração aplicada"
+msgstr "Rakendatud konfiguratsioon"
+
+msgid "Microfone"
+msgstr "Mikrofon"
+
+msgid "Ativando"
+msgstr "Aktiveerimine"
+
 msgid "Configuração de áudio."
 msgstr "Helikonfiguratsioon."
 
@@ -46,32 +61,14 @@ msgstr ""
 "See filter kasutab neuronivõrgu tehnikat, et eemaldada ümbritsev müra ja helid, mis häirivad "
 "võrgusalvestusi ja kõnesid."
 
-msgid "Gerenciador de Áudio"
-msgstr "Audio Manager"
+msgid "GERENCIADOR DE ÁUDIO"
+msgstr "HELIHALDUR"
 
 msgid "Frequências sonoras:"
 msgstr "Helisagedused:"
 
-msgid "Reduzir ruídos do microfone"
-msgstr "Mikrofoni müra vähendamine"
-
 msgid "Filtro de ruído"
 msgstr "Mürafilter"
 
-msgid "Iniciar automaticamente"
-msgstr "Käivitub automaatselt"
-
-msgid "Configuração aplicada"
-msgstr "Rakendatud konfiguratsioon"
-
-msgid "Microfone"
-msgstr "Mikrofon"
-
-msgid "Ativando"
-msgstr "Aktiveerimine"
-
-msgid "Filtro do Microfone"
-msgstr "Mikrofoni filter"
-
-msgid "Desativando"
-msgstr "Deaktiveerimine"
+msgid "INICIAR AUTOMATICAMENTE"
+msgstr "AUTOMAATNE KÄIVITAMINE"

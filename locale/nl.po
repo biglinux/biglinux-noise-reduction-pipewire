@@ -16,6 +16,21 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "X-Generator: attranslate\n"
 
+msgid "Desativando"
+msgstr "Deactiveren van"
+
+msgid "Filtro do Microfone"
+msgstr "Microfoonfilter"
+
+msgid "Configuração aplicada"
+msgstr "Toegepaste configuratie"
+
+msgid "Microfone"
+msgstr "Microfoon"
+
+msgid "Ativando"
+msgstr "Activeren"
+
 msgid "Configuração de áudio."
 msgstr "Audio configuratie."
 
@@ -46,32 +61,14 @@ msgstr ""
 "Dit filter gebruikt neurale netwerktechnieken om omgevingsgeluiden en geluiden te verwijderen die "
 "online opnamen en gesprekken verstoren."
 
-msgid "Gerenciador de Áudio"
-msgstr "Audiobeheerder"
+msgid "GERENCIADOR DE ÁUDIO"
+msgstr "AUDIO BEHEER"
 
 msgid "Frequências sonoras:"
 msgstr "Geluidsfrequenties:"
 
-msgid "Reduzir ruídos do microfone"
-msgstr "Microfoonruis verminderen"
-
 msgid "Filtro de ruído"
 msgstr "Ruisfilter"
 
-msgid "Iniciar automaticamente"
-msgstr "Automatisch starten"
-
-msgid "Configuração aplicada"
-msgstr "Toegepaste configuratie"
-
-msgid "Microfone"
-msgstr "Microfoon"
-
-msgid "Ativando"
-msgstr "Activeren"
-
-msgid "Filtro do Microfone"
-msgstr "Microfoonfilter"
-
-msgid "Desativando"
-msgstr "Deactiveren van"
+msgid "INICIAR AUTOMATICAMENTE"
+msgstr "AUTOMATISCH STARTEN"

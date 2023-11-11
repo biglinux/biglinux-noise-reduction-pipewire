@@ -16,6 +16,21 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "X-Generator: attranslate\n"
 
+msgid "Desativando"
+msgstr "деактивація"
+
+msgid "Filtro do Microfone"
+msgstr "Мікрофонний фільтр"
+
+msgid "Configuração aplicada"
+msgstr "Застосована конфігурація"
+
+msgid "Microfone"
+msgstr "MIC"
+
+msgid "Ativando"
+msgstr "активація"
+
 msgid "Configuração de áudio."
 msgstr "Налаштування звуку."
 
@@ -46,32 +61,14 @@ msgstr ""
 "Цей фільтр використовує методи нейронної мережі для видалення шумів навколишнього середовища та "
 "звуків, які порушують онлайн-записи та дзвінки."
 
-msgid "Gerenciador de Áudio"
-msgstr "Аудіо менеджер"
+msgid "GERENCIADOR DE ÁUDIO"
+msgstr "АУДІО МЕНЕДЖЕР"
 
 msgid "Frequências sonoras:"
 msgstr "Звукові частоти:"
 
-msgid "Reduzir ruídos do microfone"
-msgstr "Зменшити шум мікрофона"
-
 msgid "Filtro de ruído"
 msgstr "шумовий фільтр"
 
-msgid "Iniciar automaticamente"
-msgstr "авто старт"
-
-msgid "Configuração aplicada"
-msgstr "Застосована конфігурація"
-
-msgid "Microfone"
-msgstr "MIC"
-
-msgid "Ativando"
-msgstr "активація"
-
-msgid "Filtro do Microfone"
-msgstr "Мікрофонний фільтр"
-
-msgid "Desativando"
-msgstr "деактивація"
+msgid "INICIAR AUTOMATICAMENTE"
+msgstr "ЗАПУСК АВТОМАТИЧНО"
