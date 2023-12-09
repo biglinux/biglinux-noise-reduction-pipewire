@@ -1013,7 +1013,6 @@ input {
 
 .form-wrap {
   width: 100%;
-  margin: 2em auto 0;
 }
 
 .form-wrap a {
@@ -1326,12 +1325,11 @@ li img {
 }
 
 #desc {
-  margin-bottom: 5px;
   text-align: -webkit-center;
 }
 
 .fc-card {
-  height: 60vh;
+  height: 100%;
   width: 100vw;
   color: var(--text-a-color);
   /*width: 60%;*/
