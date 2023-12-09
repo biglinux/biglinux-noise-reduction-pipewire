@@ -955,68 +955,6 @@ li img {
   border-radius: 10px;
 }
 
-
-.products {
-  /* font-size: 0.5vw;*/
-  display: flex;
-  align-items: center;
-  width: 290px;
-  height: 45px;
-  /* @media screen and (min-width: 480px) {
-    width: 300px;
-    font-size: 1.1vw;
-   }*/
-}
-
-.icone {
-  display: block;
-  /* text-align: center; */
-  /* border: 1px solid #fff;*/
-}
-
-.txt {
-  width: 120%;
-  white-space: pre-line;
-  font-size: 13px;
-  /*@media screen and (min-width: 500px) {
-   background-color: red;   
-   width: 120px;
-   font-size: 1.1vw;
-
-  }*/
-}
-@media screen and (max-width: 1200px) {
-  .txt {
-    width: 120%;
-    font-size: 1.3vw;
-  }
-}
-@media screen and (max-width: 680px) {
-  .txt {
-    /* border: 1px solid #fff; */
-    font-size: 1.8vw;
-    /* text-align: center; */
-  }
-}
-
-.block-with-text {
-  overflow: hidden;
-  position: relative;
-  line-height: 1.2em;
-  max-height: 6em;
-  /* aqui vc controla a altura da caixa de texto */
-  text-align: justify;
-}
-
-.block-with-text:before {
-  content: "...";
-  position: absolute;
-  right: 0px;
-  bottom: 0;
-  background-color: #ffffff;
-  padding: 0 0px 0 0.25em;
-}
-
 .status {
   margin-left: auto;
   width: 200px;
