@@ -497,24 +497,6 @@ input {
   opacity: 1;
 }
 
-.form-wrap form .button {
-  float: left;
-  margin: 0 0 3px 3px;
-  padding: 0.1em 1em;
-  width: auto;
-  display: inline-block;
-  background-color: #3a6df0;
-  border: none;
-  color: #fff;
-  cursor: pointer;
-  font-size: 0.8em;
-  border-radius: 30px;
-}
-
-.form-wrap form .button:hover {
-  background-color: #5c9fed;
-}
-
 .button {
   float: left;
   margin: 0 0 3px 3px;
