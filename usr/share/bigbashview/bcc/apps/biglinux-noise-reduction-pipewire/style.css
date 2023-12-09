@@ -510,7 +510,6 @@ a.button:hover {
 /* USER (FORM WRAPPER) */
 .form-wrap {
   width: 100%;
-  margin: 0 auto 2em;
   color: #fff;
 }
 
@@ -537,6 +536,10 @@ a.button:hover {
   -moz-box-shadow: none;
   box-shadow: none;
   border-radius: 10px;
+
+  display: flex;
+  justify-content: center;
+  align-items: center;
 }
 
 .user .actions {
