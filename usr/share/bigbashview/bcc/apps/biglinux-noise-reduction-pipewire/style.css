@@ -461,22 +461,6 @@ input {
   width: 100%;
 }
 
-.form-wrap .tabs {
-  overflow: hidden;
-}
-
-.form-wrap .tabs * {
-  -webkit-transition: 0.25s ease-in-out;
-  -moz-transition: 0.25s ease-in-out;
-  -o-transition: 0.25s ease-in-out;
-  transition: 0.25s ease-in-out;
-}
-
-.form-wrap .tabs h3 {
-  float: left;
-  width: 33.3%;
-}
-
 .form-wrap .tabs-content {
   display: flex;
   flex-direction: row;
