@@ -73,6 +73,9 @@
     --text-a-color: #444;
 }
 
+*{
+  user-select: none;
+}
 
 .dark-light {
   position: fixed;
