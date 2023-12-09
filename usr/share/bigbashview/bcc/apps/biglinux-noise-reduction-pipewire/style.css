@@ -955,58 +955,10 @@ li img {
   border-radius: 10px;
 }
 
-.dropdown {
-  position: relative;
-  height: 53px;
-  width: 40px;
-  top: -33px;
-  display: flex;
-  left: -5px;
-  background: transparent;
-  border: none;
-  cursor: pointer;
-}
-.dropdown ul {
-  position: absolute;
-  background: var(--dropdown-bg);
-  height: 140px;
-  width: 120px;
-  right: 0;
-  top: 20px;
-  pointer-events: none;
-  opacity: 0;
-  transform: translatey(10px);
-  transition: all 0.4s ease;
-}
-.dropdown ul li a {
-  text-decoration: none;
-  color: var(--theme-color);
-  font-size: 12px;
-}
-
-.dropdown.is-active ul {
-  opacity: 1;
-  pointer-events: all;
-  transform: translatey(25px);
-}
-.dropdown.is-active ul li:hover {
-  background-color: var(--dropdown-hover);
-}
-
-.button-wrapper {
-  display: flex;
-  align-items: center;
-  justify-content: flex-end;
-  width: auto;
-  margin-left: auto;
-}
-
 * {
   outline: none;
   box-sizing: border-box;
 }
-
-
 
 input[type=button] {
   background: -moz-linear-gradient(#ffffff, #dfdfdf);
