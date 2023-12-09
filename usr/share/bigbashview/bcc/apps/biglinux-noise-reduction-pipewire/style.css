@@ -623,18 +623,6 @@ div#list-tab-content {
   text-align: center;
 }
 
-ul#menu-lista {
-  list-style-type: none;
-  text-align: center;
-  margin: 0;
-  padding: 0;
-}
-
-ul#menu-lista li {
-  display: inline-block;
-  padding: 2px;
-}
-
 .colorunderline {
   text-align: left;
   width: 100%;
@@ -809,23 +797,6 @@ input {
 
 .fa {
   display: none;
-}
-
-
-
-#menu a img {
-  border: 1px solid #5a6374;
-  color: var(--text-a-color);
-  text-decoration: none;
-  margin: 10px 0 0 0;
-  border-radius: 5px;
-  box-shadow: 0 0 8px 2px #3a404f;
-}
-
-#menu a:hover img:hover {
-  border: 1px solid #00ffff;
-  box-shadow: 0 0 8px 2px #1e59f1;
-  color: #1e59f1;
 }
 
 ul {
