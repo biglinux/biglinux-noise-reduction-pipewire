@@ -138,42 +138,6 @@ body.light-mode .video-bg:before {
   padding: 20px;
 }
 
-.header {
-  display: flex;
-  align-items: center;
-  flex-shrink: 0;
-  height: 58px;
-  width: 100%;
-  border-bottom: 1px solid var(--border-color);
-  padding: 0 30px;
-  white-space: nowrap;
-}
-@media screen and (max-width: 480px) {
-  .header {
-    padding: 0 16px;
-  }
-}
-.header-menu {
-  display: flex;
-  align-items: center;
-}
-.header-menu a {
-  padding: 20px 30px;
-  text-decoration: none;
-  color: var(--inactive-color);
-  border-bottom: 2px solid transparent;
-  transition: 0.3s;
-}
-@media screen and (max-width: 610px) {
-  .header-menu a:not(.main-header-link) {
-    display: none;
-  }
-}
-.header-menu a.is-active, .header-menu a:hover {
-  color: var(--theme-color);
-  border-bottom: 2px solid var(--theme-color);
-}
-
 @supports (-webkit-appearance: none) or (-moz-appearance: none) {
   input[type=checkbox],
 input[type=radio] {
