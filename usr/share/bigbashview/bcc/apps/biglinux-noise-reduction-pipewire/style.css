@@ -325,55 +325,6 @@ body {
   overflow: hidden;
 }
 
-
-.content-list {
-  margin: 3px;
-  position: relative;
-  width: 100%;
-  text-align: right;
-  border-radius: 11px;
-  flex-grow: 1;
-  padding: 10px;
-  background-color: #282c38;
-  min-height: 1px;
-}
-
-.list {
-  height: 100%;
-  overflow: auto;
-  -webkit-overflow-scrolling: auto;
-}
-
-/* BUTTON */
-a.button {
-  position: relative;
-  left: 20px;
-  top: 20px;
-  height: auto;
-  padding: 0.8rem 1rem;
-  font-size: 0.8rem;
-  /*line-height: normal;*/
-  text-transform: uppercase;
-  font-family: var(--body-font);
-  font-weight: 700;
-  letter-spacing: 0;
-  border-radius: 0;
-  border: 1px solid #253244;
-  text-decoration: none;
-  color: #fff;
-  background-color: transparent;
-  -webkit-transition: all 0.2s ease-in-out;
-  -moz-transition: all 0.2s ease-in-out;
-  -o-transition: all 0.2s ease-in-out;
-  transition: all 0.2s ease-in-out;
-}
-
-a.button:hover {
-  border-color: #385ca2;
-  color: #fff;
-  padding: 1rem 3.2rem;
-}
-
 /* LOGIN */
 .login {
   margin: auto;
