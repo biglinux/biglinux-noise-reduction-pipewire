@@ -547,16 +547,6 @@ input[type=button] {
   justify-content: center;
 }
 
-.svg-color {
-  fill: linear-gradient(#000, #FFF);
-  width: 32px;
-}
-
-#header-shape-gradient {
-  --color-stop: #f12c06;
-  --color-bot: #faed34;
-}
-
 main {
   position: relative;
   display: flex;
