@@ -881,32 +881,6 @@ li label {
   padding: 0 0 15px 0;
 }
 
-.img-label li label {
-  display: block;
-  margin: 0 0 0 0;
-  color: #278bc7;
-  margin-right: 20px;
-  font-weight: 600;
-  text-align: right;
-  margin-top: -35px;
-  padding: 0 0 28px 0;
-  font-size: 20px;
-  text-shadow: 1px 1px 2px #444;
-}
-
-li img {
-  border: 1px solid #5a6374;
-  width: 300px;
-  text-align: center;
-  align-items: center;
-  align: center;
-  justify-content: center;
-}
-
-.centretext {
-  text-align: center;
-}
-
 #desc {
   text-align: -webkit-center;
 }
