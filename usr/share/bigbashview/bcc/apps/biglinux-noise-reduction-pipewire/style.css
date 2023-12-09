@@ -76,7 +76,7 @@
 
 .dark-light {
   position: fixed;
-  bottom: 50px;
+  bottom: 20px;
   right: 30px;
   background-color: var(--dropdown-bg);
   box-shadow: -1px 3px 8px -1px rgba(0, 0, 0, 0.2);
@@ -87,6 +87,7 @@
   height: 40px;
   cursor: pointer;
 }
+
 .dark-light svg {
   width: 24px;
   flex-shrink: 0;
