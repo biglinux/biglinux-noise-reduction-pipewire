@@ -325,44 +325,6 @@ body {
   overflow: hidden;
 }
 
-.icon120x120 img {
-  align-items: center;
-  justify-content: center;
-  text-align: center;
-  width: 120px;
-  height: 120px;
-  fill: gray;
-}
-
-.parent-list a:link, a:visited {
-  width: 100%;
-  color: white;
-  padding: 0px 5px;
-  text-decoration: none;
-  display: inline-block;
-}
-
-.parent-list a:hover, a:active {
-  /*background-color: #fff;*/
-}
-
-.parent-list {
-  width: 100%;
-  height: 400px;
-  display: flex;
-  flex-direction: column;
-}
-
-.parent-list span {
-  float: right;
-  padding: 0 5px 0 0;
-}
-
-.parent-list p {
-  padding: 3px;
-  margin: 2px;
-  text-align: left;
-}
 
 .content-list {
   margin: 3px;
