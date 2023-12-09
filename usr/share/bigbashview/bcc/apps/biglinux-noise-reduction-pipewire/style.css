@@ -138,6 +138,11 @@ body.light-mode .video-bg:before {
   padding: 20px;
 }
 
+.content-section-title {
+  color: var(--text-a-color);
+  margin-bottom: 14px;
+}
+
 @supports (-webkit-appearance: none) or (-moz-appearance: none) {
   input[type=checkbox],
 input[type=radio] {
