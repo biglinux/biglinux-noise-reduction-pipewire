@@ -608,28 +608,9 @@ a.button:hover {
 
 
 /* FORM ELEMENTS */
-div#webappsbig-tab-content {
-  width: 100%;
-  text-align: center;
-}
-
 div#add-tab-content {
   width: 100%;
   text-align: center;
-}
-
-div#list-tab-content {
-  width: 100%;
-  text-align: center;
-}
-
-.colorunderline {
-  text-align: left;
-  width: 100%;
-  font-size: 16px;
-  border-bottom: 1px solid var(--text-a-color);
-  margin-top: 15px;
-  padding-bottom: 10px;
 }
 
 input {
