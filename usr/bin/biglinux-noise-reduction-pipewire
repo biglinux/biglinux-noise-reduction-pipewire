@@ -1,11 +1,16 @@
-#!/bin/bash
+#!/usr/bin/env bash
 
 # Set localization environment variables for translations
 export TEXTDOMAINDIR="/usr/share/locale"
 export TEXTDOMAIN=biglinux-noise-reduction-pipewire
 
 # Define the title of the application window
-TITLE="Reduzir ruídos do microfone"
+#TITLE="Reduzir ruídos do microfone"
+
+	declare -g appspath='/usr/share/bigbashview/bcc/apps/biglinux-noise-reduction-pipewire'
+	declare -g icon_file='icon/biglinux-noise-reduction-pipewire.svg'
+	declare -g TITLE="biglinux-noise-reduction-pipewire"
+	declare -g sub="biglinux-noise-reduction-pipewire"
 
 # Navigate to the application's directory
 cd /usr/share/bigbashview/bcc/apps/biglinux-noise-reduction-pipewire/
@@ -16,4 +21,4 @@ QT_QPA_PLATFORM=xcb \
 SDL_VIDEODRIVER=x11 \
 WINIT_UNIX_BACKEND=x11 \
 GDK_BACKEND=x11 \
-bigbashview -n "$TITLE" -s 720x400 -c transparent index.sh.htm -i /usr/share/bigbashview/bcc/apps/biglinux-noise-reduction-pipewire/icon/biglinux-noise-reduction-pipewire.svg
+bigbashview -n "$TITLE" -s 720x400 -c transparent -p "$sub" -d "$appspath" index.sh.htm -i "$icon_file"
