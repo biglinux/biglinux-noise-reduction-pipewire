@@ -6,9 +6,9 @@ export TEXTDOMAIN=biglinux-noise-reduction-pipewire
 
 # Verifica o ambiente de área de trabalho e define o titulo da aplicação
 if [[ "$XDG_CURRENT_DESKTOP" == "GNOME" ]]; then
-    TITLE="biglinux-noise-reduction-pipewire"
+    declare -g TITLE="biglinux-noise-reduction-pipewire"
 else
-    TITLE="Reduzir ruídos do microfone"
+    declare -g TITLE=$"Reduzir ruídos do microfone"
 fi
 
 # Navigate to the application's directory
