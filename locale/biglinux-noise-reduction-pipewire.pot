@@ -1,0 +1,67 @@
+# SOME DESCRIPTIVE TITLE.
+# Copyright (C) YEAR THE PACKAGE'S COPYRIGHT HOLDER
+# This file is distributed under the same license as the biglinux-noise-reduction-pipewire package.
+# FIRST AUTHOR <EMAIL@ADDRESS>, YEAR.
+#
+#, fuzzy
+msgid   ""
+msgstr  "Project-Id-Version: biglinux-noise-reduction-pipewire\n"
+        "Report-Msgid-Bugs-To: \n"
+        "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+        "Language-Team: LANGUAGE <LL@li.org>\n"
+        "Language: \n"
+        "MIME-Version: 1.0\n"
+        "Content-Type: text/plain; charset=UTF-8\n"
+        "Content-Transfer-Encoding: 8bit\n"
+
+msgid   "Reduzir ruídos do microfone"
+msgstr  ""
+
+msgid   "Ativando"
+msgstr  ""
+
+msgid   "Filtro do Microfone"
+msgstr  ""
+
+msgid   "Desativando"
+msgstr  ""
+
+msgid   "Este filtro utiliza técnicas de redes neurais para remover ruídos e "
+        "sons do ambiente que atrapalham gravações e chamadas online."
+msgstr  ""
+
+msgid   "GERENCIADOR DE ÁUDIO"
+msgstr  ""
+
+msgid   "Frequências sonoras:"
+msgstr  ""
+
+msgid   "Filtro de ruído"
+msgstr  ""
+
+msgid   "INICIAR AUTOMATICAMENTE"
+msgstr  ""
+
+msgid   "Configuração de áudio."
+msgstr  ""
+
+msgid   "Confirma a remoção das personalizações na configuração de áudio?"
+msgstr  ""
+
+msgid   "Configuração de áudio"
+msgstr  ""
+
+msgid   "Configuração de áudio restaurada.\n"
+        "\n"
+        "Os programas em execução no momento podem precisar ser fechados\n"
+        "e abertos novamente para o áudio funcionar corretamente."
+msgstr  ""
+
+msgid   "Cancelado, nenhuma configuração foi removida!"
+msgstr  ""
+
+msgid   "Configuração aplicada"
+msgstr  ""
+
+msgid   "Microfone"
+msgstr  ""

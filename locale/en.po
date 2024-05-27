@@ -1,0 +1,76 @@
+# SOME DESCRIPTIVE TITLE.
+# Copyright (C) YEAR THE PACKAGE'S COPYRIGHT HOLDER
+# This file is distributed under the same license as the biglinux-noise-reduction-pipewire package.
+# FIRST AUTHOR <EMAIL@ADDRESS>, YEAR.
+#
+#, fuzzy
+msgid ""
+msgstr ""
+"Project-Id-Version: biglinux-noise-reduction-pipewire\n"
+"Report-Msgid-Bugs-To: \n"
+"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"Language-Team: LANGUAGE <LL@li.org>\n"
+"Language: \n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=utf-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+
+msgid "Reduzir ruídos do microfone"
+msgstr "Reduzir ruídos do microfone"
+
+msgid "Ativando"
+msgstr "Ativando"
+
+msgid "Filtro do Microfone"
+msgstr "Filtro do Microfone"
+
+msgid "Desativando"
+msgstr "Desativando"
+
+msgid ""
+"Este filtro utiliza técnicas de redes neurais para remover ruídos e sons do "
+"ambiente que atrapalham gravações e chamadas online."
+msgstr ""
+"Este filtro utiliza técnicas de redes neurais para remover ruídos e sons do "
+"ambiente que atrapalham gravações e chamadas online."
+
+msgid "GERENCIADOR DE ÁUDIO"
+msgstr "GERENCIADOR DE ÁUDIO"
+
+msgid "Frequências sonoras:"
+msgstr "Frequências sonoras:"
+
+msgid "Filtro de ruído"
+msgstr "Filtro de ruído"
+
+msgid "INICIAR AUTOMATICAMENTE"
+msgstr "INICIAR AUTOMATICAMENTE"
+
+msgid "Configuração de áudio."
+msgstr "Configuração de áudio."
+
+msgid "Confirma a remoção das personalizações na configuração de áudio?"
+msgstr "Confirma a remoção das personalizações na configuração de áudio?"
+
+msgid "Configuração de áudio"
+msgstr "Configuração de áudio"
+
+msgid ""
+"Configuração de áudio restaurada.\n"
+"\n"
+"Os programas em execução no momento podem precisar ser fechados\n"
+"e abertos novamente para o áudio funcionar corretamente."
+msgstr ""
+"Configuração de áudio restaurada.\n"
+"\n"
+"Os programas em execução no momento podem precisar ser fechados\n"
+"e abertos novamente para o áudio funcionar corretamente."
+
+msgid "Cancelado, nenhuma configuração foi removida!"
+msgstr "Cancelado, nenhuma configuração foi removida!"
+
+msgid "Configuração aplicada"
+msgstr "Configuração aplicada"
+
+msgid "Microfone"
+msgstr "Microfone"
