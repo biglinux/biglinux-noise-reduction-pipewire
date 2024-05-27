@@ -4,20 +4,11 @@
 export TEXTDOMAINDIR="/usr/share/locale"
 export TEXTDOMAIN=biglinux-noise-reduction-pipewire
 
-# Define the title of the application window
-
-	declare -g appspath='/usr/share/bigbashview/bcc/apps/biglinux-noise-reduction-pipewire'
-	declare -g icon_file='icon/biglinux-noise-reduction-pipewire.svg'
-	declare -g sub="biglinux-noise-reduction-pipewire"
-
-# Verifica o ambiente de área de trabalho
-desktop_environment=$(echo $XDG_CURRENT_DESKTOP)
-
-# Comandos específicos para cada ambiente
-if [[ "$desktop_environment" == "GNOME" ]]; then
-    declare -g TITLE="biglinux-noise-reduction-pipewire"
+# Verifica o ambiente de área de trabalho e define o titulo da aplicação
+if [[ "$XDG_CURRENT_DESKTOP" == "GNOME" ]]; then
+    TITLE="biglinux-noise-reduction-pipewire"
 else
-    declare -g TITLE=$(gettext "Reduzir ruídos do microfone")
+    TITLE="Reduzir ruídos do microfone"
 fi
 
 # Navigate to the application's directory
@@ -29,4 +20,4 @@ QT_QPA_PLATFORM=xcb \
 SDL_VIDEODRIVER=x11 \
 WINIT_UNIX_BACKEND=x11 \
 GDK_BACKEND=x11 \
-bigbashview -n "$TITLE" -s 720x400 -c transparent -p "$sub" -d "$appspath" index.sh.htm -i "$icon_file"
+bigbashview -n "$TITLE" -s 720x400 -c transparent -p "$TEXTDOMAIN" index.sh.htm -i icon/biglinux-noise-reduction-pipewire.svg
