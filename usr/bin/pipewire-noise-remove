@@ -45,7 +45,17 @@ elif [ "$1" = "stop" ]; then
     for pid in $pipewirePidFiltered; do
         kill $pid
     done
+
+elif [ "$1" = "status" ]; then
+    # Check if the configuration file exists
+    if [ -e "$config_path" ]; then
+        echo "enabled"
+        exit 0
+    else
+        echo "disabled"
+        exit 1
+    fi
 else
     # Print usage information if no valid argument is provided
-    echo "Usage: $0 {start|stop}"
+    echo "Usage: $0 {start|stop|status}"
 fi
