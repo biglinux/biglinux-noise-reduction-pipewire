@@ -30,6 +30,8 @@ msgstr  "#-#-#-#-#  biglinux-noise-reduction-pipewire-bash.pot (biglinux-noise-r
 #
 # #-#-#-#-#  biglinux-noise-reduction-pipewire-bash.pot (biglinux-noise-reduction-pipewire)  #-#-#-#-#
 #
+# #-#-#-#-#  biglinux-noise-reduction-pipewire-bash.pot (biglinux-noise-reduction-pipewire)  #-#-#-#-#
+#
 msgid   "Reduce Microphone Noise"
 msgstr  ""
 #
@@ -38,6 +40,8 @@ msgstr  ""
 #
 msgid   "Disabled!"
 msgstr  ""
+#
+# #-#-#-#-#  biglinux-noise-reduction-pipewire-bash.pot (biglinux-noise-reduction-pipewire)  #-#-#-#-#
 #
 # #-#-#-#-#  biglinux-noise-reduction-pipewire-bash.pot (biglinux-noise-reduction-pipewire)  #-#-#-#-#
 #
@@ -54,8 +58,12 @@ msgstr  ""
 #
 # #-#-#-#-#  biglinux-noise-reduction-pipewire-bash.pot (biglinux-noise-reduction-pipewire)  #-#-#-#-#
 #
+# #-#-#-#-#  biglinux-noise-reduction-pipewire-bash.pot (biglinux-noise-reduction-pipewire)  #-#-#-#-#
+#
 msgid   "The new version of the noise reduction filter applies the feature directly to the selected default microphone in the system, eliminating the need to choose a virtual microphone."
 msgstr  ""
+#
+# #-#-#-#-#  biglinux-noise-reduction-pipewire-bash.pot (biglinux-noise-reduction-pipewire)  #-#-#-#-#
 #
 # #-#-#-#-#  biglinux-noise-reduction-pipewire-bash.pot (biglinux-noise-reduction-pipewire)  #-#-#-#-#
 #
