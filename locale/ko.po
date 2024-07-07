@@ -1,0 +1,34 @@
+# SOME DESCRIPTIVE TITLE.
+# Copyright (C) YEAR THE PACKAGE'S COPYRIGHT HOLDER
+# This file is distributed under the same license as the biglinux-noise-reduction-pipewire package.
+# FIRST AUTHOR <EMAIL@ADDRESS>, YEAR.
+# 
+#, fuzzy
+msgid ""
+msgstr ""
+"Project-Id-Version: biglinux-noise-reduction-pipewire\n"
+"Report-Msgid-Bugs-To: \n"
+"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"Language-Team: LANGUAGE <LL@li.org>\n"
+"Language: \n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=utf-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"X-Generator: attranslate\n"
+
+msgid "Reduce Microphone Noise"
+msgstr "마이크 잡음 감소"
+
+msgid "Activated!"
+msgstr "활성화되었습니다!"
+
+msgid "Disabled!"
+msgstr "비활성화됨!"
+
+msgid "Remove background noise and sounds that interfere with recordings and online calls."
+msgstr "녹음 및 온라인 통화에 방해되는 배경 소음과 소리를 제거합니다."
+
+msgid ""
+"The new version of the noise reduction filter applies the feature directly to the selected default "
+"microphone in the system, eliminating the need to choose a virtual microphone."
+msgstr "시스템에서 선택한 기본 마이크로폰에 노이즈 감소 필터의 새 버전이 기능을 직접 적용하여 가상 마이크로폰을 선택할 필요가 없어졌습니다."

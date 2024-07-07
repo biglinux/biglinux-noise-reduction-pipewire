@@ -1,0 +1,36 @@
+# SOME DESCRIPTIVE TITLE.
+# Copyright (C) YEAR THE PACKAGE'S COPYRIGHT HOLDER
+# This file is distributed under the same license as the biglinux-noise-reduction-pipewire package.
+# FIRST AUTHOR <EMAIL@ADDRESS>, YEAR.
+# 
+#, fuzzy
+msgid ""
+msgstr ""
+"Project-Id-Version: biglinux-noise-reduction-pipewire\n"
+"Report-Msgid-Bugs-To: \n"
+"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"Language-Team: LANGUAGE <LL@li.org>\n"
+"Language: \n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=utf-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"X-Generator: attranslate\n"
+
+msgid "Reduce Microphone Noise"
+msgstr "Smanjite buku mikrofona"
+
+msgid "Activated!"
+msgstr "Aktivirano!"
+
+msgid "Disabled!"
+msgstr "Onemogućeno!"
+
+msgid "Remove background noise and sounds that interfere with recordings and online calls."
+msgstr "Uklonite pozadinsku buku i zvukove koji ometaju snimanja i online pozive."
+
+msgid ""
+"The new version of the noise reduction filter applies the feature directly to the selected default "
+"microphone in the system, eliminating the need to choose a virtual microphone."
+msgstr ""
+"Nova verzija filtra za smanjenje buke primjenjuje značajku izravno na odabrani zadani mikrofon u "
+"sustavu, eliminirajući potrebu za odabirom virtualnog mikrofona."

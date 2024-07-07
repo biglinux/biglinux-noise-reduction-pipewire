@@ -1,0 +1,36 @@
+# SOME DESCRIPTIVE TITLE.
+# Copyright (C) YEAR THE PACKAGE'S COPYRIGHT HOLDER
+# This file is distributed under the same license as the biglinux-noise-reduction-pipewire package.
+# FIRST AUTHOR <EMAIL@ADDRESS>, YEAR.
+# 
+#, fuzzy
+msgid ""
+msgstr ""
+"Project-Id-Version: biglinux-noise-reduction-pipewire\n"
+"Report-Msgid-Bugs-To: \n"
+"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"Language-Team: LANGUAGE <LL@li.org>\n"
+"Language: \n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=utf-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"X-Generator: attranslate\n"
+
+msgid "Reduce Microphone Noise"
+msgstr "Mikrofonzaj csökkentése"
+
+msgid "Activated!"
+msgstr "Aktiválva!"
+
+msgid "Disabled!"
+msgstr "Letiltva!"
+
+msgid "Remove background noise and sounds that interfere with recordings and online calls."
+msgstr "Háttérzaj és olyan hangok eltávolítása, amelyek zavarják a felvételeket és az online hívásokat."
+
+msgid ""
+"The new version of the noise reduction filter applies the feature directly to the selected default "
+"microphone in the system, eliminating the need to choose a virtual microphone."
+msgstr ""
+"Az új zajcsökkentő szűrő verziója közvetlenül alkalmazza a funkciót a kiválasztott alapértelmezett "
+"mikrofonra a rendszerben, megszüntetve a virtuális mikrofon kiválasztásának szükségességét."
