@@ -62,7 +62,18 @@ elif [ "$1" = "status" ]; then
         echo "disabled"
         exit 1
     fi
+elif [ "$1" = "enable-bluetooth-autoswitch-to-headset" ]; then
+    mkdir -p ~/.config/wireplumber/wireplumber.conf.d/
+    echo 'wireplumber.settings = {
+    bluetooth.autoswitch-to-headset-profile = false
+}' > ~/.config/wireplumber/wireplumber.conf.d/11-bluetooth-policy.conf
+    systemctl --user restart wireplumber
+
+elif [ "$1" = "disable-bluetooth-autoswitch-to-headset" ]; then
+    rm -f ~/.config/wireplumber/wireplumber.conf.d/11-bluetooth-policy.conf
+    systemctl --user restart wireplumber
+
 else
     # Print usage information if no valid argument is provided
-    echo "Usage: $0 {start|stop|status}"
+    echo "Usage: $0 {start|stop|status|enable-bluetooth-autoswitch-to-headset|disable-bluetooth-autoswitch-to-headset}"
 fi
