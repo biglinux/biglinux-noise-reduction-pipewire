@@ -16,6 +16,11 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "X-Generator: attranslate\n"
 
+# 
+# #-#-#-#-#  biglinux-noise-reduction-pipewire-bash.pot (biglinux-noise-reduction-pipewire)  #-#-#-#-#
+# 
+# #-#-#-#-#  biglinux-noise-reduction-pipewire-bash.pot (biglinux-noise-reduction-pipewire)  #-#-#-#-#
+# 
 msgid "Reduce Microphone Noise"
 msgstr "Snížit hluk mikrofonu"
 
@@ -25,12 +30,25 @@ msgstr "Aktivováno!"
 msgid "Disabled!"
 msgstr "Deaktivováno!"
 
+# 
+# #-#-#-#-#  biglinux-noise-reduction-pipewire-bash.pot (biglinux-noise-reduction-pipewire)  #-#-#-#-#
+# 
+# #-#-#-#-#  biglinux-noise-reduction-pipewire-bash.pot (biglinux-noise-reduction-pipewire)  #-#-#-#-#
+# 
 msgid "Remove background noise and sounds that interfere with recordings and online calls."
 msgstr "Odstraňte pozadí hluku a zvuky, které ruší nahrávky a online hovory."
 
+# 
+# #-#-#-#-#  biglinux-noise-reduction-pipewire-bash.pot (biglinux-noise-reduction-pipewire)  #-#-#-#-#
+# 
+# #-#-#-#-#  biglinux-noise-reduction-pipewire-bash.pot (biglinux-noise-reduction-pipewire)  #-#-#-#-#
+# 
 msgid ""
 "The new version of the noise reduction filter applies the feature directly to the selected default "
 "microphone in the system, eliminating the need to choose a virtual microphone."
 msgstr ""
 "Nová verze filtru pro redukci šumu aplikuje funkci přímo na vybraný výchozí mikrofon v systému, "
 "eliminuje potřebu volby virtuálního mikrofonu."
+
+msgid "Enable"
+msgstr "Povolit"

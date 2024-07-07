@@ -16,6 +16,11 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "X-Generator: attranslate\n"
 
+# 
+# #-#-#-#-#  biglinux-noise-reduction-pipewire-bash.pot (biglinux-noise-reduction-pipewire)  #-#-#-#-#
+# 
+# #-#-#-#-#  biglinux-noise-reduction-pipewire-bash.pot (biglinux-noise-reduction-pipewire)  #-#-#-#-#
+# 
 msgid "Reduce Microphone Noise"
 msgstr "Reducer mikrofonstøj"
 
@@ -25,12 +30,25 @@ msgstr "Aktiveret!"
 msgid "Disabled!"
 msgstr "Deaktiveret!"
 
+# 
+# #-#-#-#-#  biglinux-noise-reduction-pipewire-bash.pot (biglinux-noise-reduction-pipewire)  #-#-#-#-#
+# 
+# #-#-#-#-#  biglinux-noise-reduction-pipewire-bash.pot (biglinux-noise-reduction-pipewire)  #-#-#-#-#
+# 
 msgid "Remove background noise and sounds that interfere with recordings and online calls."
 msgstr "Fjern baggrundsstøj og lyde, der forstyrrer optagelser og online opkald."
 
+# 
+# #-#-#-#-#  biglinux-noise-reduction-pipewire-bash.pot (biglinux-noise-reduction-pipewire)  #-#-#-#-#
+# 
+# #-#-#-#-#  biglinux-noise-reduction-pipewire-bash.pot (biglinux-noise-reduction-pipewire)  #-#-#-#-#
+# 
 msgid ""
 "The new version of the noise reduction filter applies the feature directly to the selected default "
 "microphone in the system, eliminating the need to choose a virtual microphone."
 msgstr ""
 "Den nye version af støjreduktionsfilteret anvender funktionen direkte på den valgte "
 "standardmikrofon i systemet, hvilket eliminerer behovet for at vælge en virtuel mikrofon."
+
+msgid "Enable"
+msgstr "Aktivér"

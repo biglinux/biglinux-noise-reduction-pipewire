@@ -16,6 +16,11 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "X-Generator: attranslate\n"
 
+# 
+# #-#-#-#-#  biglinux-noise-reduction-pipewire-bash.pot (biglinux-noise-reduction-pipewire)  #-#-#-#-#
+# 
+# #-#-#-#-#  biglinux-noise-reduction-pipewire-bash.pot (biglinux-noise-reduction-pipewire)  #-#-#-#-#
+# 
 msgid "Reduce Microphone Noise"
 msgstr "Smanjite buku mikrofona"
 
@@ -25,12 +30,25 @@ msgstr "Aktivirano!"
 msgid "Disabled!"
 msgstr "Onemogućeno!"
 
+# 
+# #-#-#-#-#  biglinux-noise-reduction-pipewire-bash.pot (biglinux-noise-reduction-pipewire)  #-#-#-#-#
+# 
+# #-#-#-#-#  biglinux-noise-reduction-pipewire-bash.pot (biglinux-noise-reduction-pipewire)  #-#-#-#-#
+# 
 msgid "Remove background noise and sounds that interfere with recordings and online calls."
 msgstr "Uklonite pozadinsku buku i zvukove koji ometaju snimanja i online pozive."
 
+# 
+# #-#-#-#-#  biglinux-noise-reduction-pipewire-bash.pot (biglinux-noise-reduction-pipewire)  #-#-#-#-#
+# 
+# #-#-#-#-#  biglinux-noise-reduction-pipewire-bash.pot (biglinux-noise-reduction-pipewire)  #-#-#-#-#
+# 
 msgid ""
 "The new version of the noise reduction filter applies the feature directly to the selected default "
 "microphone in the system, eliminating the need to choose a virtual microphone."
 msgstr ""
 "Nova verzija filtra za smanjenje buke primjenjuje značajku izravno na odabrani zadani mikrofon u "
 "sustavu, eliminirajući potrebu za odabirom virtualnog mikrofona."
+
+msgid "Enable"
+msgstr "Omogući"

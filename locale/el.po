@@ -16,6 +16,11 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "X-Generator: attranslate\n"
 
+# 
+# #-#-#-#-#  biglinux-noise-reduction-pipewire-bash.pot (biglinux-noise-reduction-pipewire)  #-#-#-#-#
+# 
+# #-#-#-#-#  biglinux-noise-reduction-pipewire-bash.pot (biglinux-noise-reduction-pipewire)  #-#-#-#-#
+# 
 msgid "Reduce Microphone Noise"
 msgstr "Μείωση Θορύβου Μικροφώνου"
 
@@ -25,12 +30,25 @@ msgstr "Ενεργοποιήθηκε!"
 msgid "Disabled!"
 msgstr "Απενεργοποιημένο!"
 
+# 
+# #-#-#-#-#  biglinux-noise-reduction-pipewire-bash.pot (biglinux-noise-reduction-pipewire)  #-#-#-#-#
+# 
+# #-#-#-#-#  biglinux-noise-reduction-pipewire-bash.pot (biglinux-noise-reduction-pipewire)  #-#-#-#-#
+# 
 msgid "Remove background noise and sounds that interfere with recordings and online calls."
 msgstr "Αφαιρέστε θόρυβο φόντου και ήχους που επηρεάζουν τις εγγραφές και τις online κλήσεις."
 
+# 
+# #-#-#-#-#  biglinux-noise-reduction-pipewire-bash.pot (biglinux-noise-reduction-pipewire)  #-#-#-#-#
+# 
+# #-#-#-#-#  biglinux-noise-reduction-pipewire-bash.pot (biglinux-noise-reduction-pipewire)  #-#-#-#-#
+# 
 msgid ""
 "The new version of the noise reduction filter applies the feature directly to the selected default "
 "microphone in the system, eliminating the need to choose a virtual microphone."
 msgstr ""
 "Η νέα έκδοση του φίλτρου μείωσης θορύβου εφαρμόζει το χαρακτηριστικό απευθείας στον προεπιλεγμένο "
 "μικρόφωνο που έχει επιλεγεί στο σύστημα, εξαλείφοντας την ανάγκη επιλογής ενός εικονικού μικροφώνου."
+
+msgid "Enable"
+msgstr "Ενεργοποίηση"
