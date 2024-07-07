@@ -18,6 +18,13 @@ fi
 
 # Check for the first argument to determine the action (start or stop)
 if [ "$1" = "start" ]; then
+
+    # Find and kill the pipewire process
+    pipewirePidFiltered=$(ps -aux | grep '/usr/bin/pipewire -c filter-chain.conf' | awk '{ print $2 }')
+    for pid in $pipewirePidFiltered; do
+        kill $pid
+    done
+
     # Send a notification to indicate activation
     notify-send $"Activated!" --app-name="$mic_name"
 
