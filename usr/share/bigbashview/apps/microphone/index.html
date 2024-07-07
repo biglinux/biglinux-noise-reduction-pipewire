@@ -1,0 +1,197 @@
+<!-- Name of JSON file with translation -->
+<script>const projectName = 'biglinux-noise-reduction-pipewire';</script>
+
+<!-- Include the generic header (CSS and JS) -->
+<?include html /usr/share/bigbashview/framework/html/genericHeader.html?>
+
+<!-- Include window control side decorator -->
+<link href="/usr/share/bigbashview/framework/css/client-side-decorator.css" rel="stylesheet">
+<script src="qrc:///qtwebchannel/qwebchannel.js"></script>
+<script src="/usr/share/bigbashview/framework/js/client-side-decorator.js" defer></script>
+
+<!-- Includes the window control side shell script -->
+<?include bash /usr/share/bigbashview/framework/shell/windowControlSide.sh 2> /dev/null ?>
+
+<style>
+  main > div {
+    display: inline-block;
+    width: 10px;
+    height: 100px;
+    border-radius: 5px;
+    margin: 0 2px;
+    background: #00c3ff;
+    z-index: 1;
+  }
+
+  main:before,
+  main:after {
+    background-color: #00c3ff47;
+    content: "";
+    display: inline-block;
+    height: 2px;
+    position: relative;
+    vertical-align: middle;
+    width: 210px;
+  }
+
+  main:before {
+    right: -150px;
+    margin-left: 0%;
+  }
+
+  main:after {
+    left: -150px;
+    margin-right: 0%;
+  }
+</style>
+</head>
+<body>
+<div id="page" class="drag-area" x-data="noiseControl">
+  <div id="title-bar">
+      <div id="app-left-title" class="row absolute left page-content">
+          <img class="circle mini drag-area" src="/usr/share/icons/hicolor/scalable/apps/biglinux-noise-reduction-pipewire.svg">
+      </div>
+      <div class="center-align absolute center drag-area">
+          <h6 class="small drag-area" stonejs>Reduce Microphone Noise</h6>
+      </div>
+  </div>
+
+  <div id="main" class="page-content-without-left-bar">
+      <main class="center-align margin padding"></main><!-- Start show sound frequencies -->
+      <nav class="center-align">
+        <div class="bold">Enable</div>
+        <label class="switch">
+          <input type="checkbox" x-model="enabled" @change="toggleNoiseReduction">
+          <span></span>
+        </label>
+      </nav>
+      
+      <div class="margin padding" stonejs>Remove background noise and sounds that interfere with recordings and online calls.</div>
+
+      <div class="margin padding" stonejs>The new version of the noise reduction filter applies the feature directly to the selected default microphone in the system, eliminating the need to choose a virtual microphone.</div>
+  </div>
+</div>
+
+<script>
+  document.addEventListener('alpine:init', () => {
+    Alpine.data('noiseControl', () => ({
+      enabled: false,
+      
+      async init() {
+        await this.updateStatus();
+        setInterval(this.updateStatus.bind(this), 3000);
+      },
+      
+      async updateStatus() {
+        const status = await this.checkNoiseReductionStatus();
+        this.enabled = (status === 'enabled');
+      },
+      
+      async checkNoiseReductionStatus() {
+        try {
+          const response = await fetch('actions.sh?status');
+          const text = await response.text();
+          return text.trim();
+        } catch (error) {
+          console.error('Error checking noise reduction status:', error);
+          return 'disable';
+        }
+      },
+      
+      async toggleNoiseReduction() {
+        const action = this.enabled ? 'start' : 'stop';
+        try {
+          await fetch(`actions.sh?${action}`);
+        } catch (error) {
+          console.error(`Error sending ${action} command:`, error);
+        }
+      }
+    }));
+  });
+  
+  class AudioVisualizer {
+    constructor(audioContext, processFrame, processError) {
+      this.audioContext = audioContext;
+      this.processFrame = processFrame;
+      this.connectStream = this.connectStream.bind(this);
+      navigator.mediaDevices.getUserMedia({ audio: true, video: false })
+        .then(this.connectStream)
+        .catch((error) => {
+          if (processError) {
+            processError(error);
+          }
+        });
+    }
+  
+    connectStream(stream) {
+      this.analyser = this.audioContext.createAnalyser();
+      const source = this.audioContext.createMediaStreamSource(stream);
+      source.connect(this.analyser);
+      this.analyser.smoothingTimeConstant = 0.5;
+      this.analyser.fftSize = 32;
+  
+      this.initRenderLoop(this.analyser);
+    }
+  
+    initRenderLoop() {
+      const frequencyData = new Uint8Array(this.analyser.frequencyBinCount);
+      const processFrame = this.processFrame || (() => {});
+  
+      const renderFrame = () => {
+        this.analyser.getByteFrequencyData(frequencyData);
+        processFrame(frequencyData);
+  
+        requestAnimationFrame(renderFrame);
+      };
+      requestAnimationFrame(renderFrame);
+    }
+  }
+  
+  const visualMainElement = document.querySelector('main');
+  const visualValueCount = 16;
+  let visualElements;
+  const createDOMElements = () => {
+    let i;
+    for (i = 0; i < visualValueCount; ++i) {
+      const elm = document.createElement('div');
+      visualMainElement.appendChild(elm);
+    }
+  
+    visualElements = document.querySelectorAll('main div');
+  };
+  createDOMElements();
+  
+  const init = () => {
+    // Creating initial DOM elements
+    const audioContext = new AudioContext();
+    const initDOM = () => {
+      visualMainElement.innerHTML = '';
+      createDOMElements();
+    };
+    initDOM();
+  
+    // Swapping values around for a better visual effect
+    const dataMap = { 0: 15, 1: 10, 2: 8, 3: 9, 4: 6, 5: 5, 6: 2, 7: 1, 8: 0, 9: 4, 10: 3, 11: 7, 12: 11, 13: 12, 14: 13, 15: 14 };
+    const processFrame = (data) => {
+      const values = Object.values(data);
+      let i;
+      for (i = 0; i < visualValueCount; ++i) {
+        const value = values[dataMap[i]] / 255;
+        const elmStyles = visualElements[i].style;
+        elmStyles.transform = `scaleY(${value})`;
+        elmStyles.opacity = Math.max(.25, value);
+      }
+    };
+  
+    const processError = () => {
+      visualMainElement.classList.add('error');
+      visualMainElement.innerText = 'Allow access to your microphone.';
+    };
+  
+    const a = new AudioVisualizer(audioContext, processFrame, processError);
+  };
+  
+  init();
+  </script>
+</body>
+</html>

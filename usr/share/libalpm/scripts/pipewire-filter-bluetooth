@@ -1,0 +1,7 @@
+#!/bin/bash
+
+# Add ["filter.smart.name"] = big.filter-microphone, after line with ["filter.smart"\] = true,
+
+if ! grep -q 'big.filter-microphone' /usr/share/wireplumber/scripts/monitors/bluez.lua; then
+    sed -i '/^\s*\["filter.smart"\] = true,/a\      ["filter.smart.name"] = big.filter-microphone,' /usr/share/wireplumber/scripts/monitors/bluez.lua
+fi

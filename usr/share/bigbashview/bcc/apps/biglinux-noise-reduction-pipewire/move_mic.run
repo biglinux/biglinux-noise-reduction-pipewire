@@ -1,8 +1,0 @@
-#!/bin/bash
-#kdialog --msgbox "move_mic.run"
-#Translation
-export TEXTDOMAINDIR="/usr/share/locale"
-export TEXTDOMAIN=biglinux-noise-reduction-pipewire
-
-pipewire-noise-move-mic
-notify-send $"Configuração aplicada" -a $"Microfone"

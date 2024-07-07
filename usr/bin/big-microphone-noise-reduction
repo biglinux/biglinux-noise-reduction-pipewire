@@ -1,0 +1,6 @@
+#!/usr/bin/env bash
+
+cd /usr/share/bigbashview/apps/microphone/
+
+# Start bigbashview
+bigbashview -s 900x480 -n big-microphone-noise-reduction -p big-microphone-noise-reduction -c transparent -w frameless index.html

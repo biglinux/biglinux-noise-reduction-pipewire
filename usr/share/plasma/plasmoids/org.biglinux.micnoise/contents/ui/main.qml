@@ -12,20 +12,20 @@ import org.kde.plasma.plasma5support as Plasma5Support
 PlasmoidItem {
     id: root
     property string outputText
+    property bool isActive: false
 
     // Constants
     readonly property int defaultInterval: 7000
-    readonly property int toggleInterval: 500
-
+    readonly property int toggleInterval: 1500
 
     // Function to run the command
     function runCommand() {
-        executable.exec('ps -x | grep "/bin/bash /usr/bin/[p]ipewire-noise-remove"')
+        executable.exec('sh -c "test -f ~/.config/pipewire/filter-chain.conf.d/source-rnnoise-smart.conf"')
     }
 
     // Function to toggle the noise reduction
     function toggle() {
-        var command = outputText ? 'stop' : 'start'
+        var command = isActive ? 'stop' : 'start'
         executable.exec('systemctl --user ' + command + ' noise-reduction-pipewire')
         timer.interval = toggleInterval  // Shorten the interval for quick feedback
     }
@@ -36,7 +36,6 @@ PlasmoidItem {
         //return PlasmaCore.Types.ActiveStatus;
         return PlasmaCore.Types.PassiveStatus;
     }
-
 
     Plasma5Support.DataSource {
         id: "executable"
@@ -61,6 +60,7 @@ PlasmoidItem {
         function onExited(sourceName, exitCode, exitStatus, stdout, stderr) {
             Qt.callLater(function() {
                 root.outputText = stdout;
+                root.isActive = (exitCode === 0);
             });
             timer.restart();
         }
@@ -78,11 +78,10 @@ PlasmoidItem {
         }
     }
 
-
     fullRepresentation: PlasmoidItem {
         Kirigami.Icon {
             id: icon
-            source: outputText ? 'big-noise-reduction-on' : 'big-noise-reduction-off'
+            source: isActive ? 'big-noise-reduction-on' : 'big-noise-reduction-off'
             height: Math.min(parent.height, parent.width)
             width: Math.min(parent.height, parent.width)
             anchors.fill: parent
@@ -92,7 +91,5 @@ PlasmoidItem {
             anchors.fill: parent
             onClicked: toggle()
         }
-
     }
-
 }
