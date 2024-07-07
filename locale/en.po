@@ -20,6 +20,8 @@ msgstr ""
 #
 # #-#-#-#-#  biglinux-noise-reduction-pipewire-bash.pot (biglinux-noise-reduction-pipewire)  #-#-#-#-#
 #
+# #-#-#-#-#  biglinux-noise-reduction-pipewire-bash.pot (biglinux-noise-reduction-pipewire)  #-#-#-#-#
+#
 msgid "Reduce Microphone Noise"
 msgstr "Reduce Microphone Noise"
 
@@ -36,6 +38,8 @@ msgstr "Disabled!"
 #
 # #-#-#-#-#  biglinux-noise-reduction-pipewire-bash.pot (biglinux-noise-reduction-pipewire)  #-#-#-#-#
 #
+# #-#-#-#-#  biglinux-noise-reduction-pipewire-bash.pot (biglinux-noise-reduction-pipewire)  #-#-#-#-#
+#
 msgid ""
 "Remove background noise and sounds that interfere with recordings and online "
 "calls."
@@ -43,6 +47,8 @@ msgstr ""
 "Remove background noise and sounds that interfere with recordings and online "
 "calls."
 
+#
+# #-#-#-#-#  biglinux-noise-reduction-pipewire-bash.pot (biglinux-noise-reduction-pipewire)  #-#-#-#-#
 #
 # #-#-#-#-#  biglinux-noise-reduction-pipewire-bash.pot (biglinux-noise-reduction-pipewire)  #-#-#-#-#
 #
@@ -57,6 +63,8 @@ msgstr ""
 "to the selected default microphone in the system, eliminating the need to "
 "choose a virtual microphone."
 
+#
+# #-#-#-#-#  biglinux-noise-reduction-pipewire-bash.pot (biglinux-noise-reduction-pipewire)  #-#-#-#-#
 #
 msgid "Enable"
 msgstr "Enable"
