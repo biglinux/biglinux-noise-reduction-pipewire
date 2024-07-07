@@ -1,7 +1,7 @@
 [Desktop Entry]
 Categories=AudioVideo;
 Exec=big-microphone-noise-reduction
-Icon=big-microphone-noise-reduction
+Icon=biglinux-noise-reduction-pipewire
 Name=Reduce microphone noise
 Name[bg]=Намаляване на шума от микрофона
 Name[cs]=Snižte šum mikrofonu
