@@ -25,7 +25,7 @@ PlasmoidItem {
 
     // Function to toggle the noise reduction
     function toggle() {
-        var command = isActive ? 'stop' : 'start'
+        var command = isActive ? 'stop' : 'restart'
         executable.exec('systemctl --user ' + command + ' noise-reduction-pipewire')
         timer.interval = toggleInterval  // Shorten the interval for quick feedback
     }

@@ -76,6 +76,7 @@ case "$1" in
         ;;
     
     disable-bluetooth-autoswitch-to-headset)
+        mkdir -p "$(dirname "$bluetooth_policy")"
         echo 'wireplumber.settings = {
     bluetooth.autoswitch-to-headset-profile = false
 }' > "$bluetooth_policy"
