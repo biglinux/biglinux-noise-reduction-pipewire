@@ -9,71 +9,100 @@ mic_name=$"Reduce Microphone Noise"
 config_path_old="$HOME/.config/pipewire/filter-chain.conf.d/source-rnnoise.conf"
 config_path="$HOME/.config/pipewire/filter-chain.conf.d/source-rnnoise-smart.conf"
 system_file="/usr/share/pipewire/filter-chain/source-rnnoise-smart.conf"
+bluetooth_policy="$HOME/.config/wireplumber/wireplumber.conf.d/11-bluetooth-policy.conf"
 
-# Update to new version ( 07/07/2024 )
+# Update to new version (07/07/2024)
 if [[ -e "$config_path_old" ]]; then
     rm -f "$config_path_old"
-    cp "$system_file"
+    cp "$system_file" "$config_path"
 fi
 
-# Check for the first argument to determine the action (start or stop)
-if [ "$1" = "start" ]; then
+# Check for the first argument to determine the action (start, stop, status, etc.)
+case "$1" in
+    start)
+        # Find and kill the pipewire process
+        pipewirePidFiltered=$(ps -aux | grep '/usr/bin/pipewire -c filter-chain.conf' | awk '{ print $2 }')
+        for pid in $pipewirePidFiltered; do
+            kill $pid
+        done
 
-    # Find and kill the pipewire process
-    pipewirePidFiltered=$(ps -aux | grep '/usr/bin/pipewire -c filter-chain.conf' | awk '{ print $2 }')
-    for pid in $pipewirePidFiltered; do
-        kill $pid
-    done
+        # Send a notification to indicate activation
+        notify-send $"Activated!" --app-name="$mic_name"
 
-    # Send a notification to indicate activation
-    notify-send $"Activated!" --app-name="$mic_name"
+        # Check if the configuration file exists
+        if [ ! -e "$config_path" ]; then
+            # Create the directory if it doesn't exist
+            mkdir -p "$(dirname "$config_path")"
 
-    # Check if the configuration file exists
-    if [ ! -e "$config_path" ]; then
-        # Create the directory if it doesn't exist
-        mkdir -p ~/.config/pipewire/filter-chain.conf.d
+            # Copy the configuration file
+            cp -f "$system_file" "$config_path"
+        fi
 
-        # Copy the configuration file
-        cp -f "$system_file" "$config_path"
-    fi
+        # Start the noise reduction services
+        exec /usr/bin/pipewire -c filter-chain.conf
+        ;;
+    
+    stop)
+        # Send a notification to indicate deactivation
+        notify-send $"Disabled!" --app-name="$mic_name"
 
-    # Start the noise reduction services
-    exec /usr/bin/pipewire -c filter-chain.conf
+        # Remove the configuration file
+        rm -f "$config_path"
 
-elif [ "$1" = "stop" ]; then
-    # Send a notification to indicate deactivation
-    notify-send $"Disabled!" --app-name="$mic_name"
-
-    # Remove the configuration file
-    rm -f "$config_path"
-
-    # Find and kill the pipewire process
-    pipewirePidFiltered=$(ps -aux | grep '/usr/bin/pipewire -c filter-chain.conf' | awk '{ print $2 }')
-    for pid in $pipewirePidFiltered; do
-        kill $pid
-    done
-
-elif [ "$1" = "status" ]; then
-    # Check if the configuration file exists
-    if [ -e "$config_path" ]; then
-        echo "enabled"
-        exit 0
-    else
-        echo "disabled"
-        exit 1
-    fi
-elif [ "$1" = "enable-bluetooth-autoswitch-to-headset" ]; then
-    mkdir -p ~/.config/wireplumber/wireplumber.conf.d/
-    echo 'wireplumber.settings = {
+        # Find and kill the pipewire process
+        pipewirePidFiltered=$(ps -aux | grep '/usr/bin/pipewire -c filter-chain.conf' | awk '{ print $2 }')
+        for pid in $pipewirePidFiltered; do
+            kill $pid
+        done
+        ;;
+    
+    status)
+        # Check if the configuration file exists
+        if [ -e "$config_path" ]; then
+            echo "enabled"
+            exit 0
+        else
+            echo "disabled"
+            exit 1
+        fi
+        ;;
+    
+    enable-bluetooth-autoswitch-to-headset)
+        mkdir -p "$(dirname "$bluetooth_policy")"
+        echo 'wireplumber.settings = {
+    bluetooth.autoswitch-to-headset-profile = true
+}' > "$bluetooth_policy"
+        systemctl --user restart wireplumber
+        ;;
+    
+    disable-bluetooth-autoswitch-to-headset)
+        echo 'wireplumber.settings = {
     bluetooth.autoswitch-to-headset-profile = false
-}' > ~/.config/wireplumber/wireplumber.conf.d/11-bluetooth-policy.conf
-    systemctl --user restart wireplumber
-
-elif [ "$1" = "disable-bluetooth-autoswitch-to-headset" ]; then
-    rm -f ~/.config/wireplumber/wireplumber.conf.d/11-bluetooth-policy.conf
-    systemctl --user restart wireplumber
-
-else
-    # Print usage information if no valid argument is provided
-    echo "Usage: $0 {start|stop|status|enable-bluetooth-autoswitch-to-headset|disable-bluetooth-autoswitch-to-headset}"
-fi
+}' > "$bluetooth_policy"
+        systemctl --user restart wireplumber
+        ;;
+    
+    status-bluetooth)
+        # Check if the configuration file exists
+        if [[ -e "$bluetooth_policy" ]] && grep -q 'bluetooth.autoswitch-to-headset-profile = false' "$bluetooth_policy"; then
+            echo "disabled"
+            exit 1
+        else
+            echo "enabled"
+            exit 0
+        fi
+        ;;
+    
+    *)
+        # Print usage information if no valid argument is provided
+        echo "Usage: $0 {start|stop|status|enable-bluetooth-autoswitch-to-headset|disable-bluetooth-autoswitch-to-headset|status-bluetooth}"
+        echo ""
+        echo "Commands:"
+        echo "  start                             Start the noise reduction services"
+        echo "  stop                              Stop the noise reduction services"
+        echo "  status                            Check if the noise reduction is enabled or disabled"
+        echo "  enable-bluetooth-autoswitch-to-headset  Enable automatic switching to Bluetooth headset profile"
+        echo "  disable-bluetooth-autoswitch-to-headset Disable automatic switching to Bluetooth headset profile"
+        echo "  status-bluetooth                  Check the status of the Bluetooth headset auto-switch"
+        ;;
+esac
