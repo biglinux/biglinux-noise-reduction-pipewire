@@ -50,5 +50,28 @@ msgstr ""
 "Den nya versionen av brusreduceringsfiltret tillämpar funktionen direkt på den valda "
 "standardmikrofonen i systemet, vilket eliminerar behovet av att välja en virtuell mikrofon."
 
+# 
+# #-#-#-#-#  biglinux-noise-reduction-pipewire-bash.pot (biglinux-noise-reduction-pipewire)  #-#-#-#-#
+# 
+# #-#-#-#-#  biglinux-noise-reduction-pipewire-bash.pot (biglinux-noise-reduction-pipewire)  #-#-#-#-#
+# 
+# #-#-#-#-#  biglinux-noise-reduction-pipewire-bash.pot (biglinux-noise-reduction-pipewire)  #-#-#-#-#
+# 
 msgid "Enable"
 msgstr "Aktivera"
+
+msgid "Noise Reduction"
+msgstr "Ljudreducering"
+
+msgid "Bluetooth Autoswitch"
+msgstr "Bluetooth Autoswitch"
+
+msgid ""
+"When using Bluetooth headphones, it is possible to automatically activate the Bluetooth microphone "
+"when requested."
+msgstr ""
+"När du använder Bluetooth-hörlurar är det möjligt att automatiskt aktivera Bluetooth-mikrofonen vid "
+"begäran."
+
+msgid "Audio quality may decrease when using the Bluetooth microphone."
+msgstr "Ljudkvaliteten kan försämras vid användning av Bluetooth-mikrofonen."

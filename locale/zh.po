@@ -48,5 +48,26 @@ msgid ""
 "microphone in the system, eliminating the need to choose a virtual microphone."
 msgstr "新版本的降噪滤波器直接应用功能于系统中选择的默认麦克风，无需选择虚拟麦克风。"
 
+# 
+# #-#-#-#-#  biglinux-noise-reduction-pipewire-bash.pot (biglinux-noise-reduction-pipewire)  #-#-#-#-#
+# 
+# #-#-#-#-#  biglinux-noise-reduction-pipewire-bash.pot (biglinux-noise-reduction-pipewire)  #-#-#-#-#
+# 
+# #-#-#-#-#  biglinux-noise-reduction-pipewire-bash.pot (biglinux-noise-reduction-pipewire)  #-#-#-#-#
+# 
 msgid "Enable"
 msgstr "启用"
+
+msgid "Noise Reduction"
+msgstr "降噪"
+
+msgid "Bluetooth Autoswitch"
+msgstr "蓝牙自动切换"
+
+msgid ""
+"When using Bluetooth headphones, it is possible to automatically activate the Bluetooth microphone "
+"when requested."
+msgstr "在使用蓝牙耳机时，可以在需要时自动激活蓝牙麦克风。"
+
+msgid "Audio quality may decrease when using the Bluetooth microphone."
+msgstr "使用蓝牙麦克风时可能会降低音频质量。"

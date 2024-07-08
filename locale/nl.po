@@ -51,5 +51,28 @@ msgstr ""
 "geselecteerde standaardmicrofoon in het systeem, waardoor het niet nodig is om een virtuele "
 "microfoon te kiezen."
 
+# 
+# #-#-#-#-#  biglinux-noise-reduction-pipewire-bash.pot (biglinux-noise-reduction-pipewire)  #-#-#-#-#
+# 
+# #-#-#-#-#  biglinux-noise-reduction-pipewire-bash.pot (biglinux-noise-reduction-pipewire)  #-#-#-#-#
+# 
+# #-#-#-#-#  biglinux-noise-reduction-pipewire-bash.pot (biglinux-noise-reduction-pipewire)  #-#-#-#-#
+# 
 msgid "Enable"
 msgstr "Inschakelen"
+
+msgid "Noise Reduction"
+msgstr "Geluidsvermindering"
+
+msgid "Bluetooth Autoswitch"
+msgstr "Bluetooth Automatisch overschakelen"
+
+msgid ""
+"When using Bluetooth headphones, it is possible to automatically activate the Bluetooth microphone "
+"when requested."
+msgstr ""
+"Bij het gebruik van Bluetooth-hoofdtelefoons is het mogelijk om de Bluetooth-microfoon automatisch "
+"te activeren wanneer dat wordt gevraagd."
+
+msgid "Audio quality may decrease when using the Bluetooth microphone."
+msgstr "De audiokwaliteit kan afnemen bij gebruik van de Bluetooth-microfoon."

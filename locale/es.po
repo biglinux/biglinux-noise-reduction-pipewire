@@ -50,5 +50,28 @@ msgstr ""
 "La nueva versión del filtro de reducción de ruido aplica la función directamente al micrófono "
 "predeterminado seleccionado en el sistema, eliminando la necesidad de elegir un micrófono virtual."
 
+# 
+# #-#-#-#-#  biglinux-noise-reduction-pipewire-bash.pot (biglinux-noise-reduction-pipewire)  #-#-#-#-#
+# 
+# #-#-#-#-#  biglinux-noise-reduction-pipewire-bash.pot (biglinux-noise-reduction-pipewire)  #-#-#-#-#
+# 
+# #-#-#-#-#  biglinux-noise-reduction-pipewire-bash.pot (biglinux-noise-reduction-pipewire)  #-#-#-#-#
+# 
 msgid "Enable"
 msgstr "habilitar"
+
+msgid "Noise Reduction"
+msgstr "Reducción de ruido"
+
+msgid "Bluetooth Autoswitch"
+msgstr "Bluetooth Autoswitch"
+
+msgid ""
+"When using Bluetooth headphones, it is possible to automatically activate the Bluetooth microphone "
+"when requested."
+msgstr ""
+"Al usar auriculares Bluetooth, es posible activar automáticamente el micrófono Bluetooth cuando se "
+"solicite."
+
+msgid "Audio quality may decrease when using the Bluetooth microphone."
+msgstr "La calidad del audio puede disminuir al usar el micrófono Bluetooth."

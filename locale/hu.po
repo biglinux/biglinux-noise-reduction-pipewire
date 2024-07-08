@@ -50,5 +50,28 @@ msgstr ""
 "Az új zajcsökkentő szűrő verziója közvetlenül alkalmazza a funkciót a kiválasztott alapértelmezett "
 "mikrofonra a rendszerben, megszüntetve a virtuális mikrofon kiválasztásának szükségességét."
 
+# 
+# #-#-#-#-#  biglinux-noise-reduction-pipewire-bash.pot (biglinux-noise-reduction-pipewire)  #-#-#-#-#
+# 
+# #-#-#-#-#  biglinux-noise-reduction-pipewire-bash.pot (biglinux-noise-reduction-pipewire)  #-#-#-#-#
+# 
+# #-#-#-#-#  biglinux-noise-reduction-pipewire-bash.pot (biglinux-noise-reduction-pipewire)  #-#-#-#-#
+# 
 msgid "Enable"
 msgstr "Engedélyezés"
+
+msgid "Noise Reduction"
+msgstr "Zajcsökkentés"
+
+msgid "Bluetooth Autoswitch"
+msgstr "Bluetooth Automatikus Váltás"
+
+msgid ""
+"When using Bluetooth headphones, it is possible to automatically activate the Bluetooth microphone "
+"when requested."
+msgstr ""
+"Amikor Bluetooth fejhallgatót használ, lehetséges automatikusan aktiválni a Bluetooth mikrofont "
+"kérésre."
+
+msgid "Audio quality may decrease when using the Bluetooth microphone."
+msgstr "Az audió minősége csökkenhet, ha a Bluetooth mikrofont használja."

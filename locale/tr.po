@@ -50,5 +50,28 @@ msgstr ""
 "Ses gürültüsü azaltma filtresinin yeni sürümü, özelliği doğrudan sistemde seçilen varsayılan "
 "mikrofona uygular ve sanal bir mikrofon seçme ihtiyacını ortadan kaldırır."
 
+# 
+# #-#-#-#-#  biglinux-noise-reduction-pipewire-bash.pot (biglinux-noise-reduction-pipewire)  #-#-#-#-#
+# 
+# #-#-#-#-#  biglinux-noise-reduction-pipewire-bash.pot (biglinux-noise-reduction-pipewire)  #-#-#-#-#
+# 
+# #-#-#-#-#  biglinux-noise-reduction-pipewire-bash.pot (biglinux-noise-reduction-pipewire)  #-#-#-#-#
+# 
 msgid "Enable"
 msgstr "Etkinleştir"
+
+msgid "Noise Reduction"
+msgstr "Gürültü Azaltma"
+
+msgid "Bluetooth Autoswitch"
+msgstr "Bluetooth Otomatik Değiştirme"
+
+msgid ""
+"When using Bluetooth headphones, it is possible to automatically activate the Bluetooth microphone "
+"when requested."
+msgstr ""
+"Bluetooth kulaklıkları kullanırken, istendiğinde Bluetooth mikrofonunu otomatik olarak "
+"etkinleştirmek mümkündür."
+
+msgid "Audio quality may decrease when using the Bluetooth microphone."
+msgstr "Bluetooth mikrofonu kullanırken ses kalitesi düşebilir."

@@ -50,5 +50,26 @@ msgstr ""
 "Nová verzia filtra na redukciu hluku aplikuje funkciu priamo na vybraný predvolený mikrofón v "
 "systéme, eliminujúc potrebu výberu virtuálneho mikrofónu."
 
+# 
+# #-#-#-#-#  biglinux-noise-reduction-pipewire-bash.pot (biglinux-noise-reduction-pipewire)  #-#-#-#-#
+# 
+# #-#-#-#-#  biglinux-noise-reduction-pipewire-bash.pot (biglinux-noise-reduction-pipewire)  #-#-#-#-#
+# 
+# #-#-#-#-#  biglinux-noise-reduction-pipewire-bash.pot (biglinux-noise-reduction-pipewire)  #-#-#-#-#
+# 
 msgid "Enable"
 msgstr "Povoliť"
+
+msgid "Noise Reduction"
+msgstr "Redukcia šumu"
+
+msgid "Bluetooth Autoswitch"
+msgstr "Bluetooth Automatické prepínanie"
+
+msgid ""
+"When using Bluetooth headphones, it is possible to automatically activate the Bluetooth microphone "
+"when requested."
+msgstr "Pri používaní Bluetooth slúchadiel je možné automaticky aktivovať Bluetooth mikrofón po požiadavke."
+
+msgid "Audio quality may decrease when using the Bluetooth microphone."
+msgstr "Kvalita zvuku sa môže znížiť pri používaní Bluetooth mikrofónu."

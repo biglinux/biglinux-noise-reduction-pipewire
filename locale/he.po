@@ -50,5 +50,26 @@ msgstr ""
 "הגרסה החדשה של מסנן ההפחתת רעש מחילה את התכונה ישירות למיקרופון הברירת מחדל שנבחר במערכת, מה שמסיר "
 "את הצורך לבחור מיקרופון וירטואלי."
 
+# 
+# #-#-#-#-#  biglinux-noise-reduction-pipewire-bash.pot (biglinux-noise-reduction-pipewire)  #-#-#-#-#
+# 
+# #-#-#-#-#  biglinux-noise-reduction-pipewire-bash.pot (biglinux-noise-reduction-pipewire)  #-#-#-#-#
+# 
+# #-#-#-#-#  biglinux-noise-reduction-pipewire-bash.pot (biglinux-noise-reduction-pipewire)  #-#-#-#-#
+# 
 msgid "Enable"
 msgstr "הפעל"
+
+msgid "Noise Reduction"
+msgstr "הפחתת רעש"
+
+msgid "Bluetooth Autoswitch"
+msgstr "Bluetooth Autoswitch"
+
+msgid ""
+"When using Bluetooth headphones, it is possible to automatically activate the Bluetooth microphone "
+"when requested."
+msgstr "כאשר משתמשים באוזניות Bluetooth, ניתן להפעיל באופן אוטומטי את מיקרופון הבלוטות כאשר נדרש."
+
+msgid "Audio quality may decrease when using the Bluetooth microphone."
+msgstr "איכות השמע עשויה להתרדת בשימוש במיקרופון בלוטות' פתח."

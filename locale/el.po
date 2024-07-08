@@ -50,5 +50,28 @@ msgstr ""
 "Η νέα έκδοση του φίλτρου μείωσης θορύβου εφαρμόζει το χαρακτηριστικό απευθείας στον προεπιλεγμένο "
 "μικρόφωνο που έχει επιλεγεί στο σύστημα, εξαλείφοντας την ανάγκη επιλογής ενός εικονικού μικροφώνου."
 
+# 
+# #-#-#-#-#  biglinux-noise-reduction-pipewire-bash.pot (biglinux-noise-reduction-pipewire)  #-#-#-#-#
+# 
+# #-#-#-#-#  biglinux-noise-reduction-pipewire-bash.pot (biglinux-noise-reduction-pipewire)  #-#-#-#-#
+# 
+# #-#-#-#-#  biglinux-noise-reduction-pipewire-bash.pot (biglinux-noise-reduction-pipewire)  #-#-#-#-#
+# 
 msgid "Enable"
 msgstr "Ενεργοποίηση"
+
+msgid "Noise Reduction"
+msgstr "Μείωση Θορύβου"
+
+msgid "Bluetooth Autoswitch"
+msgstr "Αυτόματη εναλλαγή Bluetooth"
+
+msgid ""
+"When using Bluetooth headphones, it is possible to automatically activate the Bluetooth microphone "
+"when requested."
+msgstr ""
+"Κατά τη χρήση ακουστικών Bluetooth, είναι δυνατή η αυτόματη ενεργοποίηση του μικροφώνου Bluetooth "
+"όταν ζητηθεί."
+
+msgid "Audio quality may decrease when using the Bluetooth microphone."
+msgstr "Η ποιότητα ήχου μπορεί να μειωθεί κατά τη χρήση του μικροφώνου Bluetooth."

@@ -48,5 +48,26 @@ msgid ""
 "microphone in the system, eliminating the need to choose a virtual microphone."
 msgstr "시스템에서 선택한 기본 마이크로폰에 노이즈 감소 필터의 새 버전이 기능을 직접 적용하여 가상 마이크로폰을 선택할 필요가 없어졌습니다."
 
+# 
+# #-#-#-#-#  biglinux-noise-reduction-pipewire-bash.pot (biglinux-noise-reduction-pipewire)  #-#-#-#-#
+# 
+# #-#-#-#-#  biglinux-noise-reduction-pipewire-bash.pot (biglinux-noise-reduction-pipewire)  #-#-#-#-#
+# 
+# #-#-#-#-#  biglinux-noise-reduction-pipewire-bash.pot (biglinux-noise-reduction-pipewire)  #-#-#-#-#
+# 
 msgid "Enable"
 msgstr "활성화"
+
+msgid "Noise Reduction"
+msgstr "소음 감소"
+
+msgid "Bluetooth Autoswitch"
+msgstr "블루투스 자동 전환"
+
+msgid ""
+"When using Bluetooth headphones, it is possible to automatically activate the Bluetooth microphone "
+"when requested."
+msgstr "Bluetooth 헤드폰을 사용할 때 요청 시 Bluetooth 마이크를 자동으로 활성화할 수 있습니다."
+
+msgid "Audio quality may decrease when using the Bluetooth microphone."
+msgstr "블루투스 마이크를 사용할 때 오디오 품질이 감소할 수 있습니다."

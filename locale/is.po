@@ -52,5 +52,28 @@ msgstr ""
 "Versi baru filter pengurangan kebisingan menerapkan fitur langsung ke mikrofon default yang dipilih "
 "dalam sistem, menghilangkan kebutuhan untuk memilih mikrofon virtual."
 
+# 
+# #-#-#-#-#  biglinux-noise-reduction-pipewire-bash.pot (biglinux-noise-reduction-pipewire)  #-#-#-#-#
+# 
+# #-#-#-#-#  biglinux-noise-reduction-pipewire-bash.pot (biglinux-noise-reduction-pipewire)  #-#-#-#-#
+# 
+# #-#-#-#-#  biglinux-noise-reduction-pipewire-bash.pot (biglinux-noise-reduction-pipewire)  #-#-#-#-#
+# 
 msgid "Enable"
 msgstr "Aktifkan"
+
+msgid "Noise Reduction"
+msgstr "Pengurangan Kebisingan"
+
+msgid "Bluetooth Autoswitch"
+msgstr "Bluetooth Autoswitch"
+
+msgid ""
+"When using Bluetooth headphones, it is possible to automatically activate the Bluetooth microphone "
+"when requested."
+msgstr ""
+"Ketika menggunakan headphone Bluetooth, memungkinkan untuk secara otomatis mengaktifkan mikrofon "
+"Bluetooth saat diminta."
+
+msgid "Audio quality may decrease when using the Bluetooth microphone."
+msgstr "Kualitas audio mungkin menurun saat menggunakan mikrofon Bluetooth."

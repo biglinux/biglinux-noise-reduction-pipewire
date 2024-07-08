@@ -50,5 +50,28 @@ msgstr ""
 "Нова версія фільтра шумозниження застосовує функцію безпосередньо до вибраного типового мікрофона в "
 "системі, усуваючи потребу у виборі віртуального мікрофона."
 
+# 
+# #-#-#-#-#  biglinux-noise-reduction-pipewire-bash.pot (biglinux-noise-reduction-pipewire)  #-#-#-#-#
+# 
+# #-#-#-#-#  biglinux-noise-reduction-pipewire-bash.pot (biglinux-noise-reduction-pipewire)  #-#-#-#-#
+# 
+# #-#-#-#-#  biglinux-noise-reduction-pipewire-bash.pot (biglinux-noise-reduction-pipewire)  #-#-#-#-#
+# 
 msgid "Enable"
 msgstr "Увімкнути"
+
+msgid "Noise Reduction"
+msgstr "Зменшення шуму"
+
+msgid "Bluetooth Autoswitch"
+msgstr "Bluetooth Автоперемикач"
+
+msgid ""
+"When using Bluetooth headphones, it is possible to automatically activate the Bluetooth microphone "
+"when requested."
+msgstr ""
+"Під час використання бездротових навушників Bluetooth можливо автоматично активувати Bluetooth "
+"мікрофон за запитом."
+
+msgid "Audio quality may decrease when using the Bluetooth microphone."
+msgstr "Якість звуку може знизитися при використанні Bluetooth мікрофону."
