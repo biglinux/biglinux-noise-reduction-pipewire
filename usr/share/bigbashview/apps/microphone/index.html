@@ -46,15 +46,22 @@
 </style>
 </head>
 <body>
-<div id="page" class="drag-area" x-data="noiseControl">
-  <div id="title-bar">
-      <div id="app-left-title" class="row absolute left page-content">
-          <img class="circle mini drag-area" src="/usr/share/icons/hicolor/scalable/apps/biglinux-noise-reduction-pipewire.svg">
-      </div>
-      <div class="center-align absolute center drag-area">
-          <h6 class="small drag-area" stonejs>Reduce Microphone Noise</h6>
-      </div>
-  </div>
+
+
+  <!-- Using Client Side Decoration use body transparent to make shadow, and page work like real body -->
+  <div id="page" class="drag-area" x-data="noiseControl">
+    <!-- Any component with drag-area class is used to drag and move window -->
+    <div id="title-bar" class="drag-area row">
+
+        <div id="title-auto-change-side" class="row drag-area">
+            <img class="circle mini drag-area" src="/usr/share/icons/hicolor/scalable/apps/biglinux-noise-reduction-pipewire.svg">
+          </div>
+          <div class="row drag-area center absolute">
+            <h6 class="small drag-area" stonejs>Reduce Microphone Noise</h6>
+          </div>
+    </div>
+
+
 
   <div id="main" class="page-content-without-left-bar">
       <main class="center-align"></main><!-- Start show sound frequencies -->
