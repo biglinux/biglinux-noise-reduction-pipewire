@@ -26,9 +26,6 @@ case "$1" in
             kill $pid
         done
 
-        # Send a notification to indicate activation
-        notify-send $"Activated!" --app-name="$mic_name"
-
         # Check if the configuration file exists
         if [ ! -e "$config_path" ]; then
             # Create the directory if it doesn't exist
@@ -39,7 +36,12 @@ case "$1" in
         fi
 
         # Start the noise reduction services
-        exec /usr/bin/pipewire -c filter-chain.conf
+        /usr/bin/pipewire -c filter-chain.conf &
+        sleep 1
+        pactl set-source-mute $(pactl list sources short | grep -o 'output.filter-chain[[:alnum:]_-]*') 0
+        sleep 3
+        pactl set-source-mute $(pactl list sources short | grep -o 'output.filter-chain[[:alnum:]_-]*') 0
+        wait
         ;;
     
     stop)

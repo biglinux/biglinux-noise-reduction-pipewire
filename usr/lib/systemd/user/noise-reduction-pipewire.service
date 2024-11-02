@@ -15,7 +15,7 @@ BindsTo=pipewire.service
 ExecStart=/usr/bin/pipewire-noise-remove start
 
 # Command to execute after the service stops
-ExecStopPost=/usr/bin/pipewire-noise-remove stop
+ExecStop=/usr/bin/pipewire-noise-remove stop
 
 # Service type: simple (foreground service)
 Type=simple
