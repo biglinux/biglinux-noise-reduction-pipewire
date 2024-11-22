@@ -39,9 +39,19 @@ case "$1" in
         /usr/bin/pipewire -c filter-chain.conf &
         sleep 1
         pactl set-source-mute $(pactl list sources short | grep -o 'output.filter-chain[[:alnum:]_-]*') 0
+        pactl set-source-volume $(pactl list sources short | grep -o 'output.filter-chain[[:alnum:]_-]*') 100%
         sleep 3
         pactl set-source-mute $(pactl list sources short | grep -o 'output.filter-chain[[:alnum:]_-]*') 0
+        pactl set-source-volume $(pactl list sources short | grep -o 'output.filter-chain[[:alnum:]_-]*') 100%
         wait
+
+        # If need uncomment to use alternative way to detect device name
+        # See all audio configuration in json format and filter with jq and save device path in variable
+        #Filter_Microphone_Device=$(pw-dump | jq -r '.[].info.props |
+        #select(."port.alias" == "Noise Canceling Microphone:capture_1") |
+        #."object.path" |
+        #split(":")[0]')
+
         ;;
     
     stop)
