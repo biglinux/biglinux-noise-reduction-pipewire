@@ -7,7 +7,12 @@ arch=('any')
 license=('GPL')
 url="https://github.com/biglinux/biglinux-noise-reduction-pipewire"
 pkgdesc="Interface to enable or disable microphone noise reduction, using https://github.com/werman/noise-suppression-for-voice"
-depends=('bigbashview' 'noise-suppression-for-voice' 'pipewire')
+depends=('bigbashview' 'noise-suppression-for-voice' 'pipewire' 'swh-plugins')
+# This not provide a real ladspa host, but pipewire provides
+provides=(
+  ladspa-host
+)
+
 source=("git+https://github.com/biglinux/biglinux-noise-reduction-pipewire.git")
 md5sums=(SKIP)
 
