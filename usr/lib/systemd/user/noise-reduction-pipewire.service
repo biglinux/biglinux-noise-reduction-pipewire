@@ -11,6 +11,9 @@ After=pipewire.service
 BindsTo=pipewire.service
 
 [Service]
+# Better priority
+Nice=-11
+
 # Command to execute after the service starts
 ExecStart=/usr/bin/pipewire-noise-remove start
 
