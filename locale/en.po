@@ -66,6 +66,8 @@ msgstr ""
 #
 # #-#-#-#-#  biglinux-noise-reduction-pipewire-bash.pot (biglinux-noise-reduction-pipewire)  #-#-#-#-#
 #
+# #-#-#-#-#  biglinux-noise-reduction-pipewire-bash.pot (biglinux-noise-reduction-pipewire)  #-#-#-#-#
+#
 msgid "Reduce Microphone Noise"
 msgstr "Reduce Microphone Noise"
 
@@ -77,6 +79,8 @@ msgstr "Activated!"
 msgid "Disabled!"
 msgstr "Disabled!"
 
+#
+# #-#-#-#-#  biglinux-noise-reduction-pipewire-bash.pot (biglinux-noise-reduction-pipewire)  #-#-#-#-#
 #
 # #-#-#-#-#  biglinux-noise-reduction-pipewire-bash.pot (biglinux-noise-reduction-pipewire)  #-#-#-#-#
 #
@@ -288,6 +292,8 @@ msgstr "Bluetooth Autoswitch"
 #
 # #-#-#-#-#  biglinux-noise-reduction-pipewire-bash.pot (biglinux-noise-reduction-pipewire)  #-#-#-#-#
 #
+# #-#-#-#-#  biglinux-noise-reduction-pipewire-bash.pot (biglinux-noise-reduction-pipewire)  #-#-#-#-#
+#
 msgid ""
 "When using Bluetooth headphones, it is possible to automatically activate "
 "the Bluetooth microphone when requested."
@@ -334,5 +340,23 @@ msgstr ""
 #
 # #-#-#-#-#  biglinux-noise-reduction-pipewire-bash.pot (biglinux-noise-reduction-pipewire)  #-#-#-#-#
 #
+# #-#-#-#-#  biglinux-noise-reduction-pipewire-bash.pot (biglinux-noise-reduction-pipewire)  #-#-#-#-#
+#
 msgid "Audio quality may decrease when using the Bluetooth microphone."
 msgstr "Audio quality may decrease when using the Bluetooth microphone."
+
+#
+msgid "<i>mic</i> Sound Waves"
+msgstr "<i>mic</i> Sound Waves"
+
+#
+msgid "<i>settings</i> Config"
+msgstr "<i>settings</i> Config"
+
+#
+msgid "<i>graphic_eq</i> Noise Reduction"
+msgstr "<i>graphic_eq</i> Noise Reduction"
+
+#
+msgid "<i>bluetooth</i> Bluetooth Autoswitch"
+msgstr "<i>bluetooth</i> Bluetooth Autoswitch"
