@@ -1,238 +1,268 @@
-<!-- Name of JSON file with translation -->
-<script>const projectName = 'biglinux-noise-reduction-pipewire';</script>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <!-- Name of JSON file with translation -->
+  <script>const projectName = 'biglinux-noise-reduction-pipewire';</script>
 
-<!-- Include the generic header (CSS and JS) -->
-<?include html /usr/share/bigbashview/framework/html/genericHeader.html?>
+  <!-- Include the generic header (CSS and JS) -->
+  <?include html /usr/share/bigbashview/framework/html/genericHeader.html?>
 
-<!-- Include window control side decorator -->
-<link href="/usr/share/bigbashview/framework/css/client-side-decorator.css" rel="stylesheet">
-<script src="qrc:///qtwebchannel/qwebchannel.js"></script>
-<script src="/usr/share/bigbashview/framework/js/client-side-decorator.js" defer></script>
+  <!-- Include window control side decorator -->
+  <link href="/usr/share/bigbashview/framework/css/client-side-decorator.css" rel="stylesheet">
+  <script src="qrc:///qtwebchannel/qwebchannel.js"></script>
+  <script src="/usr/share/bigbashview/framework/js/client-side-decorator.js" defer></script>
 
-<!-- Includes the window control side shell script -->
-<?include bash /usr/share/bigbashview/framework/shell/windowControlSide.sh 2> /dev/null ?>
+  <!-- Includes the window control side shell script -->
+  <?include bash /usr/share/bigbashview/framework/shell/windowControlSide.sh 2> /dev/null ?>
 
-<style>
-  main > div {
-    display: inline-block;
-    width: 10px;
-    height: 100px;
-    border-radius: 5px;
-    margin: 0 2px;
-    background: #00c3ff;
-    z-index: 1;
-  }
+  <!-- Inclua o Alpine.js -->
+  <script src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js" defer></script>
 
-  main:before,
-  main:after {
-    background-color: #00c3ff47;
-    content: "";
-    display: inline-block;
-    height: 2px;
-    position: relative;
-    vertical-align: middle;
-    width: 210px;
-  }
+  <style>
+    main > div {
+      display: inline-block;
+      width: 10px;
+      height: 100px;
+      border-radius: 15px;
+      margin: 0 2px;
+      /*background: #00c3ff;*/
+      background: linear-gradient(180deg, #00c3ff, #00c3ff47);      
+      z-index: 1;
+    }
 
-  main:before {
-    right: -150px;
-    margin-left: 0%;
-  }
+    main:before,
+    main:after {
+      background-color: #00c3ff47;
+      content: "";
+      display: inline-block;
+      height: 1px;
+      position: relative;
+      vertical-align: middle;
+      width: 120px;
+    }
 
-  main:after {
-    left: -150px;
-    margin-right: 0%;
-  }
-</style>
+    main:before {
+      right: -112px;
+      margin-left: 0%;
+    }
+
+    main:after {
+      left: -112px;
+      margin-right: 0%;
+    }
+
+    .field {
+      background: transparent;
+    }
+  </style>
 </head>
 <body>
-
-
   <!-- Using Client Side Decoration use body transparent to make shadow, and page work like real body -->
   <div id="page" class="drag-area" x-data="noiseControl">
     <!-- Any component with drag-area class is used to drag and move window -->
     <div id="title-bar" class="drag-area row">
-
-        <div id="title-auto-change-side" class="row drag-area">
-            <img class="circle mini drag-area" src="/usr/share/icons/hicolor/scalable/apps/biglinux-noise-reduction-pipewire.svg">
-          </div>
-          <div class="row drag-area center absolute">
-            <h6 class="small drag-area" stonejs>Reduce Microphone Noise</h6>
-          </div>
-    </div>
-
-  <div id="main" class="page-content-without-left-bar">
-      <main class="center-align"></main><!-- Start show sound frequencies -->
-      <nav class="center-align">
-        <div class="bold right-margin" stonejs>Noise Reduction</div>
-        <label class="switch left-margin">
-          <input type="checkbox" x-model="enabled" @change="toggleNoiseReduction">
-          <span></span>
-        </label>
-      </nav>
-      <div class="padding" stonejs>Remove background noise and sounds that interfere with recordings and online calls.</div>
-      <br>
-      <br>
-      <nav class="center-align">
-        <div class="bold right-margin" stonejs>Bluetooth Autoswitch</div>
-        <label class="switch left-margin">
-          <input type="checkbox" x-model="bluetoothEnabled" @change="toggleBluetoothAutoswitch">
-          <span></span>
-        </label>
-      </nav>
-      <div class="padding">
-        <p class="left" stonejs>When using Bluetooth headphones, it is possible to automatically activate the Bluetooth microphone when requested.</p>
-        <p class="left" stonejs>Audio quality may decrease when using the Bluetooth microphone.</p>
+      <div id="title-auto-change-side" class="row drag-area">
+        <img class="circle mini drag-area" src="/usr/share/icons/hicolor/scalable/apps/biglinux-noise-reduction-pipewire.svg">
       </div>
+      <div class="row drag-area center absolute">
+        <h6 class="small drag-area" stonejs>Reduce Microphone Noise</h6>
+      </div>
+    </div>
+    <div id="main" class="page-content-without-left-bar padding">
+      <fieldset>
+        <legend stonejs><i>mic</i> Sound Waves</legend>
+        <!-- Start show sound frequencies -->
+        <main class="center-align"></main>
+      </fieldset>
+
+      <div class="space"></div>
+
+      <fieldset>
+        <legend stonejs><i>settings</i> Config</legend>
+        <div class="middle-align field">
+          <nav>
+            <div class="max">
+              
+              <h6 stonejs><i>graphic_eq</i> Noise Reduction</h6>
+              <div stonejs>Remove background noise and sounds that interfere with recordings and online calls.</div>
+            </div>
+            <label class="switch icon">
+              <input type="checkbox" x-model="enabled" @change="toggleNoiseReduction">
+              <span><i>mic</i></span>
+            </label>
+          </nav>
+          <span class="error" id="visualMainElement"></span>
+        </div>
+
+        <div class="space"></div>
+
+        <div class="middle-align field">
+          <nav>
+            <div class="max">
+              <h6 stonejs><i>bluetooth</i> Bluetooth Autoswitch</h6>
+              <div stonejs>When using Bluetooth headphones, it is possible to automatically activate the Bluetooth microphone when requested.</div>
+              <div stonejs>Audio quality may decrease when using the Bluetooth microphone.</div>
+            </div>
+            <label class="switch icon">
+              <input type="checkbox" x-model="bluetoothEnabled" @change="toggleBluetoothAutoswitch">
+              <span><i>bluetooth</i></span>
+            </label>
+          </nav>
+        </div>
+      </fieldset>
+    </div>
   </div>
-</div>
 
-<script>
-  document.addEventListener('alpine:init', () => {
-    Alpine.data('noiseControl', () => ({
-      enabled: false,
-      bluetoothEnabled: false,
+  <script>
+    // Defina a variável canResize no escopo global
+    window.canResize = true; // ou false, dependendo da lógica do seu aplicativo
 
-      async init() {
-        await this.updateStatus();
-        setInterval(this.updateStatus.bind(this), 3000);
-      },
+    // Defina o componente noiseControl antes de ser usado pelo Alpine.js
+    document.addEventListener('alpine:init', () => {
+      Alpine.data('noiseControl', () => ({
+        enabled: false,
+        bluetoothEnabled: false,
 
-      async updateStatus() {
-        const noiseStatus = await this.checkNoiseReductionStatus();
-        this.enabled = (noiseStatus === 'enabled');
+        async init() {
+          await this.updateStatus();
+          setInterval(this.updateStatus.bind(this), 3000);
+        },
 
-        const bluetoothStatus = await this.checkBluetoothStatus();
-        this.bluetoothEnabled = (bluetoothStatus === 'enabled');
-      },
+        async updateStatus() {
+          const noiseStatus = await this.checkNoiseReductionStatus();
+          this.enabled = (noiseStatus === 'enabled');
 
-      async checkNoiseReductionStatus() {
-        try {
-          const response = await fetch('actions.sh?status');
-          const text = await response.text();
-          return text.trim();
-        } catch (error) {
-          console.error('Error checking noise reduction status:', error);
-          return 'disable';
-        }
-      },
+          const bluetoothStatus = await this.checkBluetoothStatus();
+          this.bluetoothEnabled = (bluetoothStatus === 'enabled');
+        },
 
-      async checkBluetoothStatus() {
-        try {
-          const response = await fetch('actions.sh?status-bluetooth');
-          const text = await response.text();
-          return text.trim();
-        } catch (error) {
-          console.error('Error checking Bluetooth status:', error);
-          return 'enabled';
-        }
-      },
-
-      async toggleNoiseReduction() {
-        const action = this.enabled ? 'start' : 'stop';
-        try {
-          await fetch(`actions.sh?${action}`);
-        } catch (error) {
-          console.error(`Error sending ${action} command:`, error);
-        }
-      },
-
-      async toggleBluetoothAutoswitch() {
-        const action = this.bluetoothEnabled ? 'enable-bluetooth-autoswitch-to-headset' : 'disable-bluetooth-autoswitch-to-headset';
-        try {
-          await fetch(`actions.sh?${action}`);
-          await new Promise(resolve => setTimeout(resolve, 2000)); // Wait for 2000ms
-          location.reload(); // Refresh the page
-        } catch (error) {
-          console.error(`Error sending ${action} command:`, error);
-        }
-      }
-    }));
-  });
-
-  class AudioVisualizer {
-    constructor(audioContext, processFrame, processError) {
-      this.audioContext = audioContext;
-      this.processFrame = processFrame;
-      this.connectStream = this.connectStream.bind(this);
-      navigator.mediaDevices.getUserMedia({ audio: true, video: false })
-        .then(this.connectStream)
-        .catch((error) => {
-          if (processError) {
-            processError(error);
+        async checkNoiseReductionStatus() {
+          try {
+            const response = await fetch('actions.sh?status');
+            const text = await response.text();
+            return text.trim();
+          } catch (error) {
+            console.error('Error checking noise reduction status:', error);
+            return 'disable';
           }
-        });
-    }
+        },
 
-    connectStream(stream) {
-      this.analyser = this.audioContext.createAnalyser();
-      const source = this.audioContext.createMediaStreamSource(stream);
-      source.connect(this.analyser);
-      this.analyser.smoothingTimeConstant = 0.5;
-      this.analyser.fftSize = 32;
+        async checkBluetoothStatus() {
+          try {
+            const response = await fetch('actions.sh?status-bluetooth');
+            const text = await response.text();
+            return text.trim();
+          } catch (error) {
+            console.error('Error checking Bluetooth status:', error);
+            return 'enabled';
+          }
+        },
 
-      this.initRenderLoop(this.analyser);
-    }
+        async toggleNoiseReduction() {
+          const action = this.enabled ? 'start' : 'stop';
+          try {
+            await fetch(`actions.sh?${action}`);
+          } catch (error) {
+            console.error(`Error sending ${action} command:`, error);
+          }
+        },
 
-    initRenderLoop() {
-      const frequencyData = new Uint8Array(this.analyser.frequencyBinCount);
-      const processFrame = this.processFrame || (() => {});
+        async toggleBluetoothAutoswitch() {
+          const action = this.bluetoothEnabled ? 'enable-bluetooth-autoswitch-to-headset' : 'disable-bluetooth-autoswitch-to-headset';
+          try {
+            await fetch(`actions.sh?${action}`);
+            await new Promise(resolve => setTimeout(resolve, 2000)); // Wait for 2000ms
+            location.reload(); // Refresh the page
+          } catch (error) {
+            console.error(`Error sending ${action} command:`, error);
+          }
+        }
+      }));
+    });
 
-      const renderFrame = () => {
-        this.analyser.getByteFrequencyData(frequencyData);
-        processFrame(frequencyData);
+    // Inicialize o visualizador de áudio após o DOM ser carregado
+    document.addEventListener('DOMContentLoaded', () => {
+      const visualMainElement = document.getElementById('visualMainElement');
 
-        requestAnimationFrame(renderFrame);
-      };
-      requestAnimationFrame(renderFrame);
-    }
-  }
+      class AudioVisualizer {
+        constructor(audioContext, processFrame, processError) {
+          this.audioContext = audioContext;
+          this.processFrame = processFrame;
+          this.connectStream = this.connectStream.bind(this);
+          navigator.mediaDevices.getUserMedia({ audio: true, video: false })
+            .then(this.connectStream)
+            .catch((error) => {
+              if (processError) {
+                processError(error);
+              }
+            });
+        }
 
-  const visualMainElement = document.querySelector('main');
-  const visualValueCount = 16;
-  let visualElements;
-  const createDOMElements = () => {
-    let i;
-    for (i = 0; i < visualValueCount; ++i) {
-      const elm = document.createElement('div');
-      visualMainElement.appendChild(elm);
-    }
+        connectStream(stream) {
+          this.analyser = this.audioContext.createAnalyser();
+          const source = this.audioContext.createMediaStreamSource(stream);
+          source.connect(this.analyser);
+          this.analyser.smoothingTimeConstant = 0.5;
+          this.analyser.fftSize = 32;
 
-    visualElements = document.querySelectorAll('main div');
-  };
-  createDOMElements();
+          this.initRenderLoop(this.analyser);
+        }
 
-  const init = () => {
-    // Creating initial DOM elements
-    const audioContext = new AudioContext();
-    const initDOM = () => {
-      visualMainElement.innerHTML = '';
-      createDOMElements();
-    };
-    initDOM();
+        initRenderLoop() {
+          const frequencyData = new Uint8Array(this.analyser.frequencyBinCount);
+          const processFrame = this.processFrame || (() => {});
 
-    // Swapping values around for a better visual effect
-    const dataMap = { 0: 15, 1: 10, 2: 8, 3: 9, 4: 6, 5: 5, 6: 2, 7: 1, 8: 0, 9: 4, 10: 3, 11: 7, 12: 11, 13: 12, 14: 13, 15: 14 };
-    const processFrame = (data) => {
-      const values = Object.values(data);
-      let i;
-      for (i = 0; i < visualValueCount; ++i) {
-        const value = values[dataMap[i]] / 255;
-        const elmStyles = visualElements[i].style;
-        elmStyles.transform = `scaleY(${value})`;
-        elmStyles.opacity = Math.max(.25, value);
+          const renderFrame = () => {
+            this.analyser.getByteFrequencyData(frequencyData);
+            processFrame(frequencyData);
+
+            requestAnimationFrame(renderFrame);
+          };
+          requestAnimationFrame(renderFrame);
+        }
       }
-    };
 
-    const processError = () => {
-      visualMainElement.classList.add('error');
-      visualMainElement.innerText = 'Allow access to your microphone.';
-    };
+      const mainElement = document.querySelector('main');
+      const visualValueCount = 16;
+      let visualElements;
 
-    const a = new AudioVisualizer(audioContext, processFrame, processError);
-  };
+      const createDOMElements = () => {
+        for (let i = 0; i < visualValueCount; ++i) {
+          const elm = document.createElement('div');
+          mainElement.appendChild(elm);
+        }
+        visualElements = document.querySelectorAll('main div');
+      };
 
-  init();
-</script>
+      const init = () => {
+        const audioContext = new AudioContext();
+        createDOMElements();
+
+        const dataMap = { 0: 15, 1: 10, 2: 8, 3: 9, 4: 6, 5: 5, 6: 2, 7: 1, 8: 0, 9: 4, 10: 3, 11: 7, 12: 11, 13: 12, 14: 13, 15: 14 };
+        const processFrame = (data) => {
+          const values = Object.values(data);
+          for (let i = 0; i < visualValueCount; ++i) {
+            const value = values[dataMap[i]] / 255;
+            const elmStyles = visualElements[i].style;
+            elmStyles.transform = `scaleY(${value})`;
+            elmStyles.opacity = Math.max(.25, value);
+          }
+        };
+
+        const processError = () => {
+          if (visualMainElement) {
+            visualMainElement.classList.add('error');
+            visualMainElement.innerText = 'Allow access to your microphone.';
+          } else {
+            console.error('Elemento com ID "visualMainElement" não encontrado.');
+          }
+        };
+
+        new AudioVisualizer(audioContext, processFrame, processError);
+      };
+
+      init();
+    });
+  </script>
 </body>
 </html>
