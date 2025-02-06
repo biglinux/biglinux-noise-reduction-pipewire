@@ -5,8 +5,7 @@
 #
 #, fuzzy
 msgid   ""
-msgstr  "#-#-#-#-#  biglinux-noise-reduction-pipewire-bash.pot (biglinux-noise-reduction-pipewire)  #-#-#-#-#\n"
-        "Project-Id-Version: biglinux-noise-reduction-pipewire\n"
+msgstr  "Project-Id-Version: biglinux-noise-reduction-pipewire\n"
         "Report-Msgid-Bugs-To: \n"
         "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
         "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -14,15 +13,8 @@ msgstr  "#-#-#-#-#  biglinux-noise-reduction-pipewire-bash.pot (biglinux-noise-r
         "MIME-Version: 1.0\n"
         "Content-Type: text/plain; charset=UTF-8\n"
         "Content-Transfer-Encoding: 8bit\n"
-        "#-#-#-#-#  biglinux-noise-reduction-pipewire-js.pot (biglinux-noise-reduction-pipewire)  #-#-#-#-#\n"
-        "Project-Id-Version: biglinux-noise-reduction-pipewire\n"
-        "Report-Msgid-Bugs-To: \n"
-        "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
-        "Language-Team: LANGUAGE <LL@li.org>\n"
-        "Language: \n"
-        "MIME-Version: 1.0\n"
-        "Content-Type: text/plain; charset=utf-8\n"
-        "Content-Transfer-Encoding: 8bit\n"
+#
+# #-#-#-#-#  biglinux-noise-reduction-pipewire-bash.pot (biglinux-noise-reduction-pipewire)  #-#-#-#-#
 #
 # #-#-#-#-#  biglinux-noise-reduction-pipewire-bash.pot (biglinux-noise-reduction-pipewire)  #-#-#-#-#
 #
@@ -86,6 +78,8 @@ msgstr  ""
 #
 msgid   "Disabled!"
 msgstr  ""
+#
+# #-#-#-#-#  biglinux-noise-reduction-pipewire-bash.pot (biglinux-noise-reduction-pipewire)  #-#-#-#-#
 #
 # #-#-#-#-#  biglinux-noise-reduction-pipewire-bash.pot (biglinux-noise-reduction-pipewire)  #-#-#-#-#
 #
@@ -290,8 +284,12 @@ msgstr  ""
 #
 # #-#-#-#-#  biglinux-noise-reduction-pipewire-bash.pot (biglinux-noise-reduction-pipewire)  #-#-#-#-#
 #
+# #-#-#-#-#  biglinux-noise-reduction-pipewire-bash.pot (biglinux-noise-reduction-pipewire)  #-#-#-#-#
+#
 msgid   "When using Bluetooth headphones, it is possible to automatically activate the Bluetooth microphone when requested."
 msgstr  ""
+#
+# #-#-#-#-#  biglinux-noise-reduction-pipewire-bash.pot (biglinux-noise-reduction-pipewire)  #-#-#-#-#
 #
 # #-#-#-#-#  biglinux-noise-reduction-pipewire-bash.pot (biglinux-noise-reduction-pipewire)  #-#-#-#-#
 #
@@ -340,6 +338,8 @@ msgstr  ""
 #
 # #-#-#-#-#  biglinux-noise-reduction-pipewire-bash.pot (biglinux-noise-reduction-pipewire)  #-#-#-#-#
 #
+# #-#-#-#-#  biglinux-noise-reduction-pipewire-bash.pot (biglinux-noise-reduction-pipewire)  #-#-#-#-#
+#
 msgid   "<i>mic</i> Sound Waves"
 msgstr  ""
 #
@@ -350,10 +350,17 @@ msgstr  ""
 #
 # #-#-#-#-#  biglinux-noise-reduction-pipewire-bash.pot (biglinux-noise-reduction-pipewire)  #-#-#-#-#
 #
+# #-#-#-#-#  biglinux-noise-reduction-pipewire-bash.pot (biglinux-noise-reduction-pipewire)  #-#-#-#-#
+#
 msgid   "<i>graphic_eq</i> Noise Reduction"
 msgstr  ""
 #
 # #-#-#-#-#  biglinux-noise-reduction-pipewire-bash.pot (biglinux-noise-reduction-pipewire)  #-#-#-#-#
 #
+# #-#-#-#-#  biglinux-noise-reduction-pipewire-bash.pot (biglinux-noise-reduction-pipewire)  #-#-#-#-#
+#
 msgid   "<i>bluetooth</i> Bluetooth Autoswitch"
+msgstr  ""
+#
+msgid   "<i>tune</i> Config"
 msgstr  ""
