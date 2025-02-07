@@ -273,3 +273,11 @@ msgstr "<i>bluetooth</i> Bluetooth Automatikus kapcsoló"
 #: NEEDS WORK
 msgid "<i>tune</i> Config"
 msgstr "<i>hangolás</i> Beállítás"
+
+#: NEEDS WORK
+msgid "Sound Waves"
+msgstr "Hanggörbék"
+
+#: NEEDS WORK
+msgid "Config"
+msgstr "Beállítások"

@@ -273,3 +273,11 @@ msgstr "<i>bluetooth</i> Automatyczne przełączanie Bluetooth"
 #: NEEDS WORK
 msgid "<i>tune</i> Config"
 msgstr "<i>tune</i> Konfiguracja"
+
+#: NEEDS WORK
+msgid "Sound Waves"
+msgstr "Fale dźwiękowe"
+
+#: NEEDS WORK
+msgid "Config"
+msgstr "Konfiguracja"

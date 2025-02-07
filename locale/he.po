@@ -271,3 +271,11 @@ msgstr "<i>בלוטות'</i> מתג אוטומטי בלוטות'"
 #: NEEDS WORK
 msgid "<i>tune</i> Config"
 msgstr "<i>כוונן</i> הגדרות"
+
+#: NEEDS WORK
+msgid "Sound Waves"
+msgstr "גלי קול"
+
+#: NEEDS WORK
+msgid "Config"
+msgstr "הגדרות"

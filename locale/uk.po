@@ -273,3 +273,11 @@ msgstr "<i>bluetooth</i> Bluetooth Автоперемикання"
 #: NEEDS WORK
 msgid "<i>tune</i> Config"
 msgstr "<i>налаштування</i>"
+
+#: NEEDS WORK
+msgid "Sound Waves"
+msgstr "Звукові хвилі"
+
+#: NEEDS WORK
+msgid "Config"
+msgstr "Конфігурація"

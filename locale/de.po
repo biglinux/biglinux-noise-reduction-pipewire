@@ -276,3 +276,11 @@ msgstr "<i>Bluetooth</i> Bluetooth-Autoschalter"
 #: NEEDS WORK
 msgid "<i>tune</i> Config"
 msgstr "<i>tune</i> Konfiguration"
+
+#: NEEDS WORK
+msgid "Sound Waves"
+msgstr "Schallwellen"
+
+#: NEEDS WORK
+msgid "Config"
+msgstr "Konfiguration"

@@ -269,3 +269,11 @@ msgstr "<i>Bluetooth</i> Bluetooth自動切替"
 #: NEEDS WORK
 msgid "<i>tune</i> Config"
 msgstr "<i>チューニング</i> 設定"
+
+#: NEEDS WORK
+msgid "Sound Waves"
+msgstr "音波"
+
+#: NEEDS WORK
+msgid "Config"
+msgstr "設定"

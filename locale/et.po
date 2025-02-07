@@ -273,3 +273,11 @@ msgstr "<i>bluetooth</i> Bluetoothi automaatne lülitus"
 #: NEEDS WORK
 msgid "<i>tune</i> Config"
 msgstr "<i>häälestamise</i> Konfiguratsioon"
+
+#: NEEDS WORK
+msgid "Sound Waves"
+msgstr "Helilaine"
+
+#: NEEDS WORK
+msgid "Config"
+msgstr "Seaded"

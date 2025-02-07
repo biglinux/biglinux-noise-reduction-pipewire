@@ -273,3 +273,11 @@ msgstr "<i>bluetooth</i> Bluetooth-autoswitch"
 #: NEEDS WORK
 msgid "<i>tune</i> Config"
 msgstr "<i>virittää</i> Asetus"
+
+#: NEEDS WORK
+msgid "Sound Waves"
+msgstr "Ääniaallot"
+
+#: NEEDS WORK
+msgid "Config"
+msgstr "Asetukset"

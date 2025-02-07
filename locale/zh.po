@@ -269,3 +269,11 @@ msgstr "<i>蓝牙</i> 蓝牙自动切换"
 #: NEEDS WORK
 msgid "<i>tune</i> Config"
 msgstr "<i>调优</i> 配置"
+
+#: NEEDS WORK
+msgid "Sound Waves"
+msgstr "声波"
+
+#: NEEDS WORK
+msgid "Config"
+msgstr "配置"

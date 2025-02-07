@@ -273,3 +273,11 @@ msgstr "<i>bluetooth</i> Bluetooth Autoswitch"
 #: NEEDS WORK
 msgid "<i>tune</i> Config"
 msgstr "<i>juster</i> Konfigurasjon"
+
+#: NEEDS WORK
+msgid "Sound Waves"
+msgstr "Lydvåger"
+
+#: NEEDS WORK
+msgid "Config"
+msgstr "Konfigurasjon"

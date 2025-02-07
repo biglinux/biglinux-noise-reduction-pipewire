@@ -275,3 +275,11 @@ msgstr "<i>bluetooth</i> Bluetooth Sjálfvirkur Val."
 #: NEEDS WORK
 msgid "<i>tune</i> Config"
 msgstr "<i>tune</i> Stilling"
+
+#: NEEDS WORK
+msgid "Sound Waves"
+msgstr "Hljóðbylgjur"
+
+#: NEEDS WORK
+msgid "Config"
+msgstr "Stillingar"

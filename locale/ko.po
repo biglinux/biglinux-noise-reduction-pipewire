@@ -269,3 +269,11 @@ msgstr "<i>블루투스</i> 블루투스 자동 전환"
 #: NEEDS WORK
 msgid "<i>tune</i> Config"
 msgstr "<i>조정</i> 구성"
+
+#: NEEDS WORK
+msgid "Sound Waves"
+msgstr "음파"
+
+#: NEEDS WORK
+msgid "Config"
+msgstr "구성"

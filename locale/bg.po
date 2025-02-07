@@ -273,3 +273,11 @@ msgstr "<i>bluetooth</i> Автоматично превключване на Bl
 #: NEEDS WORK
 msgid "<i>tune</i> Config"
 msgstr "<i>настройка</i> Конфигурация"
+
+#: NEEDS WORK
+msgid "Sound Waves"
+msgstr "Звукови вълни"
+
+#: NEEDS WORK
+msgid "Config"
+msgstr "Конфигурация"

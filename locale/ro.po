@@ -273,3 +273,11 @@ msgstr "<i>bluetooth</i> Comutare automată Bluetooth"
 #: NEEDS WORK
 msgid "<i>tune</i> Config"
 msgstr "<i>tune</i> Configurație"
+
+#: NEEDS WORK
+msgid "Sound Waves"
+msgstr "Unde sonore"
+
+#: NEEDS WORK
+msgid "Config"
+msgstr "Configurație"

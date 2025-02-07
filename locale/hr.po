@@ -271,3 +271,11 @@ msgstr "<i>bluetooth</i> Bluetooth automatsko prebacivanje"
 #: NEEDS WORK
 msgid "<i>tune</i> Config"
 msgstr "<i>tune</i> Konfiguracija"
+
+#: NEEDS WORK
+msgid "Sound Waves"
+msgstr "Zvučni valovi"
+
+#: NEEDS WORK
+msgid "Config"
+msgstr "Konfiguracija"

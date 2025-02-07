@@ -273,3 +273,11 @@ msgstr "<i>μπλουτούθ</i> Αυτόματη εναλλαγή Bluetooth"
 #: NEEDS WORK
 msgid "<i>tune</i> Config"
 msgstr "<i>ρυθμίσεις</i> Config"
+
+#: NEEDS WORK
+msgid "Sound Waves"
+msgstr "Ηχητικά Κύματα"
+
+#: NEEDS WORK
+msgid "Config"
+msgstr "Ρυθμίσεις"

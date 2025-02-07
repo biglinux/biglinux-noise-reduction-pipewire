@@ -271,3 +271,11 @@ msgstr "<i>bluetooth</i> Automatické přepínání Bluetooth"
 #: NEEDS WORK
 msgid "<i>tune</i> Config"
 msgstr "<i>ladění</i> Konfigurace"
+
+#: NEEDS WORK
+msgid "Sound Waves"
+msgstr "Zvukové vlny"
+
+#: NEEDS WORK
+msgid "Config"
+msgstr "Konfigurace"
