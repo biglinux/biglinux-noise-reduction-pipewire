@@ -15,7 +15,6 @@ msgstr ""
 "Content-Type: text/plain; charset=utf-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "X-Generator: attranslate\n"
-
 # 
 # #-#-#-#-#  biglinux-noise-reduction-pipewire-bash.pot (biglinux-noise-reduction-pipewire)  #-#-#-#-#
 # 
@@ -23,13 +22,10 @@ msgstr ""
 # 
 msgid "Reduce Microphone Noise"
 msgstr "Vähennä mikrofonin melua"
-
 msgid "Activated!"
 msgstr "Aktivoitu!"
-
 msgid "Disabled!"
 msgstr "Poistettu!"
-
 # 
 # #-#-#-#-#  biglinux-noise-reduction-pipewire-bash.pot (biglinux-noise-reduction-pipewire)  #-#-#-#-#
 # 
@@ -37,7 +33,6 @@ msgstr "Poistettu!"
 # 
 msgid "Remove background noise and sounds that interfere with recordings and online calls."
 msgstr "Poista taustamelu ja äänet, jotka häiritsevät tallenteita ja verkkopuheluita."
-
 # 
 # #-#-#-#-#  biglinux-noise-reduction-pipewire-bash.pot (biglinux-noise-reduction-pipewire)  #-#-#-#-#
 # 
@@ -49,7 +44,6 @@ msgid ""
 msgstr ""
 "Uusi kohinan vähentämisen suodattimen versio soveltaa ominaisuutta suoraan valittuun "
 "oletusmikrofoniin järjestelmässä, poistaen tarpeen valita virtuaalimikrofoni."
-
 # 
 # #-#-#-#-#  biglinux-noise-reduction-pipewire-bash.pot (biglinux-noise-reduction-pipewire)  #-#-#-#-#
 # 
@@ -59,7 +53,6 @@ msgstr ""
 # 
 msgid "Enable"
 msgstr "Ota käyttöön"
-
 # 
 # #-#-#-#-#  biglinux-noise-reduction-pipewire-bash.pot (biglinux-noise-reduction-pipewire)  #-#-#-#-#
 # 
@@ -101,7 +94,6 @@ msgstr "Ota käyttöön"
 # 
 msgid "Noise Reduction"
 msgstr "Melunpoisto"
-
 # 
 # #-#-#-#-#  biglinux-noise-reduction-pipewire-bash.pot (biglinux-noise-reduction-pipewire)  #-#-#-#-#
 # 
@@ -143,7 +135,6 @@ msgstr "Melunpoisto"
 # 
 msgid "Bluetooth Autoswitch"
 msgstr "Bluetoothin automaattinen vaihto"
-
 # 
 # #-#-#-#-#  biglinux-noise-reduction-pipewire-bash.pot (biglinux-noise-reduction-pipewire)  #-#-#-#-#
 # 
@@ -191,7 +182,6 @@ msgid ""
 msgstr ""
 "Käytettäessä Bluetooth-kuulokkeita on mahdollista aktivoida Bluetooth-mikrofoni automaattisesti "
 "pyydettäessä."
-
 # 
 # #-#-#-#-#  biglinux-noise-reduction-pipewire-bash.pot (biglinux-noise-reduction-pipewire)  #-#-#-#-#
 # 
@@ -235,7 +225,6 @@ msgstr ""
 # 
 msgid "Audio quality may decrease when using the Bluetooth microphone."
 msgstr "Äänilaatu saattaa heikentyä käytettäessä Bluetooth-mikrofonia."
-
 # 
 # #-#-#-#-#  biglinux-noise-reduction-pipewire-bash.pot (biglinux-noise-reduction-pipewire)  #-#-#-#-#
 # 
@@ -244,14 +233,12 @@ msgstr "Äänilaatu saattaa heikentyä käytettäessä Bluetooth-mikrofonia."
 #: NEEDS WORK
 msgid "<i>mic</i> Sound Waves"
 msgstr "<i>mikrofoni</i> Ääniaallot"
-
 # 
 # #-#-#-#-#  biglinux-noise-reduction-pipewire-bash.pot (biglinux-noise-reduction-pipewire)  #-#-#-#-#
 # 
 #: NEEDS WORK
 msgid "<i>settings</i> Config"
 msgstr "<i>asetukset</i> Määritys"
-
 # 
 # #-#-#-#-#  biglinux-noise-reduction-pipewire-bash.pot (biglinux-noise-reduction-pipewire)  #-#-#-#-#
 # 
@@ -260,7 +247,6 @@ msgstr "<i>asetukset</i> Määritys"
 #: NEEDS WORK
 msgid "<i>graphic_eq</i> Noise Reduction"
 msgstr "<i>graphic_eq</i> Melun vähennys"
-
 # 
 # #-#-#-#-#  biglinux-noise-reduction-pipewire-bash.pot (biglinux-noise-reduction-pipewire)  #-#-#-#-#
 # 
@@ -269,15 +255,71 @@ msgstr "<i>graphic_eq</i> Melun vähennys"
 #: NEEDS WORK
 msgid "<i>bluetooth</i> Bluetooth Autoswitch"
 msgstr "<i>bluetooth</i> Bluetooth-autoswitch"
-
 #: NEEDS WORK
 msgid "<i>tune</i> Config"
 msgstr "<i>virittää</i> Asetus"
-
+# 
+# #-#-#-#-#  biglinux-noise-reduction-pipewire-bash.pot (biglinux-noise-reduction-pipewire)  #-#-#-#-#
+# 
+# #-#-#-#-#  biglinux-noise-reduction-pipewire-bash.pot (biglinux-noise-reduction-pipewire)  #-#-#-#-#
+# 
+# #-#-#-#-#  biglinux-noise-reduction-pipewire-bash.pot (biglinux-noise-reduction-pipewire)  #-#-#-#-#
+# 
 #: NEEDS WORK
 msgid "Sound Waves"
 msgstr "Ääniaallot"
-
+# 
+# #-#-#-#-#  biglinux-noise-reduction-pipewire-bash.pot (biglinux-noise-reduction-pipewire)  #-#-#-#-#
+# 
+# #-#-#-#-#  biglinux-noise-reduction-pipewire-bash.pot (biglinux-noise-reduction-pipewire)  #-#-#-#-#
+# 
+# #-#-#-#-#  biglinux-noise-reduction-pipewire-bash.pot (biglinux-noise-reduction-pipewire)  #-#-#-#-#
+# 
 #: NEEDS WORK
 msgid "Config"
 msgstr "Asetukset"
+# 
+# File: biglinux-noise-reduction-pipewire/usr/share/bigbashview/apps/microphone/noise_reducer.py, line: 214
+#: NEEDS WORK
+msgid "Microphone Settings"
+msgstr "Mikrofonin asetukset"
+# 
+# File: biglinux-noise-reduction-pipewire/usr/share/bigbashview/apps/microphone/noise_reducer.py, line: 216
+#: NEEDS WORK
+msgid "Configure noise reduction and bluetooth settings"
+msgstr "Määritä melunvaimennus ja Bluetooth-asetukset"
+# 
+# File: biglinux-noise-reduction-pipewire/usr/share/bigbashview/apps/microphone/noise_reducer.py, line: 224
+#: NEEDS WORK
+msgid "Remove background noise and sounds that interfere with recordings and online calls"
+msgstr "Poista taustamelu ja äänet, jotka häiritsevät tallenteita ja verkkopuheluita."
+# 
+# File: biglinux-noise-reduction-pipewire/usr/share/bigbashview/apps/microphone/noise_reducer.py, line: 241
+#: NEEDS WORK
+msgid "Automatically activate Bluetooth microphone when requested. Audio quality may decrease."
+msgstr "Ota Bluetooth-mikrofoni automaattisesti käyttöön pyydettäessä. Äänenlaatu saattaa heikentyä."
+# 
+# File: biglinux-noise-reduction-pipewire/usr/share/bigbashview/apps/microphone/noise_reducer.py, line: 276
+#: NEEDS WORK
+msgid "About"
+msgstr "Tietoja"
+# 
+# File: biglinux-noise-reduction-pipewire/usr/share/bigbashview/apps/microphone/noise_reducer.py, line: 432
+#: NEEDS WORK
+msgid "Noise reduction enabled"
+msgstr "Melun vähennys käytössä"
+# 
+# File: biglinux-noise-reduction-pipewire/usr/share/bigbashview/apps/microphone/noise_reducer.py, line: 436
+#: NEEDS WORK
+msgid "Noise reduction disabled"
+msgstr "Melun vähentäminen pois päältä"
+# 
+# File: biglinux-noise-reduction-pipewire/usr/share/bigbashview/apps/microphone/noise_reducer.py, line: 472
+#: NEEDS WORK
+msgid "Bluetooth autoswitch enabled"
+msgstr "Bluetooth-autoswitch on käytössä"
+# 
+# File: biglinux-noise-reduction-pipewire/usr/share/bigbashview/apps/microphone/noise_reducer.py, line: 477
+#: NEEDS WORK
+msgid "Bluetooth autoswitch disabled"
+msgstr "Bluetooth-autoswitch on käytöstä poistettu."

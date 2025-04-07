@@ -78,6 +78,8 @@ msgstr ""
 #
 # #-#-#-#-#  biglinux-noise-reduction-pipewire-bash.pot (biglinux-noise-reduction-pipewire)  #-#-#-#-#
 #
+# #-#-#-#-#  biglinux-noise-reduction-pipewire-bash.pot (biglinux-noise-reduction-pipewire)  #-#-#-#-#
+#
 msgid "Reduce Microphone Noise"
 msgstr "Reduce Microphone Noise"
 
@@ -89,6 +91,8 @@ msgstr "Activated!"
 msgid "Disabled!"
 msgstr "Disabled!"
 
+#
+# #-#-#-#-#  biglinux-noise-reduction-pipewire-bash.pot (biglinux-noise-reduction-pipewire)  #-#-#-#-#
 #
 # #-#-#-#-#  biglinux-noise-reduction-pipewire-bash.pot (biglinux-noise-reduction-pipewire)  #-#-#-#-#
 #
@@ -190,7 +194,7 @@ msgid "Enable"
 msgstr "Enable"
 
 #
-# #-#-#-#-#  biglinux-noise-reduction-pipewire-bash.pot (biglinux-noise-reduction-pipewire)  #-#-#-#-#
+# #-#-#-#-#  biglinux-noise-reduction-pipewire.pot (biglinux-noise-reduction-pipewire)  #-#-#-#-#
 #
 # #-#-#-#-#  biglinux-noise-reduction-pipewire-bash.pot (biglinux-noise-reduction-pipewire)  #-#-#-#-#
 #
@@ -234,11 +238,18 @@ msgstr "Enable"
 #
 # #-#-#-#-#  biglinux-noise-reduction-pipewire-bash.pot (biglinux-noise-reduction-pipewire)  #-#-#-#-#
 #
+# #-#-#-#-#  biglinux-noise-reduction-pipewire-bash.pot (biglinux-noise-reduction-pipewire)  #-#-#-#-#
+#
+# #-#-#-#-#  biglinux-noise-reduction-pipewire-bash.pot (biglinux-noise-reduction-pipewire)  #-#-#-#-#
+#
+# File: biglinux-noise-reduction-pipewire/usr/share/bigbashview/apps/microphone/noise_reducer.py, line: 159
+# File: biglinux-noise-reduction-pipewire/usr/share/bigbashview/apps/microphone/noise_reducer.py, line: 221
+# File: biglinux-noise-reduction-pipewire/usr/share/bigbashview/apps/microphone/noise_reducer.py, line: 294
 msgid "Noise Reduction"
 msgstr "Noise Reduction"
 
 #
-# #-#-#-#-#  biglinux-noise-reduction-pipewire-bash.pot (biglinux-noise-reduction-pipewire)  #-#-#-#-#
+# #-#-#-#-#  biglinux-noise-reduction-pipewire.pot (biglinux-noise-reduction-pipewire)  #-#-#-#-#
 #
 # #-#-#-#-#  biglinux-noise-reduction-pipewire-bash.pot (biglinux-noise-reduction-pipewire)  #-#-#-#-#
 #
@@ -282,9 +293,16 @@ msgstr "Noise Reduction"
 #
 # #-#-#-#-#  biglinux-noise-reduction-pipewire-bash.pot (biglinux-noise-reduction-pipewire)  #-#-#-#-#
 #
+# #-#-#-#-#  biglinux-noise-reduction-pipewire-bash.pot (biglinux-noise-reduction-pipewire)  #-#-#-#-#
+#
+# #-#-#-#-#  biglinux-noise-reduction-pipewire-bash.pot (biglinux-noise-reduction-pipewire)  #-#-#-#-#
+#
+# File: biglinux-noise-reduction-pipewire/usr/share/bigbashview/apps/microphone/noise_reducer.py, line: 238
 msgid "Bluetooth Autoswitch"
 msgstr "Bluetooth Autoswitch"
 
+#
+# #-#-#-#-#  biglinux-noise-reduction-pipewire-bash.pot (biglinux-noise-reduction-pipewire)  #-#-#-#-#
 #
 # #-#-#-#-#  biglinux-noise-reduction-pipewire-bash.pot (biglinux-noise-reduction-pipewire)  #-#-#-#-#
 #
@@ -394,6 +412,8 @@ msgstr ""
 #
 # #-#-#-#-#  biglinux-noise-reduction-pipewire-bash.pot (biglinux-noise-reduction-pipewire)  #-#-#-#-#
 #
+# #-#-#-#-#  biglinux-noise-reduction-pipewire-bash.pot (biglinux-noise-reduction-pipewire)  #-#-#-#-#
+#
 msgid "Audio quality may decrease when using the Bluetooth microphone."
 msgstr "Audio quality may decrease when using the Bluetooth microphone."
 
@@ -436,6 +456,8 @@ msgstr "<i>tune</i> Config"
 #
 # #-#-#-#-#  biglinux-noise-reduction-pipewire-bash.pot (biglinux-noise-reduction-pipewire)  #-#-#-#-#
 #
+# #-#-#-#-#  biglinux-noise-reduction-pipewire-bash.pot (biglinux-noise-reduction-pipewire)  #-#-#-#-#
+#
 msgid "Sound Waves"
 msgstr "Sound Waves"
 
@@ -444,5 +466,60 @@ msgstr "Sound Waves"
 #
 # #-#-#-#-#  biglinux-noise-reduction-pipewire-bash.pot (biglinux-noise-reduction-pipewire)  #-#-#-#-#
 #
+# #-#-#-#-#  biglinux-noise-reduction-pipewire-bash.pot (biglinux-noise-reduction-pipewire)  #-#-#-#-#
+#
 msgid "Config"
 msgstr "Config"
+
+#
+# File: biglinux-noise-reduction-pipewire/usr/share/bigbashview/apps/microphone/noise_reducer.py, line: 214
+msgid "Microphone Settings"
+msgstr "Microphone Settings"
+
+#
+# File: biglinux-noise-reduction-pipewire/usr/share/bigbashview/apps/microphone/noise_reducer.py, line: 216
+msgid "Configure noise reduction and bluetooth settings"
+msgstr "Configure noise reduction and bluetooth settings"
+
+#
+# File: biglinux-noise-reduction-pipewire/usr/share/bigbashview/apps/microphone/noise_reducer.py, line: 224
+msgid ""
+"Remove background noise and sounds that interfere with recordings and online "
+"calls"
+msgstr ""
+"Remove background noise and sounds that interfere with recordings and online "
+"calls"
+
+#
+# File: biglinux-noise-reduction-pipewire/usr/share/bigbashview/apps/microphone/noise_reducer.py, line: 241
+msgid ""
+"Automatically activate Bluetooth microphone when requested. Audio quality "
+"may decrease."
+msgstr ""
+"Automatically activate Bluetooth microphone when requested. Audio quality "
+"may decrease."
+
+#
+# File: biglinux-noise-reduction-pipewire/usr/share/bigbashview/apps/microphone/noise_reducer.py, line: 276
+msgid "About"
+msgstr "About"
+
+#
+# File: biglinux-noise-reduction-pipewire/usr/share/bigbashview/apps/microphone/noise_reducer.py, line: 432
+msgid "Noise reduction enabled"
+msgstr "Noise reduction enabled"
+
+#
+# File: biglinux-noise-reduction-pipewire/usr/share/bigbashview/apps/microphone/noise_reducer.py, line: 436
+msgid "Noise reduction disabled"
+msgstr "Noise reduction disabled"
+
+#
+# File: biglinux-noise-reduction-pipewire/usr/share/bigbashview/apps/microphone/noise_reducer.py, line: 472
+msgid "Bluetooth autoswitch enabled"
+msgstr "Bluetooth autoswitch enabled"
+
+#
+# File: biglinux-noise-reduction-pipewire/usr/share/bigbashview/apps/microphone/noise_reducer.py, line: 477
+msgid "Bluetooth autoswitch disabled"
+msgstr "Bluetooth autoswitch disabled"

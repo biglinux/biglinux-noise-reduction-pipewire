@@ -15,7 +15,6 @@ msgstr ""
 "Content-Type: text/plain; charset=utf-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "X-Generator: attranslate\n"
-
 # 
 # #-#-#-#-#  biglinux-noise-reduction-pipewire-bash.pot (biglinux-noise-reduction-pipewire)  #-#-#-#-#
 # 
@@ -23,13 +22,10 @@ msgstr ""
 # 
 msgid "Reduce Microphone Noise"
 msgstr "Зменшити шум мікрофона"
-
 msgid "Activated!"
 msgstr "Активовано!"
-
 msgid "Disabled!"
 msgstr "Вимкнено!"
-
 # 
 # #-#-#-#-#  biglinux-noise-reduction-pipewire-bash.pot (biglinux-noise-reduction-pipewire)  #-#-#-#-#
 # 
@@ -37,7 +33,6 @@ msgstr "Вимкнено!"
 # 
 msgid "Remove background noise and sounds that interfere with recordings and online calls."
 msgstr "Видалити фоновий шум та звуки, які заважають записам та онлайн дзвінкам."
-
 # 
 # #-#-#-#-#  biglinux-noise-reduction-pipewire-bash.pot (biglinux-noise-reduction-pipewire)  #-#-#-#-#
 # 
@@ -49,7 +44,6 @@ msgid ""
 msgstr ""
 "Нова версія фільтра шумозниження застосовує функцію безпосередньо до вибраного типового мікрофона в "
 "системі, усуваючи потребу у виборі віртуального мікрофона."
-
 # 
 # #-#-#-#-#  biglinux-noise-reduction-pipewire-bash.pot (biglinux-noise-reduction-pipewire)  #-#-#-#-#
 # 
@@ -59,7 +53,6 @@ msgstr ""
 # 
 msgid "Enable"
 msgstr "Увімкнути"
-
 # 
 # #-#-#-#-#  biglinux-noise-reduction-pipewire-bash.pot (biglinux-noise-reduction-pipewire)  #-#-#-#-#
 # 
@@ -101,7 +94,6 @@ msgstr "Увімкнути"
 # 
 msgid "Noise Reduction"
 msgstr "Зменшення шуму"
-
 # 
 # #-#-#-#-#  biglinux-noise-reduction-pipewire-bash.pot (biglinux-noise-reduction-pipewire)  #-#-#-#-#
 # 
@@ -143,7 +135,6 @@ msgstr "Зменшення шуму"
 # 
 msgid "Bluetooth Autoswitch"
 msgstr "Bluetooth Автоперемикач"
-
 # 
 # #-#-#-#-#  biglinux-noise-reduction-pipewire-bash.pot (biglinux-noise-reduction-pipewire)  #-#-#-#-#
 # 
@@ -191,7 +182,6 @@ msgid ""
 msgstr ""
 "Під час використання бездротових навушників Bluetooth можливо автоматично активувати Bluetooth "
 "мікрофон за запитом."
-
 # 
 # #-#-#-#-#  biglinux-noise-reduction-pipewire-bash.pot (biglinux-noise-reduction-pipewire)  #-#-#-#-#
 # 
@@ -235,7 +225,6 @@ msgstr ""
 # 
 msgid "Audio quality may decrease when using the Bluetooth microphone."
 msgstr "Якість звуку може знизитися при використанні Bluetooth мікрофону."
-
 # 
 # #-#-#-#-#  biglinux-noise-reduction-pipewire-bash.pot (biglinux-noise-reduction-pipewire)  #-#-#-#-#
 # 
@@ -244,14 +233,12 @@ msgstr "Якість звуку може знизитися при викори�
 #: NEEDS WORK
 msgid "<i>mic</i> Sound Waves"
 msgstr "<i>мікрофон</i> Звукові хвилі"
-
 # 
 # #-#-#-#-#  biglinux-noise-reduction-pipewire-bash.pot (biglinux-noise-reduction-pipewire)  #-#-#-#-#
 # 
 #: NEEDS WORK
 msgid "<i>settings</i> Config"
 msgstr "<i>налаштування</i> Конфігурація"
-
 # 
 # #-#-#-#-#  biglinux-noise-reduction-pipewire-bash.pot (biglinux-noise-reduction-pipewire)  #-#-#-#-#
 # 
@@ -260,7 +247,6 @@ msgstr "<i>налаштування</i> Конфігурація"
 #: NEEDS WORK
 msgid "<i>graphic_eq</i> Noise Reduction"
 msgstr "<i>graphic_eq</i> Зниження шуму"
-
 # 
 # #-#-#-#-#  biglinux-noise-reduction-pipewire-bash.pot (biglinux-noise-reduction-pipewire)  #-#-#-#-#
 # 
@@ -269,15 +255,71 @@ msgstr "<i>graphic_eq</i> Зниження шуму"
 #: NEEDS WORK
 msgid "<i>bluetooth</i> Bluetooth Autoswitch"
 msgstr "<i>bluetooth</i> Bluetooth Автоперемикання"
-
 #: NEEDS WORK
 msgid "<i>tune</i> Config"
 msgstr "<i>налаштування</i>"
-
+# 
+# #-#-#-#-#  biglinux-noise-reduction-pipewire-bash.pot (biglinux-noise-reduction-pipewire)  #-#-#-#-#
+# 
+# #-#-#-#-#  biglinux-noise-reduction-pipewire-bash.pot (biglinux-noise-reduction-pipewire)  #-#-#-#-#
+# 
+# #-#-#-#-#  biglinux-noise-reduction-pipewire-bash.pot (biglinux-noise-reduction-pipewire)  #-#-#-#-#
+# 
 #: NEEDS WORK
 msgid "Sound Waves"
 msgstr "Звукові хвилі"
-
+# 
+# #-#-#-#-#  biglinux-noise-reduction-pipewire-bash.pot (biglinux-noise-reduction-pipewire)  #-#-#-#-#
+# 
+# #-#-#-#-#  biglinux-noise-reduction-pipewire-bash.pot (biglinux-noise-reduction-pipewire)  #-#-#-#-#
+# 
+# #-#-#-#-#  biglinux-noise-reduction-pipewire-bash.pot (biglinux-noise-reduction-pipewire)  #-#-#-#-#
+# 
 #: NEEDS WORK
 msgid "Config"
 msgstr "Конфігурація"
+# 
+# File: biglinux-noise-reduction-pipewire/usr/share/bigbashview/apps/microphone/noise_reducer.py, line: 214
+#: NEEDS WORK
+msgid "Microphone Settings"
+msgstr "Налаштування мікрофона"
+# 
+# File: biglinux-noise-reduction-pipewire/usr/share/bigbashview/apps/microphone/noise_reducer.py, line: 216
+#: NEEDS WORK
+msgid "Configure noise reduction and bluetooth settings"
+msgstr "Налаштуйте зменшення шуму та налаштування Bluetooth."
+# 
+# File: biglinux-noise-reduction-pipewire/usr/share/bigbashview/apps/microphone/noise_reducer.py, line: 224
+#: NEEDS WORK
+msgid "Remove background noise and sounds that interfere with recordings and online calls"
+msgstr "Видалити фоновий шум та звуки, які заважають записам і онлайн-дзвінкам."
+# 
+# File: biglinux-noise-reduction-pipewire/usr/share/bigbashview/apps/microphone/noise_reducer.py, line: 241
+#: NEEDS WORK
+msgid "Automatically activate Bluetooth microphone when requested. Audio quality may decrease."
+msgstr "Автоматично активувати мікрофон Bluetooth за запитом. Якість звуку може знизитися."
+# 
+# File: biglinux-noise-reduction-pipewire/usr/share/bigbashview/apps/microphone/noise_reducer.py, line: 276
+#: NEEDS WORK
+msgid "About"
+msgstr "Про програму"
+# 
+# File: biglinux-noise-reduction-pipewire/usr/share/bigbashview/apps/microphone/noise_reducer.py, line: 432
+#: NEEDS WORK
+msgid "Noise reduction enabled"
+msgstr "Зменшення шуму увімкнено"
+# 
+# File: biglinux-noise-reduction-pipewire/usr/share/bigbashview/apps/microphone/noise_reducer.py, line: 436
+#: NEEDS WORK
+msgid "Noise reduction disabled"
+msgstr "Зниження шуму вимкнено"
+# 
+# File: biglinux-noise-reduction-pipewire/usr/share/bigbashview/apps/microphone/noise_reducer.py, line: 472
+#: NEEDS WORK
+msgid "Bluetooth autoswitch enabled"
+msgstr "Увімкнено автоматичне перемикання Bluetooth"
+# 
+# File: biglinux-noise-reduction-pipewire/usr/share/bigbashview/apps/microphone/noise_reducer.py, line: 477
+#: NEEDS WORK
+msgid "Bluetooth autoswitch disabled"
+msgstr "Bluetooth автоперемикання вимкнено"

@@ -15,7 +15,6 @@ msgstr ""
 "Content-Type: text/plain; charset=utf-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "X-Generator: attranslate\n"
-
 # 
 # #-#-#-#-#  biglinux-noise-reduction-pipewire-bash.pot (biglinux-noise-reduction-pipewire)  #-#-#-#-#
 # 
@@ -23,13 +22,10 @@ msgstr ""
 # 
 msgid "Reduce Microphone Noise"
 msgstr "Smanjite buku mikrofona"
-
 msgid "Activated!"
 msgstr "Aktivirano!"
-
 msgid "Disabled!"
 msgstr "Onemogućeno!"
-
 # 
 # #-#-#-#-#  biglinux-noise-reduction-pipewire-bash.pot (biglinux-noise-reduction-pipewire)  #-#-#-#-#
 # 
@@ -37,7 +33,6 @@ msgstr "Onemogućeno!"
 # 
 msgid "Remove background noise and sounds that interfere with recordings and online calls."
 msgstr "Uklonite pozadinsku buku i zvukove koji ometaju snimanja i online pozive."
-
 # 
 # #-#-#-#-#  biglinux-noise-reduction-pipewire-bash.pot (biglinux-noise-reduction-pipewire)  #-#-#-#-#
 # 
@@ -49,7 +44,6 @@ msgid ""
 msgstr ""
 "Nova verzija filtra za smanjenje buke primjenjuje značajku izravno na odabrani zadani mikrofon u "
 "sustavu, eliminirajući potrebu za odabirom virtualnog mikrofona."
-
 # 
 # #-#-#-#-#  biglinux-noise-reduction-pipewire-bash.pot (biglinux-noise-reduction-pipewire)  #-#-#-#-#
 # 
@@ -59,7 +53,6 @@ msgstr ""
 # 
 msgid "Enable"
 msgstr "Omogući"
-
 # 
 # #-#-#-#-#  biglinux-noise-reduction-pipewire-bash.pot (biglinux-noise-reduction-pipewire)  #-#-#-#-#
 # 
@@ -101,7 +94,6 @@ msgstr "Omogući"
 # 
 msgid "Noise Reduction"
 msgstr "Smanjenje buke"
-
 # 
 # #-#-#-#-#  biglinux-noise-reduction-pipewire-bash.pot (biglinux-noise-reduction-pipewire)  #-#-#-#-#
 # 
@@ -143,7 +135,6 @@ msgstr "Smanjenje buke"
 # 
 msgid "Bluetooth Autoswitch"
 msgstr "Bluetooth automatsko prebacivanje"
-
 # 
 # #-#-#-#-#  biglinux-noise-reduction-pipewire-bash.pot (biglinux-noise-reduction-pipewire)  #-#-#-#-#
 # 
@@ -189,7 +180,6 @@ msgid ""
 "When using Bluetooth headphones, it is possible to automatically activate the Bluetooth microphone "
 "when requested."
 msgstr "Kada koristite Bluetooth slušalice, moguće je automatski aktivirati Bluetooth mikrofon po zahtjevu."
-
 # 
 # #-#-#-#-#  biglinux-noise-reduction-pipewire-bash.pot (biglinux-noise-reduction-pipewire)  #-#-#-#-#
 # 
@@ -233,7 +223,6 @@ msgstr "Kada koristite Bluetooth slušalice, moguće je automatski aktivirati Bl
 # 
 msgid "Audio quality may decrease when using the Bluetooth microphone."
 msgstr "Kvaliteta zvuka može se smanjiti prilikom korištenja Bluetooth mikrofona."
-
 # 
 # #-#-#-#-#  biglinux-noise-reduction-pipewire-bash.pot (biglinux-noise-reduction-pipewire)  #-#-#-#-#
 # 
@@ -242,14 +231,12 @@ msgstr "Kvaliteta zvuka može se smanjiti prilikom korištenja Bluetooth mikrofo
 #: NEEDS WORK
 msgid "<i>mic</i> Sound Waves"
 msgstr "<i>mikrofon</i> Zvučni valovi"
-
 # 
 # #-#-#-#-#  biglinux-noise-reduction-pipewire-bash.pot (biglinux-noise-reduction-pipewire)  #-#-#-#-#
 # 
 #: NEEDS WORK
 msgid "<i>settings</i> Config"
 msgstr "<i>postavke</i> Konfiguracija"
-
 # 
 # #-#-#-#-#  biglinux-noise-reduction-pipewire-bash.pot (biglinux-noise-reduction-pipewire)  #-#-#-#-#
 # 
@@ -258,7 +245,6 @@ msgstr "<i>postavke</i> Konfiguracija"
 #: NEEDS WORK
 msgid "<i>graphic_eq</i> Noise Reduction"
 msgstr "<i>grafički_eq</i> Smanjenje šuma"
-
 # 
 # #-#-#-#-#  biglinux-noise-reduction-pipewire-bash.pot (biglinux-noise-reduction-pipewire)  #-#-#-#-#
 # 
@@ -267,15 +253,71 @@ msgstr "<i>grafički_eq</i> Smanjenje šuma"
 #: NEEDS WORK
 msgid "<i>bluetooth</i> Bluetooth Autoswitch"
 msgstr "<i>bluetooth</i> Bluetooth automatsko prebacivanje"
-
 #: NEEDS WORK
 msgid "<i>tune</i> Config"
 msgstr "<i>tune</i> Konfiguracija"
-
+# 
+# #-#-#-#-#  biglinux-noise-reduction-pipewire-bash.pot (biglinux-noise-reduction-pipewire)  #-#-#-#-#
+# 
+# #-#-#-#-#  biglinux-noise-reduction-pipewire-bash.pot (biglinux-noise-reduction-pipewire)  #-#-#-#-#
+# 
+# #-#-#-#-#  biglinux-noise-reduction-pipewire-bash.pot (biglinux-noise-reduction-pipewire)  #-#-#-#-#
+# 
 #: NEEDS WORK
 msgid "Sound Waves"
 msgstr "Zvučni valovi"
-
+# 
+# #-#-#-#-#  biglinux-noise-reduction-pipewire-bash.pot (biglinux-noise-reduction-pipewire)  #-#-#-#-#
+# 
+# #-#-#-#-#  biglinux-noise-reduction-pipewire-bash.pot (biglinux-noise-reduction-pipewire)  #-#-#-#-#
+# 
+# #-#-#-#-#  biglinux-noise-reduction-pipewire-bash.pot (biglinux-noise-reduction-pipewire)  #-#-#-#-#
+# 
 #: NEEDS WORK
 msgid "Config"
 msgstr "Konfiguracija"
+# 
+# File: biglinux-noise-reduction-pipewire/usr/share/bigbashview/apps/microphone/noise_reducer.py, line: 214
+#: NEEDS WORK
+msgid "Microphone Settings"
+msgstr "Postavke mikrofona"
+# 
+# File: biglinux-noise-reduction-pipewire/usr/share/bigbashview/apps/microphone/noise_reducer.py, line: 216
+#: NEEDS WORK
+msgid "Configure noise reduction and bluetooth settings"
+msgstr "Konfigurirajte postavke smanjenja šuma i Bluetootha."
+# 
+# File: biglinux-noise-reduction-pipewire/usr/share/bigbashview/apps/microphone/noise_reducer.py, line: 224
+#: NEEDS WORK
+msgid "Remove background noise and sounds that interfere with recordings and online calls"
+msgstr "Uklonite pozadinsku buku i zvukove koji ometaju snimke i online pozive."
+# 
+# File: biglinux-noise-reduction-pipewire/usr/share/bigbashview/apps/microphone/noise_reducer.py, line: 241
+#: NEEDS WORK
+msgid "Automatically activate Bluetooth microphone when requested. Audio quality may decrease."
+msgstr "Automatski aktivirajte Bluetooth mikrofon kada se zatraži. Kvaliteta zvuka može opasti."
+# 
+# File: biglinux-noise-reduction-pipewire/usr/share/bigbashview/apps/microphone/noise_reducer.py, line: 276
+#: NEEDS WORK
+msgid "About"
+msgstr "O programu"
+# 
+# File: biglinux-noise-reduction-pipewire/usr/share/bigbashview/apps/microphone/noise_reducer.py, line: 432
+#: NEEDS WORK
+msgid "Noise reduction enabled"
+msgstr "Smanjenje šuma omogućeno"
+# 
+# File: biglinux-noise-reduction-pipewire/usr/share/bigbashview/apps/microphone/noise_reducer.py, line: 436
+#: NEEDS WORK
+msgid "Noise reduction disabled"
+msgstr "Smanjivanje šuma onemogućeno"
+# 
+# File: biglinux-noise-reduction-pipewire/usr/share/bigbashview/apps/microphone/noise_reducer.py, line: 472
+#: NEEDS WORK
+msgid "Bluetooth autoswitch enabled"
+msgstr "Omogućeno automatsko prebacivanje Bluetootha"
+# 
+# File: biglinux-noise-reduction-pipewire/usr/share/bigbashview/apps/microphone/noise_reducer.py, line: 477
+#: NEEDS WORK
+msgid "Bluetooth autoswitch disabled"
+msgstr "Bluetooth automatsko prebacivanje onemogućeno"

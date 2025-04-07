@@ -15,7 +15,6 @@ msgstr ""
 "Content-Type: text/plain; charset=utf-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "X-Generator: attranslate\n"
-
 # 
 # #-#-#-#-#  biglinux-noise-reduction-pipewire-bash.pot (biglinux-noise-reduction-pipewire)  #-#-#-#-#
 # 
@@ -23,13 +22,10 @@ msgstr ""
 # 
 msgid "Reduce Microphone Noise"
 msgstr "Reducir el ruido del micrófono"
-
 msgid "Activated!"
 msgstr "Activado!"
-
 msgid "Disabled!"
 msgstr "Deshabilitado!"
-
 # 
 # #-#-#-#-#  biglinux-noise-reduction-pipewire-bash.pot (biglinux-noise-reduction-pipewire)  #-#-#-#-#
 # 
@@ -37,7 +33,6 @@ msgstr "Deshabilitado!"
 # 
 msgid "Remove background noise and sounds that interfere with recordings and online calls."
 msgstr "Eliminar ruido de fondo y sonidos que interfieren con grabaciones y llamadas en línea."
-
 # 
 # #-#-#-#-#  biglinux-noise-reduction-pipewire-bash.pot (biglinux-noise-reduction-pipewire)  #-#-#-#-#
 # 
@@ -49,7 +44,6 @@ msgid ""
 msgstr ""
 "La nueva versión del filtro de reducción de ruido aplica la función directamente al micrófono "
 "predeterminado seleccionado en el sistema, eliminando la necesidad de elegir un micrófono virtual."
-
 # 
 # #-#-#-#-#  biglinux-noise-reduction-pipewire-bash.pot (biglinux-noise-reduction-pipewire)  #-#-#-#-#
 # 
@@ -59,7 +53,6 @@ msgstr ""
 # 
 msgid "Enable"
 msgstr "habilitar"
-
 # 
 # #-#-#-#-#  biglinux-noise-reduction-pipewire-bash.pot (biglinux-noise-reduction-pipewire)  #-#-#-#-#
 # 
@@ -101,7 +94,6 @@ msgstr "habilitar"
 # 
 msgid "Noise Reduction"
 msgstr "Reducción de ruido"
-
 # 
 # #-#-#-#-#  biglinux-noise-reduction-pipewire-bash.pot (biglinux-noise-reduction-pipewire)  #-#-#-#-#
 # 
@@ -143,7 +135,6 @@ msgstr "Reducción de ruido"
 # 
 msgid "Bluetooth Autoswitch"
 msgstr "Bluetooth Autoswitch"
-
 # 
 # #-#-#-#-#  biglinux-noise-reduction-pipewire-bash.pot (biglinux-noise-reduction-pipewire)  #-#-#-#-#
 # 
@@ -191,7 +182,6 @@ msgid ""
 msgstr ""
 "Al usar auriculares Bluetooth, es posible activar automáticamente el micrófono Bluetooth cuando se "
 "solicite."
-
 # 
 # #-#-#-#-#  biglinux-noise-reduction-pipewire-bash.pot (biglinux-noise-reduction-pipewire)  #-#-#-#-#
 # 
@@ -235,7 +225,6 @@ msgstr ""
 # 
 msgid "Audio quality may decrease when using the Bluetooth microphone."
 msgstr "La calidad del audio puede disminuir al usar el micrófono Bluetooth."
-
 # 
 # #-#-#-#-#  biglinux-noise-reduction-pipewire-bash.pot (biglinux-noise-reduction-pipewire)  #-#-#-#-#
 # 
@@ -244,14 +233,12 @@ msgstr "La calidad del audio puede disminuir al usar el micrófono Bluetooth."
 #: NEEDS WORK
 msgid "<i>mic</i> Sound Waves"
 msgstr "<i>mic</i> Ondas de sonido"
-
 # 
 # #-#-#-#-#  biglinux-noise-reduction-pipewire-bash.pot (biglinux-noise-reduction-pipewire)  #-#-#-#-#
 # 
 #: NEEDS WORK
 msgid "<i>settings</i> Config"
 msgstr "<i>configuración</i> Config"
-
 # 
 # #-#-#-#-#  biglinux-noise-reduction-pipewire-bash.pot (biglinux-noise-reduction-pipewire)  #-#-#-#-#
 # 
@@ -260,7 +247,6 @@ msgstr "<i>configuración</i> Config"
 #: NEEDS WORK
 msgid "<i>graphic_eq</i> Noise Reduction"
 msgstr "Reducción de Ruido"
-
 # 
 # #-#-#-#-#  biglinux-noise-reduction-pipewire-bash.pot (biglinux-noise-reduction-pipewire)  #-#-#-#-#
 # 
@@ -269,15 +255,73 @@ msgstr "Reducción de Ruido"
 #: NEEDS WORK
 msgid "<i>bluetooth</i> Bluetooth Autoswitch"
 msgstr "<i>bluetooth</i> Conmutador automático de Bluetooth"
-
 #: NEEDS WORK
 msgid "<i>tune</i> Config"
 msgstr "<i>ajuste</i> Config"
-
+# 
+# #-#-#-#-#  biglinux-noise-reduction-pipewire-bash.pot (biglinux-noise-reduction-pipewire)  #-#-#-#-#
+# 
+# #-#-#-#-#  biglinux-noise-reduction-pipewire-bash.pot (biglinux-noise-reduction-pipewire)  #-#-#-#-#
+# 
+# #-#-#-#-#  biglinux-noise-reduction-pipewire-bash.pot (biglinux-noise-reduction-pipewire)  #-#-#-#-#
+# 
 #: NEEDS WORK
 msgid "Sound Waves"
 msgstr "Ondas sonoras"
-
+# 
+# #-#-#-#-#  biglinux-noise-reduction-pipewire-bash.pot (biglinux-noise-reduction-pipewire)  #-#-#-#-#
+# 
+# #-#-#-#-#  biglinux-noise-reduction-pipewire-bash.pot (biglinux-noise-reduction-pipewire)  #-#-#-#-#
+# 
+# #-#-#-#-#  biglinux-noise-reduction-pipewire-bash.pot (biglinux-noise-reduction-pipewire)  #-#-#-#-#
+# 
 #: NEEDS WORK
 msgid "Config"
 msgstr "Configuración"
+# 
+# File: biglinux-noise-reduction-pipewire/usr/share/bigbashview/apps/microphone/noise_reducer.py, line: 214
+#: NEEDS WORK
+msgid "Microphone Settings"
+msgstr "Configuración del micrófono"
+# 
+# File: biglinux-noise-reduction-pipewire/usr/share/bigbashview/apps/microphone/noise_reducer.py, line: 216
+#: NEEDS WORK
+msgid "Configure noise reduction and bluetooth settings"
+msgstr "Configurar la reducción de ruido y los ajustes de Bluetooth."
+# 
+# File: biglinux-noise-reduction-pipewire/usr/share/bigbashview/apps/microphone/noise_reducer.py, line: 224
+#: NEEDS WORK
+msgid "Remove background noise and sounds that interfere with recordings and online calls"
+msgstr "Elimina el ruido de fondo y los sonidos que interfieren con las grabaciones y las llamadas en línea."
+# 
+# File: biglinux-noise-reduction-pipewire/usr/share/bigbashview/apps/microphone/noise_reducer.py, line: 241
+#: NEEDS WORK
+msgid "Automatically activate Bluetooth microphone when requested. Audio quality may decrease."
+msgstr ""
+"Activar automáticamente el micrófono Bluetooth cuando se solicite. La calidad de audio puede "
+"disminuir."
+# 
+# File: biglinux-noise-reduction-pipewire/usr/share/bigbashview/apps/microphone/noise_reducer.py, line: 276
+#: NEEDS WORK
+msgid "About"
+msgstr "Acerca de"
+# 
+# File: biglinux-noise-reduction-pipewire/usr/share/bigbashview/apps/microphone/noise_reducer.py, line: 432
+#: NEEDS WORK
+msgid "Noise reduction enabled"
+msgstr "Reducción de ruido habilitada"
+# 
+# File: biglinux-noise-reduction-pipewire/usr/share/bigbashview/apps/microphone/noise_reducer.py, line: 436
+#: NEEDS WORK
+msgid "Noise reduction disabled"
+msgstr "Reducción de ruido desactivada"
+# 
+# File: biglinux-noise-reduction-pipewire/usr/share/bigbashview/apps/microphone/noise_reducer.py, line: 472
+#: NEEDS WORK
+msgid "Bluetooth autoswitch enabled"
+msgstr "Bluetooth autoswitch habilitado"
+# 
+# File: biglinux-noise-reduction-pipewire/usr/share/bigbashview/apps/microphone/noise_reducer.py, line: 477
+#: NEEDS WORK
+msgid "Bluetooth autoswitch disabled"
+msgstr "Bluetooth autoswitch desactivado"

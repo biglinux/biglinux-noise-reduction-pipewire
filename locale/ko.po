@@ -15,7 +15,6 @@ msgstr ""
 "Content-Type: text/plain; charset=utf-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "X-Generator: attranslate\n"
-
 # 
 # #-#-#-#-#  biglinux-noise-reduction-pipewire-bash.pot (biglinux-noise-reduction-pipewire)  #-#-#-#-#
 # 
@@ -23,13 +22,10 @@ msgstr ""
 # 
 msgid "Reduce Microphone Noise"
 msgstr "마이크 잡음 감소"
-
 msgid "Activated!"
 msgstr "활성화되었습니다!"
-
 msgid "Disabled!"
 msgstr "비활성화됨!"
-
 # 
 # #-#-#-#-#  biglinux-noise-reduction-pipewire-bash.pot (biglinux-noise-reduction-pipewire)  #-#-#-#-#
 # 
@@ -37,7 +33,6 @@ msgstr "비활성화됨!"
 # 
 msgid "Remove background noise and sounds that interfere with recordings and online calls."
 msgstr "녹음 및 온라인 통화에 방해되는 배경 소음과 소리를 제거합니다."
-
 # 
 # #-#-#-#-#  biglinux-noise-reduction-pipewire-bash.pot (biglinux-noise-reduction-pipewire)  #-#-#-#-#
 # 
@@ -47,7 +42,6 @@ msgid ""
 "The new version of the noise reduction filter applies the feature directly to the selected default "
 "microphone in the system, eliminating the need to choose a virtual microphone."
 msgstr "시스템에서 선택한 기본 마이크로폰에 노이즈 감소 필터의 새 버전이 기능을 직접 적용하여 가상 마이크로폰을 선택할 필요가 없어졌습니다."
-
 # 
 # #-#-#-#-#  biglinux-noise-reduction-pipewire-bash.pot (biglinux-noise-reduction-pipewire)  #-#-#-#-#
 # 
@@ -57,7 +51,6 @@ msgstr "시스템에서 선택한 기본 마이크로폰에 노이즈 감소 필
 # 
 msgid "Enable"
 msgstr "활성화"
-
 # 
 # #-#-#-#-#  biglinux-noise-reduction-pipewire-bash.pot (biglinux-noise-reduction-pipewire)  #-#-#-#-#
 # 
@@ -99,7 +92,6 @@ msgstr "활성화"
 # 
 msgid "Noise Reduction"
 msgstr "소음 감소"
-
 # 
 # #-#-#-#-#  biglinux-noise-reduction-pipewire-bash.pot (biglinux-noise-reduction-pipewire)  #-#-#-#-#
 # 
@@ -141,7 +133,6 @@ msgstr "소음 감소"
 # 
 msgid "Bluetooth Autoswitch"
 msgstr "블루투스 자동 전환"
-
 # 
 # #-#-#-#-#  biglinux-noise-reduction-pipewire-bash.pot (biglinux-noise-reduction-pipewire)  #-#-#-#-#
 # 
@@ -187,7 +178,6 @@ msgid ""
 "When using Bluetooth headphones, it is possible to automatically activate the Bluetooth microphone "
 "when requested."
 msgstr "Bluetooth 헤드폰을 사용할 때 요청 시 Bluetooth 마이크를 자동으로 활성화할 수 있습니다."
-
 # 
 # #-#-#-#-#  biglinux-noise-reduction-pipewire-bash.pot (biglinux-noise-reduction-pipewire)  #-#-#-#-#
 # 
@@ -231,7 +221,6 @@ msgstr "Bluetooth 헤드폰을 사용할 때 요청 시 Bluetooth 마이크를 �
 # 
 msgid "Audio quality may decrease when using the Bluetooth microphone."
 msgstr "블루투스 마이크를 사용할 때 오디오 품질이 감소할 수 있습니다."
-
 # 
 # #-#-#-#-#  biglinux-noise-reduction-pipewire-bash.pot (biglinux-noise-reduction-pipewire)  #-#-#-#-#
 # 
@@ -240,14 +229,12 @@ msgstr "블루투스 마이크를 사용할 때 오디오 품질이 감소할 �
 #: NEEDS WORK
 msgid "<i>mic</i> Sound Waves"
 msgstr "<i>마이크</i> 음파"
-
 # 
 # #-#-#-#-#  biglinux-noise-reduction-pipewire-bash.pot (biglinux-noise-reduction-pipewire)  #-#-#-#-#
 # 
 #: NEEDS WORK
 msgid "<i>settings</i> Config"
 msgstr "<i>설정</i> 구성"
-
 # 
 # #-#-#-#-#  biglinux-noise-reduction-pipewire-bash.pot (biglinux-noise-reduction-pipewire)  #-#-#-#-#
 # 
@@ -256,7 +243,6 @@ msgstr "<i>설정</i> 구성"
 #: NEEDS WORK
 msgid "<i>graphic_eq</i> Noise Reduction"
 msgstr "<i>그래픽 이퀄라이저</i> 노이즈 감소"
-
 # 
 # #-#-#-#-#  biglinux-noise-reduction-pipewire-bash.pot (biglinux-noise-reduction-pipewire)  #-#-#-#-#
 # 
@@ -265,15 +251,71 @@ msgstr "<i>그래픽 이퀄라이저</i> 노이즈 감소"
 #: NEEDS WORK
 msgid "<i>bluetooth</i> Bluetooth Autoswitch"
 msgstr "<i>블루투스</i> 블루투스 자동 전환"
-
 #: NEEDS WORK
 msgid "<i>tune</i> Config"
 msgstr "<i>조정</i> 구성"
-
+# 
+# #-#-#-#-#  biglinux-noise-reduction-pipewire-bash.pot (biglinux-noise-reduction-pipewire)  #-#-#-#-#
+# 
+# #-#-#-#-#  biglinux-noise-reduction-pipewire-bash.pot (biglinux-noise-reduction-pipewire)  #-#-#-#-#
+# 
+# #-#-#-#-#  biglinux-noise-reduction-pipewire-bash.pot (biglinux-noise-reduction-pipewire)  #-#-#-#-#
+# 
 #: NEEDS WORK
 msgid "Sound Waves"
 msgstr "음파"
-
+# 
+# #-#-#-#-#  biglinux-noise-reduction-pipewire-bash.pot (biglinux-noise-reduction-pipewire)  #-#-#-#-#
+# 
+# #-#-#-#-#  biglinux-noise-reduction-pipewire-bash.pot (biglinux-noise-reduction-pipewire)  #-#-#-#-#
+# 
+# #-#-#-#-#  biglinux-noise-reduction-pipewire-bash.pot (biglinux-noise-reduction-pipewire)  #-#-#-#-#
+# 
 #: NEEDS WORK
 msgid "Config"
 msgstr "구성"
+# 
+# File: biglinux-noise-reduction-pipewire/usr/share/bigbashview/apps/microphone/noise_reducer.py, line: 214
+#: NEEDS WORK
+msgid "Microphone Settings"
+msgstr "마이크 설정"
+# 
+# File: biglinux-noise-reduction-pipewire/usr/share/bigbashview/apps/microphone/noise_reducer.py, line: 216
+#: NEEDS WORK
+msgid "Configure noise reduction and bluetooth settings"
+msgstr "노이즈 감소 및 블루투스 설정 구성"
+# 
+# File: biglinux-noise-reduction-pipewire/usr/share/bigbashview/apps/microphone/noise_reducer.py, line: 224
+#: NEEDS WORK
+msgid "Remove background noise and sounds that interfere with recordings and online calls"
+msgstr "배경 소음과 녹음 및 온라인 통화에 방해가 되는 소리를 제거합니다."
+# 
+# File: biglinux-noise-reduction-pipewire/usr/share/bigbashview/apps/microphone/noise_reducer.py, line: 241
+#: NEEDS WORK
+msgid "Automatically activate Bluetooth microphone when requested. Audio quality may decrease."
+msgstr "요청 시 Bluetooth 마이크를 자동으로 활성화합니다. 오디오 품질이 저하될 수 있습니다."
+# 
+# File: biglinux-noise-reduction-pipewire/usr/share/bigbashview/apps/microphone/noise_reducer.py, line: 276
+#: NEEDS WORK
+msgid "About"
+msgstr "정보"
+# 
+# File: biglinux-noise-reduction-pipewire/usr/share/bigbashview/apps/microphone/noise_reducer.py, line: 432
+#: NEEDS WORK
+msgid "Noise reduction enabled"
+msgstr "노이즈 감소 활성화됨"
+# 
+# File: biglinux-noise-reduction-pipewire/usr/share/bigbashview/apps/microphone/noise_reducer.py, line: 436
+#: NEEDS WORK
+msgid "Noise reduction disabled"
+msgstr "노이즈 감소 비활성화됨"
+# 
+# File: biglinux-noise-reduction-pipewire/usr/share/bigbashview/apps/microphone/noise_reducer.py, line: 472
+#: NEEDS WORK
+msgid "Bluetooth autoswitch enabled"
+msgstr "블루투스 자동 전환 활성화됨"
+# 
+# File: biglinux-noise-reduction-pipewire/usr/share/bigbashview/apps/microphone/noise_reducer.py, line: 477
+#: NEEDS WORK
+msgid "Bluetooth autoswitch disabled"
+msgstr "블루투스 자동 전환 비활성화됨"
