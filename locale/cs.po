@@ -151,3 +151,43 @@ msgstr "Povolený automatický přepínač Bluetooth"
 #: NEEDS WORK
 msgid "Bluetooth autoswitch disabled"
 msgstr "Bluetooth automatické přepínání je zakázáno."
+# 
+# File: biglinux-noise-reduction-pipewire/usr/share/biglinux/microphone/audio_visualizer.py, line: 27
+#: NEEDS WORK
+msgid "Rsvg module not available, will use fallback icon drawing"
+msgstr "Modul Rsvg není k dispozici, použije se náhradní vykreslování ikony."
+# 
+# File: biglinux-noise-reduction-pipewire/usr/share/biglinux/microphone/audio_visualizer.py, line: 142
+#: NEEDS WORK
+msgid "Modern Waves"
+msgstr "Moderní vlny"
+# 
+# File: biglinux-noise-reduction-pipewire/usr/share/biglinux/microphone/audio_visualizer.py, line: 146
+#: NEEDS WORK
+msgid "Sound waves with green to red gradient"
+msgstr "Zvukové vlny s gradientem od zelené k červené"
+# 
+# File: biglinux-noise-reduction-pipewire/usr/share/biglinux/microphone/audio_visualizer.py, line: 148
+#: NEEDS WORK
+msgid "Retro Bars"
+msgstr "Retro lišty"
+# 
+# File: biglinux-noise-reduction-pipewire/usr/share/biglinux/microphone/audio_visualizer.py, line: 150
+#: NEEDS WORK
+msgid "Classic equalizer-style visualization"
+msgstr "Klasická vizualizace ve stylu ekvalizéru"
+# 
+# File: biglinux-noise-reduction-pipewire/usr/share/biglinux/microphone/audio_visualizer.py, line: 153
+#: NEEDS WORK
+msgid "Spectrum"
+msgstr "Spektrum"
+# 
+# File: biglinux-noise-reduction-pipewire/usr/share/biglinux/microphone/audio_visualizer.py, line: 157
+#: NEEDS WORK
+msgid "Spectrum visualizer with green to red gradient"
+msgstr "Spektrumový vizualizér s přechodem zelené do červené"
+# 
+# File: biglinux-noise-reduction-pipewire/usr/share/biglinux/microphone/audio_visualizer.py, line: 772
+#: NEEDS WORK
+msgid "Visualization Error"
+msgstr "Chyba vizualizace"

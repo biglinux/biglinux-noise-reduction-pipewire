@@ -155,3 +155,43 @@ msgstr "Bluetooth auto-commutation activé"
 #: NEEDS WORK
 msgid "Bluetooth autoswitch disabled"
 msgstr "Bluetooth autoswitch désactivé"
+# 
+# File: biglinux-noise-reduction-pipewire/usr/share/biglinux/microphone/audio_visualizer.py, line: 27
+#: NEEDS WORK
+msgid "Rsvg module not available, will use fallback icon drawing"
+msgstr "Le module Rsvg n'est pas disponible, utilisation d'un dessin d'icône de secours."
+# 
+# File: biglinux-noise-reduction-pipewire/usr/share/biglinux/microphone/audio_visualizer.py, line: 142
+#: NEEDS WORK
+msgid "Modern Waves"
+msgstr "Vagues Modernes"
+# 
+# File: biglinux-noise-reduction-pipewire/usr/share/biglinux/microphone/audio_visualizer.py, line: 146
+#: NEEDS WORK
+msgid "Sound waves with green to red gradient"
+msgstr "Vagues sonores avec un dégradé de vert à rouge"
+# 
+# File: biglinux-noise-reduction-pipewire/usr/share/biglinux/microphone/audio_visualizer.py, line: 148
+#: NEEDS WORK
+msgid "Retro Bars"
+msgstr "Barres rétro"
+# 
+# File: biglinux-noise-reduction-pipewire/usr/share/biglinux/microphone/audio_visualizer.py, line: 150
+#: NEEDS WORK
+msgid "Classic equalizer-style visualization"
+msgstr "Visualisation de type égaliseur classique"
+# 
+# File: biglinux-noise-reduction-pipewire/usr/share/biglinux/microphone/audio_visualizer.py, line: 153
+#: NEEDS WORK
+msgid "Spectrum"
+msgstr "Spectre"
+# 
+# File: biglinux-noise-reduction-pipewire/usr/share/biglinux/microphone/audio_visualizer.py, line: 157
+#: NEEDS WORK
+msgid "Spectrum visualizer with green to red gradient"
+msgstr "Visualiseur de spectre avec dégradé de vert à rouge"
+# 
+# File: biglinux-noise-reduction-pipewire/usr/share/biglinux/microphone/audio_visualizer.py, line: 772
+#: NEEDS WORK
+msgid "Visualization Error"
+msgstr "Erreur de visualisation"

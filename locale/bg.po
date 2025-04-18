@@ -153,3 +153,43 @@ msgstr "Bluetooth автоматично превключване е актив�
 #: NEEDS WORK
 msgid "Bluetooth autoswitch disabled"
 msgstr "Bluetooth автоматично превключване деактивирано"
+# 
+# File: biglinux-noise-reduction-pipewire/usr/share/biglinux/microphone/audio_visualizer.py, line: 27
+#: NEEDS WORK
+msgid "Rsvg module not available, will use fallback icon drawing"
+msgstr "Модулът Rsvg не е наличен, ще се използва резервно рисуване на икони."
+# 
+# File: biglinux-noise-reduction-pipewire/usr/share/biglinux/microphone/audio_visualizer.py, line: 142
+#: NEEDS WORK
+msgid "Modern Waves"
+msgstr "Модерни вълни"
+# 
+# File: biglinux-noise-reduction-pipewire/usr/share/biglinux/microphone/audio_visualizer.py, line: 146
+#: NEEDS WORK
+msgid "Sound waves with green to red gradient"
+msgstr "Звукови вълни с градиент от зелено до червено"
+# 
+# File: biglinux-noise-reduction-pipewire/usr/share/biglinux/microphone/audio_visualizer.py, line: 148
+#: NEEDS WORK
+msgid "Retro Bars"
+msgstr "Ретро ленти"
+# 
+# File: biglinux-noise-reduction-pipewire/usr/share/biglinux/microphone/audio_visualizer.py, line: 150
+#: NEEDS WORK
+msgid "Classic equalizer-style visualization"
+msgstr "Класическа визуализация в стил равномерно регулиране"
+# 
+# File: biglinux-noise-reduction-pipewire/usr/share/biglinux/microphone/audio_visualizer.py, line: 153
+#: NEEDS WORK
+msgid "Spectrum"
+msgstr "Спектър"
+# 
+# File: biglinux-noise-reduction-pipewire/usr/share/biglinux/microphone/audio_visualizer.py, line: 157
+#: NEEDS WORK
+msgid "Spectrum visualizer with green to red gradient"
+msgstr "Спектрален визуализатор с градиент от зелено до червено"
+# 
+# File: biglinux-noise-reduction-pipewire/usr/share/biglinux/microphone/audio_visualizer.py, line: 772
+#: NEEDS WORK
+msgid "Visualization Error"
+msgstr "Грешка при визуализацията"

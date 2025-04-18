@@ -23,60 +23,100 @@ msgid   "Disabled!"
 msgstr  ""
 
 #
-# File: biglinux-noise-reduction-pipewire/usr/share/biglinux/microphone/noise_reducer.py, line: 160
-# File: biglinux-noise-reduction-pipewire/usr/share/biglinux/microphone/noise_reducer.py, line: 222
-# File: biglinux-noise-reduction-pipewire/usr/share/biglinux/microphone/noise_reducer.py, line: 295
+# File: biglinux-noise-reduction-pipewire/usr/share/biglinux/microphone/noise_reducer.py, line: 159
+# File: biglinux-noise-reduction-pipewire/usr/share/biglinux/microphone/noise_reducer.py, line: 221
+# File: biglinux-noise-reduction-pipewire/usr/share/biglinux/microphone/noise_reducer.py, line: 294
 msgid   "Noise Reduction"
 msgstr  ""
 
 #
-# File: biglinux-noise-reduction-pipewire/usr/share/biglinux/microphone/noise_reducer.py, line: 215
+# File: biglinux-noise-reduction-pipewire/usr/share/biglinux/microphone/noise_reducer.py, line: 214
 msgid   "Microphone Settings"
 msgstr  ""
 
 #
-# File: biglinux-noise-reduction-pipewire/usr/share/biglinux/microphone/noise_reducer.py, line: 217
+# File: biglinux-noise-reduction-pipewire/usr/share/biglinux/microphone/noise_reducer.py, line: 216
 msgid   "Configure noise reduction and bluetooth settings"
 msgstr  ""
 
 #
-# File: biglinux-noise-reduction-pipewire/usr/share/biglinux/microphone/noise_reducer.py, line: 225
+# File: biglinux-noise-reduction-pipewire/usr/share/biglinux/microphone/noise_reducer.py, line: 224
 msgid   "Remove background noise and sounds that interfere with recordings "
         "and online calls"
 msgstr  ""
 
 #
-# File: biglinux-noise-reduction-pipewire/usr/share/biglinux/microphone/noise_reducer.py, line: 239
+# File: biglinux-noise-reduction-pipewire/usr/share/biglinux/microphone/noise_reducer.py, line: 238
 msgid   "Bluetooth Autoswitch"
 msgstr  ""
 
 #
-# File: biglinux-noise-reduction-pipewire/usr/share/biglinux/microphone/noise_reducer.py, line: 242
+# File: biglinux-noise-reduction-pipewire/usr/share/biglinux/microphone/noise_reducer.py, line: 241
 msgid   "Automatically activate Bluetooth microphone when requested. Audio "
         "quality may decrease."
 msgstr  ""
 
 #
-# File: biglinux-noise-reduction-pipewire/usr/share/biglinux/microphone/noise_reducer.py, line: 277
+# File: biglinux-noise-reduction-pipewire/usr/share/biglinux/microphone/noise_reducer.py, line: 276
 msgid   "About"
 msgstr  ""
 
 #
-# File: biglinux-noise-reduction-pipewire/usr/share/biglinux/microphone/noise_reducer.py, line: 433
+# File: biglinux-noise-reduction-pipewire/usr/share/biglinux/microphone/noise_reducer.py, line: 432
 msgid   "Noise reduction enabled"
 msgstr  ""
 
 #
-# File: biglinux-noise-reduction-pipewire/usr/share/biglinux/microphone/noise_reducer.py, line: 437
+# File: biglinux-noise-reduction-pipewire/usr/share/biglinux/microphone/noise_reducer.py, line: 436
 msgid   "Noise reduction disabled"
 msgstr  ""
 
 #
-# File: biglinux-noise-reduction-pipewire/usr/share/biglinux/microphone/noise_reducer.py, line: 473
+# File: biglinux-noise-reduction-pipewire/usr/share/biglinux/microphone/noise_reducer.py, line: 472
 msgid   "Bluetooth autoswitch enabled"
 msgstr  ""
 
 #
-# File: biglinux-noise-reduction-pipewire/usr/share/biglinux/microphone/noise_reducer.py, line: 478
+# File: biglinux-noise-reduction-pipewire/usr/share/biglinux/microphone/noise_reducer.py, line: 477
 msgid   "Bluetooth autoswitch disabled"
+msgstr  ""
+
+#
+# File: biglinux-noise-reduction-pipewire/usr/share/biglinux/microphone/audio_visualizer.py, line: 27
+msgid   "Rsvg module not available, will use fallback icon drawing"
+msgstr  ""
+
+#
+# File: biglinux-noise-reduction-pipewire/usr/share/biglinux/microphone/audio_visualizer.py, line: 142
+msgid   "Modern Waves"
+msgstr  ""
+
+#
+# File: biglinux-noise-reduction-pipewire/usr/share/biglinux/microphone/audio_visualizer.py, line: 146
+msgid   "Sound waves with green to red gradient"
+msgstr  ""
+
+#
+# File: biglinux-noise-reduction-pipewire/usr/share/biglinux/microphone/audio_visualizer.py, line: 148
+msgid   "Retro Bars"
+msgstr  ""
+
+#
+# File: biglinux-noise-reduction-pipewire/usr/share/biglinux/microphone/audio_visualizer.py, line: 150
+msgid   "Classic equalizer-style visualization"
+msgstr  ""
+
+#
+# File: biglinux-noise-reduction-pipewire/usr/share/biglinux/microphone/audio_visualizer.py, line: 153
+msgid   "Spectrum"
+msgstr  ""
+
+#
+# File: biglinux-noise-reduction-pipewire/usr/share/biglinux/microphone/audio_visualizer.py, line: 157
+msgid   "Spectrum visualizer with green to red gradient"
+msgstr  ""
+
+#
+# File: biglinux-noise-reduction-pipewire/usr/share/biglinux/microphone/audio_visualizer.py, line: 772
+msgid   "Visualization Error"
 msgstr  ""

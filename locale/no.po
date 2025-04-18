@@ -151,3 +151,43 @@ msgstr "Bluetooth automatisk bytte aktivert"
 #: NEEDS WORK
 msgid "Bluetooth autoswitch disabled"
 msgstr "Bluetooth autosvits av deaktivert"
+# 
+# File: biglinux-noise-reduction-pipewire/usr/share/biglinux/microphone/audio_visualizer.py, line: 27
+#: NEEDS WORK
+msgid "Rsvg module not available, will use fallback icon drawing"
+msgstr "Rsvg-modulen er ikke tilgjengelig, vil bruke alternativ ikontegning."
+# 
+# File: biglinux-noise-reduction-pipewire/usr/share/biglinux/microphone/audio_visualizer.py, line: 142
+#: NEEDS WORK
+msgid "Modern Waves"
+msgstr "Moderne Bølger"
+# 
+# File: biglinux-noise-reduction-pipewire/usr/share/biglinux/microphone/audio_visualizer.py, line: 146
+#: NEEDS WORK
+msgid "Sound waves with green to red gradient"
+msgstr "Lydvibrasjoner med grønn til rød gradient"
+# 
+# File: biglinux-noise-reduction-pipewire/usr/share/biglinux/microphone/audio_visualizer.py, line: 148
+#: NEEDS WORK
+msgid "Retro Bars"
+msgstr "Retro Stenger"
+# 
+# File: biglinux-noise-reduction-pipewire/usr/share/biglinux/microphone/audio_visualizer.py, line: 150
+#: NEEDS WORK
+msgid "Classic equalizer-style visualization"
+msgstr "Klassisk equalizer-stil visualisering"
+# 
+# File: biglinux-noise-reduction-pipewire/usr/share/biglinux/microphone/audio_visualizer.py, line: 153
+#: NEEDS WORK
+msgid "Spectrum"
+msgstr "Spektrum"
+# 
+# File: biglinux-noise-reduction-pipewire/usr/share/biglinux/microphone/audio_visualizer.py, line: 157
+#: NEEDS WORK
+msgid "Spectrum visualizer with green to red gradient"
+msgstr "Spektrumvisualisator med grønn til rød gradient"
+# 
+# File: biglinux-noise-reduction-pipewire/usr/share/biglinux/microphone/audio_visualizer.py, line: 772
+#: NEEDS WORK
+msgid "Visualization Error"
+msgstr "Visualiseringsfeil"
