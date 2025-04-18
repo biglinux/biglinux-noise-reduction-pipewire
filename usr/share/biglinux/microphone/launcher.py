@@ -69,7 +69,11 @@ def main():
     app_path = os.path.join(script_dir, "noise_reducer.py")
 
     if os.path.exists(app_path):
-        subprocess.run([sys.executable, app_path])
+        # Set GTK application ID directly via environment variable for Wayland compatibility
+        env = os.environ.copy()
+        env["GDK_BACKEND"] = "wayland,x11"
+        env["GTK_APPLICATION_ID"] = "br.com.biglinux.microphone"
+        subprocess.run([sys.executable, app_path], env=env)
     else:
         print(f"Error: Application file not found at {app_path}")
         sys.exit(1)
