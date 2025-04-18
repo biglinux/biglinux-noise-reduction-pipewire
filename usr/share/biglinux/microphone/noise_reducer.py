@@ -9,11 +9,11 @@ import threading  # Used for threading operations
 import cairo  # Used for drawing operations
 from pathlib import Path  # Used for file path operations
 import gettext  # Used for translations
-import locale  # Used for translations
+# import locale  # Used for translations
 
 # Set up gettext for translations
-locale.setlocale(locale.LC_ALL, "")
-gettext.bindtextdomain("biglinux-noise-reduction", "/usr/share/locale")
+# locale.setlocale(locale.LC_ALL, "")
+# gettext.bindtextdomain("biglinux-noise-reduction", "/usr/share/locale")
 gettext.textdomain("biglinux-noise-reduction")
 _ = gettext.gettext
 
@@ -126,9 +126,10 @@ class NoiseReducerWindow(Adw.ApplicationWindow):
         icon_path = "/usr/share/icons/hicolor/scalable/apps/biglinux-noise-reduction-pipewire.svg"
         if os.path.exists(icon_path):
             try:
-                # Load icon using GdkPixbuf at a larger size (64x64) - increased from 48x48
-                pixbuf = GdkPixbuf.Pixbuf.new_from_file_at_size(icon_path, 64, 64)
-                icon_image = Gtk.Image.new_from_pixbuf(pixbuf)
+                # Modern GTK4 approach: use Gdk.Texture instead of GdkPixbuf
+                file = Gio.File.new_for_path(icon_path)
+                texture = Gdk.Texture.new_from_file(file)
+                icon_image = Gtk.Image.new_from_paintable(texture)
 
                 # Add margins to the icon image for proper spacing
                 icon_image.set_pixel_size(25)

@@ -1,7 +1,5 @@
 [Desktop Entry]
-Categories=AudioVideo;
-Exec=big-microphone-noise-reduction
-Icon=biglinux-noise-reduction-pipewire
+Type=Application
 Name=Reduce microphone noise
 Name[bg]=Намаляване на шума от микрофона
 Name[cs]=Snižte šum mikrofonu
@@ -30,12 +28,9 @@ Name[sv]=Minska mikrofonbruset
 Name[tr]=Mikrofon gürültüsünü azaltma
 Name[uk]=Зменшити шум мікрофона
 Name[zh]=降低麦克风噪音
-StartupNotify=true
+Icon=biglinux-noise-reduction-pipewire
+Exec=big-microphone-noise-reduction
+StartupWMClass=big-microphone-noise-reduction
+Categories=AudioVideo;
 Terminal=false
-Type=Application
-
-Actions=SoftwareRender;
-
-[Desktop Action SoftwareRender]
-Name=Software Render
-Exec=SoftwareRender biglinux-noise-reduction-pipewire
+StartupNotify=true
