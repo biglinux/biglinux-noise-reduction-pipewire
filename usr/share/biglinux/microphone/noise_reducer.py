@@ -13,8 +13,7 @@ import gettext  # Used for translations
 
 # Set up gettext for translations
 # locale.setlocale(locale.LC_ALL, "")
-# gettext.bindtextdomain("biglinux-noise-reduction", "/usr/share/locale")
-gettext.textdomain("biglinux-noise-reduction")
+gettext.textdomain("biglinux-noise-reduction-pipewire")
 _ = gettext.gettext
 
 gi.require_version("Gtk", "4.0")
@@ -27,7 +26,7 @@ from audio_visualizer import AudioVisualizer
 
 
 class NoiseReducerApp(Adw.Application):
-    def __init__(self):
+    def __init__(self): 
         super().__init__(
             application_id="com.biglinux.noise_reducer",
             flags=Gio.ApplicationFlags.DEFAULT_FLAGS,
@@ -500,5 +499,6 @@ class NoiseReducerWindow(Adw.ApplicationWindow):
 
 if __name__ == "__main__":
     app = NoiseReducerApp()
+    app.set_application_id("br.com.biglinux.microphone")
     exit_status = app.run(sys.argv)
     sys.exit(exit_status)

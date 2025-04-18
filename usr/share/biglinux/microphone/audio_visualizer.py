@@ -7,6 +7,10 @@ import math  # Required for calculations
 import random  # Used for visualization
 import asyncio  # Used in noise_reducer_service connectivity
 import os  # Used for file path checks
+import gettext  # Add gettext for internationalization
+
+# Set up translation function
+_ = gettext.gettext
 
 gi.require_version("Gtk", "4.0")
 gi.require_version("Gst", "1.0")
@@ -20,7 +24,7 @@ except (ImportError, ValueError):
     from gi.repository import Gtk, GLib, Gst  # Keep just what's needed
 
     HAS_RSVG = False
-    print("Rsvg module not available, will use fallback icon drawing")
+    print(_("Rsvg module not available, will use fallback icon drawing"))
 
 # Initialize GStreamer
 Gst.init(None)
@@ -135,22 +139,22 @@ class AudioVisualizer(Gtk.Box):
         button_box.set_size_request(-1, 32)  # Default width, fixed height
 
         # Create style buttons
-        modern_button = Gtk.Button(label="Modern Waves")
+        modern_button = Gtk.Button(label=_("Modern Waves"))
         modern_button.connect(
             "clicked", self.on_style_button_clicked, self.STYLE_MODERN
         )
-        modern_button.set_tooltip_text("Sound waves with green to red gradient")
+        modern_button.set_tooltip_text(_("Sound waves with green to red gradient"))
 
-        retro_button = Gtk.Button(label="Retro Bars")
+        retro_button = Gtk.Button(label=_("Retro Bars"))
         retro_button.connect("clicked", self.on_style_button_clicked, self.STYLE_RETRO)
-        retro_button.set_tooltip_text("Classic equalizer-style visualization")
+        retro_button.set_tooltip_text(_("Classic equalizer-style visualization"))
 
         # Add radial spectrum button
-        radial_button = Gtk.Button(label="Spectrum")
+        radial_button = Gtk.Button(label=_("Spectrum"))
         radial_button.connect(
             "clicked", self.on_style_button_clicked, self.STYLE_RADIAL
         )
-        radial_button.set_tooltip_text("Spectrum visualizer with green to red gradient")
+        radial_button.set_tooltip_text(_("Spectrum visualizer with green to red gradient"))
 
         # Add buttons to button box
         button_box.append(modern_button)
@@ -765,7 +769,7 @@ class AudioVisualizer(Gtk.Box):
             cr.select_font_face("Sans", cairo.FontSlant.NORMAL, cairo.FontWeight.BOLD)
             cr.set_font_size(12)
             cr.move_to(10, height / 2)
-            cr.show_text("Visualization Error")
+            cr.show_text(_("Visualization Error"))
 
     def draw_modern_waves(self, cr, width, height):
         """Draws sound waves with green to yellow to red gradients."""
