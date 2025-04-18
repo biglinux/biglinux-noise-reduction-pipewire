@@ -449,14 +449,16 @@ class AudioVisualizer(Gtk.Box):
             if self.non_disruptive_mode:
                 print("Using non-disruptive audio pipeline")
 
-                # Modified pipeline to ensure proper audio capture for visualization
+                # Modified pipeline to avoid int range assertion errors
                 pipeline_str = (
                     "autoaudiosrc name=src ! "
                     "queue ! "
                     "audioconvert ! "
                     "audioresample ! "
-                    "audio/x-raw,format=F32LE,channels=1,rate=44100 ! "  # Specific format for better processing
-                    "spectrum bands=32 threshold=-90 interval=50000000 post-messages=true ! "
+                    # Remove the specific format specifications that are causing range errors
+                    "audio/x-raw ! "
+                    # Fix spectrum bands to avoid int range error
+                    "spectrum bands=16 threshold=-80 interval=50000000 post-messages=true ! "
                     "fakesink sync=false"
                 )
 
