@@ -25,60 +25,60 @@ msgid "Microphone Settings"
 msgstr "Microphone Settings"
 
 #
-# File: biglinux-noise-reduction-pipewire/usr/share/biglinux/microphone/noise_reducer.py, line: 263
+# File: biglinux-noise-reduction-pipewire/usr/share/biglinux/microphone/noise_reducer.py, line: 257
 msgid "Background Noise Reduction"
 msgstr "Background Noise Reduction"
 
 #
-# File: biglinux-noise-reduction-pipewire/usr/share/biglinux/microphone/noise_reducer.py, line: 264
+# File: biglinux-noise-reduction-pipewire/usr/share/biglinux/microphone/noise_reducer.py, line: 258
 msgid "Improve voice quality on calls and recordings"
 msgstr "Improve voice quality on calls and recordings"
 
 #
-# File: biglinux-noise-reduction-pipewire/usr/share/biglinux/microphone/noise_reducer.py, line: 290
+# File: biglinux-noise-reduction-pipewire/usr/share/biglinux/microphone/noise_reducer.py, line: 284
 msgid "Auto-activate Bluetooth Microphone"
 msgstr "Auto-activate Bluetooth Microphone"
 
 #
-# File: biglinux-noise-reduction-pipewire/usr/share/biglinux/microphone/noise_reducer.py, line: 291
+# File: biglinux-noise-reduction-pipewire/usr/share/biglinux/microphone/noise_reducer.py, line: 285
 msgid "May reduce audio quality"
 msgstr "May reduce audio quality"
 
 #
-# File: biglinux-noise-reduction-pipewire/usr/share/biglinux/microphone/noise_reducer.py, line: 310
+# File: biglinux-noise-reduction-pipewire/usr/share/biglinux/microphone/noise_reducer.py, line: 304
 msgid "Volume Control"
 msgstr "Volume Control"
 
 #
-# File: biglinux-noise-reduction-pipewire/usr/share/biglinux/microphone/noise_reducer.py, line: 313
+# File: biglinux-noise-reduction-pipewire/usr/share/biglinux/microphone/noise_reducer.py, line: 307
 msgid ""
 "Keep microphone volume below 70% and noise filter at 100% for best results."
 msgstr ""
 "Keep microphone volume below 70% and noise filter at 100% for best results."
 
 #
-# File: biglinux-noise-reduction-pipewire/usr/share/biglinux/microphone/noise_reducer.py, line: 318
+# File: biglinux-noise-reduction-pipewire/usr/share/biglinux/microphone/noise_reducer.py, line: 312
 msgid "Open"
 msgstr "Open"
 
 #
-# File: biglinux-noise-reduction-pipewire/usr/share/biglinux/microphone/noise_reducer.py, line: 384
-# File: biglinux-noise-reduction-pipewire/usr/share/biglinux/microphone/noise_reducer.py, line: 572
+# File: biglinux-noise-reduction-pipewire/usr/share/biglinux/microphone/noise_reducer.py, line: 379
+# File: biglinux-noise-reduction-pipewire/usr/share/biglinux/microphone/noise_reducer.py, line: 567
 msgid "Starting noise reduction..."
 msgstr "Starting noise reduction..."
 
 #
-# File: biglinux-noise-reduction-pipewire/usr/share/biglinux/microphone/noise_reducer.py, line: 432
+# File: biglinux-noise-reduction-pipewire/usr/share/biglinux/microphone/noise_reducer.py, line: 427
 msgid "About"
 msgstr "About"
 
 #
-# File: biglinux-noise-reduction-pipewire/usr/share/biglinux/microphone/noise_reducer.py, line: 449
+# File: biglinux-noise-reduction-pipewire/usr/share/biglinux/microphone/noise_reducer.py, line: 444
 msgid "Noise Reduction"
 msgstr "Noise Reduction"
 
 #
-# File: biglinux-noise-reduction-pipewire/usr/share/biglinux/microphone/noise_reducer.py, line: 577
+# File: biglinux-noise-reduction-pipewire/usr/share/biglinux/microphone/noise_reducer.py, line: 572
 msgid "Disabling noise reduction..."
 msgstr "Disabling noise reduction..."
 
