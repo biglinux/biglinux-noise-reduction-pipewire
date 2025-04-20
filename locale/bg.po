@@ -134,31 +134,6 @@ msgstr ""
 msgid "About"
 msgstr "За програмата"
 # 
-# File: biglinux-noise-reduction-pipewire/usr/share/bigbashview/apps/microphone/noise_reducer.py, line: 432
-#: NEEDS WORK
-msgid "Noise reduction enabled"
-msgstr "Активирано намаляване на шума"
-# 
-# File: biglinux-noise-reduction-pipewire/usr/share/bigbashview/apps/microphone/noise_reducer.py, line: 436
-#: NEEDS WORK
-msgid "Noise reduction disabled"
-msgstr "Намаляване на шума деактивирано"
-# 
-# File: biglinux-noise-reduction-pipewire/usr/share/bigbashview/apps/microphone/noise_reducer.py, line: 472
-#: NEEDS WORK
-msgid "Bluetooth autoswitch enabled"
-msgstr "Bluetooth автоматично превключване е активирано"
-# 
-# File: biglinux-noise-reduction-pipewire/usr/share/bigbashview/apps/microphone/noise_reducer.py, line: 477
-#: NEEDS WORK
-msgid "Bluetooth autoswitch disabled"
-msgstr "Bluetooth автоматично превключване деактивирано"
-# 
-# File: biglinux-noise-reduction-pipewire/usr/share/biglinux/microphone/audio_visualizer.py, line: 27
-#: NEEDS WORK
-msgid "Rsvg module not available, will use fallback icon drawing"
-msgstr "Модулът Rsvg не е наличен, ще се използва резервно рисуване на икони."
-# 
 # File: biglinux-noise-reduction-pipewire/usr/share/biglinux/microphone/audio_visualizer.py, line: 142
 #: NEEDS WORK
 msgid "Modern Waves"

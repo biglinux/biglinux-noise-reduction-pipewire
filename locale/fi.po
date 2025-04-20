@@ -132,31 +132,6 @@ msgstr "Ota Bluetooth-mikrofoni automaattisesti käyttöön pyydettäessä. Ää
 msgid "About"
 msgstr "Tietoja"
 # 
-# File: biglinux-noise-reduction-pipewire/usr/share/bigbashview/apps/microphone/noise_reducer.py, line: 432
-#: NEEDS WORK
-msgid "Noise reduction enabled"
-msgstr "Melun vähennys käytössä"
-# 
-# File: biglinux-noise-reduction-pipewire/usr/share/bigbashview/apps/microphone/noise_reducer.py, line: 436
-#: NEEDS WORK
-msgid "Noise reduction disabled"
-msgstr "Melun vähentäminen pois päältä"
-# 
-# File: biglinux-noise-reduction-pipewire/usr/share/bigbashview/apps/microphone/noise_reducer.py, line: 472
-#: NEEDS WORK
-msgid "Bluetooth autoswitch enabled"
-msgstr "Bluetooth-autoswitch on käytössä"
-# 
-# File: biglinux-noise-reduction-pipewire/usr/share/bigbashview/apps/microphone/noise_reducer.py, line: 477
-#: NEEDS WORK
-msgid "Bluetooth autoswitch disabled"
-msgstr "Bluetooth-autoswitch on käytöstä poistettu."
-# 
-# File: biglinux-noise-reduction-pipewire/usr/share/biglinux/microphone/audio_visualizer.py, line: 27
-#: NEEDS WORK
-msgid "Rsvg module not available, will use fallback icon drawing"
-msgstr "Rsvg-moduuli ei ole saatavilla, käytetään varakuvakuvantamista."
-# 
 # File: biglinux-noise-reduction-pipewire/usr/share/biglinux/microphone/audio_visualizer.py, line: 142
 #: NEEDS WORK
 msgid "Modern Waves"

@@ -132,31 +132,6 @@ msgstr "Lülitage Bluetooth-mikrofon automaatselt sisse, kui seda küsitakse. He
 msgid "About"
 msgstr "Teave"
 # 
-# File: biglinux-noise-reduction-pipewire/usr/share/bigbashview/apps/microphone/noise_reducer.py, line: 432
-#: NEEDS WORK
-msgid "Noise reduction enabled"
-msgstr "Müraha vähenemine lubatud"
-# 
-# File: biglinux-noise-reduction-pipewire/usr/share/bigbashview/apps/microphone/noise_reducer.py, line: 436
-#: NEEDS WORK
-msgid "Noise reduction disabled"
-msgstr "Müraha vähendamine keelatud"
-# 
-# File: biglinux-noise-reduction-pipewire/usr/share/bigbashview/apps/microphone/noise_reducer.py, line: 472
-#: NEEDS WORK
-msgid "Bluetooth autoswitch enabled"
-msgstr "Bluetoothi automaatne lülitus on lubatud"
-# 
-# File: biglinux-noise-reduction-pipewire/usr/share/bigbashview/apps/microphone/noise_reducer.py, line: 477
-#: NEEDS WORK
-msgid "Bluetooth autoswitch disabled"
-msgstr "Bluetoothi automaatne lülitus on keelatud."
-# 
-# File: biglinux-noise-reduction-pipewire/usr/share/biglinux/microphone/audio_visualizer.py, line: 27
-#: NEEDS WORK
-msgid "Rsvg module not available, will use fallback icon drawing"
-msgstr "Rsvg moodul ei ole saadaval, kasutatakse varuikooni joonistamist."
-# 
 # File: biglinux-noise-reduction-pipewire/usr/share/biglinux/microphone/audio_visualizer.py, line: 142
 #: NEEDS WORK
 msgid "Modern Waves"

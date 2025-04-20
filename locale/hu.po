@@ -132,31 +132,6 @@ msgstr "Automatikusan aktiválja a Bluetooth mikrofont, amikor kérik. A hangmin
 msgid "About"
 msgstr "Névjegy"
 # 
-# File: biglinux-noise-reduction-pipewire/usr/share/bigbashview/apps/microphone/noise_reducer.py, line: 432
-#: NEEDS WORK
-msgid "Noise reduction enabled"
-msgstr "Zajcsökkentés engedélyezve"
-# 
-# File: biglinux-noise-reduction-pipewire/usr/share/bigbashview/apps/microphone/noise_reducer.py, line: 436
-#: NEEDS WORK
-msgid "Noise reduction disabled"
-msgstr "Zajcsökkentés letiltva"
-# 
-# File: biglinux-noise-reduction-pipewire/usr/share/bigbashview/apps/microphone/noise_reducer.py, line: 472
-#: NEEDS WORK
-msgid "Bluetooth autoswitch enabled"
-msgstr "Bluetooth automatikus váltás engedélyezve"
-# 
-# File: biglinux-noise-reduction-pipewire/usr/share/bigbashview/apps/microphone/noise_reducer.py, line: 477
-#: NEEDS WORK
-msgid "Bluetooth autoswitch disabled"
-msgstr "A Bluetooth automatikus váltás letiltva"
-# 
-# File: biglinux-noise-reduction-pipewire/usr/share/biglinux/microphone/audio_visualizer.py, line: 27
-#: NEEDS WORK
-msgid "Rsvg module not available, will use fallback icon drawing"
-msgstr "Az Rsvg modul nem elérhető, visszaesési ikonrajzolást fogunk használni."
-# 
 # File: biglinux-noise-reduction-pipewire/usr/share/biglinux/microphone/audio_visualizer.py, line: 142
 #: NEEDS WORK
 msgid "Modern Waves"

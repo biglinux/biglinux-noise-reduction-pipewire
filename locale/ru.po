@@ -132,31 +132,6 @@ msgstr "Автоматически активировать Bluetooth-микро
 msgid "About"
 msgstr "О программе"
 # 
-# File: biglinux-noise-reduction-pipewire/usr/share/bigbashview/apps/microphone/noise_reducer.py, line: 432
-#: NEEDS WORK
-msgid "Noise reduction enabled"
-msgstr "Шумоподавление включено"
-# 
-# File: biglinux-noise-reduction-pipewire/usr/share/bigbashview/apps/microphone/noise_reducer.py, line: 436
-#: NEEDS WORK
-msgid "Noise reduction disabled"
-msgstr "Шумоподавление отключено"
-# 
-# File: biglinux-noise-reduction-pipewire/usr/share/bigbashview/apps/microphone/noise_reducer.py, line: 472
-#: NEEDS WORK
-msgid "Bluetooth autoswitch enabled"
-msgstr "Включен автоматический переключатель Bluetooth"
-# 
-# File: biglinux-noise-reduction-pipewire/usr/share/bigbashview/apps/microphone/noise_reducer.py, line: 477
-#: NEEDS WORK
-msgid "Bluetooth autoswitch disabled"
-msgstr "Автоматическое переключение Bluetooth отключено"
-# 
-# File: biglinux-noise-reduction-pipewire/usr/share/biglinux/microphone/audio_visualizer.py, line: 27
-#: NEEDS WORK
-msgid "Rsvg module not available, will use fallback icon drawing"
-msgstr "Модуль Rsvg недоступен, будет использовано резервное рисование значка."
-# 
 # File: biglinux-noise-reduction-pipewire/usr/share/biglinux/microphone/audio_visualizer.py, line: 142
 #: NEEDS WORK
 msgid "Modern Waves"
