@@ -1,6 +1,9 @@
 import asyncio
 import os
 import pathlib
+import logging
+
+logger = logging.getLogger(__name__)
 
 
 class NoiseReducerService:
@@ -9,7 +12,7 @@ class NoiseReducerService:
     Uses actions.sh script to interact with the system instead of direct systemctl calls.
     """
 
-    def __init__(self):
+    def __init__(self) -> None:
         self.service_name = "noise-reduction-pipewire"
         self._is_updating = False
         # Use the absolute path to the system command
@@ -19,101 +22,100 @@ class NoiseReducerService:
         current_dir = pathlib.Path(__file__).parent.absolute()
         self.actions_script = os.path.join(current_dir, "actions.sh")
 
-    async def get_noise_reduction_status(self):
-        """Check if noise reduction service is active using actions.sh."""
-        try:
-            process = await asyncio.create_subprocess_exec(
-                "/bin/bash",
-                self.actions_script,
-                "status",  # Changed from "check-noise-reduction" to "status"
-                stdout=asyncio.subprocess.PIPE,
-                stderr=asyncio.subprocess.PIPE,
-            )
-            stdout, _ = await process.communicate()
-            status = stdout.decode().strip()
+    async def _run_action_script(
+        self, action: str, capture_output: bool = True
+    ) -> str | None:
+        """
+        Base method to run the actions script with a given action.
 
-            if "enabled" in status.lower() or "active" in status.lower():
+        Args:
+            action (str): The action to execute via the script
+            capture_output (bool): Whether to capture and return output
+
+        Returns:
+            str: Script output if capture_output is True, else None
+        """
+        try:
+            cmd = ["/bin/bash", self.actions_script, action]
+
+            if capture_output:
+                process = await asyncio.create_subprocess_exec(
+                    *cmd,
+                    stdout=asyncio.subprocess.PIPE,
+                    stderr=asyncio.subprocess.PIPE,
+                )
+                stdout, _ = await process.communicate()
+                return stdout.decode().strip()
+            else:
+                process = await asyncio.create_subprocess_exec(*cmd)
+                await process.wait()
+                # Give service time to complete operation
+                await asyncio.sleep(1)
+                return None
+
+        except Exception:
+            logger.exception("Error running action %s", action)
+            return None
+
+    async def get_noise_reduction_status(self) -> str:
+        """
+        Check if noise reduction service is active.
+
+        Returns:
+            str: 'enabled' if the service is active, 'disabled' otherwise
+        """
+        try:
+            status = await self._run_action_script("status")
+
+            if status and ("enabled" in status.lower() or "active" in status.lower()):
                 return "enabled"
             return "disabled"
-        except Exception as e:
-            print(f"Error checking noise reduction status: {e}")
+        except Exception:
+            logger.exception("Error checking noise reduction status")
             return "disabled"
 
-    async def start_noise_reduction(self):
-        """Start the noise reduction service using actions.sh."""
+    async def start_noise_reduction(self) -> None:
+        """Start the noise reduction service."""
         self._is_updating = True
         try:
-            process = await asyncio.create_subprocess_exec(
-                "/bin/bash",
-                self.actions_script,
-                "start",  # Changed from "start-noise-reduction" to "start"
-            )
-            await process.wait()
-            # Give service time to start
-            await asyncio.sleep(1)
-        except Exception as e:
-            print(f"Error starting noise reduction: {e}")
+            await self._run_action_script("start", capture_output=False)
         finally:
             self._is_updating = False
 
-    async def stop_noise_reduction(self):
-        """Stop the noise reduction service using actions.sh."""
+    async def stop_noise_reduction(self) -> None:
+        """Stop the noise reduction service."""
         self._is_updating = True
         try:
-            process = await asyncio.create_subprocess_exec(
-                "/bin/bash",
-                self.actions_script,
-                "stop",  # Changed from "stop-noise-reduction" to "stop"
-            )
-            await process.wait()
-            # Give service time to stop
-            await asyncio.sleep(1)
-        except Exception as e:
-            print(f"Error stopping noise reduction: {e}")
+            await self._run_action_script("stop", capture_output=False)
         finally:
             self._is_updating = False
 
-    async def get_bluetooth_status(self):
-        """Get bluetooth autoswitch status using actions.sh."""
+    async def get_bluetooth_status(self) -> str:
+        """
+        Get bluetooth autoswitch status.
+
+        Returns:
+            str: 'enabled' if bluetooth autoswitch is active, 'disabled' otherwise
+        """
         try:
-            process = await asyncio.create_subprocess_exec(
-                "/bin/bash",
-                self.actions_script,
-                "check-bluetooth-status",
-                stdout=asyncio.subprocess.PIPE,
-                stderr=asyncio.subprocess.PIPE,
-            )
-            stdout, _ = await process.communicate()
-            status = stdout.decode().strip()
+            status = await self._run_action_script("check-bluetooth-status")
 
             # Properly interpret the status output
-            if "enabled" in status.lower():
+            if status and "enabled" in status.lower():
                 return "enabled"
             return "disabled"
-        except Exception as e:
-            print(f"Error checking bluetooth status: {e}")
+        except Exception:
+            logger.exception("Error checking bluetooth status")
             return "disabled"
 
-    async def enable_bluetooth_autoswitch(self):
-        """Enable bluetooth autoswitch using actions.sh."""
-        try:
-            process = await asyncio.create_subprocess_exec(
-                "/bin/bash", self.actions_script, "enable-bluetooth-autoswitch"
-            )
-            await process.wait()
-            # Give time for operation to complete
-            await asyncio.sleep(1)
-        except Exception as e:
-            print(f"Error enabling bluetooth autoswitch: {e}")
+    async def enable_bluetooth_autoswitch(self) -> None:
+        """Enable bluetooth autoswitch."""
+        await self._run_action_script(
+            "enable-bluetooth-autoswitch", capture_output=False
+        )
 
-    async def disable_bluetooth_autoswitch(self):
-        """Disable bluetooth autoswitch using actions.sh."""
-        try:
-            process = await asyncio.create_subprocess_exec(
-                "/bin/bash", self.actions_script, "disable-bluetooth-autoswitch"
-            )
-            await process.wait()
-            # Give time for operation to complete
-            await asyncio.sleep(1)
-        except Exception as e:
-            print(f"Error disabling bluetooth autoswitch: {e}")
+    async def disable_bluetooth_autoswitch(self) -> None:
+        """Disable bluetooth autoswitch."""
+        await self._run_action_script(
+            "disable-bluetooth-autoswitch", capture_output=False
+        )

@@ -3,22 +3,36 @@
 import os
 import sys
 import subprocess
+import importlib
+import logging
+import argparse
 
 
-def main():
+def main() -> None:
     """
     Simple launcher script that ensures all necessary modules are installed
     before launching the main application.
     """
-    # Check for required modules and install if missing
-    required_modules = ["numpy"]
+    # configure logging early
+    parser = argparse.ArgumentParser(
+        description="Launch Noise Reducer UI with dependencies check"
+    )
+    parser.add_argument("--debug", action="store_true", help="Enable debug logging")
+    args = parser.parse_args()
+
+    level = logging.DEBUG if args.debug else logging.INFO
+    logging.basicConfig(level=level, format="%(levelname)s:%(name)s: %(message)s")
+    logger = logging.getLogger(__name__)
+
+    logger.debug("Starting launcher")
+    required_modules: list[str] = ["numpy"]
 
     # Check Python modules
     for module in required_modules:
         try:
-            __import__(module)
+            importlib.import_module(module)
         except ImportError:
-            print(f"Installing required module: {module}")
+            logger.info("Installing required module: %s", module)
             subprocess.check_call([
                 sys.executable,
                 "-m",
@@ -56,13 +70,11 @@ def main():
                 missing_packages.append(package)
 
         if missing_packages:
-            print(
-                f"Some required packages are not installed: {', '.join(missing_packages)}"
-            )
-            print(f"You can install them with: {install_hint}")
+            logger.warning("Missing packages: %s", ", ".join(missing_packages))
+            logger.info("You can install them with: %s", install_hint)
 
     except Exception as e:
-        print(f"Could not check system packages: {e}")
+        logger.error("Could not check system packages: %s", e)
 
     # Launch the main application
     script_dir = os.path.dirname(os.path.abspath(__file__))
@@ -73,9 +85,10 @@ def main():
         env = os.environ.copy()
         env["GDK_BACKEND"] = "wayland,x11"
         env["GTK_APPLICATION_ID"] = "br.com.biglinux.microphone"
+        logger.debug("Launching main app: %s", app_path)
         subprocess.run([sys.executable, app_path], env=env)
     else:
-        print(f"Error: Application file not found at {app_path}")
+        logger.error("Application file not found at %s", app_path)
         sys.exit(1)
 
 

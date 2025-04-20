@@ -6,27 +6,28 @@ import json  # Used for settings load/save
 import os  # Used for file operations
 import asyncio  # Used for async operations
 import threading  # Used for threading operations
-import cairo  # Used for drawing operations
 from pathlib import Path  # Used for file path operations
 import gettext  # Used for translations
-# import locale  # Used for translations
+import logging  # Used for logging
 
 # Set up gettext for translations
-# locale.setlocale(locale.LC_ALL, "")
 gettext.textdomain("biglinux-noise-reduction-pipewire")
 _ = gettext.gettext
 
 gi.require_version("Gtk", "4.0")
 gi.require_version("Adw", "1")
 from gi.repository import Gtk, Adw, GLib, Gio, Gdk
-from gi.repository import GdkPixbuf
 
 from noise_reducer_service import NoiseReducerService
 from audio_visualizer import AudioVisualizer
 
+# setup module logger
+logging.basicConfig(level=logging.INFO, format="%(levelname)s:%(name)s: %(message)s")
+logger = logging.getLogger(__name__)
+
 
 class NoiseReducerApp(Adw.Application):
-    def __init__(self): 
+    def __init__(self) -> None:
         super().__init__(
             application_id="com.biglinux.noise_reducer",
             flags=Gio.ApplicationFlags.DEFAULT_FLAGS,
@@ -41,7 +42,7 @@ class NoiseReducerApp(Adw.Application):
         self.style_manager = Adw.StyleManager.get_default()
         self.style_manager.set_color_scheme(Adw.ColorScheme.PREFER_DARK)
 
-    def on_activate(self, app):
+    def on_activate(self, app: Adw.Application) -> None:
         self.service = NoiseReducerService()
         # Pass the settings file to the window
         self.win = NoiseReducerWindow(
@@ -69,13 +70,14 @@ class NoiseReducerWindow(Adw.ApplicationWindow):
 
     def setup_ui_when_ready(self):
         """Set up UI in an idle handler to fix allocation warnings"""
+        logger.debug("Setting up UI elements")
         self.setup_ui()
 
         # Start status polling with a proper wrapper after UI is ready
-        GLib.timeout_add_seconds(3, self.update_status_wrapper)
+        GLib.timeout_add_seconds(5, self.update_status_wrapper)
         return False  # remove idle handler
 
-    def load_settings(self):
+    def load_settings(self) -> None:
         try:
             # Check if settings_file is defined and exists
             if (
@@ -92,26 +94,23 @@ class NoiseReducerWindow(Adw.ApplicationWindow):
                     "bluetooth_autoswitch_enabled": False,
                 }
         except Exception as e:
-            print(f"Error loading settings: {e}")
+            logger.error("Error loading settings: %s", e)
             self.settings = {
                 "noise_reduction_enabled": False,
                 "bluetooth_autoswitch_enabled": False,
             }
 
-    def save_settings(self):
+    def save_settings(self) -> None:
         try:
             if hasattr(self, "settings_file") and self.settings_file:
                 with open(self.settings_file, "w") as f:
                     json.dump(self.settings, f)
             else:
-                print("Warning: settings_file not defined")
+                logger.warning("Warning: settings_file not defined")
         except Exception as e:
-            print(f"Error saving settings: {e}")
+            logger.error("Error saving settings: %s", e)
 
     def setup_ui(self):
-        # Create toast overlay for notifications
-        self.toast_overlay = Adw.ToastOverlay.new()
-
         # Main content box - set to expand and fill
         content_box = Gtk.Box(orientation=Gtk.Orientation.VERTICAL)
         content_box.set_vexpand(True)
@@ -139,16 +138,16 @@ class NoiseReducerWindow(Adw.ApplicationWindow):
 
                 # Add image directly to the header bar
                 header_bar.pack_start(icon_image)
-                print(f"Added larger icon to header bar from: {icon_path}")
-            except Exception as e:
-                print(f"Error loading icon for header bar: {e}")
+                logger.info("Added larger icon to header bar from: %s", icon_path)
+            except Exception:
+                logger.exception("Error loading icon for header bar")
                 # Fallback to icon name
                 icon_image = Gtk.Image.new_from_icon_name("applications-system")
                 icon_image.set_pixel_size(64)  # Increased from 48
                 icon_image.set_margin_start(10)
                 header_bar.pack_start(icon_image)
         else:
-            print(f"Header bar icon not found at: {icon_path}")
+            logger.warning("Header bar icon not found at: %s", icon_path)
             # Fallback to standard icon
             icon_image = Gtk.Image.new_from_icon_name("applications-system")
             icon_image.set_pixel_size(64)  # Increased from 48
@@ -259,14 +258,11 @@ class NoiseReducerWindow(Adw.ApplicationWindow):
         # Add scrolled window to content
         content_box.append(scrolled)
 
-        # Add content to toast overlay
-        self.toast_overlay.set_child(content_box)
-
         # Set initial switch states - FIX: Use non-async function for initial state
         self.initial_update_status()
 
         # Set content
-        self.set_content(self.toast_overlay)
+        self.set_content(content_box)
 
     def create_menu_button(self):
         # Create menu with GNOME style
@@ -288,8 +284,7 @@ class NoiseReducerWindow(Adw.ApplicationWindow):
         return menu_button
 
     def on_about_action(self, action, param):
-        # Show about dialog with GNOME style - add debugging
-        print("About dialog triggered")
+        logger.debug("About dialog triggered")
         about = Adw.AboutWindow.new()
         about.set_application_name(_("Noise Reduction"))
         about.set_version("3.0")
@@ -311,11 +306,11 @@ class NoiseReducerWindow(Adw.ApplicationWindow):
                 file = Gio.File.new_for_path(icon_path)
                 icon_paintable = Gdk.Texture.new_from_file(file)
                 about.set_application_icon_paintable(icon_paintable)
-                print(f"Icon loaded from: {icon_path}")
-            except Exception as e:
-                print(f"Error loading icon for about dialog: {e}")
+                logger.info("Icon loaded for About from: %s", icon_path)
+            except Exception:
+                logger.exception("Error loading icon for about dialog")
         else:
-            print(f"Icon file not found: {icon_path}")
+            logger.warning("Icon file not found: %s", icon_path)
 
         # Force dialog to be modal and ensure it's connected to the parent window
         about.set_modal(True)
@@ -328,11 +323,6 @@ class NoiseReducerWindow(Adw.ApplicationWindow):
             self.spinner.start()
         else:
             self.spinner.stop()
-
-    def show_toast(self, text):
-        toast = Adw.Toast.new(text)
-        toast.set_timeout(3)
-        self.toast_overlay.add_toast(toast)
 
     def initial_update_status(self):
         """Non-async version of update_status() for initial setup"""
@@ -356,13 +346,13 @@ class NoiseReducerWindow(Adw.ApplicationWindow):
                 # Update UI in the main thread
                 GLib.idle_add(self.update_ui_status, noise_status, bt_status)
             except Exception as e:
-                print(f"Error in status update thread: {e}")
+                logger.error("Error in status update thread: %s", e)
 
         # Start the thread
         threading.Thread(target=run_async_in_thread, daemon=True).start()
 
     def update_status_wrapper(self):
-        """Non-async wrapper for update_status to avoid coroutine warning."""
+        logger.debug("Scheduling periodic status update")
         # Start thread to run the async update_status function
         threading.Thread(target=self.run_update_status, daemon=True).start()
         return True  # Continue the timeout
@@ -378,11 +368,12 @@ class NoiseReducerWindow(Adw.ApplicationWindow):
             finally:
                 loop.close()
         except Exception as e:
-            print(f"Error in run_update_status: {e}")
+            logger.error("Error in run_update_status: %s", e)
 
-    async def update_status(self):
+    async def update_status(self) -> bool:
         """Periodic status update called by GLib timeout."""
         try:
+            logger.debug("Fetching service status")
             # Indicate loading state
             self.show_loading(True)
 
@@ -396,8 +387,8 @@ class NoiseReducerWindow(Adw.ApplicationWindow):
             # Hide loading indicator
             self.show_loading(False)
 
-        except Exception as e:
-            print(f"Error in update_status: {e}")
+        except Exception:
+            logger.exception("Error in update_status")
             self.show_loading(False)
 
         return True
@@ -405,6 +396,9 @@ class NoiseReducerWindow(Adw.ApplicationWindow):
     def update_ui_status(self, noise_status, bt_status):
         """Update the UI based on service status."""
         try:
+            logger.debug(
+                "Updating UI switches: noise=%s bt=%s", noise_status, bt_status
+            )
             # Properly interpret the status strings and update switches
             self.noise_switch.set_active(noise_status == "enabled")
             self.bt_switch.set_active(bt_status == "enabled")
@@ -413,8 +407,8 @@ class NoiseReducerWindow(Adw.ApplicationWindow):
             self.settings["noise_reduction_enabled"] = noise_status == "enabled"
             self.settings["bluetooth_autoswitch_enabled"] = bt_status == "enabled"
             self.save_settings()
-        except Exception as e:
-            print(f"Error updating UI status: {e}")
+        except Exception:
+            logger.exception("Error updating UI status")
 
     def on_noise_reduction_toggled(self, switch, state):
         """Handle toggle of noise reduction switch."""
@@ -429,12 +423,8 @@ class NoiseReducerWindow(Adw.ApplicationWindow):
             try:
                 if state:
                     loop.run_until_complete(self.service.start_noise_reduction())
-                    GLib.idle_add(lambda: self.show_toast(_("Noise reduction enabled")))
                 else:
                     loop.run_until_complete(self.service.stop_noise_reduction())
-                    GLib.idle_add(
-                        lambda: self.show_toast(_("Noise reduction disabled"))
-                    )
 
                 # Update status after toggling
                 noise_status = loop.run_until_complete(
@@ -444,7 +434,7 @@ class NoiseReducerWindow(Adw.ApplicationWindow):
                 GLib.idle_add(lambda: self.update_ui_status(noise_status, bt_status))
 
             except Exception as e:
-                print(f"Error toggling noise reduction: {e}")
+                logger.error("Error toggling noise reduction: %s", e)
             finally:
                 GLib.idle_add(lambda: self.show_loading(False))
                 loop.close()
@@ -468,14 +458,8 @@ class NoiseReducerWindow(Adw.ApplicationWindow):
             try:
                 if state:
                     loop.run_until_complete(self.service.enable_bluetooth_autoswitch())
-                    GLib.idle_add(
-                        lambda: self.show_toast(_("Bluetooth autoswitch enabled"))
-                    )
                 else:
                     loop.run_until_complete(self.service.disable_bluetooth_autoswitch())
-                    GLib.idle_add(
-                        lambda: self.show_toast(_("Bluetooth autoswitch disabled"))
-                    )
 
                 # Update status after toggling
                 noise_status = loop.run_until_complete(
@@ -485,7 +469,7 @@ class NoiseReducerWindow(Adw.ApplicationWindow):
                 GLib.idle_add(lambda: self.update_ui_status(noise_status, bt_status))
 
             except Exception as e:
-                print(f"Error toggling bluetooth autoswitch: {e}")
+                logger.error("Error toggling bluetooth autoswitch: %s", e)
             finally:
                 GLib.idle_add(lambda: self.show_loading(False))
                 loop.close()
@@ -498,6 +482,7 @@ class NoiseReducerWindow(Adw.ApplicationWindow):
 
 
 if __name__ == "__main__":
+    logging.getLogger().setLevel(logging.DEBUG)  # enable debug in main
     app = NoiseReducerApp()
     app.set_application_id("br.com.biglinux.microphone")
     exit_status = app.run(sys.argv)
