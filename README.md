@@ -2,7 +2,8 @@
 
 A modern, feature-rich microphone noise reduction application for Linux systems running PipeWire. This tool provides an elegant GTK4 user interface with real-time audio visualization and easy-to-use controls for reducing background noise during calls, recordings, and online meetings.
 
-![Application Screenshot](https://github.com/biglinux/biglinux-noise-reduction-pipewire/raw/main/screenshots/main-screen.png)
+![image](https://github.com/user-attachments/assets/c9d8ffe6-cf14-4696-8be4-2ce550d318e3)
+
 
 ## ✨ Features
 
@@ -127,8 +128,10 @@ This application utilizes the [noise-suppression-for-voice](https://github.com/w
 
 ## 📸 Screenshots
 
-![Modern Waves Visualization](https://github.com/biglinux/biglinux-noise-reduction-pipewire/raw/main/screenshots/waves.png)
+![image](https://github.com/user-attachments/assets/8e5af822-f8d5-4534-9d83-48937b9e49cd)
 
-![Retro Bars Visualization](https://github.com/biglinux/biglinux-noise-reduction-pipewire/raw/main/screenshots/bars.png)
+![image](https://github.com/user-attachments/assets/a8ca1637-9d31-4688-a79b-d341a8a4e1ec)
 
-![Spectrum Visualization](https://github.com/biglinux/biglinux-noise-reduction-pipewire/raw/main/screenshots/spectrum.png)
+
+![image](https://github.com/user-attachments/assets/1373fe01-cfb9-4e9d-833c-bb551d333cdb)
+
