@@ -2,192 +2,349 @@
 # Copyright (C) YEAR THE PACKAGE'S COPYRIGHT HOLDER
 # This file is distributed under the same license as the biglinux-noise-reduction-pipewire package.
 # FIRST AUTHOR <EMAIL@ADDRESS>, YEAR.
-# 
+#
 #, fuzzy
 msgid ""
 msgstr ""
 "Project-Id-Version: biglinux-noise-reduction-pipewire\n"
 "Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: \n"
+"PO-Revision-Date: \n"
 "Last-Translator: \n"
 "Language-Team: \n"
 "Language: de\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=utf-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"X-Generator: attranslate\n"
-# 
+"X-Generator: Poedit 3.5\n"
+
+#
 # #-#-#-#-#  biglinux-noise-reduction-pipewire-bash.pot (biglinux-noise-reduction-pipewire)  #-#-#-#-#
-# 
+#
 # #-#-#-#-#  biglinux-noise-reduction-pipewire-bash.pot (biglinux-noise-reduction-pipewire)  #-#-#-#-#
-# 
+#
 msgid "Reduce Microphone Noise"
 msgstr "Mikrofon-Rauschen reduzieren"
+
+msgid "Activated!"
+msgstr "Aktiviert!"
+
 msgid "Disabled!"
 msgstr "Deaktiviert!"
-# 
+
+#
 # #-#-#-#-#  biglinux-noise-reduction-pipewire-bash.pot (biglinux-noise-reduction-pipewire)  #-#-#-#-#
-# 
+#
 # #-#-#-#-#  biglinux-noise-reduction-pipewire-bash.pot (biglinux-noise-reduction-pipewire)  #-#-#-#-#
-# 
+#
+msgid "Remove background noise and sounds that interfere with recordings and online calls."
+msgstr ""
+"Entfernen Sie Hintergrundgeräusche und Sounds, die Auswirkungen auf Recordings (Aufzeichnungen) und "
+"Online-Anrufe haben."
+
+#
 # #-#-#-#-#  biglinux-noise-reduction-pipewire-bash.pot (biglinux-noise-reduction-pipewire)  #-#-#-#-#
-# 
+#
 # #-#-#-#-#  biglinux-noise-reduction-pipewire-bash.pot (biglinux-noise-reduction-pipewire)  #-#-#-#-#
-# 
+#
+msgid ""
+"The new version of the noise reduction filter applies the feature directly to the selected default "
+"microphone in the system, eliminating the need to choose a virtual microphone."
+msgstr ""
+"Die neue Version des Rauschunterdrückungsfilters wendet das Feature direkt auf das ausgewählte, per "
+"Default vorgegebene Mikrofon im System an. Damit entfällt die Notwendigkeit, ein virtuelles "
+"Mikrofon zu wählen."
+
+#
 # #-#-#-#-#  biglinux-noise-reduction-pipewire-bash.pot (biglinux-noise-reduction-pipewire)  #-#-#-#-#
-# 
+#
 # #-#-#-#-#  biglinux-noise-reduction-pipewire-bash.pot (biglinux-noise-reduction-pipewire)  #-#-#-#-#
-# 
+#
 # #-#-#-#-#  biglinux-noise-reduction-pipewire-bash.pot (biglinux-noise-reduction-pipewire)  #-#-#-#-#
-# 
+#
+msgid "Enable"
+msgstr "Aktivieren"
+
+#
 # #-#-#-#-#  biglinux-noise-reduction-pipewire-bash.pot (biglinux-noise-reduction-pipewire)  #-#-#-#-#
-# 
+#
 # #-#-#-#-#  biglinux-noise-reduction-pipewire-bash.pot (biglinux-noise-reduction-pipewire)  #-#-#-#-#
-# 
+#
 # #-#-#-#-#  biglinux-noise-reduction-pipewire-bash.pot (biglinux-noise-reduction-pipewire)  #-#-#-#-#
-# 
+#
 # #-#-#-#-#  biglinux-noise-reduction-pipewire-bash.pot (biglinux-noise-reduction-pipewire)  #-#-#-#-#
-# 
+#
 # #-#-#-#-#  biglinux-noise-reduction-pipewire-bash.pot (biglinux-noise-reduction-pipewire)  #-#-#-#-#
-# 
+#
 # #-#-#-#-#  biglinux-noise-reduction-pipewire-bash.pot (biglinux-noise-reduction-pipewire)  #-#-#-#-#
-# 
+#
 # #-#-#-#-#  biglinux-noise-reduction-pipewire-bash.pot (biglinux-noise-reduction-pipewire)  #-#-#-#-#
-# 
+#
 # #-#-#-#-#  biglinux-noise-reduction-pipewire-bash.pot (biglinux-noise-reduction-pipewire)  #-#-#-#-#
-# 
+#
 # #-#-#-#-#  biglinux-noise-reduction-pipewire-bash.pot (biglinux-noise-reduction-pipewire)  #-#-#-#-#
-# 
+#
 # #-#-#-#-#  biglinux-noise-reduction-pipewire-bash.pot (biglinux-noise-reduction-pipewire)  #-#-#-#-#
-# 
+#
 # #-#-#-#-#  biglinux-noise-reduction-pipewire-bash.pot (biglinux-noise-reduction-pipewire)  #-#-#-#-#
-# 
+#
 # #-#-#-#-#  biglinux-noise-reduction-pipewire-bash.pot (biglinux-noise-reduction-pipewire)  #-#-#-#-#
-# 
+#
+# #-#-#-#-#  biglinux-noise-reduction-pipewire-bash.pot (biglinux-noise-reduction-pipewire)  #-#-#-#-#
+#
+# #-#-#-#-#  biglinux-noise-reduction-pipewire-bash.pot (biglinux-noise-reduction-pipewire)  #-#-#-#-#
+#
+# #-#-#-#-#  biglinux-noise-reduction-pipewire-bash.pot (biglinux-noise-reduction-pipewire)  #-#-#-#-#
+#
+# #-#-#-#-#  biglinux-noise-reduction-pipewire-bash.pot (biglinux-noise-reduction-pipewire)  #-#-#-#-#
+#
+# #-#-#-#-#  biglinux-noise-reduction-pipewire-bash.pot (biglinux-noise-reduction-pipewire)  #-#-#-#-#
+#
+# #-#-#-#-#  biglinux-noise-reduction-pipewire-bash.pot (biglinux-noise-reduction-pipewire)  #-#-#-#-#
+#
+# #-#-#-#-#  biglinux-noise-reduction-pipewire-bash.pot (biglinux-noise-reduction-pipewire)  #-#-#-#-#
+#
 msgid "Noise Reduction"
 msgstr "Rauschunterdrückung"
-# 
+
+#
+# #-#-#-#-#  biglinux-noise-reduction-pipewire-bash.pot (biglinux-noise-reduction-pipewire)  #-#-#-#-#
+#
+# #-#-#-#-#  biglinux-noise-reduction-pipewire-bash.pot (biglinux-noise-reduction-pipewire)  #-#-#-#-#
+#
+# #-#-#-#-#  biglinux-noise-reduction-pipewire-bash.pot (biglinux-noise-reduction-pipewire)  #-#-#-#-#
+#
+# #-#-#-#-#  biglinux-noise-reduction-pipewire-bash.pot (biglinux-noise-reduction-pipewire)  #-#-#-#-#
+#
+# #-#-#-#-#  biglinux-noise-reduction-pipewire-bash.pot (biglinux-noise-reduction-pipewire)  #-#-#-#-#
+#
+# #-#-#-#-#  biglinux-noise-reduction-pipewire-bash.pot (biglinux-noise-reduction-pipewire)  #-#-#-#-#
+#
+# #-#-#-#-#  biglinux-noise-reduction-pipewire-bash.pot (biglinux-noise-reduction-pipewire)  #-#-#-#-#
+#
+# #-#-#-#-#  biglinux-noise-reduction-pipewire-bash.pot (biglinux-noise-reduction-pipewire)  #-#-#-#-#
+#
+# #-#-#-#-#  biglinux-noise-reduction-pipewire-bash.pot (biglinux-noise-reduction-pipewire)  #-#-#-#-#
+#
+# #-#-#-#-#  biglinux-noise-reduction-pipewire-bash.pot (biglinux-noise-reduction-pipewire)  #-#-#-#-#
+#
+# #-#-#-#-#  biglinux-noise-reduction-pipewire-bash.pot (biglinux-noise-reduction-pipewire)  #-#-#-#-#
+#
+# #-#-#-#-#  biglinux-noise-reduction-pipewire-bash.pot (biglinux-noise-reduction-pipewire)  #-#-#-#-#
+#
+# #-#-#-#-#  biglinux-noise-reduction-pipewire-bash.pot (biglinux-noise-reduction-pipewire)  #-#-#-#-#
+#
+# #-#-#-#-#  biglinux-noise-reduction-pipewire-bash.pot (biglinux-noise-reduction-pipewire)  #-#-#-#-#
+#
+# #-#-#-#-#  biglinux-noise-reduction-pipewire-bash.pot (biglinux-noise-reduction-pipewire)  #-#-#-#-#
+#
+# #-#-#-#-#  biglinux-noise-reduction-pipewire-bash.pot (biglinux-noise-reduction-pipewire)  #-#-#-#-#
+#
+# #-#-#-#-#  biglinux-noise-reduction-pipewire-bash.pot (biglinux-noise-reduction-pipewire)  #-#-#-#-#
+#
+# #-#-#-#-#  biglinux-noise-reduction-pipewire-bash.pot (biglinux-noise-reduction-pipewire)  #-#-#-#-#
+#
+# #-#-#-#-#  biglinux-noise-reduction-pipewire-bash.pot (biglinux-noise-reduction-pipewire)  #-#-#-#-#
+#
+msgid "Bluetooth Autoswitch"
+msgstr "Bluetooth-Autoswitch"
+
+#
+# #-#-#-#-#  biglinux-noise-reduction-pipewire-bash.pot (biglinux-noise-reduction-pipewire)  #-#-#-#-#
+#
+# #-#-#-#-#  biglinux-noise-reduction-pipewire-bash.pot (biglinux-noise-reduction-pipewire)  #-#-#-#-#
+#
+# #-#-#-#-#  biglinux-noise-reduction-pipewire-bash.pot (biglinux-noise-reduction-pipewire)  #-#-#-#-#
+#
+# #-#-#-#-#  biglinux-noise-reduction-pipewire-bash.pot (biglinux-noise-reduction-pipewire)  #-#-#-#-#
+#
+# #-#-#-#-#  biglinux-noise-reduction-pipewire-bash.pot (biglinux-noise-reduction-pipewire)  #-#-#-#-#
+#
+# #-#-#-#-#  biglinux-noise-reduction-pipewire-bash.pot (biglinux-noise-reduction-pipewire)  #-#-#-#-#
+#
+# #-#-#-#-#  biglinux-noise-reduction-pipewire-bash.pot (biglinux-noise-reduction-pipewire)  #-#-#-#-#
+#
+# #-#-#-#-#  biglinux-noise-reduction-pipewire-bash.pot (biglinux-noise-reduction-pipewire)  #-#-#-#-#
+#
+# #-#-#-#-#  biglinux-noise-reduction-pipewire-bash.pot (biglinux-noise-reduction-pipewire)  #-#-#-#-#
+#
+# #-#-#-#-#  biglinux-noise-reduction-pipewire-bash.pot (biglinux-noise-reduction-pipewire)  #-#-#-#-#
+#
+# #-#-#-#-#  biglinux-noise-reduction-pipewire-bash.pot (biglinux-noise-reduction-pipewire)  #-#-#-#-#
+#
+# #-#-#-#-#  biglinux-noise-reduction-pipewire-bash.pot (biglinux-noise-reduction-pipewire)  #-#-#-#-#
+#
+# #-#-#-#-#  biglinux-noise-reduction-pipewire-bash.pot (biglinux-noise-reduction-pipewire)  #-#-#-#-#
+#
+# #-#-#-#-#  biglinux-noise-reduction-pipewire-bash.pot (biglinux-noise-reduction-pipewire)  #-#-#-#-#
+#
+# #-#-#-#-#  biglinux-noise-reduction-pipewire-bash.pot (biglinux-noise-reduction-pipewire)  #-#-#-#-#
+#
+# #-#-#-#-#  biglinux-noise-reduction-pipewire-bash.pot (biglinux-noise-reduction-pipewire)  #-#-#-#-#
+#
+# #-#-#-#-#  biglinux-noise-reduction-pipewire-bash.pot (biglinux-noise-reduction-pipewire)  #-#-#-#-#
+#
+# #-#-#-#-#  biglinux-noise-reduction-pipewire-bash.pot (biglinux-noise-reduction-pipewire)  #-#-#-#-#
+#
+# #-#-#-#-#  biglinux-noise-reduction-pipewire-bash.pot (biglinux-noise-reduction-pipewire)  #-#-#-#-#
+#
+# #-#-#-#-#  biglinux-noise-reduction-pipewire-bash.pot (biglinux-noise-reduction-pipewire)  #-#-#-#-#
+#
+msgid ""
+"When using Bluetooth headphones, it is possible to automatically activate the Bluetooth microphone "
+"when requested."
+msgstr ""
+"Bei Verwendung von Bluetooth-Kopfhörern ist es möglich, das Bluetooth-Mikrofon auf Anfrage "
+"automatisch zu aktivieren."
+
+#
+# #-#-#-#-#  biglinux-noise-reduction-pipewire-bash.pot (biglinux-noise-reduction-pipewire)  #-#-#-#-#
+#
+# #-#-#-#-#  biglinux-noise-reduction-pipewire-bash.pot (biglinux-noise-reduction-pipewire)  #-#-#-#-#
+#
+# #-#-#-#-#  biglinux-noise-reduction-pipewire-bash.pot (biglinux-noise-reduction-pipewire)  #-#-#-#-#
+#
+# #-#-#-#-#  biglinux-noise-reduction-pipewire-bash.pot (biglinux-noise-reduction-pipewire)  #-#-#-#-#
+#
+# #-#-#-#-#  biglinux-noise-reduction-pipewire-bash.pot (biglinux-noise-reduction-pipewire)  #-#-#-#-#
+#
+# #-#-#-#-#  biglinux-noise-reduction-pipewire-bash.pot (biglinux-noise-reduction-pipewire)  #-#-#-#-#
+#
+# #-#-#-#-#  biglinux-noise-reduction-pipewire-bash.pot (biglinux-noise-reduction-pipewire)  #-#-#-#-#
+#
+# #-#-#-#-#  biglinux-noise-reduction-pipewire-bash.pot (biglinux-noise-reduction-pipewire)  #-#-#-#-#
+#
+# #-#-#-#-#  biglinux-noise-reduction-pipewire-bash.pot (biglinux-noise-reduction-pipewire)  #-#-#-#-#
+#
+# #-#-#-#-#  biglinux-noise-reduction-pipewire-bash.pot (biglinux-noise-reduction-pipewire)  #-#-#-#-#
+#
+# #-#-#-#-#  biglinux-noise-reduction-pipewire-bash.pot (biglinux-noise-reduction-pipewire)  #-#-#-#-#
+#
+# #-#-#-#-#  biglinux-noise-reduction-pipewire-bash.pot (biglinux-noise-reduction-pipewire)  #-#-#-#-#
+#
+# #-#-#-#-#  biglinux-noise-reduction-pipewire-bash.pot (biglinux-noise-reduction-pipewire)  #-#-#-#-#
+#
+# #-#-#-#-#  biglinux-noise-reduction-pipewire-bash.pot (biglinux-noise-reduction-pipewire)  #-#-#-#-#
+#
+# #-#-#-#-#  biglinux-noise-reduction-pipewire-bash.pot (biglinux-noise-reduction-pipewire)  #-#-#-#-#
+#
+# #-#-#-#-#  biglinux-noise-reduction-pipewire-bash.pot (biglinux-noise-reduction-pipewire)  #-#-#-#-#
+#
+# #-#-#-#-#  biglinux-noise-reduction-pipewire-bash.pot (biglinux-noise-reduction-pipewire)  #-#-#-#-#
+#
+# #-#-#-#-#  biglinux-noise-reduction-pipewire-bash.pot (biglinux-noise-reduction-pipewire)  #-#-#-#-#
+#
+# #-#-#-#-#  biglinux-noise-reduction-pipewire-bash.pot (biglinux-noise-reduction-pipewire)  #-#-#-#-#
+#
+# #-#-#-#-#  biglinux-noise-reduction-pipewire-bash.pot (biglinux-noise-reduction-pipewire)  #-#-#-#-#
+#
+msgid "Audio quality may decrease when using the Bluetooth microphone."
+msgstr "Die Audioqualität kann abnehmen, wenn Sie das Bluetooth-Mikrofon verwenden."
+
+#
+# #-#-#-#-#  biglinux-noise-reduction-pipewire-bash.pot (biglinux-noise-reduction-pipewire)  #-#-#-#-#
+#
+# #-#-#-#-#  biglinux-noise-reduction-pipewire-bash.pot (biglinux-noise-reduction-pipewire)  #-#-#-#-#
+#
+#: NEEDS WORK
+msgid "<i>mic</i> Sound Waves"
+msgstr "<i>mic</i> Soundwellen"
+
+#
+# #-#-#-#-#  biglinux-noise-reduction-pipewire-bash.pot (biglinux-noise-reduction-pipewire)  #-#-#-#-#
+#
+#: NEEDS WORK
+msgid "<i>settings</i> Config"
+msgstr "<i>settings</i> Config"
+
+#
+# #-#-#-#-#  biglinux-noise-reduction-pipewire-bash.pot (biglinux-noise-reduction-pipewire)  #-#-#-#-#
+#
+# #-#-#-#-#  biglinux-noise-reduction-pipewire-bash.pot (biglinux-noise-reduction-pipewire)  #-#-#-#-#
+#
+#: NEEDS WORK
+msgid "<i>graphic_eq</i> Noise Reduction"
+msgstr "<i>graphic_eq</i> Rauschunterdrückung"
+
+#
+# #-#-#-#-#  biglinux-noise-reduction-pipewire-bash.pot (biglinux-noise-reduction-pipewire)  #-#-#-#-#
+#
+# #-#-#-#-#  biglinux-noise-reduction-pipewire-bash.pot (biglinux-noise-reduction-pipewire)  #-#-#-#-#
+#
+#: NEEDS WORK
+msgid "<i>bluetooth</i> Bluetooth Autoswitch"
+msgstr "<i>Bluetooth</i> Bluetooth-Autoswitch"
+
+#: NEEDS WORK
+msgid "<i>tune</i> Config"
+msgstr "<i>tune</i> Config"
+
+#
+# #-#-#-#-#  biglinux-noise-reduction-pipewire-bash.pot (biglinux-noise-reduction-pipewire)  #-#-#-#-#
+#
+#: NEEDS WORK
+msgid "Sound Waves"
+msgstr "Soundwellen"
+
+#
+# #-#-#-#-#  biglinux-noise-reduction-pipewire-bash.pot (biglinux-noise-reduction-pipewire)  #-#-#-#-#
+#
+#: NEEDS WORK
+msgid "Config"
+msgstr "Konfiguration"
+
+#
 # File: biglinux-noise-reduction-pipewire/usr/share/bigbashview/apps/microphone/noise_reducer.py, line: 214
 #: NEEDS WORK
 msgid "Microphone Settings"
 msgstr "Mikrofoneinstellungen"
-# 
+
+#
 # File: biglinux-noise-reduction-pipewire/usr/share/bigbashview/apps/microphone/noise_reducer.py, line: 216
 #: NEEDS WORK
 msgid "Configure noise reduction and bluetooth settings"
-msgstr "Konfigurieren Sie die Geräuschunterdrückung und die Bluetooth-Einstellungen."
-# 
+msgstr "Rauschunterdrückung und Bluetooth-Einstellungen konfigurieren"
+
+#
 # File: biglinux-noise-reduction-pipewire/usr/share/bigbashview/apps/microphone/noise_reducer.py, line: 224
 #: NEEDS WORK
 msgid "Remove background noise and sounds that interfere with recordings and online calls"
-msgstr "Hintergrundgeräusche und Geräusche entfernen, die Aufnahmen und Online-Anrufe stören."
-# 
-# #-#-#-#-#  biglinux-noise-reduction-pipewire-bash.pot (biglinux-noise-reduction-pipewire)  #-#-#-#-#
-# 
-# #-#-#-#-#  biglinux-noise-reduction-pipewire-bash.pot (biglinux-noise-reduction-pipewire)  #-#-#-#-#
-# 
-# #-#-#-#-#  biglinux-noise-reduction-pipewire-bash.pot (biglinux-noise-reduction-pipewire)  #-#-#-#-#
-# 
-# #-#-#-#-#  biglinux-noise-reduction-pipewire-bash.pot (biglinux-noise-reduction-pipewire)  #-#-#-#-#
-# 
-# #-#-#-#-#  biglinux-noise-reduction-pipewire-bash.pot (biglinux-noise-reduction-pipewire)  #-#-#-#-#
-# 
-# #-#-#-#-#  biglinux-noise-reduction-pipewire-bash.pot (biglinux-noise-reduction-pipewire)  #-#-#-#-#
-# 
-# #-#-#-#-#  biglinux-noise-reduction-pipewire-bash.pot (biglinux-noise-reduction-pipewire)  #-#-#-#-#
-# 
-# #-#-#-#-#  biglinux-noise-reduction-pipewire-bash.pot (biglinux-noise-reduction-pipewire)  #-#-#-#-#
-# 
-# #-#-#-#-#  biglinux-noise-reduction-pipewire-bash.pot (biglinux-noise-reduction-pipewire)  #-#-#-#-#
-# 
-# #-#-#-#-#  biglinux-noise-reduction-pipewire-bash.pot (biglinux-noise-reduction-pipewire)  #-#-#-#-#
-# 
-# #-#-#-#-#  biglinux-noise-reduction-pipewire-bash.pot (biglinux-noise-reduction-pipewire)  #-#-#-#-#
-# 
-# #-#-#-#-#  biglinux-noise-reduction-pipewire-bash.pot (biglinux-noise-reduction-pipewire)  #-#-#-#-#
-# 
-# #-#-#-#-#  biglinux-noise-reduction-pipewire-bash.pot (biglinux-noise-reduction-pipewire)  #-#-#-#-#
-# 
-# #-#-#-#-#  biglinux-noise-reduction-pipewire-bash.pot (biglinux-noise-reduction-pipewire)  #-#-#-#-#
-# 
-# #-#-#-#-#  biglinux-noise-reduction-pipewire-bash.pot (biglinux-noise-reduction-pipewire)  #-#-#-#-#
-# 
-# #-#-#-#-#  biglinux-noise-reduction-pipewire-bash.pot (biglinux-noise-reduction-pipewire)  #-#-#-#-#
-# 
-# #-#-#-#-#  biglinux-noise-reduction-pipewire-bash.pot (biglinux-noise-reduction-pipewire)  #-#-#-#-#
-# 
-# #-#-#-#-#  biglinux-noise-reduction-pipewire-bash.pot (biglinux-noise-reduction-pipewire)  #-#-#-#-#
-# 
-# #-#-#-#-#  biglinux-noise-reduction-pipewire-bash.pot (biglinux-noise-reduction-pipewire)  #-#-#-#-#
-# 
-msgid "Bluetooth Autoswitch"
-msgstr "Bluetooth-Autoswitch"
-# 
+msgstr ""
+"Hintergrundgeräusche und Sounds entfernen, die Auswirkungen auf Recordings (Aufzeichnungen) und "
+"Online-Anrufe haben"
+
+#
 # File: biglinux-noise-reduction-pipewire/usr/share/bigbashview/apps/microphone/noise_reducer.py, line: 241
 #: NEEDS WORK
 msgid "Automatically activate Bluetooth microphone when requested. Audio quality may decrease."
-msgstr "Bluetooth-Mikrofon automatisch aktivieren, wenn angefordert. Die Audioqualität kann abnehmen."
-# 
+msgstr "Bluetooth-Mikrofon auf Anfrage automatisch aktivieren. Die Audioqualität kann abnehmen."
+
+#
 # File: biglinux-noise-reduction-pipewire/usr/share/bigbashview/apps/microphone/noise_reducer.py, line: 276
 #: NEEDS WORK
 msgid "About"
 msgstr "Über"
-# 
+
+#
 # File: biglinux-noise-reduction-pipewire/usr/share/bigbashview/apps/microphone/noise_reducer.py, line: 432
 #: NEEDS WORK
 msgid "Noise reduction enabled"
 msgstr "Rauschunterdrückung aktiviert"
-# 
+
+#
 # File: biglinux-noise-reduction-pipewire/usr/share/bigbashview/apps/microphone/noise_reducer.py, line: 436
 #: NEEDS WORK
 msgid "Noise reduction disabled"
 msgstr "Rauschunterdrückung deaktiviert"
-# 
+
+#
 # File: biglinux-noise-reduction-pipewire/usr/share/bigbashview/apps/microphone/noise_reducer.py, line: 472
 #: NEEDS WORK
 msgid "Bluetooth autoswitch enabled"
-msgstr "Bluetooth-Autoschalter aktiviert"
-# 
+msgstr "Bluetooth-Autoswitch aktiviert"
+
+#
 # File: biglinux-noise-reduction-pipewire/usr/share/bigbashview/apps/microphone/noise_reducer.py, line: 477
 #: NEEDS WORK
 msgid "Bluetooth autoswitch disabled"
-msgstr "Bluetooth-Autoschalter deaktiviert"
-# 
-# File: biglinux-noise-reduction-pipewire/usr/share/biglinux/microphone/audio_visualizer.py, line: 27
-#: NEEDS WORK
-msgid "Rsvg module not available, will use fallback icon drawing"
-msgstr "Rsvg-Modul nicht verfügbar, es wird auf das Fallback-Icon-Zeichnen zurückgegriffen."
-# 
-# File: biglinux-noise-reduction-pipewire/usr/share/biglinux/microphone/audio_visualizer.py, line: 142
-#: NEEDS WORK
-msgid "Modern Waves"
-msgstr "Moderne Wellen"
-# 
-# File: biglinux-noise-reduction-pipewire/usr/share/biglinux/microphone/audio_visualizer.py, line: 146
-#: NEEDS WORK
-msgid "Sound waves with green to red gradient"
-msgstr "Schallwellen mit grün-rot Farbverlauf"
-# 
-# File: biglinux-noise-reduction-pipewire/usr/share/biglinux/microphone/audio_visualizer.py, line: 148
-#: NEEDS WORK
-msgid "Retro Bars"
-msgstr "Retro-Leisten"
-# 
-# File: biglinux-noise-reduction-pipewire/usr/share/biglinux/microphone/audio_visualizer.py, line: 150
-#: NEEDS WORK
-msgid "Classic equalizer-style visualization"
-msgstr "Klassische Equalizer-ähnliche Visualisierung"
-# 
-# File: biglinux-noise-reduction-pipewire/usr/share/biglinux/microphone/audio_visualizer.py, line: 153
-#: NEEDS WORK
-msgid "Spectrum"
-msgstr "Spektrum"
-# 
-# File: biglinux-noise-reduction-pipewire/usr/share/biglinux/microphone/audio_visualizer.py, line: 157
-#: NEEDS WORK
-msgid "Spectrum visualizer with green to red gradient"
-msgstr "Spektrum-Visualizer mit grün-rot Farbverlauf"
-# 
-# File: biglinux-noise-reduction-pipewire/usr/share/biglinux/microphone/audio_visualizer.py, line: 772
-#: NEEDS WORK
-msgid "Visualization Error"
-msgstr "Visualisierungsfehler"
+msgstr "Bluetooth-Autoswitch deaktiviert"
