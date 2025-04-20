@@ -21,7 +21,7 @@ fi
 case "$1" in
     start)
         # Find and kill the pipewire process
-        pipewirePidFiltered=$(ps -aux | grep '/usr/bin/pipewire -c filter-chain.conf' | awk '{ print $2 }')
+        pipewirePidFiltered=$(ps -aux | grep '/usr/bin/[p]ipewire -c filter-chain.conf' | awk '{ print $2 }')
         for pid in $pipewirePidFiltered; do
             kill $pid
         done
@@ -55,14 +55,11 @@ case "$1" in
         ;;
     
     stop)
-        # Send a notification to indicate deactivation
-        notify-send $"Disabled!" --app-name="$mic_name"
-
         # Remove the configuration file
         rm -f "$config_path"
 
         # Find and kill the pipewire process
-        pipewirePidFiltered=$(ps -aux | grep '/usr/bin/pipewire -c filter-chain.conf' | awk '{ print $2 }')
+        pipewirePidFiltered=$(ps -aux | grep '/usr/bin/[p]ipewire -c filter-chain.conf' | awk '{ print $2 }')
         for pid in $pipewirePidFiltered; do
             kill $pid
         done

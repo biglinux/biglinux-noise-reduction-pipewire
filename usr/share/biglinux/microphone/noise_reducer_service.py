@@ -2,6 +2,7 @@ import asyncio
 import os
 import pathlib
 import logging
+import subprocess  # Added for synchronous subprocess calls
 
 logger = logging.getLogger(__name__)
 
@@ -15,8 +16,6 @@ class NoiseReducerService:
     def __init__(self) -> None:
         self.service_name = "noise-reduction-pipewire"
         self._is_updating = False
-        # Use the absolute path to the system command
-        self.command_path = "/usr/sbin/pipewire-noise-remove"
 
         # Path to the actions.sh script in the same directory
         current_dir = pathlib.Path(__file__).parent.absolute()
@@ -64,15 +63,8 @@ class NoiseReducerService:
         Returns:
             str: 'enabled' if the service is active, 'disabled' otherwise
         """
-        try:
-            status = await self._run_action_script("status")
-
-            if status and ("enabled" in status.lower() or "active" in status.lower()):
-                return "enabled"
-            return "disabled"
-        except Exception:
-            logger.exception("Error checking noise reduction status")
-            return "disabled"
+        status = await self._run_action_script("status")
+        return status
 
     async def start_noise_reduction(self) -> None:
         """Start the noise reduction service."""
@@ -90,32 +82,26 @@ class NoiseReducerService:
         finally:
             self._is_updating = False
 
-    async def get_bluetooth_status(self) -> str:
+    def get_bluetooth_status(self) -> str:
         """
-        Get bluetooth autoswitch status.
+        Get bluetooth autoswitch status synchronously.
 
         Returns:
             str: 'enabled' if bluetooth autoswitch is active, 'disabled' otherwise
         """
-        try:
-            status = await self._run_action_script("check-bluetooth-status")
+        cmd = ["/bin/bash", self.actions_script, "status-bluetooth"]
+        result = subprocess.run(cmd, capture_output=True, text=True)
+        status = result.stdout.strip()
+        return status
 
-            # Properly interpret the status output
-            if status and "enabled" in status.lower():
-                return "enabled"
-            return "disabled"
-        except Exception:
-            logger.exception("Error checking bluetooth status")
-            return "disabled"
+    def enable_bluetooth_autoswitch(self) -> str:
+        cmd = ["/bin/bash", self.actions_script, "enable-bluetooth"]
+        result = subprocess.run(cmd, capture_output=True, text=True)
+        status = result.stdout.strip()
+        return status
 
-    async def enable_bluetooth_autoswitch(self) -> None:
-        """Enable bluetooth autoswitch."""
-        await self._run_action_script(
-            "enable-bluetooth-autoswitch", capture_output=False
-        )
-
-    async def disable_bluetooth_autoswitch(self) -> None:
-        """Disable bluetooth autoswitch."""
-        await self._run_action_script(
-            "disable-bluetooth-autoswitch", capture_output=False
-        )
+    def disable_bluetooth_autoswitch(self) -> str:
+        cmd = ["/bin/bash", self.actions_script, "disable-bluetooth"]
+        result = subprocess.run(cmd, capture_output=True, text=True)
+        status = result.stdout.strip()
+        return status

@@ -9,16 +9,8 @@ case "$1" in
             exit 0
         fi
 
-        echo "Iniciando o serviço de redução de ruído..."
+        echo "Starting the noise reduction service..."
         systemctl --user enable --now "$SERVICE"
-
-        sleep 1
-        if systemctl --user is-active --quiet "$SERVICE"; then
-            echo "enabled"
-        else
-            echo "Erro ao iniciar o serviço."
-            exit 1
-        fi
         ;;
 
     stop)
@@ -27,27 +19,31 @@ case "$1" in
             exit 0
         fi
 
-        echo "Parando o serviço de redução de ruído..."
+        echo "Stopping the noise reduction service..."
         systemctl --user disable --now "$SERVICE"
+        ;;
 
-        sleep 1
-        if ! systemctl --user is-active --quiet "$SERVICE"; then
-            echo "disabled"
-        else
-            echo "Erro ao parar o serviço."
-            exit 1
-        fi
+    enable-bluetooth)
+        pipewire-noise-remove enable-bluetooth-autoswitch-to-headset
+        ;;
+
+    disable-bluetooth)
+        pipewire-noise-remove disable-bluetooth-autoswitch-to-headset
         ;;
 
     status)
-        if systemctl --user is-active --quiet "$SERVICE"; then
-            echo "enabled"
-        else
-            echo "disabled"
-        fi
+        pipewire-noise-remove status
         ;;
 
-    *)
-        pipewire-noise-remove "$1"
+    status-bluetooth)
+        pipewire-noise-remove status-bluetooth
+        ;;
+    *) # Show help in english
+        echo "Usage: $0 {start|stop|status|status-bluetooth}"
+        echo "start: Start the noise reduction service"
+        echo "stop: Stop the noise reduction service"
+        echo "status: Show the status of the noise reduction service"
+        echo "status-bluetooth: Show the status of the bluetooth noise reduction service"
+        
         ;;
 esac
