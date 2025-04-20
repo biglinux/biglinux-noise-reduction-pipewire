@@ -155,7 +155,7 @@ class AudioVisualizer(Gtk.Box):
         retro_button.set_tooltip_text(_("Classic equalizer-style visualization"))
 
         # Add radial spectrum button
-        radial_button = Gtk.Button(label=_("Spectrum"))
+        radial_button = Gtk.Button(label=_("Circular"))
         radial_button.connect(
             "clicked", self.on_style_button_clicked, self.STYLE_RADIAL
         )
