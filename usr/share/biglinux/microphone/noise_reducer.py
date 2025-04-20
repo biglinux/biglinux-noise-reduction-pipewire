@@ -204,12 +204,6 @@ class NoiseReducerWindow(Adw.ApplicationWindow):
         menu_button = self.create_menu_button()
         header_bar.pack_end(menu_button)
 
-        # Add spinner to header bar
-        self.spinner = Gtk.Spinner()
-        self.spinner.set_size_request(16, 16)
-        self.spinner.set_visible(False)
-        header_bar.pack_end(self.spinner)
-
         # Add header to content
         content_box.append(header_bar)
 
@@ -359,6 +353,7 @@ class NoiseReducerWindow(Adw.ApplicationWindow):
             }
             
             .big-spinner {
+                color: white;
                 min-width: 64px;
                 min-height: 64px;
             }
@@ -571,7 +566,7 @@ class NoiseReducerWindow(Adw.ApplicationWindow):
             # When enabling: use 4-second timeout
             self.loading_label.set_text(_("Starting noise reduction..."))
             self.show_loading_overlay()
-            GLib.timeout_add(3000, self.hide_loading_overlay)
+            GLib.timeout_add(2500, self.hide_loading_overlay)
         else:
             # When disabling: use 1-second timeout
             self.loading_label.set_text(_("Disabling noise reduction..."))
