@@ -145,10 +145,10 @@ msgstr "ברים רטרו"
 msgid "Classic equalizer-style visualization"
 msgstr "ויזואליזציה בסגנון אקולייזר קלאסי"
 # 
-# File: biglinux-noise-reduction-pipewire/usr/share/biglinux/microphone/audio_visualizer.py, line: 153
+# File: biglinux-noise-reduction-pipewire/usr/share/biglinux/microphone/audio_visualizer.py, line: 158
 #: NEEDS WORK
-msgid "Spectrum"
-msgstr "ספקטרום"
+msgid "Circular"
+msgstr "מעגלי"
 # 
 # File: biglinux-noise-reduction-pipewire/usr/share/biglinux/microphone/audio_visualizer.py, line: 157
 #: NEEDS WORK

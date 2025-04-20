@@ -109,8 +109,8 @@ msgstr "Classic equalizer-style visualization"
 
 #
 # File: biglinux-noise-reduction-pipewire/usr/share/biglinux/microphone/audio_visualizer.py, line: 158
-msgid "Spectrum"
-msgstr "Spectrum"
+msgid "Circular"
+msgstr "Circular"
 
 #
 # File: biglinux-noise-reduction-pipewire/usr/share/biglinux/microphone/audio_visualizer.py, line: 163

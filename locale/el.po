@@ -147,10 +147,10 @@ msgstr "Ρετρό Μπάρες"
 msgid "Classic equalizer-style visualization"
 msgstr "Κλασική οπτικοποίηση τύπου ισοσταθμιστή"
 # 
-# File: biglinux-noise-reduction-pipewire/usr/share/biglinux/microphone/audio_visualizer.py, line: 153
+# File: biglinux-noise-reduction-pipewire/usr/share/biglinux/microphone/audio_visualizer.py, line: 158
 #: NEEDS WORK
-msgid "Spectrum"
-msgstr "Φάσμα"
+msgid "Circular"
+msgstr "Κυκλικός"
 # 
 # File: biglinux-noise-reduction-pipewire/usr/share/biglinux/microphone/audio_visualizer.py, line: 157
 #: NEEDS WORK

@@ -145,10 +145,10 @@ msgstr "Retro Sávok"
 msgid "Classic equalizer-style visualization"
 msgstr "Klasszikus ekvalizáló stílusú vizualizáció"
 # 
-# File: biglinux-noise-reduction-pipewire/usr/share/biglinux/microphone/audio_visualizer.py, line: 153
+# File: biglinux-noise-reduction-pipewire/usr/share/biglinux/microphone/audio_visualizer.py, line: 158
 #: NEEDS WORK
-msgid "Spectrum"
-msgstr "Spektrum"
+msgid "Circular"
+msgstr "Körkörös"
 # 
 # File: biglinux-noise-reduction-pipewire/usr/share/biglinux/microphone/audio_visualizer.py, line: 157
 #: NEEDS WORK

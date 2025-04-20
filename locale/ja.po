@@ -145,10 +145,10 @@ msgstr "レトロバー"
 msgid "Classic equalizer-style visualization"
 msgstr "クラシックイコライザースタイルのビジュアライゼーション"
 # 
-# File: biglinux-noise-reduction-pipewire/usr/share/biglinux/microphone/audio_visualizer.py, line: 153
+# File: biglinux-noise-reduction-pipewire/usr/share/biglinux/microphone/audio_visualizer.py, line: 158
 #: NEEDS WORK
-msgid "Spectrum"
-msgstr "スペクトル"
+msgid "Circular"
+msgstr "円形"
 # 
 # File: biglinux-noise-reduction-pipewire/usr/share/biglinux/microphone/audio_visualizer.py, line: 157
 #: NEEDS WORK

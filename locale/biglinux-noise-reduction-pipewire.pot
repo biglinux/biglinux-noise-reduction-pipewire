@@ -107,7 +107,7 @@ msgstr  ""
 
 #
 # File: biglinux-noise-reduction-pipewire/usr/share/biglinux/microphone/audio_visualizer.py, line: 158
-msgid   "Spectrum"
+msgid   "Circular"
 msgstr  ""
 
 #

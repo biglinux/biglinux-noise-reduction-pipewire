@@ -145,10 +145,10 @@ msgstr "Ретро ленти"
 msgid "Classic equalizer-style visualization"
 msgstr "Класическа визуализация в стил равномерно регулиране"
 # 
-# File: biglinux-noise-reduction-pipewire/usr/share/biglinux/microphone/audio_visualizer.py, line: 153
+# File: biglinux-noise-reduction-pipewire/usr/share/biglinux/microphone/audio_visualizer.py, line: 158
 #: NEEDS WORK
-msgid "Spectrum"
-msgstr "Спектър"
+msgid "Circular"
+msgstr "Кръгово"
 # 
 # File: biglinux-noise-reduction-pipewire/usr/share/biglinux/microphone/audio_visualizer.py, line: 157
 #: NEEDS WORK

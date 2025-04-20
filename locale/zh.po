@@ -145,10 +145,10 @@ msgstr "复古条形图"
 msgid "Classic equalizer-style visualization"
 msgstr "经典均衡器风格可视化"
 # 
-# File: biglinux-noise-reduction-pipewire/usr/share/biglinux/microphone/audio_visualizer.py, line: 153
+# File: biglinux-noise-reduction-pipewire/usr/share/biglinux/microphone/audio_visualizer.py, line: 158
 #: NEEDS WORK
-msgid "Spectrum"
-msgstr "光谱"
+msgid "Circular"
+msgstr "循环"
 # 
 # File: biglinux-noise-reduction-pipewire/usr/share/biglinux/microphone/audio_visualizer.py, line: 157
 #: NEEDS WORK
