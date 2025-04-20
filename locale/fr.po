@@ -22,8 +22,59 @@ msgstr ""
 # 
 msgid "Reduce Microphone Noise"
 msgstr "Réduire le bruit du microphone"
-msgid "Disabled!"
-msgstr "Désactivé !"
+# 
+# File: biglinux-noise-reduction-pipewire/usr/share/bigbashview/apps/microphone/noise_reducer.py, line: 214
+#: NEEDS WORK
+msgid "Microphone Settings"
+msgstr "Paramètres du microphone"
+# 
+# File: biglinux-noise-reduction-pipewire/usr/share/biglinux/microphone/noise_reducer.py, line: 263
+#: NEEDS WORK
+msgid "Background Noise Reduction"
+msgstr "Réduction du bruit de fond"
+# 
+# File: biglinux-noise-reduction-pipewire/usr/share/biglinux/microphone/noise_reducer.py, line: 264
+#: NEEDS WORK
+msgid "Improve voice quality on calls and recordings"
+msgstr "Améliorez la qualité vocale lors des appels et des enregistrements."
+# 
+# File: biglinux-noise-reduction-pipewire/usr/share/biglinux/microphone/noise_reducer.py, line: 290
+#: NEEDS WORK
+msgid "Auto-activate Bluetooth Microphone"
+msgstr "Activation automatique du microphone Bluetooth"
+# 
+# File: biglinux-noise-reduction-pipewire/usr/share/biglinux/microphone/noise_reducer.py, line: 291
+#: NEEDS WORK
+msgid "May reduce audio quality"
+msgstr "Peut réduire la qualité audio."
+# 
+# File: biglinux-noise-reduction-pipewire/usr/share/biglinux/microphone/noise_reducer.py, line: 310
+#: NEEDS WORK
+msgid "Volume Control"
+msgstr "Contrôle du volume"
+# 
+# File: biglinux-noise-reduction-pipewire/usr/share/biglinux/microphone/noise_reducer.py, line: 313
+#: NEEDS WORK
+msgid "Keep microphone volume below 70% and noise filter at 100% for best results."
+msgstr ""
+"Maintenez le volume du microphone en dessous de 70 % et le filtre anti-bruit à 100 % pour de "
+"meilleurs résultats."
+# 
+# File: biglinux-noise-reduction-pipewire/usr/share/biglinux/microphone/noise_reducer.py, line: 318
+#: NEEDS WORK
+msgid "Open"
+msgstr "Ouvrir"
+# 
+# File: biglinux-noise-reduction-pipewire/usr/share/biglinux/microphone/noise_reducer.py, line: 384
+# File: biglinux-noise-reduction-pipewire/usr/share/biglinux/microphone/noise_reducer.py, line: 572
+#: NEEDS WORK
+msgid "Starting noise reduction..."
+msgstr "Démarrage de la réduction de bruit..."
+# 
+# File: biglinux-noise-reduction-pipewire/usr/share/bigbashview/apps/microphone/noise_reducer.py, line: 276
+#: NEEDS WORK
+msgid "About"
+msgstr "À propos"
 # 
 # #-#-#-#-#  biglinux-noise-reduction-pipewire-bash.pot (biglinux-noise-reduction-pipewire)  #-#-#-#-#
 # 
@@ -66,75 +117,15 @@ msgstr "Désactivé !"
 msgid "Noise Reduction"
 msgstr "Réduction du bruit"
 # 
-# File: biglinux-noise-reduction-pipewire/usr/share/bigbashview/apps/microphone/noise_reducer.py, line: 214
+# File: biglinux-noise-reduction-pipewire/usr/share/biglinux/microphone/noise_reducer.py, line: 577
 #: NEEDS WORK
-msgid "Microphone Settings"
-msgstr "Paramètres du microphone"
+msgid "Disabling noise reduction..."
+msgstr "Désactivation de la réduction du bruit..."
 # 
-# File: biglinux-noise-reduction-pipewire/usr/share/bigbashview/apps/microphone/noise_reducer.py, line: 216
+# File: biglinux-noise-reduction-pipewire/usr/share/biglinux/microphone/audio_visualizer.py, line: 27
 #: NEEDS WORK
-msgid "Configure noise reduction and bluetooth settings"
-msgstr "Configurer la réduction du bruit et les paramètres Bluetooth."
-# 
-# File: biglinux-noise-reduction-pipewire/usr/share/bigbashview/apps/microphone/noise_reducer.py, line: 224
-#: NEEDS WORK
-msgid "Remove background noise and sounds that interfere with recordings and online calls"
-msgstr ""
-"Supprimez le bruit de fond et les sons qui interfèrent avec les enregistrements et les appels en "
-"ligne."
-# 
-# #-#-#-#-#  biglinux-noise-reduction-pipewire-bash.pot (biglinux-noise-reduction-pipewire)  #-#-#-#-#
-# 
-# #-#-#-#-#  biglinux-noise-reduction-pipewire-bash.pot (biglinux-noise-reduction-pipewire)  #-#-#-#-#
-# 
-# #-#-#-#-#  biglinux-noise-reduction-pipewire-bash.pot (biglinux-noise-reduction-pipewire)  #-#-#-#-#
-# 
-# #-#-#-#-#  biglinux-noise-reduction-pipewire-bash.pot (biglinux-noise-reduction-pipewire)  #-#-#-#-#
-# 
-# #-#-#-#-#  biglinux-noise-reduction-pipewire-bash.pot (biglinux-noise-reduction-pipewire)  #-#-#-#-#
-# 
-# #-#-#-#-#  biglinux-noise-reduction-pipewire-bash.pot (biglinux-noise-reduction-pipewire)  #-#-#-#-#
-# 
-# #-#-#-#-#  biglinux-noise-reduction-pipewire-bash.pot (biglinux-noise-reduction-pipewire)  #-#-#-#-#
-# 
-# #-#-#-#-#  biglinux-noise-reduction-pipewire-bash.pot (biglinux-noise-reduction-pipewire)  #-#-#-#-#
-# 
-# #-#-#-#-#  biglinux-noise-reduction-pipewire-bash.pot (biglinux-noise-reduction-pipewire)  #-#-#-#-#
-# 
-# #-#-#-#-#  biglinux-noise-reduction-pipewire-bash.pot (biglinux-noise-reduction-pipewire)  #-#-#-#-#
-# 
-# #-#-#-#-#  biglinux-noise-reduction-pipewire-bash.pot (biglinux-noise-reduction-pipewire)  #-#-#-#-#
-# 
-# #-#-#-#-#  biglinux-noise-reduction-pipewire-bash.pot (biglinux-noise-reduction-pipewire)  #-#-#-#-#
-# 
-# #-#-#-#-#  biglinux-noise-reduction-pipewire-bash.pot (biglinux-noise-reduction-pipewire)  #-#-#-#-#
-# 
-# #-#-#-#-#  biglinux-noise-reduction-pipewire-bash.pot (biglinux-noise-reduction-pipewire)  #-#-#-#-#
-# 
-# #-#-#-#-#  biglinux-noise-reduction-pipewire-bash.pot (biglinux-noise-reduction-pipewire)  #-#-#-#-#
-# 
-# #-#-#-#-#  biglinux-noise-reduction-pipewire-bash.pot (biglinux-noise-reduction-pipewire)  #-#-#-#-#
-# 
-# #-#-#-#-#  biglinux-noise-reduction-pipewire-bash.pot (biglinux-noise-reduction-pipewire)  #-#-#-#-#
-# 
-# #-#-#-#-#  biglinux-noise-reduction-pipewire-bash.pot (biglinux-noise-reduction-pipewire)  #-#-#-#-#
-# 
-# #-#-#-#-#  biglinux-noise-reduction-pipewire-bash.pot (biglinux-noise-reduction-pipewire)  #-#-#-#-#
-# 
-msgid "Bluetooth Autoswitch"
-msgstr "Bluetooth Autoswitch"
-# 
-# File: biglinux-noise-reduction-pipewire/usr/share/bigbashview/apps/microphone/noise_reducer.py, line: 241
-#: NEEDS WORK
-msgid "Automatically activate Bluetooth microphone when requested. Audio quality may decrease."
-msgstr ""
-"Activez automatiquement le microphone Bluetooth lorsqu'il est demandé. La qualité audio peut "
-"diminuer."
-# 
-# File: biglinux-noise-reduction-pipewire/usr/share/bigbashview/apps/microphone/noise_reducer.py, line: 276
-#: NEEDS WORK
-msgid "About"
-msgstr "À propos"
+msgid "Rsvg module not available, will use fallback icon drawing"
+msgstr "Le module Rsvg n'est pas disponible, utilisation d'un dessin d'icône de secours."
 # 
 # File: biglinux-noise-reduction-pipewire/usr/share/biglinux/microphone/audio_visualizer.py, line: 142
 #: NEEDS WORK

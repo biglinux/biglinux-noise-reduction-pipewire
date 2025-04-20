@@ -20,85 +20,104 @@ msgid "Reduce Microphone Noise"
 msgstr "Reduce Microphone Noise"
 
 #
-msgid "Disabled!"
-msgstr "Disabled!"
-
-#
-# File: biglinux-noise-reduction-pipewire/usr/share/biglinux/microphone/noise_reducer.py, line: 158
-# File: biglinux-noise-reduction-pipewire/usr/share/biglinux/microphone/noise_reducer.py, line: 220
-# File: biglinux-noise-reduction-pipewire/usr/share/biglinux/microphone/noise_reducer.py, line: 289
-msgid "Noise Reduction"
-msgstr "Noise Reduction"
-
-#
-# File: biglinux-noise-reduction-pipewire/usr/share/biglinux/microphone/noise_reducer.py, line: 213
+# File: biglinux-noise-reduction-pipewire/usr/share/biglinux/microphone/noise_reducer.py, line: 200
 msgid "Microphone Settings"
 msgstr "Microphone Settings"
 
 #
-# File: biglinux-noise-reduction-pipewire/usr/share/biglinux/microphone/noise_reducer.py, line: 215
-msgid "Configure noise reduction and bluetooth settings"
-msgstr "Configure noise reduction and bluetooth settings"
+# File: biglinux-noise-reduction-pipewire/usr/share/biglinux/microphone/noise_reducer.py, line: 263
+msgid "Background Noise Reduction"
+msgstr "Background Noise Reduction"
 
 #
-# File: biglinux-noise-reduction-pipewire/usr/share/biglinux/microphone/noise_reducer.py, line: 223
+# File: biglinux-noise-reduction-pipewire/usr/share/biglinux/microphone/noise_reducer.py, line: 264
+msgid "Improve voice quality on calls and recordings"
+msgstr "Improve voice quality on calls and recordings"
+
+#
+# File: biglinux-noise-reduction-pipewire/usr/share/biglinux/microphone/noise_reducer.py, line: 290
+msgid "Auto-activate Bluetooth Microphone"
+msgstr "Auto-activate Bluetooth Microphone"
+
+#
+# File: biglinux-noise-reduction-pipewire/usr/share/biglinux/microphone/noise_reducer.py, line: 291
+msgid "May reduce audio quality"
+msgstr "May reduce audio quality"
+
+#
+# File: biglinux-noise-reduction-pipewire/usr/share/biglinux/microphone/noise_reducer.py, line: 310
+msgid "Volume Control"
+msgstr "Volume Control"
+
+#
+# File: biglinux-noise-reduction-pipewire/usr/share/biglinux/microphone/noise_reducer.py, line: 313
 msgid ""
-"Remove background noise and sounds that interfere with recordings and online "
-"calls"
+"Keep microphone volume below 70% and noise filter at 100% for best results."
 msgstr ""
-"Remove background noise and sounds that interfere with recordings and online "
-"calls"
+"Keep microphone volume below 70% and noise filter at 100% for best results."
 
 #
-# File: biglinux-noise-reduction-pipewire/usr/share/biglinux/microphone/noise_reducer.py, line: 237
-msgid "Bluetooth Autoswitch"
-msgstr "Bluetooth Autoswitch"
+# File: biglinux-noise-reduction-pipewire/usr/share/biglinux/microphone/noise_reducer.py, line: 318
+msgid "Open"
+msgstr "Open"
 
 #
-# File: biglinux-noise-reduction-pipewire/usr/share/biglinux/microphone/noise_reducer.py, line: 240
-msgid ""
-"Automatically activate Bluetooth microphone when requested. Audio quality "
-"may decrease."
-msgstr ""
-"Automatically activate Bluetooth microphone when requested. Audio quality "
-"may decrease."
+# File: biglinux-noise-reduction-pipewire/usr/share/biglinux/microphone/noise_reducer.py, line: 384
+# File: biglinux-noise-reduction-pipewire/usr/share/biglinux/microphone/noise_reducer.py, line: 572
+msgid "Starting noise reduction..."
+msgstr "Starting noise reduction..."
 
 #
-# File: biglinux-noise-reduction-pipewire/usr/share/biglinux/microphone/noise_reducer.py, line: 272
+# File: biglinux-noise-reduction-pipewire/usr/share/biglinux/microphone/noise_reducer.py, line: 432
 msgid "About"
 msgstr "About"
 
 #
-# File: biglinux-noise-reduction-pipewire/usr/share/biglinux/microphone/audio_visualizer.py, line: 177
+# File: biglinux-noise-reduction-pipewire/usr/share/biglinux/microphone/noise_reducer.py, line: 449
+msgid "Noise Reduction"
+msgstr "Noise Reduction"
+
+#
+# File: biglinux-noise-reduction-pipewire/usr/share/biglinux/microphone/noise_reducer.py, line: 577
+msgid "Disabling noise reduction..."
+msgstr "Disabling noise reduction..."
+
+#
+# File: biglinux-noise-reduction-pipewire/usr/share/biglinux/microphone/audio_visualizer.py, line: 27
+msgid "Rsvg module not available, will use fallback icon drawing"
+msgstr "Rsvg module not available, will use fallback icon drawing"
+
+#
+# File: biglinux-noise-reduction-pipewire/usr/share/biglinux/microphone/audio_visualizer.py, line: 147
 msgid "Modern Waves"
 msgstr "Modern Waves"
 
 #
-# File: biglinux-noise-reduction-pipewire/usr/share/biglinux/microphone/audio_visualizer.py, line: 178
+# File: biglinux-noise-reduction-pipewire/usr/share/biglinux/microphone/audio_visualizer.py, line: 151
 msgid "Sound waves with green to red gradient"
 msgstr "Sound waves with green to red gradient"
 
 #
-# File: biglinux-noise-reduction-pipewire/usr/share/biglinux/microphone/audio_visualizer.py, line: 182
+# File: biglinux-noise-reduction-pipewire/usr/share/biglinux/microphone/audio_visualizer.py, line: 153
 msgid "Retro Bars"
 msgstr "Retro Bars"
 
 #
-# File: biglinux-noise-reduction-pipewire/usr/share/biglinux/microphone/audio_visualizer.py, line: 183
+# File: biglinux-noise-reduction-pipewire/usr/share/biglinux/microphone/audio_visualizer.py, line: 155
 msgid "Classic equalizer-style visualization"
 msgstr "Classic equalizer-style visualization"
 
 #
-# File: biglinux-noise-reduction-pipewire/usr/share/biglinux/microphone/audio_visualizer.py, line: 187
+# File: biglinux-noise-reduction-pipewire/usr/share/biglinux/microphone/audio_visualizer.py, line: 158
 msgid "Spectrum"
 msgstr "Spectrum"
 
 #
-# File: biglinux-noise-reduction-pipewire/usr/share/biglinux/microphone/audio_visualizer.py, line: 188
+# File: biglinux-noise-reduction-pipewire/usr/share/biglinux/microphone/audio_visualizer.py, line: 163
 msgid "Spectrum visualizer with green to red gradient"
 msgstr "Spectrum visualizer with green to red gradient"
 
 #
-# File: biglinux-noise-reduction-pipewire/usr/share/biglinux/microphone/audio_visualizer.py, line: 939
+# File: biglinux-noise-reduction-pipewire/usr/share/biglinux/microphone/audio_visualizer.py, line: 787
 msgid "Visualization Error"
 msgstr "Visualization Error"

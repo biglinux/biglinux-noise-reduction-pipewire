@@ -22,8 +22,57 @@ msgstr ""
 # 
 msgid "Reduce Microphone Noise"
 msgstr "Kurangkan Bunyi Mikrofon"
-msgid "Disabled!"
-msgstr "Dinonaktifkan!"
+# 
+# File: biglinux-noise-reduction-pipewire/usr/share/bigbashview/apps/microphone/noise_reducer.py, line: 214
+#: NEEDS WORK
+msgid "Microphone Settings"
+msgstr "Hljóðnema stillingar"
+# 
+# File: biglinux-noise-reduction-pipewire/usr/share/biglinux/microphone/noise_reducer.py, line: 263
+#: NEEDS WORK
+msgid "Background Noise Reduction"
+msgstr "Bakgrunnshljóðsminnkun"
+# 
+# File: biglinux-noise-reduction-pipewire/usr/share/biglinux/microphone/noise_reducer.py, line: 264
+#: NEEDS WORK
+msgid "Improve voice quality on calls and recordings"
+msgstr "Bættu hljóðgæði í símtölum og upptökum"
+# 
+# File: biglinux-noise-reduction-pipewire/usr/share/biglinux/microphone/noise_reducer.py, line: 290
+#: NEEDS WORK
+msgid "Auto-activate Bluetooth Microphone"
+msgstr "Sjálfvirk virkni Bluetooth hljóðnema"
+# 
+# File: biglinux-noise-reduction-pipewire/usr/share/biglinux/microphone/noise_reducer.py, line: 291
+#: NEEDS WORK
+msgid "May reduce audio quality"
+msgstr "Gæti minnkað hljóðgæði"
+# 
+# File: biglinux-noise-reduction-pipewire/usr/share/biglinux/microphone/noise_reducer.py, line: 310
+#: NEEDS WORK
+msgid "Volume Control"
+msgstr "Hljóðstýring"
+# 
+# File: biglinux-noise-reduction-pipewire/usr/share/biglinux/microphone/noise_reducer.py, line: 313
+#: NEEDS WORK
+msgid "Keep microphone volume below 70% and noise filter at 100% for best results."
+msgstr "Hafðu hljóðnema hljóðstyrk undir 70% og hávaða síu á 100% fyrir bestu niðurstöður."
+# 
+# File: biglinux-noise-reduction-pipewire/usr/share/biglinux/microphone/noise_reducer.py, line: 318
+#: NEEDS WORK
+msgid "Open"
+msgstr "Opna"
+# 
+# File: biglinux-noise-reduction-pipewire/usr/share/biglinux/microphone/noise_reducer.py, line: 384
+# File: biglinux-noise-reduction-pipewire/usr/share/biglinux/microphone/noise_reducer.py, line: 572
+#: NEEDS WORK
+msgid "Starting noise reduction..."
+msgstr "Byrjar hávaða minnkun..."
+# 
+# File: biglinux-noise-reduction-pipewire/usr/share/bigbashview/apps/microphone/noise_reducer.py, line: 276
+#: NEEDS WORK
+msgid "About"
+msgstr "Um umfjöllun"
 # 
 # #-#-#-#-#  biglinux-noise-reduction-pipewire-bash.pot (biglinux-noise-reduction-pipewire)  #-#-#-#-#
 # 
@@ -66,71 +115,15 @@ msgstr "Dinonaktifkan!"
 msgid "Noise Reduction"
 msgstr "Pengurangan Kebisingan"
 # 
-# File: biglinux-noise-reduction-pipewire/usr/share/bigbashview/apps/microphone/noise_reducer.py, line: 214
+# File: biglinux-noise-reduction-pipewire/usr/share/biglinux/microphone/noise_reducer.py, line: 577
 #: NEEDS WORK
-msgid "Microphone Settings"
-msgstr "Hljóðnema stillingar"
+msgid "Disabling noise reduction..."
+msgstr "Að slökkva á hávaðaþjöppun..."
 # 
-# File: biglinux-noise-reduction-pipewire/usr/share/bigbashview/apps/microphone/noise_reducer.py, line: 216
+# File: biglinux-noise-reduction-pipewire/usr/share/biglinux/microphone/audio_visualizer.py, line: 27
 #: NEEDS WORK
-msgid "Configure noise reduction and bluetooth settings"
-msgstr "Stilltuðu hávaðaþrýstingu og Bluetooth stillingar"
-# 
-# File: biglinux-noise-reduction-pipewire/usr/share/bigbashview/apps/microphone/noise_reducer.py, line: 224
-#: NEEDS WORK
-msgid "Remove background noise and sounds that interfere with recordings and online calls"
-msgstr "Fjarlægðu bakgrunnshljóð og hljóð sem trufla upptökur og netköll."
-# 
-# #-#-#-#-#  biglinux-noise-reduction-pipewire-bash.pot (biglinux-noise-reduction-pipewire)  #-#-#-#-#
-# 
-# #-#-#-#-#  biglinux-noise-reduction-pipewire-bash.pot (biglinux-noise-reduction-pipewire)  #-#-#-#-#
-# 
-# #-#-#-#-#  biglinux-noise-reduction-pipewire-bash.pot (biglinux-noise-reduction-pipewire)  #-#-#-#-#
-# 
-# #-#-#-#-#  biglinux-noise-reduction-pipewire-bash.pot (biglinux-noise-reduction-pipewire)  #-#-#-#-#
-# 
-# #-#-#-#-#  biglinux-noise-reduction-pipewire-bash.pot (biglinux-noise-reduction-pipewire)  #-#-#-#-#
-# 
-# #-#-#-#-#  biglinux-noise-reduction-pipewire-bash.pot (biglinux-noise-reduction-pipewire)  #-#-#-#-#
-# 
-# #-#-#-#-#  biglinux-noise-reduction-pipewire-bash.pot (biglinux-noise-reduction-pipewire)  #-#-#-#-#
-# 
-# #-#-#-#-#  biglinux-noise-reduction-pipewire-bash.pot (biglinux-noise-reduction-pipewire)  #-#-#-#-#
-# 
-# #-#-#-#-#  biglinux-noise-reduction-pipewire-bash.pot (biglinux-noise-reduction-pipewire)  #-#-#-#-#
-# 
-# #-#-#-#-#  biglinux-noise-reduction-pipewire-bash.pot (biglinux-noise-reduction-pipewire)  #-#-#-#-#
-# 
-# #-#-#-#-#  biglinux-noise-reduction-pipewire-bash.pot (biglinux-noise-reduction-pipewire)  #-#-#-#-#
-# 
-# #-#-#-#-#  biglinux-noise-reduction-pipewire-bash.pot (biglinux-noise-reduction-pipewire)  #-#-#-#-#
-# 
-# #-#-#-#-#  biglinux-noise-reduction-pipewire-bash.pot (biglinux-noise-reduction-pipewire)  #-#-#-#-#
-# 
-# #-#-#-#-#  biglinux-noise-reduction-pipewire-bash.pot (biglinux-noise-reduction-pipewire)  #-#-#-#-#
-# 
-# #-#-#-#-#  biglinux-noise-reduction-pipewire-bash.pot (biglinux-noise-reduction-pipewire)  #-#-#-#-#
-# 
-# #-#-#-#-#  biglinux-noise-reduction-pipewire-bash.pot (biglinux-noise-reduction-pipewire)  #-#-#-#-#
-# 
-# #-#-#-#-#  biglinux-noise-reduction-pipewire-bash.pot (biglinux-noise-reduction-pipewire)  #-#-#-#-#
-# 
-# #-#-#-#-#  biglinux-noise-reduction-pipewire-bash.pot (biglinux-noise-reduction-pipewire)  #-#-#-#-#
-# 
-# #-#-#-#-#  biglinux-noise-reduction-pipewire-bash.pot (biglinux-noise-reduction-pipewire)  #-#-#-#-#
-# 
-msgid "Bluetooth Autoswitch"
-msgstr "Bluetooth Autoswitch"
-# 
-# File: biglinux-noise-reduction-pipewire/usr/share/bigbashview/apps/microphone/noise_reducer.py, line: 241
-#: NEEDS WORK
-msgid "Automatically activate Bluetooth microphone when requested. Audio quality may decrease."
-msgstr "Virknuðu sjálfkrafa Bluetooth hljóðnema þegar óskað er. Hljóðgæði geta minnkað."
-# 
-# File: biglinux-noise-reduction-pipewire/usr/share/bigbashview/apps/microphone/noise_reducer.py, line: 276
-#: NEEDS WORK
-msgid "About"
-msgstr "Um umfjöllun"
+msgid "Rsvg module not available, will use fallback icon drawing"
+msgstr "Rsvg module ekki tiltækt, mun nota varafallstákn teikningu"
 # 
 # File: biglinux-noise-reduction-pipewire/usr/share/biglinux/microphone/audio_visualizer.py, line: 142
 #: NEEDS WORK
