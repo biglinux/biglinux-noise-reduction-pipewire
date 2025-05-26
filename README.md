@@ -46,7 +46,7 @@ cd biglinux-noise-reduction-pipewire
 
 For Arch-based systems:
 ```bash
-sudo pacman -S noise-suppression-for-voice-big pipewire swh-plugins python-numpy gettext python-gobject
+sudo pacman -S --needed noise-suppression-for-voice-big pipewire swh-plugins python-numpy gettext python-gobject gtk4 libadwaita python-cairo
 ```
 
 For Debian/Ubuntu-based systems:
