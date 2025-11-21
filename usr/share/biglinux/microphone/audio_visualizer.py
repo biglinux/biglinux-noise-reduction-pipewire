@@ -616,26 +616,30 @@ class AudioVisualizer(Gtk.Box):
 
     def on_message(self, bus, message):
         """Handle element messages from GStreamer bus."""
-        if message.get_structure() and message.get_structure().get_name() == "spectrum":
-            # Process spectrum data from messages
-            structure = message.get_structure()
-            if structure:
-                # Get the magnitude array
-                magnitudes_gtype = structure.get_list("magnitude")
-                magnitudes_varray = magnitudes_gtype[1]
+        structure = message.get_structure()
 
-                magnitudes = [
-                    magnitudes_varray.get_nth(i)
-                    for i in range(magnitudes_varray.n_values)
-                ]
+        if not structure or structure.get_name() != "spectrum":
+            return False
 
-                if magnitudes_gtype[0]:
-                    self.last_spectrum_time = time.time()
-                    self.process_spectrum_data(magnitudes)
-                    return True
-                else:
-                    print("Warning: Received spectrum message without magnitude values")
-        return False
+        if not structure.has_field("magnitude"):
+            print("Warning: spectrum message missing 'magnitude' field")
+            return False
+
+        # Extract magnitude list (bool success, GObject.ValueArray)
+        success, varray = structure.get_list("magnitude")
+
+        if not success or varray is None:
+            print("Warning: Received spectrum message without valid magnitude values")
+            return False
+
+        magnitudes = [
+            varray.get_nth(i)
+            for i in range(varray.n_values)
+        ]
+
+        self.last_spectrum_time = time.time()
+        self.process_spectrum_data(magnitudes)
+        return True
 
     def on_error(self, bus, message):
         """Handle error messages from GStreamer bus."""
