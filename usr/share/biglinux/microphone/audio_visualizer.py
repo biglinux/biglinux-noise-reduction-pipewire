@@ -621,8 +621,15 @@ class AudioVisualizer(Gtk.Box):
             structure = message.get_structure()
             if structure:
                 # Get the magnitude array
-                magnitudes = structure.get_value("magnitude")
-                if magnitudes:
+                magnitudes_gtype = structure.get_list("magnitude")
+                magnitudes_varray = magnitudes_gtype[1]
+
+                magnitudes = [
+                    magnitudes_varray.get_nth(i)
+                    for i in range(magnitudes_varray.n_values)
+                ]
+
+                if magnitudes_gtype[0]:
                     self.last_spectrum_time = time.time()
                     self.process_spectrum_data(magnitudes)
                     return True
