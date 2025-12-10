@@ -3,7 +3,6 @@
 # This file is distributed under the same license as the biglinux-noise-reduction-pipewire package.
 # FIRST AUTHOR <EMAIL@ADDRESS>, YEAR.
 # 
-#, fuzzy
 msgid ""
 msgstr ""
 "Project-Id-Version: biglinux-noise-reduction-pipewire\n"
@@ -24,53 +23,43 @@ msgid "Reduce Microphone Noise"
 msgstr "マイクノイズを軽減"
 # 
 # File: biglinux-noise-reduction-pipewire/usr/share/bigbashview/apps/microphone/noise_reducer.py, line: 214
-#: NEEDS WORK
 msgid "Microphone Settings"
 msgstr "マイク設定"
 # 
 # File: biglinux-noise-reduction-pipewire/usr/share/biglinux/microphone/noise_reducer.py, line: 263
-#: NEEDS WORK
 msgid "Background Noise Reduction"
 msgstr "背景ノイズ除去"
 # 
 # File: biglinux-noise-reduction-pipewire/usr/share/biglinux/microphone/noise_reducer.py, line: 264
-#: NEEDS WORK
 msgid "Improve voice quality on calls and recordings"
 msgstr "通話や録音の音声品質を向上させる"
 # 
 # File: biglinux-noise-reduction-pipewire/usr/share/biglinux/microphone/noise_reducer.py, line: 290
-#: NEEDS WORK
 msgid "Auto-activate Bluetooth Microphone"
 msgstr "Bluetoothマイクを自動的に有効にする"
 # 
 # File: biglinux-noise-reduction-pipewire/usr/share/biglinux/microphone/noise_reducer.py, line: 291
-#: NEEDS WORK
 msgid "May reduce audio quality"
 msgstr "音質が低下する可能性があります。"
 # 
 # File: biglinux-noise-reduction-pipewire/usr/share/biglinux/microphone/noise_reducer.py, line: 310
-#: NEEDS WORK
 msgid "Volume Control"
 msgstr "音量コントロール"
 # 
 # File: biglinux-noise-reduction-pipewire/usr/share/biglinux/microphone/noise_reducer.py, line: 313
-#: NEEDS WORK
 msgid "Keep microphone volume below 70% and noise filter at 100% for best results."
 msgstr "マイクの音量は70%未満に設定し、ノイズフィルターは100%に設定してください。最良の結果が得られます。"
 # 
 # File: biglinux-noise-reduction-pipewire/usr/share/biglinux/microphone/noise_reducer.py, line: 318
-#: NEEDS WORK
 msgid "Open"
 msgstr "オープン"
 # 
 # File: biglinux-noise-reduction-pipewire/usr/share/biglinux/microphone/noise_reducer.py, line: 384
 # File: biglinux-noise-reduction-pipewire/usr/share/biglinux/microphone/noise_reducer.py, line: 572
-#: NEEDS WORK
 msgid "Starting noise reduction..."
 msgstr "ノイズリダクションを開始しています..."
 # 
 # File: biglinux-noise-reduction-pipewire/usr/share/bigbashview/apps/microphone/noise_reducer.py, line: 276
-#: NEEDS WORK
 msgid "About"
 msgstr "情報について"
 # 
@@ -116,46 +105,37 @@ msgid "Noise Reduction"
 msgstr "ノイズリダクション"
 # 
 # File: biglinux-noise-reduction-pipewire/usr/share/biglinux/microphone/noise_reducer.py, line: 577
-#: NEEDS WORK
 msgid "Disabling noise reduction..."
 msgstr "ノイズリダクションを無効にしています..."
 # 
 # File: biglinux-noise-reduction-pipewire/usr/share/biglinux/microphone/audio_visualizer.py, line: 27
-#: NEEDS WORK
 msgid "Rsvg module not available, will use fallback icon drawing"
 msgstr "Rsvgモジュールは利用できません。フォールバックアイコン描画を使用します。"
 # 
 # File: biglinux-noise-reduction-pipewire/usr/share/biglinux/microphone/audio_visualizer.py, line: 142
-#: NEEDS WORK
 msgid "Modern Waves"
 msgstr "モダンウェーブ"
 # 
 # File: biglinux-noise-reduction-pipewire/usr/share/biglinux/microphone/audio_visualizer.py, line: 146
-#: NEEDS WORK
 msgid "Sound waves with green to red gradient"
 msgstr "緑から赤へのグラデーションの音波"
 # 
 # File: biglinux-noise-reduction-pipewire/usr/share/biglinux/microphone/audio_visualizer.py, line: 148
-#: NEEDS WORK
 msgid "Retro Bars"
 msgstr "レトロバー"
 # 
 # File: biglinux-noise-reduction-pipewire/usr/share/biglinux/microphone/audio_visualizer.py, line: 150
-#: NEEDS WORK
 msgid "Classic equalizer-style visualization"
 msgstr "クラシックイコライザースタイルのビジュアライゼーション"
 # 
 # File: biglinux-noise-reduction-pipewire/usr/share/biglinux/microphone/audio_visualizer.py, line: 158
-#: NEEDS WORK
 msgid "Circular"
 msgstr "円形"
 # 
 # File: biglinux-noise-reduction-pipewire/usr/share/biglinux/microphone/audio_visualizer.py, line: 157
-#: NEEDS WORK
 msgid "Spectrum visualizer with green to red gradient"
 msgstr "緑から赤のグラデーションを持つスペクトラムビジュアライザー"
 # 
 # File: biglinux-noise-reduction-pipewire/usr/share/biglinux/microphone/audio_visualizer.py, line: 772
-#: NEEDS WORK
 msgid "Visualization Error"
 msgstr "視覚化エラー"

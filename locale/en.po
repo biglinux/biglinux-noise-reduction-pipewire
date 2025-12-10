@@ -3,7 +3,6 @@
 # This file is distributed under the same license as the biglinux-noise-reduction-pipewire package.
 # FIRST AUTHOR <EMAIL@ADDRESS>, YEAR.
 #
-#, fuzzy
 msgid ""
 msgstr ""
 "Project-Id-Version: biglinux-noise-reduction-pipewire\n"
@@ -18,6 +17,46 @@ msgstr ""
 #
 msgid "Reduce Microphone Noise"
 msgstr "Reduce Microphone Noise"
+
+#
+# File: biglinux-noise-reduction-pipewire/usr/share/biglinux/microphone/audio_visualizer.py, line: 27
+msgid "Rsvg module not available, will use fallback icon drawing"
+msgstr "Rsvg module not available, will use fallback icon drawing"
+
+#
+# File: biglinux-noise-reduction-pipewire/usr/share/biglinux/microphone/audio_visualizer.py, line: 147
+msgid "Modern Waves"
+msgstr "Modern Waves"
+
+#
+# File: biglinux-noise-reduction-pipewire/usr/share/biglinux/microphone/audio_visualizer.py, line: 151
+msgid "Sound waves with green to red gradient"
+msgstr "Sound waves with green to red gradient"
+
+#
+# File: biglinux-noise-reduction-pipewire/usr/share/biglinux/microphone/audio_visualizer.py, line: 153
+msgid "Retro Bars"
+msgstr "Retro Bars"
+
+#
+# File: biglinux-noise-reduction-pipewire/usr/share/biglinux/microphone/audio_visualizer.py, line: 155
+msgid "Classic equalizer-style visualization"
+msgstr "Classic equalizer-style visualization"
+
+#
+# File: biglinux-noise-reduction-pipewire/usr/share/biglinux/microphone/audio_visualizer.py, line: 158
+msgid "Circular"
+msgstr "Circular"
+
+#
+# File: biglinux-noise-reduction-pipewire/usr/share/biglinux/microphone/audio_visualizer.py, line: 163
+msgid "Spectrum visualizer with green to red gradient"
+msgstr "Spectrum visualizer with green to red gradient"
+
+#
+# File: biglinux-noise-reduction-pipewire/usr/share/biglinux/microphone/audio_visualizer.py, line: 798
+msgid "Visualization Error"
+msgstr "Visualization Error"
 
 #
 # File: biglinux-noise-reduction-pipewire/usr/share/biglinux/microphone/noise_reducer.py, line: 200
@@ -81,43 +120,3 @@ msgstr "Noise Reduction"
 # File: biglinux-noise-reduction-pipewire/usr/share/biglinux/microphone/noise_reducer.py, line: 572
 msgid "Disabling noise reduction..."
 msgstr "Disabling noise reduction..."
-
-#
-# File: biglinux-noise-reduction-pipewire/usr/share/biglinux/microphone/audio_visualizer.py, line: 27
-msgid "Rsvg module not available, will use fallback icon drawing"
-msgstr "Rsvg module not available, will use fallback icon drawing"
-
-#
-# File: biglinux-noise-reduction-pipewire/usr/share/biglinux/microphone/audio_visualizer.py, line: 147
-msgid "Modern Waves"
-msgstr "Modern Waves"
-
-#
-# File: biglinux-noise-reduction-pipewire/usr/share/biglinux/microphone/audio_visualizer.py, line: 151
-msgid "Sound waves with green to red gradient"
-msgstr "Sound waves with green to red gradient"
-
-#
-# File: biglinux-noise-reduction-pipewire/usr/share/biglinux/microphone/audio_visualizer.py, line: 153
-msgid "Retro Bars"
-msgstr "Retro Bars"
-
-#
-# File: biglinux-noise-reduction-pipewire/usr/share/biglinux/microphone/audio_visualizer.py, line: 155
-msgid "Classic equalizer-style visualization"
-msgstr "Classic equalizer-style visualization"
-
-#
-# File: biglinux-noise-reduction-pipewire/usr/share/biglinux/microphone/audio_visualizer.py, line: 158
-msgid "Circular"
-msgstr "Circular"
-
-#
-# File: biglinux-noise-reduction-pipewire/usr/share/biglinux/microphone/audio_visualizer.py, line: 163
-msgid "Spectrum visualizer with green to red gradient"
-msgstr "Spectrum visualizer with green to red gradient"
-
-#
-# File: biglinux-noise-reduction-pipewire/usr/share/biglinux/microphone/audio_visualizer.py, line: 787
-msgid "Visualization Error"
-msgstr "Visualization Error"

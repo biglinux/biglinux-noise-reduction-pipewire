@@ -3,7 +3,6 @@
 # This file is distributed under the same license as the biglinux-noise-reduction-pipewire package.
 # FIRST AUTHOR <EMAIL@ADDRESS>, YEAR.
 # 
-#, fuzzy
 msgid ""
 msgstr ""
 "Project-Id-Version: biglinux-noise-reduction-pipewire\n"
@@ -24,53 +23,43 @@ msgid "Reduce Microphone Noise"
 msgstr "הפחת רעש מיקרופון"
 # 
 # File: biglinux-noise-reduction-pipewire/usr/share/bigbashview/apps/microphone/noise_reducer.py, line: 214
-#: NEEDS WORK
 msgid "Microphone Settings"
 msgstr "הגדרות מיקרופון"
 # 
 # File: biglinux-noise-reduction-pipewire/usr/share/biglinux/microphone/noise_reducer.py, line: 263
-#: NEEDS WORK
 msgid "Background Noise Reduction"
 msgstr "הפחתת רעש רקע"
 # 
 # File: biglinux-noise-reduction-pipewire/usr/share/biglinux/microphone/noise_reducer.py, line: 264
-#: NEEDS WORK
 msgid "Improve voice quality on calls and recordings"
 msgstr "שפר את איכות הקול בשיחות ובהקלטות"
 # 
 # File: biglinux-noise-reduction-pipewire/usr/share/biglinux/microphone/noise_reducer.py, line: 290
-#: NEEDS WORK
 msgid "Auto-activate Bluetooth Microphone"
 msgstr "הפעל מיקרופון בלוטות' באופן אוטומטי"
 # 
 # File: biglinux-noise-reduction-pipewire/usr/share/biglinux/microphone/noise_reducer.py, line: 291
-#: NEEDS WORK
 msgid "May reduce audio quality"
 msgstr "עשוי להפחית את איכות השמע"
 # 
 # File: biglinux-noise-reduction-pipewire/usr/share/biglinux/microphone/noise_reducer.py, line: 310
-#: NEEDS WORK
 msgid "Volume Control"
 msgstr "בקרת עוצמת קול"
 # 
 # File: biglinux-noise-reduction-pipewire/usr/share/biglinux/microphone/noise_reducer.py, line: 313
-#: NEEDS WORK
 msgid "Keep microphone volume below 70% and noise filter at 100% for best results."
 msgstr "שמור על עוצמת המיקרופון מתחת ל-70% ועל מסנן הרעש ב-100% לתוצאות הטובות ביותר."
 # 
 # File: biglinux-noise-reduction-pipewire/usr/share/biglinux/microphone/noise_reducer.py, line: 318
-#: NEEDS WORK
 msgid "Open"
 msgstr "פתח"
 # 
 # File: biglinux-noise-reduction-pipewire/usr/share/biglinux/microphone/noise_reducer.py, line: 384
 # File: biglinux-noise-reduction-pipewire/usr/share/biglinux/microphone/noise_reducer.py, line: 572
-#: NEEDS WORK
 msgid "Starting noise reduction..."
 msgstr "מתחיל הפחתת רעש..."
 # 
 # File: biglinux-noise-reduction-pipewire/usr/share/bigbashview/apps/microphone/noise_reducer.py, line: 276
-#: NEEDS WORK
 msgid "About"
 msgstr "אודות"
 # 
@@ -116,46 +105,37 @@ msgid "Noise Reduction"
 msgstr "הפחתת רעש"
 # 
 # File: biglinux-noise-reduction-pipewire/usr/share/biglinux/microphone/noise_reducer.py, line: 577
-#: NEEDS WORK
 msgid "Disabling noise reduction..."
 msgstr "כיבוי הפחתת רעש..."
 # 
 # File: biglinux-noise-reduction-pipewire/usr/share/biglinux/microphone/audio_visualizer.py, line: 27
-#: NEEDS WORK
 msgid "Rsvg module not available, will use fallback icon drawing"
 msgstr "מודול Rsvg אינו זמין, ישתמשו בציור אייקון חלופי"
 # 
 # File: biglinux-noise-reduction-pipewire/usr/share/biglinux/microphone/audio_visualizer.py, line: 142
-#: NEEDS WORK
 msgid "Modern Waves"
 msgstr "גלים מודרניים"
 # 
 # File: biglinux-noise-reduction-pipewire/usr/share/biglinux/microphone/audio_visualizer.py, line: 146
-#: NEEDS WORK
 msgid "Sound waves with green to red gradient"
 msgstr "גלי קול עם גרדיאנט מירוק לאדום"
 # 
 # File: biglinux-noise-reduction-pipewire/usr/share/biglinux/microphone/audio_visualizer.py, line: 148
-#: NEEDS WORK
 msgid "Retro Bars"
 msgstr "ברים רטרו"
 # 
 # File: biglinux-noise-reduction-pipewire/usr/share/biglinux/microphone/audio_visualizer.py, line: 150
-#: NEEDS WORK
 msgid "Classic equalizer-style visualization"
 msgstr "ויזואליזציה בסגנון אקולייזר קלאסי"
 # 
 # File: biglinux-noise-reduction-pipewire/usr/share/biglinux/microphone/audio_visualizer.py, line: 158
-#: NEEDS WORK
 msgid "Circular"
 msgstr "מעגלי"
 # 
 # File: biglinux-noise-reduction-pipewire/usr/share/biglinux/microphone/audio_visualizer.py, line: 157
-#: NEEDS WORK
 msgid "Spectrum visualizer with green to red gradient"
 msgstr "מְחַשֵּׁב סְפֶקְטְרוּם עם גרדיאנט מירוק לאדום"
 # 
 # File: biglinux-noise-reduction-pipewire/usr/share/biglinux/microphone/audio_visualizer.py, line: 772
-#: NEEDS WORK
 msgid "Visualization Error"
 msgstr "שגיאת חזותית"
