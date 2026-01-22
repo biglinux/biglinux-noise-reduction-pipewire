@@ -1,34 +1,56 @@
-# BigLinux Noise Reduction for PipeWire
+# BigLinux Microphone - AI Noise Reduction for PipeWire
 
-A modern, feature-rich microphone noise reduction application for Linux systems running PipeWire. This tool provides an elegant GTK4 user interface with real-time audio visualization and easy-to-use controls for reducing background noise during calls, recordings, and online meetings.
+[![License: GPL-3.0](https://img.shields.io/badge/License-GPL%203.0-blue.svg)](https://www.gnu.org/licenses/gpl-3.0)
+[![Python 3.10+](https://img.shields.io/badge/Python-3.10%2B-blue.svg)](https://www.python.org/)
+[![GTK4](https://img.shields.io/badge/GTK-4.0-green.svg)](https://gtk.org/)
+[![Libadwaita](https://img.shields.io/badge/Libadwaita-1.0-purple.svg)](https://gnome.pages.gitlab.gnome.org/libadwaita/)
 
-![image](https://github.com/user-attachments/assets/45771b61-8bc1-4c7b-8b2c-58543464f885)
+A professional microphone processing application for Linux systems running PipeWire. Features AI-powered noise reduction, 10-band equalizer, stereo enhancement, and real-time audio visualization in a modern GTK4/Libadwaita interface.
 
+**Powered by GTCRN** - Gated Temporal Convolutional Recurrent Network for state-of-the-art voice enhancement.
 
-## ✨ Features
+![BigLinux Microphone Interface](https://github.com/user-attachments/assets/45771b61-8bc1-4c7b-8b2c-58543464f885)
 
-- **Advanced Noise Reduction**: Remove background noise and sounds that interfere with recordings and online calls
-- **Real-time Audio Visualization**: See your microphone input with multiple visualization styles:
-  - Modern Waves - Smooth flowing waveform visualization
-  - Retro Bars - Classic equalizer-style visualization
-  - Spectrum - Radial spectrum analyzer
-- **Bluetooth Support**: Automatically activate Bluetooth microphone when requested
-- **User-friendly Interface**: Modern GTK4 interface with Adwaita styling
-- **Persistent Settings**: Your configuration is automatically saved and restored
-- **Resource Efficient**: Minimal CPU and memory usage when running in the background
-- **Wayland Compatible**: Works seamlessly on both Wayland and X11
+## Features
 
-## 📋 Requirements
+### AI Noise Reduction
+- **GTCRN Neural Network** - Superior voice quality with deep learning
+- **Model Selection** - Full Quality (best results) or Low Latency (real-time)
+- **Adjustable Strength** - Fine-tune noise reduction intensity (0-100%)
 
-- Linux system with PipeWire audio
-- Python 3.7+
-- GTK4 and libadwaita
-- GStreamer with appropriate plugins
-- NumPy
+### Audio Processing
+- **10-Band Parametric Equalizer** - Full control from 31Hz to 16kHz
+- **EQ Presets** - Voice Boost, Podcast, Warm, Bright, De-esser, and more
+- **Noise Gate** - Eliminate background noise during silence
+- **Transient Suppressor** - Remove clicks and pops
 
-## 🚀 Installation
+### Stereo Enhancement
+- **Dual Mono** - Simple stereo duplication
+- **Radio Voice** - Professional broadcast compression
+- **Voice Changer** - Pitch adjustment
 
-### From Package Manager (BigLinux)
+### Visualization & Monitoring
+- **Real-time Spectrum Analyzer** - Three visualization styles
+- **Headphone Monitor** - Listen to processed audio with adjustable delay
+- **Live Parameter Updates** - Instant feedback without restarting
+
+### User Experience
+- **Smart Filter Integration** - Uses PipeWire's `filter.smart` (no virtual device needed)
+- **Profile Management** - Save and load custom configurations
+- **Persistent Settings** - Automatic save/restore on startup
+- **Wayland & X11** - Full compatibility with both display servers
+
+## Requirements
+
+- Linux with PipeWire audio server
+- Python 3.10 or later
+- GTK4 and Libadwaita 1.0+
+- GStreamer with base/good plugins
+- GTCRN LADSPA plugin
+
+## Installation
+
+### BigLinux / Arch Linux
 
 ```bash
 sudo pacman -S biglinux-noise-reduction-pipewire
@@ -36,101 +58,168 @@ sudo pacman -S biglinux-noise-reduction-pipewire
 
 ### From Source
 
-1. Clone the repository:
+1. **Clone the repository:**
 ```bash
 git clone https://github.com/biglinux/biglinux-noise-reduction-pipewire.git
 cd biglinux-noise-reduction-pipewire
 ```
 
-2. Install dependencies:
-
-For Arch-based systems:
+2. **Install dependencies (Arch-based):**
 ```bash
-sudo pacman -S --needed noise-suppression-for-voice-big pipewire swh-plugins python-numpy gettext python-gobject gtk4 libadwaita python-cairo
+sudo pacman -S --needed \
+    gtcrn-ladspa \
+    pipewire \
+    swh-plugins \
+    python-numpy \
+    python-gobject \
+    python-cairo \
+    gtk4 \
+    libadwaita \
+    gstreamer \
+    gst-plugins-base \
+    gst-plugins-good
 ```
 
-For Debian/Ubuntu-based systems:
+3. **Install the Python package:**
 ```bash
-sudo apt install pipewire ladspa-sdk python3-numpy gettext python3-gi python3-gi-cairo
-# Note: You may need to manually install noise-suppression-for-voice from source
+pip install --user .
 ```
 
-3. Run the application:
+4. **Run:**
 ```bash
-./usr/share/biglinux/microphone/launcher.py
+python -m biglinux_microphone
 ```
 
-## 💻 Usage
+## Usage
 
-1. **Start the application** from your application menu or run:
+### Quick Start
+
+1. Launch from your application menu or run `big-microphone-noise-reduction`
+2. Toggle **Noise Reduction** to enable AI processing
+3. Adjust the **Strength** slider to balance quality vs. noise removal
+4. Expand sections to access Equalizer, Stereo, and advanced settings
+
+### Keyboard Shortcuts
+
+| Shortcut | Action |
+|----------|--------|
+| `Ctrl+Q` | Quit application |
+| `Ctrl+,` | Show preferences hint |
+
+### Command Line
+
 ```bash
-biglinux-noise-reduction-pipewire
+# Run with debug logging
+python -m biglinux_microphone --debug
+
+# Show version
+python -m biglinux_microphone --version
 ```
 
-2. **Enable noise reduction** by toggling the "Noise Reduction" switch.
-
-3. **Select visualization style** using the buttons below the audio visualizer.
-
-4. **Toggle Bluetooth auto-switching** with the "Bluetooth Autoswitch" option.
-
-5. **Click on the center icon** in the visualizer to quickly toggle noise reduction.
-
-## 🔧 Technical Details
-
-The application integrates with systemd user services to manage the noise reduction pipeline. The core components include:
-
-- **NoiseReducerService**: Manages the systemd service and backend operations
-- **AudioVisualizer**: Provides real-time audio visualization using GStreamer
-- **NoiseReducerApp**: GTK4/Adwaita-based user interface
-
-The noise reduction is implemented using the [noise-suppression-for-voice](https://github.com/werman/noise-suppression-for-voice) library integrated with PipeWire filters that are activated/deactivated through the systemd user service.
-
-## 🧩 Architecture
+## Architecture
 
 ```
-biglinux-noise-reduction-pipewire/
-├── noise_reducer.py       # Main application GUI
-├── noise_reducer_service.py # Service manager
-├── audio_visualizer.py    # Audio visualization component
-├── launcher.py            # Dependency checking and application launcher
-└── actions.sh             # System integration script
+src/biglinux_microphone/
+├── application.py      # Adw.Application lifecycle
+├── window.py           # Main window and UI composition
+├── config.py           # Settings, constants, dataclasses
+├── audio/
+│   └── filter_chain.py # PipeWire filter-chain generation
+├── services/
+│   ├── pipewire_service.py    # PipeWire integration
+│   ├── settings_service.py    # Settings management
+│   ├── profile_service.py     # Profile save/load
+│   ├── audio_monitor.py       # GStreamer spectrum analysis
+│   ├── monitor_service.py     # Headphone monitoring
+│   └── config_persistence.py  # State persistence
+├── ui/
+│   ├── main_view.py           # Primary UI components
+│   ├── spectrum_widget.py     # Audio visualizer
+│   ├── components.py          # Reusable UI widgets
+│   └── base_view.py           # View base class
+└── utils/
+    ├── i18n.py                # Internationalization
+    ├── async_utils.py         # Async helpers
+    └── validators.py          # Input validation
 ```
 
-## 🔄 Integration
+## Technical Details
 
-The application integrates seamlessly with:
+### PipeWire Integration
 
-- **PipeWire**: Modern audio server for Linux
-- **Systemd**: Service management for noise reduction
-- **noise-suppression-for-voice**: High-quality noise reduction library
-- **GTK4/libadwaita**: For a native GNOME look and feel 
-- **GStreamer**: Audio capture and visualization
+The application generates a PipeWire filter-chain configuration that processes audio in real-time. The `filter.smart` feature allows transparent integration with applications - no need to manually select a virtual microphone.
 
-## 🤝 Contributing
+### GTCRN Neural Network
 
-Contributions are welcome! Please feel free to submit a Pull Request.
+GTCRN (Gated Temporal Convolutional Recurrent Network) is a deep learning model optimized for real-time speech enhancement:
+
+| Feature | GTCRN | Traditional (RNNoise) |
+|---------|-------|-----------------------|
+| Architecture | TCN + GRU | Simple RNN |
+| Voice Quality | Excellent | Good |
+| Model Options | 2 (Quality/Latency) | 1 |
+| Strength Control | Yes (0-100%) | No |
+| CPU Usage | Moderate | Low |
+
+### Supported LADSPA Plugins
+
+- `libgtcrn_ladspa.so` - AI noise reduction
+- `sc4m_1916.so` - Radio voice compression
+- `pitch_scale_1193.so` - Voice pitch shifting
+- SWH plugins - Gate, EQ, stereo effects
+
+## Localization
+
+Translations available for 25+ languages. Translation files are in the `locale/` directory.
+
+To contribute translations:
+1. Copy `locale/biglinux-noise-reduction-pipewire.pot` to `locale/<lang>.po`
+2. Translate the strings
+3. Submit a pull request
+
+## Contributing
+
+Contributions are welcome! Please follow these guidelines:
 
 1. Fork the repository
-2. Create your feature branch (`git checkout -b feature/amazing-feature`)
-3. Commit your changes (`git commit -m 'Add some amazing feature'`)
-4. Push to the branch (`git push origin feature/amazing-feature`)
-5. Open a Pull Request
+2. Create a feature branch (`git checkout -b feature/amazing-feature`)
+3. Write tests for new functionality
+4. Ensure code passes linting (`ruff check src/`)
+5. Commit with descriptive messages
+6. Push and open a Pull Request
 
-## 📜 License
+### Development Setup
 
-This project is licensed under the GNU General Public License v3.0 - see the LICENSE file for details.
+```bash
+# Install development dependencies
+pip install -e ".[dev]"
 
-## 👏 Credits
+# Run tests
+pytest tests/ -v
 
-Developed by the BigLinux Team.
+# Run linter
+ruff check src/
 
-This application utilizes the [noise-suppression-for-voice](https://github.com/werman/noise-suppression-for-voice) project by werman for its noise reduction capabilities.
+# Type checking
+mypy src/biglinux_microphone/
+```
 
-## 📸 Screenshots
+## License
 
-![image](https://github.com/user-attachments/assets/030fc674-52b2-47e1-aefe-ecc35f16ae70)
+GNU General Public License v3.0 - see [LICENSE](LICENSE) for details.
 
-![image](https://github.com/user-attachments/assets/a8ca1637-9d31-4688-a79b-d341a8a4e1ec)
+## Credits
 
-![image](https://github.com/user-attachments/assets/84c4f3a5-3682-45e8-97ad-1ac07eb23ff2)
+**Developed by BigLinux Team**
 
+- [GTCRN Project](https://github.com/Xiaobin-Rong/gtcrn) - Neural network for noise reduction
+- [PipeWire](https://pipewire.org/) - Modern audio server
+- [GTK4](https://gtk.org/) / [Libadwaita](https://gnome.pages.gitlab.gnome.org/libadwaita/) - UI framework
+
+## Screenshots
+
+![Main Interface](https://github.com/user-attachments/assets/030fc674-52b2-47e1-aefe-ecc35f16ae70)
+
+![Equalizer Settings](https://github.com/user-attachments/assets/a8ca1637-9d31-4688-a79b-d341a8a4e1ec)
+
+![Advanced Options](https://github.com/user-attachments/assets/84c4f3a5-3682-45e8-97ad-1ac07eb23ff2)

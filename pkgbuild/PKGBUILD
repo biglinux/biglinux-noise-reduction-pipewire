@@ -1,41 +1,60 @@
 # Maintainer: Bruno Goncalves <bigbruno@gmail.com>
 
 pkgname=biglinux-noise-reduction-pipewire
-pkgver=$(date +%y.%m.%d)
-pkgrel=$(date +%H%M)
+pkgver=2.0.0
+pkgrel=1
 arch=('any')
-license=('GPL')
+license=('GPL-3.0-or-later')
 url="https://github.com/biglinux/biglinux-noise-reduction-pipewire"
-pkgdesc="Interface to enable or disable microphone noise reduction, using https://github.com/werman/noise-suppression-for-voice"
-depends=('noise-suppression-for-voice-big' 'pipewire' 'swh-plugins' 'python-numpy' 'gettext' 'python-gobject' 'gtk4' 'libadwaita' 'python-cairo')
-# This not provide a real ladspa host, but pipewire provides
-provides=(
-  ladspa-host
+pkgdesc="AI-powered microphone noise reduction with GTK4/Libadwaita interface for PipeWire"
+
+depends=(
+    'gtcrn-ladspa'
+    'pipewire'
+    'swh-plugins'
+    'python>=3.10'
+    'python-numpy'
+    'python-gobject'
+    'python-cairo'
+    'gtk4'
+    'libadwaita'
+    'gstreamer'
+    'gst-plugins-base'
+    'gst-plugins-good'
 )
 
+optdepends=(
+    'wireplumber: For Bluetooth autoswitch feature'
+)
+
+# This package provides a LADSPA host via PipeWire filter-chain
+provides=('ladspa-host')
+
 source=("git+https://github.com/biglinux/biglinux-noise-reduction-pipewire.git")
-md5sums=(SKIP)
+md5sums=('SKIP')
 
 package() {
-    # Verify default folder
+    # Determine source directory
     if [ -d "${srcdir}/${pkgname}/${pkgname}" ]; then
         InternalDir="${srcdir}/${pkgname}/${pkgname}"
     else
         InternalDir="${srcdir}/${pkgname}"
     fi
 
-
-    # Copy files
+    # Install usr directory contents (binaries, icons, desktop file, etc.)
     if [ -d "${InternalDir}/usr" ]; then
         cp -r "${InternalDir}/usr" "${pkgdir}/"
     fi
 
-    if [ -d "${InternalDir}/etc" ]; then
-        cp -r "${InternalDir}/etc" "${pkgdir}/"
-    fi
+    # Install Python package using pip
+    cd "${InternalDir}"
+    python -m pip install --no-deps --no-build-isolation --root="${pkgdir}" --prefix=/usr .
 
-    if [ -d "${InternalDir}/opt" ]; then
-        cp -r "${InternalDir}/opt" "${pkgdir}/"
-    fi
+    # Clean up Python cache files
+    find "${pkgdir}" -type d -name "__pycache__" -exec rm -rf {} + 2>/dev/null || true
+    find "${pkgdir}" -name "*.pyc" -delete 2>/dev/null || true
+
+    # Ensure binaries are executable
+    chmod +x "${pkgdir}/usr/bin/big-microphone-noise-reduction" 2>/dev/null || true
+    chmod +x "${pkgdir}/usr/bin/pipewire-noise-remove" 2>/dev/null || true
 }
-

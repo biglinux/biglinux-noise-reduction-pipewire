@@ -1,0 +1,142 @@
+[build-system]
+requires = ["setuptools>=61.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "biglinux-microphone"
+version = "2.0.0"
+description = "BigLinux Microphone Settings - AI-powered noise reduction with stereo enhancement and equalizer"
+readme = "README.md"
+license = {text = "GPL-3.0-or-later"}
+requires-python = ">=3.10"
+authors = [
+    {name = "BigLinux Team", email = "dev@biglinux.com.br"}
+]
+maintainers = [
+    {name = "BigLinux Team", email = "dev@biglinux.com.br"}
+]
+keywords = [
+    "audio",
+    "microphone",
+    "noise-reduction",
+    "pipewire",
+    "gtk4",
+    "libadwaita",
+    "biglinux",
+]
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Environment :: X11 Applications :: GTK",
+    "Intended Audience :: End Users/Desktop",
+    "License :: OSI Approved :: GNU General Public License v3 or later (GPLv3+)",
+    "Operating System :: POSIX :: Linux",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Topic :: Multimedia :: Sound/Audio",
+    "Topic :: Desktop Environment :: Gnome",
+]
+
+# Runtime dependencies - PyGObject is typically system-installed
+dependencies = []
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=7.0",
+    "pytest-asyncio>=0.21",
+    "pytest-cov>=4.0",
+    "mypy>=1.0",
+    "ruff>=0.1",
+]
+docs = [
+    "sphinx>=6.0",
+    "sphinx-rtd-theme>=1.0",
+]
+
+[project.scripts]
+biglinux-microphone = "biglinux_microphone.main:main"
+
+[project.gui-scripts]
+biglinux-microphone-gui = "biglinux_microphone.main:main"
+
+[project.urls]
+Homepage = "https://github.com/biglinux/biglinux-noise-reduction-pipewire"
+Documentation = "https://github.com/biglinux/biglinux-noise-reduction-pipewire#readme"
+Repository = "https://github.com/biglinux/biglinux-noise-reduction-pipewire.git"
+Issues = "https://github.com/biglinux/biglinux-noise-reduction-pipewire/issues"
+
+[tool.setuptools]
+package-dir = {"" = "src"}
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.setuptools.package-data]
+biglinux_microphone = ["py.typed"]
+
+# ============================================================================
+# Development Tools Configuration
+# ============================================================================
+
+[tool.ruff]
+target-version = "py310"
+line-length = 88
+
+[tool.ruff.lint]
+select = [
+    "E",      # pycodestyle errors
+    "W",      # pycodestyle warnings
+    "F",      # Pyflakes
+    "I",      # isort
+    "B",      # flake8-bugbear
+    "C4",     # flake8-comprehensions
+    "UP",     # pyupgrade
+    "ARG",    # flake8-unused-arguments
+    "SIM",    # flake8-simplify
+]
+ignore = [
+    "E501",   # line too long (handled by formatter)
+    "E402",   # module level import not at top (required for gi.require_version)
+    "B008",   # do not perform function calls in argument defaults
+    "C901",   # too complex
+]
+
+[tool.ruff.lint.per-file-ignores]
+"__init__.py" = ["F401"]  # Allow unused imports in __init__
+"tests/*" = ["ARG"]       # Allow unused arguments in tests
+"**/ui/*.py" = ["ARG002"] # Allow unused callback arguments in UI
+"application.py" = ["ARG002"]  # Allow unused callback arguments
+"window.py" = ["ARG002"]  # Allow unused callback arguments
+
+[tool.ruff.lint.isort]
+known-first-party = ["biglinux_microphone"]
+
+[tool.black]
+target-version = ["py310"]
+line-length = 88
+
+[tool.mypy]
+python_version = "3.10"
+warn_return_any = true
+warn_unused_configs = true
+disallow_untyped_defs = true
+disallow_incomplete_defs = true
+check_untyped_defs = true
+strict_optional = true
+warn_redundant_casts = true
+warn_unused_ignores = true
+
+[[tool.mypy.overrides]]
+module = [
+    "gi",
+    "gi.repository",
+    "gi.repository.*",
+]
+ignore_missing_imports = true
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+python_files = ["test_*.py"]
+python_functions = ["test_*"]
+addopts = "-v --tb=short"

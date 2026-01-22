@@ -1,0 +1,317 @@
+/* BigLinux Microphone Settings - Custom Styles */
+
+/* ========================================================================
+   Global Styles
+   ======================================================================== */
+
+/* Color scheme integration */
+:root {
+    --accent-bg-color: @accent_bg_color;
+    --accent-fg-color: @accent_fg_color;
+}
+
+/* ========================================================================
+   Hero Section (Main Toggle)
+   ======================================================================== */
+
+.hero-section {
+    padding: 24px;
+    border-radius: 12px;
+    background: linear-gradient(
+        to bottom,
+        alpha(@accent_bg_color, 0.15),
+        alpha(@accent_bg_color, 0.05)
+    );
+    margin-bottom: 12px;
+}
+
+.hero-icon {
+    opacity: 0.8;
+    margin-bottom: 12px;
+}
+
+.hero-icon.active {
+    opacity: 1.0;
+    color: @accent_bg_color;
+}
+
+/* Large switch for main toggle */
+.large-switch {
+    min-width: 80px;
+    min-height: 40px;
+}
+
+.large-switch slider {
+    min-width: 36px;
+    min-height: 36px;
+    margin: 2px;
+}
+
+/* ========================================================================
+   Status Indicators
+   ======================================================================== */
+
+.status-enabled {
+    color: @success_color;
+    font-weight: 600;
+}
+
+.status-disabled {
+    color: @dim_label;
+}
+
+.success {
+    color: @success_color;
+}
+
+.warning {
+    color: @warning_color;
+}
+
+.error {
+    color: @error_color;
+}
+
+/* ========================================================================
+   Level Bars (Audio Visualizer)
+   ======================================================================== */
+
+levelbar {
+    min-height: 8px;
+    border-radius: 4px;
+}
+
+levelbar block.low {
+    background-color: @success_color;
+}
+
+levelbar block.high {
+    background-color: @warning_color;
+}
+
+levelbar block.full {
+    background-color: @error_color;
+}
+
+levelbar trough {
+    background-color: alpha(@shade_color, 0.3);
+    border-radius: 4px;
+}
+
+/* ========================================================================
+   Equalizer Sliders
+   ======================================================================== */
+
+.eq-slider-box {
+    padding: 12px;
+}
+
+.eq-slider {
+    min-height: 150px;
+}
+
+.eq-slider trough {
+    min-width: 8px;
+    border-radius: 4px;
+}
+
+.eq-slider highlight {
+    border-radius: 4px;
+}
+
+.eq-slider slider {
+    min-width: 20px;
+    min-height: 20px;
+    border-radius: 50%;
+}
+
+.eq-label {
+    font-size: 10px;
+    font-weight: 500;
+    min-width: 40px;
+}
+
+.eq-value-label {
+    font-family: monospace;
+    font-size: 11px;
+}
+
+/* ========================================================================
+   Preset Cards
+   ======================================================================== */
+
+.preset-card {
+    padding: 16px;
+    border-radius: 8px;
+    background: alpha(@card_bg_color, 0.8);
+    transition: all 200ms ease;
+}
+
+.preset-card:hover {
+    background: alpha(@card_bg_color, 1.0);
+    box-shadow: 0 2px 8px alpha(black, 0.1);
+}
+
+.preset-card.selected {
+    border: 2px solid @accent_bg_color;
+    background: alpha(@accent_bg_color, 0.1);
+}
+
+.preset-card-icon {
+    font-size: 24px;
+    margin-bottom: 8px;
+    color: @accent_fg_color;
+}
+
+.preset-card-title {
+    font-weight: 600;
+    margin-bottom: 4px;
+}
+
+.preset-card-description {
+    font-size: 12px;
+    color: @dim_label;
+}
+
+/* ========================================================================
+   Advanced Settings
+   ======================================================================== */
+
+.settings-group {
+    margin-bottom: 24px;
+}
+
+.settings-group-title {
+    font-size: 12px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    color: @dim_label;
+    margin-bottom: 8px;
+    padding-left: 12px;
+}
+
+/* ========================================================================
+   Stereo Visualization
+   ======================================================================== */
+
+.stereo-diagram {
+    min-height: 120px;
+    padding: 24px;
+    border-radius: 8px;
+    background: alpha(@shade_color, 0.2);
+}
+
+.stereo-speaker {
+    opacity: 0.5;
+}
+
+.stereo-speaker.active {
+    opacity: 1.0;
+    color: @accent_bg_color;
+}
+
+/* ========================================================================
+   Info Banners
+   ======================================================================== */
+
+.info-banner {
+    background: alpha(@accent_bg_color, 0.1);
+    padding: 12px 16px;
+    border-radius: 8px;
+    margin: 12px 0;
+}
+
+.info-banner-icon {
+    color: @accent_bg_color;
+    margin-right: 12px;
+}
+
+/* ========================================================================
+   Navigation Items
+   ======================================================================== */
+
+row.navigation-row {
+    min-height: 56px;
+}
+
+row.navigation-row:hover {
+    background: alpha(@accent_bg_color, 0.05);
+}
+
+row.navigation-row image.arrow {
+    opacity: 0.5;
+}
+
+row.navigation-row:hover image.arrow {
+    opacity: 1.0;
+}
+
+/* ========================================================================
+   Animations
+   ======================================================================== */
+
+@keyframes pulse {
+    0% { opacity: 0.6; }
+    50% { opacity: 1.0; }
+    100% { opacity: 0.6; }
+}
+
+.pulsing {
+    animation: pulse 2s ease-in-out infinite;
+}
+
+.processing-indicator {
+    animation: pulse 1s ease-in-out infinite;
+}
+
+/* ========================================================================
+   Cards with hover effects
+   ======================================================================== */
+
+.card {
+    padding: 16px;
+    border-radius: 12px;
+    background: @card_bg_color;
+    box-shadow: 0 1px 3px alpha(black, 0.1);
+    transition: box-shadow 200ms ease;
+}
+
+.card:hover {
+    box-shadow: 0 4px 12px alpha(black, 0.15);
+}
+
+/* ========================================================================
+   Responsive Adjustments
+   ======================================================================== */
+
+/* For narrow windows */
+@media (max-width: 500px) {
+    .hero-section {
+        padding: 16px;
+    }
+    
+    .large-switch {
+        min-width: 60px;
+        min-height: 32px;
+    }
+    
+    .eq-slider {
+        min-height: 120px;
+    }
+}
+
+/* ========================================================================
+   Dark theme adjustments
+   ======================================================================== */
+
+/* These work automatically with Adwaita's dark mode support */
+@media (prefers-color-scheme: dark) {
+    .card {
+        background: alpha(@card_bg_color, 0.8);
+    }
+    
+    levelbar trough {
+        background-color: alpha(@shade_color, 0.5);
+    }
+}

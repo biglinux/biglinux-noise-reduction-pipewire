@@ -8,26 +8,31 @@ import org.kde.plasma.plasmoid
 import org.kde.plasma.core as PlasmaCore
 import org.kde.kirigami as Kirigami
 import org.kde.plasma.plasma5support as Plasma5Support
+import Qt.labs.folderlistmodel
+import Qt.labs.platform
 
 PlasmoidItem {
     id: root
     property string outputText
-    property bool isActive: false
 
-    // Constants
-    readonly property int defaultInterval: 7000
-    readonly property int toggleInterval: 1500
 
-    // Function to run the command
-    function runCommand() {
-        executable.exec('sh -c "test -f ~/.config/pipewire/filter-chain.conf.d/source-rnnoise-smart.conf"')
+    // Folder monitoring to check if the filter is active
+    FolderListModel {
+        id: fileConfigMonitor
+        plugin: "qml-folderlistmodel"
+        folder: "file://" + StandardPaths.writableLocation(StandardPaths.HomeLocation) + "/.config/pipewire/filter-chain.conf.d"
+        nameFilters: ["source-gtcrn-smart.conf", "source-rnnoise-smart.conf"]
     }
 
+    // Function to run the command
+    // function runCommand() removed as it is now handled by FolderListModel
+
+
     // Function to toggle the noise reduction
+
     function toggle() {
         var command = isActive ? 'stop' : 'restart'
         executable.exec('systemctl --user ' + command + ' noise-reduction-pipewire')
-        timer.interval = toggleInterval  // Shorten the interval for quick feedback
     }
 
     preferredRepresentation: fullRepresentation
@@ -56,27 +61,7 @@ PlasmoidItem {
         }
     }
 
-    Connections {
-        function onExited(sourceName, exitCode, exitStatus, stdout, stderr) {
-            Qt.callLater(function() {
-                root.outputText = stdout;
-                root.isActive = (exitCode === 0);
-            });
-            timer.restart();
-        }
-
-        target: executable
-    }
-
-    // Timer to periodically run the command
-    Timer {
-        id: timer
-        interval: defaultInterval
-        onTriggered: runCommand()
-        Component.onCompleted: {
-            triggered()
-        }
-    }
+    property bool isActive: fileConfigMonitor.count > 0
 
     fullRepresentation: PlasmoidItem {
         Kirigami.Icon {

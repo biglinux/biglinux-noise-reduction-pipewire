@@ -1,6 +1,6 @@
 [Desktop Entry]
 Type=Application
-Name=Reduce microphone noise
+Name=Microphone Noise Reduction
 Name[bg]=Намаляване на шума от микрофона
 Name[cs]=Snižte šum mikrofonu
 Name[da]=Reducer mikrofonstøj
@@ -34,3 +34,4 @@ StartupWMClass=big-microphone-noise-reduction
 Categories=AudioVideo;
 Terminal=false
 StartupNotify=true
+Keywords=microphone;noise;reduction;audio;pipewire;gtcrn;

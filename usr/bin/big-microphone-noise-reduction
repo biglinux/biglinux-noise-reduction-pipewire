@@ -1,5 +1,16 @@
 #!/usr/bin/env bash
+# BigLinux Microphone Noise Reduction - Entry Point
+# Launches the GTK4/Libadwaita application for microphone noise reduction
 
-cd /usr/share/biglinux/microphone/
+export GTK_USE_PORTAL=1
 
-exec python launcher.py
+# Search for biglinux_microphone module in different Python paths
+# This ensures compatibility when Python is updated
+for i in /usr/lib/python3.{25..6}/site-packages/biglinux_microphone; do
+    if [[ -d "$i" ]]; then
+        cd "$i"
+        break
+    fi
+done
+
+exec python3 -m biglinux_microphone "$@"
