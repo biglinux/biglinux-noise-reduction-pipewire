@@ -7,7 +7,6 @@ arch=('any')
 license=('GPL-3.0-or-later')
 url="https://github.com/biglinux/biglinux-noise-reduction-pipewire"
 pkgdesc="AI-powered microphone noise reduction with GTK4/Libadwaita interface for PipeWire"
-
 depends=(
     'gtcrn-ladspa'
     'pipewire'
@@ -21,6 +20,10 @@ depends=(
     'gstreamer'
     'gst-plugins-base'
     'gst-plugins-good'
+)
+
+optdepends=(
+    'wireplumber: For Bluetooth autoswitch feature'
 )
 
 # This package provides a LADSPA host via PipeWire filter-chain
@@ -42,8 +45,16 @@ package() {
         cp -r "${InternalDir}/usr" "${pkgdir}/"
     fi
 
-    # Install Python package using pip
+    # Get Python version for site-packages path
+    _pyver=$(python -c 'import sys; print(f"{sys.version_info.major}.{sys.version_info.minor}")')
+    _sitepkg="${pkgdir}/usr/lib/python${_pyver}/site-packages"
+
+    # Install Python package manually
     cd "${InternalDir}"
+    install -d "${_sitepkg}/biglinux_microphone"
+
+    # Copy all Python source files
+    cp -r src/biglinux_microphone/* "${_sitepkg}/biglinux_microphone/"
 
     # Clean up Python cache files
     find "${pkgdir}" -type d -name "__pycache__" -exec rm -rf {} + 2>/dev/null || true
