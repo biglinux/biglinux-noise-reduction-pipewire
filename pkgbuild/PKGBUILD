@@ -23,8 +23,6 @@ depends=(
     'gst-plugins-good'
 )
 
-makedepends=('python-pip')
-
 # This package provides a LADSPA host via PipeWire filter-chain
 provides=('ladspa-host')
 
@@ -46,7 +44,6 @@ package() {
 
     # Install Python package using pip
     cd "${InternalDir}"
-    python -m pip install --no-deps --no-build-isolation --root="${pkgdir}" --prefix=/usr .
 
     # Clean up Python cache files
     find "${pkgdir}" -type d -name "__pycache__" -exec rm -rf {} + 2>/dev/null || true
