@@ -13,4 +13,4 @@ for i in /usr/lib/python3.{25..6}/site-packages/biglinux_microphone; do
     fi
 done
 
-exec python3 -m biglinux_microphone "$@"
+exec python3 __init__.py "$@"
