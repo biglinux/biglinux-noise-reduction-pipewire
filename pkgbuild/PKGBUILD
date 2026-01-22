@@ -23,9 +23,7 @@ depends=(
     'gst-plugins-good'
 )
 
-optdepends=(
-    'wireplumber: For Bluetooth autoswitch feature'
-)
+makedepends=('python-pip')
 
 # This package provides a LADSPA host via PipeWire filter-chain
 provides=('ladspa-host')
