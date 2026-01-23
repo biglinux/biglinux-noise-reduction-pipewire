@@ -14,6 +14,8 @@ msgstr ""
 "Content-Type: text/plain; charset=utf-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "X-Generator: attranslate\n"
+msgid "Configure..."
+msgstr "Configurar..."
 # 
 # File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/utils/tooltip_helper.py, line: 41
 msgid ""
@@ -257,11 +259,13 @@ msgstr ""
 # 
 # File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/utils/tooltip_helper.py, line: 147
 msgid ""
-"Automatically switches your headset between listening mode and call mode when you use the microphone. "
-"Note: Using the headset microphone generally reduces both headphone and microphone quality."
+"Automatically switches your headset between listening mode and call mode when you use the "
+"microphone. Note: Using the headset microphone generally reduces both headphone and microphone "
+"quality."
 msgstr ""
-"Alterna automaticamente o seu fone entre o modo de audição e o modo de chamada quando você usa o microfone. "
-"Nota: O uso do microfone do headset bluetooth geralmente reduz a qualidade de áudio do fone e do microfone."
+"Alterna automaticamente o seu fone entre o modo de audição e o modo de chamada quando você usa o "
+"microfone. Nota: O uso do microfone do headset bluetooth geralmente reduz a qualidade de áudio do "
+"fone e do microfone."
 # 
 # File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/utils/tooltip_helper.py, line: 155
 msgid ""
@@ -496,13 +500,20 @@ msgstr "Tempo de decaimento ({release:.1f} ms)"
 # File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/ui/main_view.py, line: 1003
 #, python-brace-format
 msgid "If you want sounds other than the voice to be captured, reduce the filter intensity. ({percent}%)"
-msgstr "Se você deseja que outros áudios além da voz sejam capturados, pode reduzir a intensidade do filtro. ({percent}%)"
+msgstr ""
+"Se você deseja que outros áudios além da voz sejam capturados, pode reduzir a intensidade do "
+"filtro. ({percent}%)"
 # 
 # File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/ui/main_view.py, line: 701
 # File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/ui/main_view.py, line: 1408
 #, python-brace-format
 msgid "Monitor feedback delay. Useful for checking sync. ({delay} ms)"
 msgstr "Monitorar atraso de feedback. Útil para verificar sincronização. ({delay} ms)"
+# 
+# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/ui/main_view.py, line: 1049
+#, python-brace-format
+msgid "Removal aggressiveness. High values clean more but may alter voice. ({percent}%)"
+msgstr "Aggressividade de remoção. Valores altos limpam mais, mas podem alterar a voz. ({percent}%)"
 # 
 # File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/ui/main_view.py, line: 1135
 msgid "Radio Effect Intensity"

@@ -14,6 +14,8 @@ msgstr ""
 "Content-Type: text/plain; charset=utf-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "X-Generator: attranslate\n"
+msgid "Configure..."
+msgstr "Configureren..."
 # 
 # File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/utils/tooltip_helper.py, line: 41
 msgid ""
@@ -257,21 +259,13 @@ msgstr ""
 # 
 # File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/utils/tooltip_helper.py, line: 147
 msgid ""
-"Automatically manage the Bluetooth Headset profile.\n"
-"\n"
-"Switches to high quality (A2DP) when only listening,\n"
-"and automatically activates the microphone (HSP/HFP) when needed.\n"
-"\n"
-"WARNING: Using the bluetooth microphone (HSP/HFP) significantly reduces\n"
-"the quality of both the audio you hear and the microphone."
+"Automatically switches your headset between listening mode and call mode when you use the "
+"microphone. Note: Using the headset microphone generally reduces both headphone and microphone "
+"quality."
 msgstr ""
-"Beheer automatisch het Bluetooth-headsetprofiel.\n"
-"\n"
-"Schakelt over naar hoge kwaliteit (A2DP) wanneer je alleen luistert,\n"
-"en activeert automatisch de microfoon (HSP/HFP) wanneer nodig.\n"
-"\n"
-"WAARSCHUWING: Het gebruik van de bluetoothmicrofoon (HSP/HFP) vermindert aanzienlijk\n"
-"de kwaliteit van zowel de audio die je hoort als de microfoon."
+"Schakelt automatisch je headset tussen luistermodus en belmodus wanneer je de microfoon gebruikt. "
+"Opmerking: Het gebruik van de headsetmicrofoon vermindert over het algemeen zowel de kwaliteit van "
+"de hoofdtelefoon als de microfoon."
 # 
 # File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/utils/tooltip_helper.py, line: 155
 msgid ""
@@ -299,9 +293,9 @@ msgstr "Verwijdert achtergrondgeluiden (toetsenbord, ventilator) met behulp van 
 msgid "Cleanup Intensity"
 msgstr "Schoonmaakintensiteit"
 # 
-# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/ui/main_view.py, line: 247
-msgid "Aggressiveness of removal. High values clean more but may alter voice."
-msgstr "Aggressiviteit van verwijdering. Hoge waarden reinigen meer maar kunnen de stem veranderen."
+# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/ui/main_view.py, line: 252
+msgid "If you want sounds other than the voice to be captured, reduce the filter intensity."
+msgstr "Als je andere geluiden dan de stem wilt vastleggen, verlaag dan de filterintensiteit."
 # 
 # File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/ui/main_view.py, line: 256
 # File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/ui/main_view.py, line: 1137
@@ -428,9 +422,9 @@ msgstr "Pas elke frequentie aan"
 msgid "Bluetooth Headset Mode"
 msgstr "Bluetooth-headsetmodus"
 # 
-# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/ui/main_view.py, line: 534
-msgid "Automatically switch between high quality vs call profile."
-msgstr "Automatisch schakelen tussen hoge kwaliteit en belprofiel."
+# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/ui/main_view.py, line: 540
+msgid "Automatically switch between headset listening and call modes."
+msgstr "Schakel automatisch tussen headsetluister- en belmodi."
 # 
 # File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/ui/main_view.py, line: 549
 msgid "Monitor Feedback"
@@ -490,17 +484,22 @@ msgstr "Min open tijd ({hold:.1f} ms)"
 msgid "Decay time ({release:.1f} ms)"
 msgstr "Vervalstijd ({release:.1f} ms)"
 # 
-# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/ui/main_view.py, line: 694
-# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/ui/main_view.py, line: 1003
+# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/ui/main_view.py, line: 701
 #, python-brace-format
-msgid "Removal aggressiveness. High values clean more but may alter voice. ({percent}%)"
-msgstr "Verwijderingsagressiviteit. Hoge waarden reinigen meer, maar kunnen de stem veranderen. ({percent}%)"
+msgid "If you want sounds other than the voice to be captured, reduce the filter intensity. ({percent}%)"
+msgstr "Als je andere geluiden dan de stem wilt vastleggen, verlaag dan de filterintensiteit. ({percent}%)"
 # 
 # File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/ui/main_view.py, line: 701
 # File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/ui/main_view.py, line: 1408
 #, python-brace-format
 msgid "Monitor feedback delay. Useful for checking sync. ({delay} ms)"
 msgstr "Monitor feedbackvertraging. Handig voor het controleren van synchronisatie. ({delay} ms)"
+# 
+# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/ui/main_view.py, line: 694
+# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/ui/main_view.py, line: 1003
+#, python-brace-format
+msgid "Removal aggressiveness. High values clean more but may alter voice. ({percent}%)"
+msgstr "Verwijderingsagressiviteit. Hoge waarden reinigen meer, maar kunnen de stem veranderen. ({percent}%)"
 # 
 # File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/ui/main_view.py, line: 1135
 msgid "Radio Effect Intensity"

@@ -14,6 +14,8 @@ msgstr ""
 "Content-Type: text/plain; charset=utf-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "X-Generator: attranslate\n"
+msgid "Configure..."
+msgstr "設定..."
 # 
 # File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/utils/tooltip_helper.py, line: 41
 msgid ""
@@ -252,21 +254,10 @@ msgstr ""
 # 
 # File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/utils/tooltip_helper.py, line: 147
 msgid ""
-"Automatically manage the Bluetooth Headset profile.\n"
-"\n"
-"Switches to high quality (A2DP) when only listening,\n"
-"and automatically activates the microphone (HSP/HFP) when needed.\n"
-"\n"
-"WARNING: Using the bluetooth microphone (HSP/HFP) significantly reduces\n"
-"the quality of both the audio you hear and the microphone."
-msgstr ""
-"Bluetoothヘッドセットプロファイルを自動的に管理します。\n"
-"\n"
-"リスニング時は高品質（A2DP）に切り替え、\n"
-"必要に応じてマイク（HSP/HFP）を自動的に有効にします。\n"
-"\n"
-"警告：Bluetoothマイク（HSP/HFP）を使用すると、\n"
-"聞こえる音声とマイクの両方の品質が大幅に低下します。"
+"Automatically switches your headset between listening mode and call mode when you use the "
+"microphone. Note: Using the headset microphone generally reduces both headphone and microphone "
+"quality."
+msgstr "マイクを使用すると、ヘッドセットが自動的にリスニングモードと通話モードの間で切り替わります。注意: ヘッドセットのマイクを使用すると、一般的にヘッドフォンとマイクの品質が低下します。"
 # 
 # File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/utils/tooltip_helper.py, line: 155
 msgid ""
@@ -294,9 +285,9 @@ msgstr "AIを使用してバックグラウンドノイズ（キーボード、�
 msgid "Cleanup Intensity"
 msgstr "クリーンアップ強度"
 # 
-# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/ui/main_view.py, line: 247
-msgid "Aggressiveness of removal. High values clean more but may alter voice."
-msgstr "除去の攻撃性。高い値はより多くをクリーンにしますが、声が変わる可能性があります。"
+# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/ui/main_view.py, line: 252
+msgid "If you want sounds other than the voice to be captured, reduce the filter intensity."
+msgstr "音声以外の音をキャプチャしたい場合は、フィルターの強度を下げてください。"
 # 
 # File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/ui/main_view.py, line: 256
 # File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/ui/main_view.py, line: 1137
@@ -423,9 +414,9 @@ msgstr "各周波数を調整する"
 msgid "Bluetooth Headset Mode"
 msgstr "Bluetoothヘッドセットモード"
 # 
-# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/ui/main_view.py, line: 534
-msgid "Automatically switch between high quality vs call profile."
-msgstr "高品質と通話プロファイルの自動切替。"
+# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/ui/main_view.py, line: 540
+msgid "Automatically switch between headset listening and call modes."
+msgstr "ヘッドセットのリスニングモードと通話モードを自動的に切り替えます。"
 # 
 # File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/ui/main_view.py, line: 549
 msgid "Monitor Feedback"
@@ -485,17 +476,22 @@ msgstr "最小オープン時間 ({hold:.1f} ミリ秒)"
 msgid "Decay time ({release:.1f} ms)"
 msgstr "減衰時間 ({release:.1f} ms)"
 # 
-# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/ui/main_view.py, line: 694
-# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/ui/main_view.py, line: 1003
+# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/ui/main_view.py, line: 701
 #, python-brace-format
-msgid "Removal aggressiveness. High values clean more but may alter voice. ({percent}%)"
-msgstr "除去の攻撃性。高い値はより多くをクリーンにしますが、声が変わる可能性があります。({percent}%)"
+msgid "If you want sounds other than the voice to be captured, reduce the filter intensity. ({percent}%)"
+msgstr "音声以外の音をキャプチャしたい場合は、フィルターの強度を下げてください。({percent}%)"
 # 
 # File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/ui/main_view.py, line: 701
 # File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/ui/main_view.py, line: 1408
 #, python-brace-format
 msgid "Monitor feedback delay. Useful for checking sync. ({delay} ms)"
 msgstr "フィードバック遅延を監視します。同期を確認するのに便利です。 ({delay} ミリ秒)"
+# 
+# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/ui/main_view.py, line: 694
+# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/ui/main_view.py, line: 1003
+#, python-brace-format
+msgid "Removal aggressiveness. High values clean more but may alter voice. ({percent}%)"
+msgstr "除去の攻撃性。高い値はより多くをクリーンにしますが、声が変わる可能性があります。({percent}%)"
 # 
 # File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/ui/main_view.py, line: 1135
 msgid "Radio Effect Intensity"

@@ -14,6 +14,8 @@ msgstr ""
 "Content-Type: text/plain; charset=utf-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "X-Generator: attranslate\n"
+msgid "Configure..."
+msgstr "Beállítás..."
 # 
 # File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/utils/tooltip_helper.py, line: 41
 msgid ""
@@ -258,21 +260,13 @@ msgstr ""
 # 
 # File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/utils/tooltip_helper.py, line: 147
 msgid ""
-"Automatically manage the Bluetooth Headset profile.\n"
-"\n"
-"Switches to high quality (A2DP) when only listening,\n"
-"and automatically activates the microphone (HSP/HFP) when needed.\n"
-"\n"
-"WARNING: Using the bluetooth microphone (HSP/HFP) significantly reduces\n"
-"the quality of both the audio you hear and the microphone."
+"Automatically switches your headset between listening mode and call mode when you use the "
+"microphone. Note: Using the headset microphone generally reduces both headphone and microphone "
+"quality."
 msgstr ""
-"Automatikusan kezeli a Bluetooth fejhallgató profilt.\n"
-"\n"
-"Csak hallgatáskor magas minőségre (A2DP) vált,\n"
-"és automatikusan aktiválja a mikrofont (HSP/HFP), amikor szükséges.\n"
-"\n"
-"FIGYELEM: A bluetooth mikrofon (HSP/HFP) használata jelentősen csökkenti\n"
-"az Ön által hallott audio és a mikrofon minőségét."
+"Automatikusan vált a fejhallgató a hallgatási mód és a hívás mód között, amikor használja a "
+"mikrofont. Megjegyzés: A fejhallgató mikrofonjának használata általában csökkenti a fejhallgató és "
+"a mikrofon minőségét."
 # 
 # File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/utils/tooltip_helper.py, line: 155
 msgid ""
@@ -300,9 +294,9 @@ msgstr "Eltávolítja a háttérzajt (billentyűzet, ventilátor) mesterséges i
 msgid "Cleanup Intensity"
 msgstr "Tisztítási intenzitás"
 # 
-# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/ui/main_view.py, line: 247
-msgid "Aggressiveness of removal. High values clean more but may alter voice."
-msgstr "Eltávolítás agresszivitása. A magas értékek jobban tisztítanak, de megváltoztathatják a hangot."
+# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/ui/main_view.py, line: 252
+msgid "If you want sounds other than the voice to be captured, reduce the filter intensity."
+msgstr "Ha más hangokat is szeretnél rögzíteni a hangon kívül, csökkentsd a szűrő intenzitását."
 # 
 # File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/ui/main_view.py, line: 256
 # File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/ui/main_view.py, line: 1137
@@ -429,9 +423,9 @@ msgstr "Állítsa be az egyes frekvenciákat."
 msgid "Bluetooth Headset Mode"
 msgstr "Bluetooth fejhallgató mód"
 # 
-# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/ui/main_view.py, line: 534
-msgid "Automatically switch between high quality vs call profile."
-msgstr "Automatikusan váltás a magas minőség és a hívás profil között."
+# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/ui/main_view.py, line: 540
+msgid "Automatically switch between headset listening and call modes."
+msgstr "Automatikusan váltás a fejhallgató hallgatási és hívási módok között."
 # 
 # File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/ui/main_view.py, line: 549
 msgid "Monitor Feedback"
@@ -491,6 +485,17 @@ msgstr "Min nyitási idő ({hold:.1f} ms)"
 msgid "Decay time ({release:.1f} ms)"
 msgstr "Lebontási idő ({release:.1f} ms)"
 # 
+# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/ui/main_view.py, line: 701
+#, python-brace-format
+msgid "If you want sounds other than the voice to be captured, reduce the filter intensity. ({percent}%)"
+msgstr "Ha más hangokat is szeretnél rögzíteni a hangon kívül, csökkentsd a szűrő intenzitását. ({percent}%)"
+# 
+# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/ui/main_view.py, line: 701
+# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/ui/main_view.py, line: 1408
+#, python-brace-format
+msgid "Monitor feedback delay. Useful for checking sync. ({delay} ms)"
+msgstr "Késleltetés figyelése. Hasznos a szinkronizálás ellenőrzéséhez. ({delay} ms)"
+# 
 # File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/ui/main_view.py, line: 694
 # File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/ui/main_view.py, line: 1003
 #, python-brace-format
@@ -498,12 +503,6 @@ msgid "Removal aggressiveness. High values clean more but may alter voice. ({per
 msgstr ""
 "Eltávolítási agresszivitás. A magas értékek jobban tisztítanak, de megváltoztathatják a hangot. "
 "({percent}%)"
-# 
-# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/ui/main_view.py, line: 701
-# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/ui/main_view.py, line: 1408
-#, python-brace-format
-msgid "Monitor feedback delay. Useful for checking sync. ({delay} ms)"
-msgstr "Késleltetés figyelése. Hasznos a szinkronizálás ellenőrzéséhez. ({delay} ms)"
 # 
 # File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/ui/main_view.py, line: 1135
 msgid "Radio Effect Intensity"
