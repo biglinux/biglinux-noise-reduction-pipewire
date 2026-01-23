@@ -249,7 +249,7 @@ class MainView(Adw.NavigationPage):
         self._strength_row, self._strength_scale = create_action_row_with_scale(
             _("Cleanup Intensity"),
             subtitle=_(
-                "Aggressiveness of removal. High values clean more but may alter voice."
+                "If you want sounds other than the voice to be captured, reduce the filter intensity."
             ),
             min_value=STRENGTH_MIN,
             max_value=STRENGTH_MAX,
@@ -536,7 +536,9 @@ class MainView(Adw.NavigationPage):
         # Bluetooth auto-switch
         self._bt_row, self._bt_switch = create_action_row_with_switch(
             _("Bluetooth Headset Mode"),
-            subtitle=_("Automatically switch between high quality vs call profile."),
+            subtitle=_(
+                "Automatically switch between headset listening and call modes."
+            ),
             active=False,  # Will be set correctly by _load_state
             on_toggled=self._on_bluetooth_toggled,
         )
@@ -696,7 +698,7 @@ class MainView(Adw.NavigationPage):
             strength_percent = int(self._settings.noise_reduction.strength * 100)
             self._strength_row.set_subtitle(
                 _(
-                    "Removal aggressiveness. High values clean more but may alter voice. ({percent}%)"
+                    "If you want sounds other than the voice to be captured, reduce the filter intensity. ({percent}%)"
                 ).format(percent=strength_percent)
             )
 

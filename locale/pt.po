@@ -257,21 +257,11 @@ msgstr ""
 # 
 # File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/utils/tooltip_helper.py, line: 147
 msgid ""
-"Automatically manage the Bluetooth Headset profile.\n"
-"\n"
-"Switches to high quality (A2DP) when only listening,\n"
-"and automatically activates the microphone (HSP/HFP) when needed.\n"
-"\n"
-"WARNING: Using the bluetooth microphone (HSP/HFP) significantly reduces\n"
-"the quality of both the audio you hear and the microphone."
+"Automatically switches your headset between listening mode and call mode when you use the microphone. "
+"Note: Using the headset microphone generally reduces both headphone and microphone quality."
 msgstr ""
-"Gerencia automaticamente o perfil do fone de ouvido Bluetooth.\n"
-"\n"
-"Muda para alta qualidade (A2DP) ao ouvir apenas,\n"
-"e ativa automaticamente o microfone (HSP/HFP) quando necessário.\n"
-"\n"
-"AVISO: Usar o microfone bluetooth (HSP/HFP) reduz significativamente\n"
-"a qualidade tanto do áudio que você ouve quanto do microfone."
+"Alterna automaticamente o seu fone entre o modo de audição e o modo de chamada quando você usa o microfone. "
+"Nota: O uso do microfone do headset bluetooth geralmente reduz a qualidade de áudio do fone e do microfone."
 # 
 # File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/utils/tooltip_helper.py, line: 155
 msgid ""
@@ -300,8 +290,8 @@ msgid "Cleanup Intensity"
 msgstr "Intensidade de Limpeza"
 # 
 # File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/ui/main_view.py, line: 247
-msgid "Aggressiveness of removal. High values clean more but may alter voice."
-msgstr "Agressividade da remoção. Valores altos limpam mais, mas podem alterar a voz."
+msgid "If you want sounds other than the voice to be captured, reduce the filter intensity."
+msgstr "Se você deseja que outros áudios além da voz sejam capturados, pode reduzir a intensidade do filtro."
 # 
 # File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/ui/main_view.py, line: 256
 # File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/ui/main_view.py, line: 1137
@@ -429,8 +419,8 @@ msgid "Bluetooth Headset Mode"
 msgstr "Modo de Fone de Ouvido Bluetooth"
 # 
 # File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/ui/main_view.py, line: 534
-msgid "Automatically switch between high quality vs call profile."
-msgstr "Alternar automaticamente entre o perfil de alta qualidade e o perfil de chamada."
+msgid "Automatically switch between headset listening and call modes."
+msgstr "Alternar automaticamente entre os modos de audição e chamada do fone."
 # 
 # File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/ui/main_view.py, line: 549
 msgid "Monitor Feedback"
@@ -505,8 +495,8 @@ msgstr "Tempo de decaimento ({release:.1f} ms)"
 # File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/ui/main_view.py, line: 694
 # File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/ui/main_view.py, line: 1003
 #, python-brace-format
-msgid "Removal aggressiveness. High values clean more but may alter voice. ({percent}%)"
-msgstr "Aggressividade de remoção. Valores altos limpam mais, mas podem alterar a voz. ({percent}%)"
+msgid "If you want sounds other than the voice to be captured, reduce the filter intensity. ({percent}%)"
+msgstr "Se você deseja que outros áudios além da voz sejam capturados, pode reduzir a intensidade do filtro. ({percent}%)"
 # 
 # File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/ui/main_view.py, line: 701
 # File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/ui/main_view.py, line: 1408

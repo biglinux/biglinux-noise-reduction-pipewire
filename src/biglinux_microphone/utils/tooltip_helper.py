@@ -144,11 +144,8 @@ TOOLTIPS = {
     ),
     # Bluetooth section
     "bluetooth_toggle": _(
-        "Automatically manage the Bluetooth Headset profile.\n\n"
-        "Switches to high quality (A2DP) when only listening,\n"
-        "and automatically activates the microphone (HSP/HFP) when needed.\n\n"
-        "WARNING: Using the bluetooth microphone (HSP/HFP) significantly reduces\n"
-        "the quality of both the audio you hear and the microphone."
+        "Automatically switches your headset between listening mode and call mode when you use the microphone. "
+        "Note: Using the headset microphone generally reduces both headphone and microphone quality."
     ),
     # Visualizer
     "visualizer_style": _(
