@@ -27,8 +27,8 @@ APP_ID = "br.com.biglinux.microphone"
 APP_NAME = "Microphone Settings"
 APP_VERSION = "5.0.0"
 APP_DEVELOPER = "BigLinux Team"
-APP_WEBSITE = "https://www.biglinux.com.br"
-APP_ISSUE_URL = "https://github.com/biglinux/biglinux-noise-reduction-pipewire/issues"
+APP_WEBSITE = "https://github.com/biglinux/biglinux-noise-reduction-pipewire"
+APP_ISSUE_URL = f"{APP_WEBSITE}/issues"
 
 # =============================================================================
 # Window Configuration

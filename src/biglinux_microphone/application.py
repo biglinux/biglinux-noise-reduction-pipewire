@@ -211,20 +211,27 @@ class MicrophoneApplication(Adw.Application):
         about.set_website(APP_WEBSITE)
         about.set_issue_url(APP_ISSUE_URL)
         about.set_application_icon("biglinux-noise-reduction-pipewire")
-        about.set_copyright("© 2025-2026 BigLinux Team")
-        about.set_developers(["BigLinux Team"])
-        about.set_comments(
-            _("AI-powered noise reduction with stereo enhancement and equalization")
-        )
 
-        # Add credits
+        # Add legal notice
         about.add_credit_section(
-            _("Powered by"),
-            ["GTCRN Neural Network", "PipeWire Audio Server"],
+            _("Legal"),
+            [
+                _(
+                    "The GPL-3.0 license applies to this configuration interface. The projects used to apply the filters have their own licenses."
+                )
+            ],
         )
 
-        # Add link to GTCRN project
-        about.add_link(_("GTCRN Project"), "https://github.com/Xiaobin-Rong/gtcrn")
+        # Add credits/acknowledgments
+        about.add_credit_section(
+            _("Technologies used"),
+            [
+                "GTCRN (Neural Network for Speech Enhancement)",
+                "PipeWire Audio Server",
+                "GTK Development Team",
+                "Libadwaita Project",
+            ],
+        )
 
         about.present(self._window)
         logger.debug("About dialog shown")
