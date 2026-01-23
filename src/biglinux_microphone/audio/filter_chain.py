@@ -876,3 +876,54 @@ def generate_config_for_settings(
     )
     generator = FilterChainGenerator(config)
     return generator.generate()
+
+
+def ensure_daemon_config() -> None:
+    """
+    Ensure ~/.config/pipewire/filter-chain.conf exists with correct realtime priority.
+
+    This main config file is required by the separate 'pipewire -c filter-chain.conf'
+    process to ensure it runs with correct RT priority (83), preventing choppy audio.
+    """
+    config_path = Path.home() / ".config" / "pipewire" / "filter-chain.conf"
+
+    # Check if file exists and has correct priority
+    valid = False
+    if config_path.exists():
+        try:
+            content = config_path.read_text()
+            if "rt.prio" in content and "83" in content:
+                valid = True
+        except OSError:
+            pass
+
+    if not valid:
+        logger.info("Updating %s with correct RT priority", config_path)
+        content = """# BigLinux Microphone Filter Chain RT Config
+# Required for correct process priority to avoid audio stuttering
+
+context.properties = {
+    ## Properties for the PipeWire daemon.
+    #module.x11.bell = false
+}
+
+context.modules = [
+    { name = libpipewire-module-rt
+        args = {
+            rt.prio      = 83
+            nice.level   = -11
+            rt.time.soft = -1
+            rt.time.hard = -1
+        }
+        flags = [ ifexists nofail ]
+    },
+    { name = libpipewire-module-protocol-native },
+    { name = libpipewire-module-client-node },
+    { name = libpipewire-module-adapter }
+]
+"""
+        try:
+            config_path.parent.mkdir(parents=True, exist_ok=True)
+            config_path.write_text(content)
+        except OSError as e:
+            logger.error("Failed to write RT config to %s: %s", config_path, e)

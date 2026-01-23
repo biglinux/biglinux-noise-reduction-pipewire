@@ -26,6 +26,7 @@ from biglinux_microphone.audio.filter_chain import (
     MBEQ_PARAM_NAMES,
     FilterChainConfig,
     FilterChainGenerator,
+    ensure_daemon_config,
 )
 from biglinux_microphone.config import (
     NoiseModel,
@@ -236,7 +237,7 @@ class PipeWireService:
 
             # Ensure config directory exists and generate config file
             self._config_file.parent.mkdir(parents=True, exist_ok=True)
-            self._ensure_daemon_config()
+            ensure_daemon_config()
             self._generate_config()
 
             # Start filter-chain as a separate background process
@@ -278,56 +279,6 @@ class PipeWireService:
         """Configure the filter source after startup."""
         # The filter source auto-connects in PipeWire
         logger.debug("Filter source configuration complete")
-
-    def _ensure_daemon_config(self) -> None:
-        """
-        Ensure ~/.config/pipewire/filter-chain.conf exists with correct realtime priority.
-
-        This main config file is required by the separate 'pipewire -c filter-chain.conf'
-        process to ensure it runs with correct RT priority (83), preventing choppy audio.
-        """
-        config_path = Path.home() / ".config" / "pipewire" / "filter-chain.conf"
-
-        # Check if file exists and has correct priority
-        valid = False
-        if config_path.exists():
-            try:
-                content = config_path.read_text()
-                if "rt.prio" in content and "83" in content:
-                    valid = True
-            except OSError:
-                pass
-
-        if not valid:
-            logger.info("Updating %s with correct RT priority", config_path)
-            content = """# BigLinux Microphone Filter Chain RT Config
-# Required for correct process priority to avoid audio stuttering
-
-context.properties = {
-    ## Properties for the PipeWire daemon.
-    #module.x11.bell = false
-}
-
-context.modules = [
-    { name = libpipewire-module-rt
-        args = {
-            rt.prio      = 83
-            nice.level   = -11
-            rt.time.soft = -1
-            rt.time.hard = -1
-        }
-        flags = [ ifexists nofail ]
-    },
-    { name = libpipewire-module-protocol-native },
-    { name = libpipewire-module-client-node },
-    { name = libpipewire-module-adapter }
-]
-"""
-            try:
-                config_path.parent.mkdir(parents=True, exist_ok=True)
-                config_path.write_text(content)
-            except OSError:
-                logger.error("Failed to write RT config to %s", config_path)
 
     async def stop(self) -> bool:
         """

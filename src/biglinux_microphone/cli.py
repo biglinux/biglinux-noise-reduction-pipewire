@@ -225,6 +225,12 @@ def cmd_start() -> int:
         if not generate_config():
             return 1
 
+    # Ensure main filter-chain config exists (with RT priority)
+    # This must be imported inside the function to avoid circular imports if placed at top level
+    from biglinux_microphone.audio.filter_chain import ensure_daemon_config
+
+    ensure_daemon_config()
+
     # Start the filter process
     if not start_filter_process():
         return 1
