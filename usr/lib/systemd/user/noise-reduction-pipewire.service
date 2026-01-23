@@ -20,8 +20,8 @@ ExecStart=/usr/bin/pipewire-noise-remove start
 # Command to execute after the service stops
 ExecStop=/usr/bin/pipewire-noise-remove stop
 
-# Service type: simple (foreground service)
-Type=simple
+# Service type: forking (script starts daemon and exits)
+Type=forking
 
 # Restart policy: restart on failure
 Restart=on-failure

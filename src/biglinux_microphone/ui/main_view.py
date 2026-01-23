@@ -111,8 +111,13 @@ class MainView(Adw.NavigationPage):
         # Timer for debounced monitor delay
         self._monitor_delay_timer: int = 0
 
+        # Timer for polling external state changes (e.g., plasmoid)
+        self._state_poll_timer: int = 0
+        self._last_known_enabled_state: bool | None = None
+
         self._setup_ui()
         self._load_state()
+        self._start_state_polling()
 
     def _setup_ui(self) -> None:
         """Set up the UI layout."""
@@ -989,6 +994,45 @@ class MainView(Adw.NavigationPage):
         self._save_settings_timer = 0
         self._settings_service.save(self._settings)
         return False
+
+    def _start_state_polling(self) -> None:
+        """Start polling for external state changes (e.g., from plasmoid)."""
+        # Poll every 2 seconds
+        self._state_poll_timer = GLib.timeout_add(2000, self._check_external_state)
+        # Initialize with current state
+        self._last_known_enabled_state = self._pipewire.is_enabled()
+
+    def _stop_state_polling(self) -> None:
+        """Stop the state polling timer."""
+        if self._state_poll_timer:
+            GLib.source_remove(self._state_poll_timer)
+            self._state_poll_timer = 0
+
+    def _check_external_state(self) -> bool:
+        """Check if the noise reduction state changed externally."""
+        try:
+            current_state = self._pipewire.is_enabled()
+            if (
+                self._last_known_enabled_state is not None
+                and current_state != self._last_known_enabled_state
+            ):
+                logger.info(
+                    "External state change detected: %s -> %s",
+                    self._last_known_enabled_state,
+                    current_state,
+                )
+                # Update UI to match external change
+                self._loading = True
+                try:
+                    self._main_switch.set_active(current_state)
+                    self._settings.noise_reduction.enabled = current_state
+                    self._update_all_controls_sensitivity()
+                finally:
+                    self._loading = False
+            self._last_known_enabled_state = current_state
+        except Exception:
+            logger.exception("Error checking external state")
+        return True  # Continue polling
 
     def _on_strength_changed(self, value: float) -> None:
         """Handle strength slider change."""
