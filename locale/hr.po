@@ -15,13 +15,6 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "X-Generator: attranslate\n"
 # 
-# #-#-#-#-#  biglinux-noise-reduction-pipewire-bash.pot (biglinux-noise-reduction-pipewire)  #-#-#-#-#
-# 
-# #-#-#-#-#  biglinux-noise-reduction-pipewire-bash.pot (biglinux-noise-reduction-pipewire)  #-#-#-#-#
-# 
-msgid "Reduce Microphone Noise"
-msgstr "Smanjite buku mikrofona"
-# 
 # File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/utils/tooltip_helper.py, line: 41
 msgid ""
 "Enable AI-powered noise reduction using neural network processing.\n"

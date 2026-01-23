@@ -15,13 +15,6 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "X-Generator: attranslate\n"
 # 
-# #-#-#-#-#  biglinux-noise-reduction-pipewire-bash.pot (biglinux-noise-reduction-pipewire)  #-#-#-#-#
-# 
-# #-#-#-#-#  biglinux-noise-reduction-pipewire-bash.pot (biglinux-noise-reduction-pipewire)  #-#-#-#-#
-# 
-msgid "Reduce Microphone Noise"
-msgstr "Kurangkan Bunyi Mikrofon"
-# 
 # File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/utils/tooltip_helper.py, line: 41
 msgid ""
 "Enable AI-powered noise reduction using neural network processing.\n"
@@ -458,6 +451,10 @@ msgstr "Vöktun á seinkun á endurgjöf. Nyttugt til að athuga samstillingu."
 # File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/ui/main_view.py, line: 569
 msgid "0s"
 msgstr "0s"
+# 
+# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/ui/main_view.py, line: 574
+# 
+# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/ui/main_view.py, line: 574
 # 
 # File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/ui/main_view.py, line: 569
 # 
