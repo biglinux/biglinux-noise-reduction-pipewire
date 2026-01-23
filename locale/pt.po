@@ -281,6 +281,13 @@ msgstr ""
 "• Barras Retrô: Barras de equalizador clássicas  \n"
 "• Circular: Visualização radial"
 # 
+# #-#-#-#-#  biglinux-noise-reduction-pipewire.pot (biglinux-noise-reduction-pipewire)  #-#-#-#-#
+# 
+# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/ui/main_view.py, line: 88
+# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/config.py, line: 27
+msgid "Microphone Settings"
+msgstr "Configurações do Microfone"
+# 
 # File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/ui/main_view.py, line: 234
 msgid "Activate Noise Reduction"
 msgstr "Ativar Redução de Ruído"

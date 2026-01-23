@@ -280,6 +280,13 @@ msgstr ""
 "• Retro stangir: Klassískar jöfnunarsúlur\n"
 "• Hringlaga: Radíusmyndun"
 # 
+# #-#-#-#-#  biglinux-noise-reduction-pipewire.pot (biglinux-noise-reduction-pipewire)  #-#-#-#-#
+# 
+# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/ui/main_view.py, line: 88
+# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/config.py, line: 27
+msgid "Microphone Settings"
+msgstr "Hljóðnema stillingar"
+# 
 # File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/ui/main_view.py, line: 234
 msgid "Activate Noise Reduction"
 msgstr "Virkja hávaða minnkun"
@@ -444,6 +451,10 @@ msgstr "Vöktun á seinkun á endurgjöf. Nyttugt til að athuga samstillingu."
 # File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/ui/main_view.py, line: 569
 msgid "0s"
 msgstr "0s"
+# 
+# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/ui/main_view.py, line: 576
+# 
+# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/ui/main_view.py, line: 576
 # 
 # File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/ui/main_view.py, line: 576
 # 

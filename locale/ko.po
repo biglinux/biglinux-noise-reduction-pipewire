@@ -273,6 +273,13 @@ msgstr ""
 "• 레트로 바: 클래식 이퀄라이저 바\n"
 "• 원형: 방사형 시각화"
 # 
+# #-#-#-#-#  biglinux-noise-reduction-pipewire.pot (biglinux-noise-reduction-pipewire)  #-#-#-#-#
+# 
+# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/ui/main_view.py, line: 88
+# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/config.py, line: 27
+msgid "Microphone Settings"
+msgstr "마이크 설정"
+# 
 # File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/ui/main_view.py, line: 234
 msgid "Activate Noise Reduction"
 msgstr "소음 감소 활성화"

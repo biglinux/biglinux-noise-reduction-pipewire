@@ -282,6 +282,13 @@ msgstr ""
 "• Ретро ленти: Класически ленти на еквалайзера\n"
 "• Кръгова: Радиална визуализация"
 # 
+# #-#-#-#-#  biglinux-noise-reduction-pipewire.pot (biglinux-noise-reduction-pipewire)  #-#-#-#-#
+# 
+# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/ui/main_view.py, line: 88
+# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/config.py, line: 27
+msgid "Microphone Settings"
+msgstr "Настройки на микрофона"
+# 
 # File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/ui/main_view.py, line: 234
 msgid "Activate Noise Reduction"
 msgstr "Активирайте намаляване на шума"
