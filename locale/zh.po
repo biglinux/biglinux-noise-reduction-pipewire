@@ -442,6 +442,10 @@ msgstr "0秒"
 # 
 # File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/ui/main_view.py, line: 576
 # 
+# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/ui/main_view.py, line: 576
+# 
+# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/ui/main_view.py, line: 576
+# 
 # File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/ui/main_view.py, line: 574
 # 
 # File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/ui/main_view.py, line: 574
@@ -571,16 +575,18 @@ msgid "All settings have been restored!"
 msgstr "所有设置已恢复！"
 # 
 # File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/application.py, line: 217
-msgid "AI-powered noise reduction with stereo enhancement and equalization"
-msgstr "基于人工智能的噪声消除，具有立体声增强和均衡功能"
+msgid "Legal"
+msgstr "法律"
 # 
-# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/application.py, line: 222
-msgid "Powered by"
-msgstr "由...提供支持"
+# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/application.py, line: 220
+msgid ""
+"The GPL-3.0 license applies to this configuration interface. The projects used to apply the filters "
+"have their own licenses."
+msgstr "此配置接口适用GPL-3.0许可证。用于应用过滤器的项目有其自己的许可证。"
 # 
 # File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/application.py, line: 227
-msgid "GTCRN Project"
-msgstr "GTCRN项目"
+msgid "Technologies used"
+msgstr "使用的技术"
 # 
 # File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/window.py, line: 172
 msgid "Restore settings?"

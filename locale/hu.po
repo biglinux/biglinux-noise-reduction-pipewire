@@ -554,16 +554,20 @@ msgid "All settings have been restored!"
 msgstr "Minden beállítás visszaállítva!"
 # 
 # File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/application.py, line: 217
-msgid "AI-powered noise reduction with stereo enhancement and equalization"
-msgstr "AI-alapú zajcsökkentés sztereó javítással és ekvalizálással"
+msgid "Legal"
+msgstr "Jogi"
 # 
-# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/application.py, line: 222
-msgid "Powered by"
-msgstr "Powered by"
+# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/application.py, line: 220
+msgid ""
+"The GPL-3.0 license applies to this configuration interface. The projects used to apply the filters "
+"have their own licenses."
+msgstr ""
+"A GPL-3.0 licenc figyelmeztetése vonatkozik erre a konfigurációs felületre. A szűrők alkalmazásához "
+"használt projektek saját licencel rendelkeznek."
 # 
 # File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/application.py, line: 227
-msgid "GTCRN Project"
-msgstr "GTCRN Projekt"
+msgid "Technologies used"
+msgstr "Használatban lévő technológiák"
 # 
 # File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/window.py, line: 172
 msgid "Restore settings?"

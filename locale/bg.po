@@ -556,16 +556,20 @@ msgid "All settings have been restored!"
 msgstr "Всички настройки са възстановени!"
 # 
 # File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/application.py, line: 217
-msgid "AI-powered noise reduction with stereo enhancement and equalization"
-msgstr "AI-базирано намаляване на шум с стерео подобрение и еквализация"
+msgid "Legal"
+msgstr "Правен"
 # 
-# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/application.py, line: 222
-msgid "Powered by"
-msgstr "Задвижвано от"
+# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/application.py, line: 220
+msgid ""
+"The GPL-3.0 license applies to this configuration interface. The projects used to apply the filters "
+"have their own licenses."
+msgstr ""
+"Лицензията GPL-3.0 се прилага за този конфигурационен интерфейс. Проектите, използвани за прилагане "
+"на филтрите, имат свои собствени лицензи."
 # 
 # File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/application.py, line: 227
-msgid "GTCRN Project"
-msgstr "GTCRN Проект"
+msgid "Technologies used"
+msgstr "Използвани технологии"
 # 
 # File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/window.py, line: 172
 msgid "Restore settings?"
