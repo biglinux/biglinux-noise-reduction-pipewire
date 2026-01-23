@@ -59,5 +59,6 @@
     "X-Plasma-Provides": [
         "org.biglinux.micnoise"
     ],
-    "X-Plasma-OptionalExtensions": "LaunchApp"
+    "X-Plasma-OptionalExtensions": "LaunchApp",
+    "X-Plasma-ConfigPluginId": ""
 }

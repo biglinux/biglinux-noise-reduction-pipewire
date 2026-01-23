@@ -31,11 +31,34 @@ PlasmoidItem {
         timer.interval = toggleInterval  // Shorten the interval for quick feedback
     }
 
+    // Function to open the GTK configurator
+    function openConfigurator() {
+        executable.exec('big-microphone-noise-reduction')
+    }
+
     preferredRepresentation: fullRepresentation
     // Active = in systray and Passive in notification area
     Plasmoid.status: {
         //return PlasmaCore.Types.ActiveStatus;
         return PlasmaCore.Types.PassiveStatus;
+    }
+
+    // Context menu action to open the GTK configurator
+    // Uses the translated text from the built-in configure action
+    Plasmoid.contextualActions: [
+        PlasmaCore.Action {
+            text: Plasmoid.internalAction("configure") ? Plasmoid.internalAction("configure").text : i18n("Configure...")
+            icon.name: "configure"
+            onTriggered: openConfigurator()
+        }
+    ]
+
+    // Hide the built-in Plasma configure action to prevent duplicate entries
+    Component.onCompleted: {
+        var configureAction = Plasmoid.internalAction("configure")
+        if (configureAction) {
+            configureAction.visible = false
+        }
     }
 
     Plasma5Support.DataSource {
