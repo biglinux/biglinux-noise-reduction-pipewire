@@ -1,7 +1,8 @@
 # BigLinux Microphone - AI Noise Reduction for PipeWire
 
 
-![BigLinux Microphone Interface](https://github.com/user-attachments/assets/45771b61-8bc1-4c7b-8b2c-58543464f885)
+<img width="851" height="828" alt="image" src="https://github.com/user-attachments/assets/73dcdd89-4e9c-4766-aadb-76608402c95e" />
+
 
 ## Features
 
