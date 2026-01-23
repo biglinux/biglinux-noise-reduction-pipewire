@@ -24,7 +24,7 @@ logger = logging.getLogger(__name__)
 # =============================================================================
 
 APP_ID = "br.com.biglinux.microphone"
-APP_NAME = "Microphone Settings"
+APP_NAME = _("Microphone Settings")
 APP_VERSION = "5.0.0"
 APP_DEVELOPER = "BigLinux Team"
 APP_WEBSITE = "https://github.com/biglinux/biglinux-noise-reduction-pipewire"

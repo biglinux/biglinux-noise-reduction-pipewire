@@ -85,7 +85,7 @@ class MainView(Adw.NavigationPage):
             audio_monitor: Optional AudioMonitor to switch sources on filter toggle
             tooltip_helper: Optional TooltipHelper for custom tooltips
         """
-        super().__init__(title="Microphone Settings", tag="main")
+        super().__init__(title=_("Microphone Settings"), tag="main")
 
         self._pipewire = pipewire_service
         self._settings_service = settings_service
