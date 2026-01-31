@@ -5,25 +5,26 @@ pkgver=$(date +%y.%m.%d)
 pkgrel=$(date +%H%M)
 arch=('any')
 license=('GPL-3.0-or-later')
+install=biglinux-noise-reduction-pipewire.install
 url="https://github.com/biglinux/biglinux-noise-reduction-pipewire"
 pkgdesc="AI-powered microphone noise reduction with GTK4/Libadwaita interface for PipeWire"
 depends=(
-    'gtcrn-ladspa'
-    'pipewire'
-    'swh-plugins'
-    'python>=3.10'
-    'python-numpy'
-    'python-gobject'
-    'python-cairo'
-    'gtk4'
-    'libadwaita'
-    'gstreamer'
-    'gst-plugins-base'
-    'gst-plugins-good'
+	'gtcrn-ladspa'
+	'pipewire'
+	'swh-plugins'
+	'python>=3.10'
+	'python-numpy'
+	'python-gobject'
+	'python-cairo'
+	'gtk4'
+	'libadwaita'
+	'gstreamer'
+	'gst-plugins-base'
+	'gst-plugins-good'
 )
 
 optdepends=(
-    'wireplumber: For Bluetooth autoswitch feature'
+	'wireplumber: For Bluetooth autoswitch feature'
 )
 
 # This package provides a LADSPA host via PipeWire filter-chain
@@ -33,34 +34,34 @@ source=("git+https://github.com/biglinux/biglinux-noise-reduction-pipewire.git")
 md5sums=('SKIP')
 
 package() {
-    # Determine source directory
-    if [ -d "${srcdir}/${pkgname}/${pkgname}" ]; then
-        InternalDir="${srcdir}/${pkgname}/${pkgname}"
-    else
-        InternalDir="${srcdir}/${pkgname}"
-    fi
+	# Determine source directory
+	if [ -d "${srcdir}/${pkgname}/${pkgname}" ]; then
+		InternalDir="${srcdir}/${pkgname}/${pkgname}"
+	else
+		InternalDir="${srcdir}/${pkgname}"
+	fi
 
-    # Install usr directory contents (binaries, icons, desktop file, etc.)
-    if [ -d "${InternalDir}/usr" ]; then
-        cp -r "${InternalDir}/usr" "${pkgdir}/"
-    fi
+	# Install usr directory contents (binaries, icons, desktop file, etc.)
+	if [ -d "${InternalDir}/usr" ]; then
+		cp -r "${InternalDir}/usr" "${pkgdir}/"
+	fi
 
-    # Get Python version for site-packages path
-    _pyver=$(python -c 'import sys; print(f"{sys.version_info.major}.{sys.version_info.minor}")')
-    _sitepkg="${pkgdir}/usr/lib/python${_pyver}/site-packages"
+	# Get Python version for site-packages path
+	_pyver=$(python -c 'import sys; print(f"{sys.version_info.major}.{sys.version_info.minor}")')
+	_sitepkg="${pkgdir}/usr/lib/python${_pyver}/site-packages"
 
-    # Install Python package manually
-    cd "${InternalDir}"
-    install -d "${_sitepkg}/biglinux_microphone"
+	# Install Python package manually
+	cd "${InternalDir}"
+	install -d "${_sitepkg}/biglinux_microphone"
 
-    # Copy all Python source files
-    cp -r src/biglinux_microphone/* "${_sitepkg}/biglinux_microphone/"
+	# Copy all Python source files
+	cp -r src/biglinux_microphone/* "${_sitepkg}/biglinux_microphone/"
 
-    # Clean up Python cache files
-    find "${pkgdir}" -type d -name "__pycache__" -exec rm -rf {} + 2>/dev/null || true
-    find "${pkgdir}" -name "*.pyc" -delete 2>/dev/null || true
+	# Clean up Python cache files
+	find "${pkgdir}" -type d -name "__pycache__" -exec rm -rf {} + 2>/dev/null || true
+	find "${pkgdir}" -name "*.pyc" -delete 2>/dev/null || true
 
-    # Ensure binaries are executable
-    chmod +x "${pkgdir}/usr/bin/big-microphone-noise-reduction" 2>/dev/null || true
-    chmod +x "${pkgdir}/usr/bin/pipewire-noise-remove" 2>/dev/null || true
+	# Ensure binaries are executable
+	chmod +x "${pkgdir}/usr/bin/big-microphone-noise-reduction" 2>/dev/null || true
+	chmod +x "${pkgdir}/usr/bin/pipewire-noise-remove" 2>/dev/null || true
 }
