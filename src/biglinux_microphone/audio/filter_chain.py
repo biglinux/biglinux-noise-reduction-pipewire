@@ -346,6 +346,8 @@ context.modules = [
             }}
             playback.props = {{
                 node.pause-on-idle = false
+                node.latency = 1024/48000
+                node.always-process = true
                 audio.rate = 48000
                 filter.smart = true
                 media.class = "Audio/Source"
@@ -433,6 +435,8 @@ context.modules = [
             }}
             playback.props = {{
                 node.pause-on-idle = false
+                node.latency = 1024/48000
+                node.always-process = true
                 audio.rate = 48000
                 audio.position = [ MONO ]
                 filter.smart = true
@@ -620,6 +624,8 @@ context.modules = [
             }}
             playback.props = {{
                 node.pause-on-idle = false
+                node.latency = 1024/48000
+                node.always-process = true
                 audio.rate = 48000
                 audio.position = [ FL FR ]
                 filter.smart = true
@@ -733,6 +739,8 @@ context.modules = [
             }}
             playback.props = {{
                 node.pause-on-idle = false
+                node.latency = 1024/48000
+                node.always-process = true
                 audio.rate = 48000
                 audio.position = [ FL FR ]
                 filter.smart = true
@@ -869,6 +877,8 @@ context.modules = [
             }}
             playback.props = {{
                 node.pause-on-idle = false
+                node.latency = 1024/48000
+                node.always-process = true
                 audio.rate = 48000
                 audio.position = [ FL FR ]
                 filter.smart = true

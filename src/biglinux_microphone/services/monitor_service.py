@@ -64,17 +64,19 @@ class MonitorService:
             delay_seconds = float(delay_ms) / 1000.0
 
             # Build pw-loopback command
+            # node.passive=true on capture prevents the loopback from pulling
+            # the output graph's clock to the microphone's USB clock, which
+            # would cause system audio speed drift.
             cmd = [
                 "/usr/bin/pw-loopback",
                 "--capture-props=media.class=Stream/Input/Audio",
+                "--capture-props=node.passive=true",
                 "--playback-props=media.class=Stream/Output/Audio",
                 f"--latency={latency_prop}",
                 f"--delay={delay_seconds}",
                 f"--capture-props=node.target={source}",
-                # Ensure we have a distinct name to identify later if needed
                 "--playback-props=media.name=BigLinuxMicMonitor",
                 "--playback-props=node.name=biglinux-mic-monitor",
-                # Force volume to 100% (1.0)
                 "--playback-props=audio.volume=1.0",
             ]
 

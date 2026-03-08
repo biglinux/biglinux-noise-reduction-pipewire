@@ -210,19 +210,6 @@ class PipeWireService:
 
         return False
 
-    async def get_status_async(self) -> str:
-        """
-        Get noise reduction status asynchronously.
-
-        Returns:
-            str: 'enabled' if active, 'disabled' otherwise
-        """
-        return "enabled" if self.is_enabled() else "disabled"
-
-    def get_status(self) -> str:
-        """Get noise reduction status synchronously."""
-        return "enabled" if self.is_enabled() else "disabled"
-
     # =========================================================================
     # Start/Stop Methods
     # =========================================================================
@@ -249,12 +236,16 @@ class PipeWireService:
         try:
             if settings:
                 self.sync_from_settings(settings)
-            return await self._start_filter_chain_process()
+            return await self._start_filter_chain_process(settings)
         finally:
             self._is_updating = False
 
-    async def _start_filter_chain_process(self) -> bool:
+    async def _start_filter_chain_process(self, settings=None) -> bool:
         """Internal: start the filter chain process and verify it's running.
+
+        Args:
+            settings: Optional AppSettings to use for config generation.
+                      When provided, avoids loading from disk (prevents race conditions).
 
         Does NOT check _is_updating — the caller is responsible for that.
         """
@@ -265,7 +256,7 @@ class PipeWireService:
             # Ensure config directory exists and generate config file
             self._config_file.parent.mkdir(parents=True, exist_ok=True)
             ensure_daemon_config()
-            self._generate_config()
+            self._generate_config(settings)
 
             # Start filter-chain as a separate background process
             subprocess.Popen(
@@ -1169,16 +1160,23 @@ class PipeWireService:
                 self._pending_on_complete = on_complete
                 logger.debug("Restart already in progress, queuing pending restart")
             else:
-                self._run_restart_in_thread(on_complete)
+                self._run_restart_in_thread(on_complete, settings)
         elif on_complete:
             from gi.repository import GLib
 
             GLib.idle_add(on_complete)
 
     def _run_restart_in_thread(
-        self, on_complete: Callable[[], None] | None = None
+        self,
+        on_complete: Callable[[], None] | None = None,
+        settings=None,
     ) -> None:
-        """Run restart in a separate thread to avoid blocking GTK."""
+        """Run restart in a separate thread to avoid blocking GTK.
+
+        Args:
+            on_complete: Optional callback to run after restart finishes
+            settings: Optional AppSettings to pass through the restart chain
+        """
         self._is_updating = True
         self._restart_pending = False
 
@@ -1186,7 +1184,7 @@ class PipeWireService:
             loop = asyncio.new_event_loop()
             asyncio.set_event_loop(loop)
             try:
-                loop.run_until_complete(self._restart())
+                loop.run_until_complete(self._restart(settings))
             finally:
                 loop.close()
                 self._is_updating = False
@@ -1201,7 +1199,7 @@ class PipeWireService:
                 logger.debug("Executing pending restart after previous completed")
                 # Regenerate config with latest settings and restart again
                 self._generate_config(pending_settings)
-                self._run_restart_in_thread(pending_callback)
+                self._run_restart_in_thread(pending_callback, pending_settings)
                 return  # Don't call on_complete for the superseded restart
 
             if on_complete:
@@ -1215,12 +1213,16 @@ class PipeWireService:
         thread = threading.Thread(target=_do_restart, daemon=True)
         thread.start()
 
-    async def _restart(self) -> None:
+    async def _restart(self, settings=None) -> None:
         """Restart the filter chain with new configuration.
+
+        Args:
+            settings: Optional AppSettings to use for config generation.
+                      When provided, avoids loading from disk (prevents race conditions).
 
         Uses internal methods directly to avoid _is_updating guard,
         since the caller (_run_restart_in_thread) manages that flag.
         """
         await self._stop_filter_chain()
         await asyncio.sleep(0.5)
-        await self._start_filter_chain_process()
+        await self._start_filter_chain_process(settings)

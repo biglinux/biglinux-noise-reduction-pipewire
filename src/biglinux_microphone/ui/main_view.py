@@ -692,11 +692,16 @@ class MainView(Adw.NavigationPage):
             if self._settings.monitor.enabled:
                 source = self._get_monitor_source()
                 channels = self._get_monitor_channels()
-                self._monitor_service.start_monitor(
+                success = self._monitor_service.start_monitor(
                     source=source,
                     delay_ms=self._settings.monitor.delay_ms,
                     channels=channels,
                 )
+                if not success:
+                    logger.warning("Failed to start monitor on load, reverting")
+                    self._monitor_switch.set_active(False)
+                    self._settings.monitor.enabled = False
+                    self._settings_service.save(self._settings)
 
             # Gate
             self._gate_switch.set_active(self._settings.gate.enabled)
@@ -983,6 +988,9 @@ class MainView(Adw.NavigationPage):
 
         self._schedule_monitor_restart()
 
+        # Update MonitorService source (raw → filtered or vice versa)
+        self._update_monitor_state()
+
     def _schedule_settings_save(self) -> None:
         """Schedule a debounced settings save."""
         self._save_debouncer.call(self._settings_service.save, self._settings)
@@ -1001,8 +1009,17 @@ class MainView(Adw.NavigationPage):
             self._state_poll_timer = 0
 
     def _check_external_state(self) -> bool:
-        """Check if the noise reduction state changed externally."""
+        """Check if the noise reduction state changed externally.
+
+        Skips detection during pipeline restarts to avoid corrupting
+        in-memory state when the filter is temporarily offline.
+        """
         try:
+            # Don't react to state changes during a pipeline restart —
+            # the service is intentionally offline and will come back.
+            if self._pipewire._is_updating:
+                return True
+
             current_state = self._pipewire.is_enabled()
             if (
                 self._last_known_enabled_state is not None
@@ -1022,9 +1039,33 @@ class MainView(Adw.NavigationPage):
                 finally:
                     self._loading = False
             self._last_known_enabled_state = current_state
+
+            # Sync monitor toggle with actual process state
+            self._sync_monitor_toggle()
         except Exception:
             logger.exception("Error checking external state")
         return True  # Continue polling
+
+    def _sync_monitor_toggle(self) -> None:
+        """Sync the monitor toggle with the actual pw-loopback process state."""
+        monitor_running = self._monitor_service.is_active()
+        monitor_desired = self._settings.monitor.enabled
+
+        if monitor_desired and not monitor_running:
+            # Process died — update UI and settings
+            logger.warning("Monitor process died, reverting toggle")
+            self._loading = True
+            try:
+                self._monitor_switch.set_active(False)
+                self._settings.monitor.enabled = False
+                self._monitor_delay_row.set_sensitive(False)
+                self._settings_service.save(self._settings)
+            finally:
+                self._loading = False
+        elif not monitor_desired and monitor_running:
+            # Process running but settings say disabled — kill rogue process
+            logger.warning("Rogue monitor process detected, stopping")
+            self._monitor_service.stop_monitor()
 
     def _on_strength_changed(self, value: float) -> None:
         """Handle strength slider change."""
@@ -1105,7 +1146,8 @@ class MainView(Adw.NavigationPage):
             return
 
         self._settings.compressor.enabled = active
-        self._schedule_settings_save()
+        # Structural change requires restart — save immediately (not debounced)
+        self._settings_service.save(self._settings)
         if self._settings.noise_reduction.enabled:
             self._show_loading()
             self._pipewire.apply_config(
@@ -1131,7 +1173,8 @@ class MainView(Adw.NavigationPage):
 
         self._settings.gate.enabled = active
         self._update_gate_sensitivity()
-        self._schedule_settings_save()
+        # Structural change requires restart — save immediately (not debounced)
+        self._settings_service.save(self._settings)
         if self._settings.noise_reduction.enabled:
             self._show_loading()
             self._pipewire.apply_config(
@@ -1275,8 +1318,8 @@ class MainView(Adw.NavigationPage):
         logger.info("EQ toggled: %s", active)
 
         self._settings.equalizer.enabled = active
-        # Schedule settings save
-        self._schedule_settings_save()
+        # Structural change requires restart — save immediately (not debounced)
+        self._settings_service.save(self._settings)
         logger.info("EQ settings saved: enabled=%s", active)
         self._update_eq_sensitivity()
 
@@ -1543,11 +1586,21 @@ class MainView(Adw.NavigationPage):
             # Restart monitor to pick up new source (filtered or raw)
             source = self._get_monitor_source()
             channels = self._get_monitor_channels()
-            self._monitor_service.start_monitor(
+            success = self._monitor_service.start_monitor(
                 source=source,
                 delay_ms=self._settings.monitor.delay_ms,
                 channels=channels,
             )
+            if not success:
+                logger.warning("Failed to restart monitor after NR change, reverting toggle")
+                self._loading = True
+                try:
+                    self._monitor_switch.set_active(False)
+                    self._settings.monitor.enabled = False
+                    self._monitor_delay_row.set_sensitive(False)
+                    self._settings_service.save(self._settings)
+                finally:
+                    self._loading = False
             return False
 
         # Small delay to ensure PipeWire graph is updated

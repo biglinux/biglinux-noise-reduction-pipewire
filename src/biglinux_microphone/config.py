@@ -10,6 +10,7 @@ from __future__ import annotations
 
 import json
 import logging
+import math
 from dataclasses import asdict, dataclass, field
 from enum import Enum, IntEnum
 from pathlib import Path
@@ -203,20 +204,21 @@ class GateConfig:
 
     @property
     def threshold_db(self) -> float:
-        """Map intensity to threshold: -50 (light) to -25 (heavy).
+        """Map intensity to threshold: -50 (light) to -15 (heavy).
 
-        Higher threshold = gate closes earlier (more aggressive at
-        silencing background noise).
+        Uses sqrt curve so "Balanced" (0.5) ≈ -25 dB (previous max).
+        Higher threshold = gate closes earlier (more aggressive).
         """
-        return -50.0 + self.intensity * 25.0
+        return -50.0 + math.sqrt(self.intensity) * 35.0
 
     @property
     def range_db(self) -> float:
-        """Map intensity to range: -40 (light) to -80 (heavy).
+        """Map intensity to range: -40 (light) to -90 (heavy).
 
+        Uses sqrt curve so "Balanced" (0.5) ≈ -75 dB.
         More negative = deeper silencing when gate is closed.
         """
-        return -40.0 - self.intensity * 40.0
+        return -40.0 - math.sqrt(self.intensity) * 50.0
 
     @property
     def attack_ms(self) -> float:
@@ -225,19 +227,17 @@ class GateConfig:
 
     @property
     def hold_ms(self) -> float:
-        """Map intensity to hold: 500 (light) to 200 (heavy).
+        """Map intensity to hold: 500 (light) to 100 (heavy).
 
+        Uses sqrt curve so "Balanced" (0.5) ≈ 217 ms (was 200 ms).
         Shorter hold = faster silence after speech stops.
         """
-        return 500.0 - self.intensity * 300.0
+        return 500.0 - math.sqrt(self.intensity) * 400.0
 
     @property
     def release_ms(self) -> float:
-        """Map intensity to release: 300 (light) to 100 (heavy).
-
-        Shorter release = faster fade to silence.
-        """
-        return 300.0 - self.intensity * 200.0
+        """Fixed fast release to avoid cutting parts of words."""
+        return 10.0
 
 
 # Transient Suppressor (for click removal)
