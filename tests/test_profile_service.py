@@ -143,7 +143,7 @@ class TestProfileService:
 
             base = service.get_profile("voice_call")
             assert profile.noise_strength == base.noise_strength
-            assert profile.gate_threshold == base.gate_threshold
+            assert profile.gate_intensity == base.gate_intensity
 
     def test_get_profile(self) -> None:
         """Test getting a profile by ID."""

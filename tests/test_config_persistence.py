@@ -26,34 +26,33 @@ class TestFilterChainState:
         state = FilterChainState()
 
         assert state.noise_reduction_enabled is True
-        assert state.noise_reduction_model == NoiseModel.GTCRN_LOW_LATENCY
+        assert state.noise_reduction_model == NoiseModel.GTCRN_DNS3
         assert state.noise_reduction_strength == 1.0
         assert state.gate_enabled is True
-        assert state.gate_threshold_db == -36
-        assert state.gate_range_db == -6
+        assert state.gate_intensity == 0.5
         assert state.stereo_mode == StereoMode.MONO
         assert state.stereo_width == 0.7
 
         assert state.crossfeed_enabled is False
-        assert state.eq_enabled is False
+        assert state.eq_enabled is True
         assert len(state.eq_bands) == 10
-        assert all(b == 0.0 for b in state.eq_bands)
+        assert state.eq_bands == [0.0, 0.0, 0.0, 1.0, 0.0, 1.0, 2.0, 3.0, 1.0, 0.0]
 
     def test_custom_values(self) -> None:
         """Test custom state values."""
         eq_bands = [1.0, 2.0, 3.0, 4.0, 5.0, -1.0, -2.0, -3.0, -4.0, -5.0]
         state = FilterChainState(
-            noise_reduction_model=NoiseModel.GTCRN_FULL_QUALITY,
+            noise_reduction_model=NoiseModel.GTCRN_DNS3,
             noise_reduction_strength=0.8,
-            gate_threshold_db=-40,
+            gate_intensity=0.7,
             stereo_mode=StereoMode.RADIO,
             eq_enabled=True,
             eq_bands=eq_bands,
         )
 
-        assert state.noise_reduction_model == NoiseModel.GTCRN_FULL_QUALITY
+        assert state.noise_reduction_model == NoiseModel.GTCRN_DNS3
         assert state.noise_reduction_strength == 0.8
-        assert state.gate_threshold_db == -40
+        assert state.gate_intensity == 0.7
         assert state.stereo_mode == StereoMode.RADIO
         assert state.eq_enabled is True
         assert state.eq_bands == eq_bands
@@ -61,7 +60,7 @@ class TestFilterChainState:
     def test_to_filter_config(self) -> None:
         """Test conversion to FilterChainConfig."""
         state = FilterChainState(
-            noise_reduction_model=NoiseModel.GTCRN_FULL_QUALITY,
+            noise_reduction_model=NoiseModel.GTCRN_DNS3,
             noise_reduction_strength=0.5,
             gate_enabled=False,
             stereo_mode=StereoMode.DUAL_MONO,
@@ -69,7 +68,7 @@ class TestFilterChainState:
 
         config = state.to_filter_config()
 
-        assert config.noise_reduction_model == NoiseModel.GTCRN_FULL_QUALITY
+        assert config.noise_reduction_model == NoiseModel.GTCRN_DNS3
         assert config.noise_reduction_strength == 0.5
         assert config.gate_enabled is False
         assert config.stereo_mode == StereoMode.DUAL_MONO
@@ -118,7 +117,7 @@ class TestConfigPersistence:
         persistence = ConfigPersistence(config_dir=temp_config_dir)
         state = FilterChainState(
             noise_reduction_strength=0.75,
-            gate_threshold_db=-42,
+            gate_intensity=0.8,
         )
 
         result = persistence.save(state)
@@ -135,11 +134,10 @@ class TestConfigPersistence:
         persistence = ConfigPersistence(config_dir=temp_config_dir)
 
         result = persistence.save_from_service_state(
-            noise_reduction_model=NoiseModel.GTCRN_FULL_QUALITY,
+            noise_reduction_model=NoiseModel.GTCRN_DNS3,
             noise_reduction_strength=0.9,
             gate_enabled=True,
-            gate_threshold_db=-30,
-            gate_range_db=-10,
+            gate_intensity=0.5,
             stereo_mode=StereoMode.MONO,
             stereo_width=0.5,
             crossfeed_enabled=False,

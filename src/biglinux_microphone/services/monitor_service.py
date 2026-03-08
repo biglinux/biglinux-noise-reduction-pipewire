@@ -151,7 +151,3 @@ class MonitorService:
 
     def get_delay(self) -> int:
         return self._current_delay_ms
-
-    def _force_volume_100(self):
-        """No-op, volume forced in arguments."""
-        pass

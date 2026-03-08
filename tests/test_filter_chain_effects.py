@@ -1,4 +1,3 @@
-import pytest
 from biglinux_microphone.audio.filter_chain import (
     FilterChainConfig,
     FilterChainGenerator,
@@ -58,5 +57,5 @@ class TestFilterChainEffects:
         assert "sc4m" in output
         assert "Ratio (1:n)" in output
         # Radio params check
-        # Ratio: 4.0 + (0.5 * 6.0) = 7.0
-        assert "7.0" in output
+        # Ratio: 3.0 + (0.5 * 3.0) = 4.5
+        assert "4.5" in output

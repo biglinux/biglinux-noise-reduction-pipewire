@@ -8,7 +8,7 @@
 
 ### AI Noise Reduction
 - **GTCRN Neural Network** - Superior voice quality with deep learning
-- **Adjustable Strength** - Fine-tune noise reduction intensity (0-100%)
+- **DNS3 & VCTK Models** - Choose between aggressive or gentle noise reduction
 
 ### Audio Processing
 - **Equalizer**

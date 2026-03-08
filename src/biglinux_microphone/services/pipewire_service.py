@@ -57,6 +57,9 @@ class PipeWireService:
     def __init__(self) -> None:
         """Initialize the PipeWire service."""
         self._is_updating = False
+        self._restart_pending = False
+        self._pending_settings = None
+        self._pending_on_complete: Callable[[], None] | None = None
 
         # Live update queue
         self._update_queue = Queue()
@@ -68,20 +71,24 @@ class PipeWireService:
 
         # Internal state tracking
         self._noise_reduction_enabled = True
-        self._noise_reduction_model = NoiseModel.GTCRN_LOW_LATENCY
+        self._noise_reduction_model = NoiseModel.GTCRN_DNS3
         self._noise_reduction_strength = 1.0
+        self._noise_reduction_speech_strength = 1.0
+        self._noise_reduction_lookahead_ms = 0
+        self._noise_reduction_voice_enhance = 0.50
+        self._noise_reduction_model_blending = False
         self._gate_enabled = True
-        self._gate_threshold_db = -36
+        self._gate_threshold_db = -30
         self._gate_range_db = -60
         self._gate_attack_ms = 10.0
-        self._gate_hold_ms = 300.0
-        self._gate_release_ms = 150.0
+        self._gate_hold_ms = 400.0
+        self._gate_release_ms = 200.0
         self._stereo_mode = StereoMode.MONO
         self._stereo_width = 0.7
 
         self._crossfeed_enabled = False
-        self._eq_enabled = False
-        self._eq_bands = [0.0] * 10
+        self._eq_enabled = True
+        self._eq_bands = [0.0, 0.0, 0.0, 1.0, 0.0, 1.0, 2.0, 3.0, 1.0, 0.0]
 
         # Paths
         self._config_file = CONFIG_PATH / CONFIG_FILE
@@ -111,6 +118,12 @@ class PipeWireService:
             / "pipewire"
             / "filter-chain.conf.d"
             / "source-rnnoise-smart.conf",
+            # Old GTCRN config
+            Path.home()
+            / ".config"
+            / "pipewire"
+            / "filter-chain.conf.d"
+            / "source-gtcrn-smart.conf",
         ]
 
         for path in legacy_paths:
@@ -131,6 +144,10 @@ class PipeWireService:
         self._noise_reduction_enabled = settings.noise_reduction.enabled
         self._noise_reduction_model = settings.noise_reduction.model
         self._noise_reduction_strength = settings.noise_reduction.strength
+        self._noise_reduction_speech_strength = settings.noise_reduction.speech_strength
+        self._noise_reduction_lookahead_ms = settings.noise_reduction.lookahead_ms
+        self._noise_reduction_voice_enhance = settings.noise_reduction.voice_enhance
+        self._noise_reduction_model_blending = settings.noise_reduction.model_blending
         self._gate_enabled = settings.gate.enabled
         self._gate_threshold_db = settings.gate.threshold_db
         self._gate_range_db = settings.gate.range_db
@@ -143,8 +160,6 @@ class PipeWireService:
         self._crossfeed_enabled = settings.stereo.crossfeed_enabled
         self._eq_enabled = settings.equalizer.enabled
         self._eq_bands = list(settings.equalizer.bands)
-
-        self._eq_bands = list(settings.equalizer.bands)
         logger.debug("Synchronized state from settings")
 
     # =========================================================================
@@ -155,41 +170,45 @@ class PipeWireService:
         """
         Check if noise reduction filter-chain is currently active.
 
-        Checks multiple indicators:
-        1. The separate pipewire filter-chain process
-        2. The filter-chain source exists in PipeWire
-        3. Config file exists as fallback
+        Uses pw-cli to query PipeWire graph for our specific filter node
+        identified by its description 'Noise Canceling Microphone'.
+        Falls back to pw-dump with filter.smart.name check.
         """
-        # Method 1: Check for pipewire filter-chain process
+        # Primary: lightweight check via pw-cli list-objects
         try:
             result = subprocess.run(
-                ["pgrep", "-f", "/usr/bin/pipewire -c filter-chain.conf"],
+                ["pw-cli", "list-objects"],
+                capture_output=True,
+                text=True,
+                timeout=3,
+            )
+            if result.returncode == 0:
+                return "Noise Canceling Microphone" in result.stdout
+        except Exception:
+            pass
+
+        # Fallback: pw-dump with precise filter.smart.name check
+        try:
+            result = subprocess.run(
+                ["pw-dump"],
                 capture_output=True,
                 text=True,
                 timeout=5,
             )
             if result.returncode == 0:
-                return True
+                import json
+
+                data = json.loads(result.stdout)
+                for obj in data:
+                    if obj.get("type") == "PipeWire:Interface:Node":
+                        props = obj.get("info", {}).get("props", {})
+                        if props.get("filter.smart.name") == "big.filter-microphone":
+                            return True
+                return False
         except Exception:
             pass
 
-        # Method 2: Check if filter source exists in PipeWire
-        try:
-            result = subprocess.run(
-                ["pactl", "list", "sources", "short"],
-                capture_output=True,
-                text=True,
-                timeout=5,
-            )
-            if result.returncode == 0:
-                output = result.stdout.lower()
-                if "big.filter-microphone" in output or "filter-chain" in output:
-                    return True
-        except Exception:
-            pass
-
-        # Fallback: check if config file exists
-        return self._config_file.exists()
+        return False
 
     async def get_status_async(self) -> str:
         """
@@ -228,12 +247,20 @@ class PipeWireService:
 
         self._is_updating = True
         try:
-            # First, stop any existing filter-chain process
-            await self._stop_filter_chain()
-
-            # Sync from settings if provided
             if settings:
                 self.sync_from_settings(settings)
+            return await self._start_filter_chain_process()
+        finally:
+            self._is_updating = False
+
+    async def _start_filter_chain_process(self) -> bool:
+        """Internal: start the filter chain process and verify it's running.
+
+        Does NOT check _is_updating — the caller is responsible for that.
+        """
+        try:
+            # First, stop any existing filter-chain process
+            await self._stop_filter_chain()
 
             # Ensure config directory exists and generate config file
             self._config_file.parent.mkdir(parents=True, exist_ok=True)
@@ -241,13 +268,11 @@ class PipeWireService:
             self._generate_config()
 
             # Start filter-chain as a separate background process
-            # This does NOT restart the main PipeWire daemon
-            # Using subprocess.Popen for background process
             subprocess.Popen(
                 ["/usr/bin/pipewire", "-c", "filter-chain.conf"],
                 stdout=subprocess.DEVNULL,
                 stderr=subprocess.DEVNULL,
-                start_new_session=True,  # Detach from parent
+                start_new_session=True,
             )
 
             # Wait briefly for the filter-chain to initialize
@@ -258,22 +283,22 @@ class PipeWireService:
                 await asyncio.sleep(0.5)
                 if self.is_enabled():
                     logger.info("Noise reduction started via filter-chain process")
-                    # Invalidate cache on new start
                     self._cached_node_id = None
-                    # Ensure filter source is available
                     await self._configure_filter_source()
                     return True
 
             logger.error(
                 "Failed to start noise reduction - process not found after timeout"
             )
+            if self._config_file.exists():
+                self._config_file.unlink()
             return False
 
         except Exception:
             logger.exception("Error starting noise reduction")
-            return False
-        finally:
-            self._is_updating = False
+            if self._config_file.exists():
+                self._config_file.unlink()
+            return
 
     async def _configure_filter_source(self) -> None:
         """Configure the filter source after startup."""
@@ -308,29 +333,77 @@ class PipeWireService:
         """
         Internal method to stop filter chain by killing the process and removing config.
 
-        This does NOT restart the main PipeWire daemon.
+        Identifies our specific process via pw-dump node.name pattern
+        (input.filter-chain-PID-N) to avoid killing unrelated filter chains.
+        Falls back to config-dir matching if pw-dump fails.
         """
-        # Find and kill any running pipewire filter-chain processes
+        pids_to_kill: set[str] = set()
+
+        # Method 1: Extract PID from our node's name in PipeWire graph
         try:
             result = subprocess.run(
-                ["pgrep", "-f", "/usr/bin/pipewire -c filter-chain.conf"],
+                ["pw-dump"],
                 capture_output=True,
                 text=True,
+                timeout=5,
             )
-            if result.returncode == 0 and result.stdout.strip():
-                for pid in result.stdout.strip().split("\n"):
-                    if pid:
-                        try:
-                            subprocess.run(
-                                ["kill", pid],
-                                capture_output=True,
-                                timeout=5,
-                            )
-                            logger.debug("Killed filter-chain process: %s", pid)
-                        except Exception:
-                            logger.warning("Failed to kill process %s", pid)
+            if result.returncode == 0:
+                import json
+                import re
+
+                data = json.loads(result.stdout)
+                for obj in data:
+                    if obj.get("type") == "PipeWire:Interface:Node":
+                        props = obj.get("info", {}).get("props", {})
+                        desc = props.get("node.description", "")
+                        name = props.get("node.name", "")
+
+                        if (
+                            desc == "Noise Canceling Microphone"
+                            and "filter-chain" in name
+                        ):
+                            # Extract PID from node.name like "input.filter-chain-80250-8"
+                            match = re.search(r"filter-chain-(\d+)", name)
+                            if match:
+                                pids_to_kill.add(match.group(1))
         except Exception:
-            logger.warning("Error finding filter-chain processes")
+            logger.warning("pw-dump failed during stop, trying fallback")
+
+        # Method 2: Fallback - find pipewire processes in our config dir
+        if not pids_to_kill:
+            try:
+                result = subprocess.run(
+                    ["pgrep", "-f", "pipewire.*filter-chain"],
+                    capture_output=True,
+                    text=True,
+                    timeout=3,
+                )
+                if result.returncode == 0 and result.stdout.strip():
+                    config_dir = str(self._config_file.parent)
+                    for pid in result.stdout.strip().split("\n"):
+                        pid = pid.strip()
+                        if not pid:
+                            continue
+                        # Verify the process cwd points to our config dir
+                        try:
+                            cwd = Path(f"/proc/{pid}/cwd").resolve()
+                            if config_dir in str(cwd):
+                                pids_to_kill.add(pid)
+                        except (OSError, PermissionError):
+                            pass
+            except Exception:
+                logger.warning("Error finding filter-chain processes")
+
+        for pid in pids_to_kill:
+            try:
+                subprocess.run(
+                    ["kill", pid],
+                    capture_output=True,
+                    timeout=5,
+                )
+                logger.debug("Killed filter-chain process: %s", pid)
+            except Exception:
+                logger.warning("Failed to kill process %s", pid)
 
         # Remove the configuration file
         if self._config_file.exists():
@@ -388,6 +461,84 @@ class PipeWireService:
         if self.is_enabled():
             return self._update_param_live("ai:Strength", strength)
         return True
+
+    def get_speech_strength(self) -> float:
+        """Get current speech strength."""
+        return self._noise_reduction_speech_strength
+
+    def set_speech_strength(self, value: float) -> bool:
+        """Set speech strength with live update."""
+        value = max(0.0, min(1.0, value))
+        self._noise_reduction_speech_strength = value
+        if self.is_enabled():
+            return self._update_param_live("ai:SpeechStrength", value)
+        return True
+
+    def get_lookahead_ms(self) -> int:
+        """Get current lookahead in ms."""
+        return self._noise_reduction_lookahead_ms
+
+    def set_lookahead_ms(self, value: int) -> bool:
+        """Set lookahead with live update."""
+        value = max(0, min(200, value))
+        self._noise_reduction_lookahead_ms = value
+        if self.is_enabled():
+            return self._update_param_live("ai:LookaheadMs", float(value))
+        return True
+
+    def get_voice_enhance(self) -> float:
+        """Get voice enhancement level."""
+        return self._noise_reduction_voice_enhance
+
+    def set_voice_enhance(self, value: float) -> bool:
+        """Set voice enhancement level with live update."""
+        value = max(0.0, min(1.0, value))
+        self._noise_reduction_voice_enhance = value
+        if self.is_enabled():
+            return self._update_param_live("ai:VoiceEnhance", value)
+        return True
+
+    def get_model_blending(self) -> bool:
+        return self._noise_reduction_model_blending
+
+    def set_model_blending(self, enabled: bool) -> bool:
+        self._noise_reduction_model_blending = enabled
+        if self.is_enabled():
+            return self._update_param_live("ai:ModelBlend", 1.0 if enabled else 0.0)
+        return True
+
+    # =========================================================================
+    # Compressor Parameters
+    # =========================================================================
+
+    def set_compressor_enabled(self, enabled: bool) -> bool:
+        """Enable or disable compressor (requires pipeline restart)."""
+        return self._requires_restart()
+
+    def set_compressor_intensity(self, intensity: float) -> bool:
+        """Set compressor intensity with live parameter update."""
+        from biglinux_microphone.config import CompressorConfig
+
+        intensity = max(0.0, min(1.0, intensity))
+        comp = CompressorConfig(enabled=True, intensity=intensity)
+
+        if not self.is_enabled():
+            return True
+
+        success = True
+        updates = {
+            "compressor:Threshold level (dB)": comp.threshold_db,
+            "compressor:Ratio (1:n)": comp.ratio,
+            "compressor:Makeup gain (dB)": comp.makeup_gain_db,
+            "compressor:Attack time (ms)": comp.attack_ms,
+            "compressor:Release time (ms)": comp.release_ms,
+            "compressor:Knee radius (dB)": comp.knee_db,
+            "compressor:RMS/peak": comp.rms_peak,
+        }
+        for param, val in updates.items():
+            if not self._update_param_live(param, val):
+                success = False
+        return success
 
     # =========================================================================
     # Gate Filter Parameters
@@ -487,6 +638,19 @@ class PipeWireService:
         if self.is_enabled():
             return self._update_param_live("gate:Decay (ms)", ms)
         return True
+
+    def set_gate_intensity(self, intensity: float) -> bool:
+        """Set gate intensity, updating all derived gate parameters live."""
+        from biglinux_microphone.config import GateConfig
+
+        gate = GateConfig(intensity=intensity)
+        ok = True
+        ok = self.set_gate_threshold(int(gate.threshold_db)) and ok
+        ok = self.set_gate_range(int(gate.range_db)) and ok
+        ok = self.set_gate_attack(gate.attack_ms) and ok
+        ok = self.set_gate_hold(gate.hold_ms) and ok
+        ok = self.set_gate_release(gate.release_ms) and ok
+        return ok
 
     # =========================================================================
     # Stereo Enhancement Parameters
@@ -761,7 +925,28 @@ class PipeWireService:
     # =========================================================================
 
     def _get_filter_chain_node_id(self) -> str | None:
-        """Get the filter-chain node ID for live parameter updates."""
+        """Get the filter-chain input node ID for live parameter updates.
+
+        Searches for a node with our description and 'input.' prefix,
+        since LADSPA control params are on the input side.
+        """
+        if self._cached_node_id:
+            # Validate cache: ensure the node still exists
+            try:
+                result = subprocess.run(
+                    ["pw-cli", "info", self._cached_node_id],
+                    capture_output=True,
+                    text=True,
+                    timeout=3,
+                )
+                if (
+                    result.returncode != 0
+                    or "Noise Canceling Microphone" not in result.stdout
+                ):
+                    self._cached_node_id = None
+            except Exception:
+                self._cached_node_id = None
+
         if self._cached_node_id:
             return self._cached_node_id
 
@@ -783,9 +968,13 @@ class PipeWireService:
             for obj in data:
                 if obj.get("type") == "PipeWire:Interface:Node":
                     props = obj.get("info", {}).get("props", {})
+                    desc = props.get("node.description", "")
                     name = props.get("node.name", "")
 
-                    if "big.filter-microphone" in name or "filter-chain" in name:
+                    # Input node has LADSPA controls; match by our description
+                    if desc == "Noise Canceling Microphone" and name.startswith(
+                        "input."
+                    ):
                         self._cached_node_id = str(props.get("object.id", ""))
                         return self._cached_node_id
 
@@ -832,7 +1021,7 @@ class PipeWireService:
         Now queues the update to non-blocking worker thread.
 
         Args:
-            param_name: Full parameter name (e.g., "gtcrn:Strength")
+            param_name: Full parameter name (e.g., "ai:Strength")
             value: New value
 
         Returns:
@@ -912,12 +1101,26 @@ class PipeWireService:
 
         # Use settings directly instead of internal state
         config = FilterChainConfig(
+            hpf_enabled=settings.hpf.enabled,
+            hpf_frequency=settings.hpf.frequency,
             noise_reduction_enabled=settings.noise_reduction.enabled,
             noise_reduction_model=settings.noise_reduction.model,
             noise_reduction_strength=settings.noise_reduction.strength,
+            noise_reduction_speech_strength=settings.noise_reduction.speech_strength,
+            noise_reduction_lookahead_ms=settings.noise_reduction.lookahead_ms,
+            noise_reduction_voice_enhance=settings.noise_reduction.voice_enhance,
+            noise_reduction_model_blending=settings.noise_reduction.model_blending,
+            compressor_enabled=settings.compressor.enabled,
+            compressor_threshold_db=settings.compressor.threshold_db,
+            compressor_ratio=settings.compressor.ratio,
+            compressor_attack_ms=settings.compressor.attack_ms,
+            compressor_release_ms=settings.compressor.release_ms,
+            compressor_makeup_gain_db=settings.compressor.makeup_gain_db,
+            compressor_knee_db=settings.compressor.knee_db,
+            compressor_rms_peak=settings.compressor.rms_peak,
             gate_enabled=settings.gate.enabled,
-            gate_threshold_db=settings.gate.threshold_db,
-            gate_range_db=settings.gate.range_db,
+            gate_threshold_db=int(settings.gate.threshold_db),
+            gate_range_db=int(settings.gate.range_db),
             gate_attack_ms=settings.gate.attack_ms,
             gate_hold_ms=settings.gate.hold_ms,
             gate_release_ms=settings.gate.release_ms,
@@ -948,10 +1151,26 @@ class PipeWireService:
         # Generate new config file
         self._generate_config(settings)
 
-        if self.is_enabled():
-            self._run_restart_in_thread(on_complete)
+        # Always restart if noise reduction should be active.
+        # We check settings (desired state) instead of is_enabled() (runtime state)
+        # to avoid race conditions during pipeline transitions.
+        should_be_active = (
+            settings.noise_reduction.enabled
+            if settings
+            else self._noise_reduction_enabled
+        )
+
+        if should_be_active:
+            if self._is_updating:
+                # A restart is already in progress; mark pending so the
+                # current restart's callback will trigger another one.
+                self._restart_pending = True
+                self._pending_settings = settings
+                self._pending_on_complete = on_complete
+                logger.debug("Restart already in progress, queuing pending restart")
+            else:
+                self._run_restart_in_thread(on_complete)
         elif on_complete:
-            # If not enabled, run callback immediately (or next tick)
             from gi.repository import GLib
 
             GLib.idle_add(on_complete)
@@ -960,6 +1179,8 @@ class PipeWireService:
         self, on_complete: Callable[[], None] | None = None
     ) -> None:
         """Run restart in a separate thread to avoid blocking GTK."""
+        self._is_updating = True
+        self._restart_pending = False
 
         def _do_restart() -> None:
             loop = asyncio.new_event_loop()
@@ -968,6 +1189,20 @@ class PipeWireService:
                 loop.run_until_complete(self._restart())
             finally:
                 loop.close()
+                self._is_updating = False
+
+            # Check if another restart was requested while we were restarting
+            if self._restart_pending:
+                pending_settings = getattr(self, "_pending_settings", None)
+                pending_callback = getattr(self, "_pending_on_complete", None)
+                self._restart_pending = False
+                self._pending_settings = None
+                self._pending_on_complete = None
+                logger.debug("Executing pending restart after previous completed")
+                # Regenerate config with latest settings and restart again
+                self._generate_config(pending_settings)
+                self._run_restart_in_thread(pending_callback)
+                return  # Don't call on_complete for the superseded restart
 
             if on_complete:
                 try:
@@ -981,7 +1216,11 @@ class PipeWireService:
         thread.start()
 
     async def _restart(self) -> None:
-        """Restart the filter chain with new configuration."""
-        await self.stop()
+        """Restart the filter chain with new configuration.
+
+        Uses internal methods directly to avoid _is_updating guard,
+        since the caller (_run_restart_in_thread) manages that flag.
+        """
+        await self._stop_filter_chain()
         await asyncio.sleep(0.5)
-        await self.start()
+        await self._start_filter_chain_process()

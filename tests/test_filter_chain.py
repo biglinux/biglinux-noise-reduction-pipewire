@@ -36,10 +36,10 @@ class TestFilterChainConfig:
         """Test default configuration values."""
         config = FilterChainConfig()
         assert config.noise_reduction_enabled is True
-        assert config.noise_reduction_model == NoiseModel.GTCRN_FULL_QUALITY
+        assert config.noise_reduction_model == NoiseModel.GTCRN_DNS3
         assert config.noise_reduction_strength == 1.0
         assert config.gate_enabled is True
-        assert config.gate_threshold_db == -40
+        assert config.gate_threshold_db == -30
         assert config.gate_range_db == -60
         assert config.stereo_mode == StereoMode.MONO
         assert config.eq_enabled is False
@@ -48,12 +48,12 @@ class TestFilterChainConfig:
         """Test custom configuration values."""
         config = FilterChainConfig(
             noise_reduction_enabled=False,
-            noise_reduction_model=NoiseModel.GTCRN_FULL_QUALITY,
+            noise_reduction_model=NoiseModel.GTCRN_DNS3,
             gate_threshold_db=-45,
             stereo_mode=StereoMode.DUAL_MONO,
         )
         assert config.noise_reduction_enabled is False
-        assert config.noise_reduction_model == NoiseModel.GTCRN_FULL_QUALITY
+        assert config.noise_reduction_model == NoiseModel.GTCRN_DNS3
         assert config.gate_threshold_db == -45
         assert config.stereo_mode == StereoMode.DUAL_MONO
 
@@ -183,13 +183,13 @@ class TestFilterChainGenerator:
         """Test noise reduction parameters are correctly applied."""
         config = FilterChainConfig(
             noise_reduction_strength=0.75,
-            noise_reduction_model=NoiseModel.GTCRN_FULL_QUALITY,
+            noise_reduction_model=NoiseModel.GTCRN_DNS3,
         )
         generator = FilterChainGenerator(config)
         content = generator.generate()
 
         assert '"Strength" = 0.75' in content
-        assert '"Model" = 1' in content  # FULL_QUALITY = 1
+        assert '"Model" = 0' in content  # DNS3 = 0
 
     def test_save_config(self) -> None:
         """Test saving configuration to file."""
@@ -276,12 +276,12 @@ class TestGenerateConfigForSettings:
         """Test custom parameter application."""
         content = generate_config_for_settings(
             noise_reduction_strength=0.5,
-            noise_reduction_model=NoiseModel.GTCRN_FULL_QUALITY,
+            noise_reduction_model=NoiseModel.GTCRN_DNS3,
             gate_threshold_db=-50,
         )
 
         assert '"Strength" = 0.5' in content
-        assert '"Model" = 1' in content
+        assert '"Model" = 0' in content  # DNS3 = 0
         assert '"Threshold (dB)" = -50' in content
 
 

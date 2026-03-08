@@ -56,9 +56,13 @@ class SpectrumAnalyzerWidget(Gtk.DrawingArea):
         """Initialize the premium spectrum analyzer."""
         super().__init__()
 
+        self.set_accessible_role(Gtk.AccessibleRole.METER)
+        self.update_property(
+            [Gtk.AccessibleProperty.LABEL],
+            ["Spectrum Analyzer"],
+        )
+
         self._num_bands = num_bands
-        self._bands = [0.0] * num_bands
-        self._target_bands = [0.0] * num_bands
         self._bands = [0.0] * num_bands
         self._target_bands = [0.0] * num_bands
         self._peaks = [0.0] * num_bands

@@ -22,15 +22,34 @@ gi.require_version("Adw", "1")
 from gi.repository import Adw, GLib, Gtk
 
 from biglinux_microphone.config import (
+    COMPRESSOR_INTENSITY_DEFAULT,
+    COMPRESSOR_INTENSITY_MAX,
+    COMPRESSOR_INTENSITY_MIN,
+    COMPRESSOR_INTENSITY_STEP,
     EQ_BANDS,
     EQ_PRESETS,
+    GATE_INTENSITY_DEFAULT,
+    GATE_INTENSITY_MAX,
+    GATE_INTENSITY_MIN,
+    GATE_INTENSITY_STEP,
+    LOOKAHEAD_MS_DEFAULT,
+    LOOKAHEAD_MS_MAX,
+    LOOKAHEAD_MS_MIN,
+    LOOKAHEAD_MS_STEP,
+    SPEECH_STRENGTH_DEFAULT,
+    SPEECH_STRENGTH_MAX,
+    SPEECH_STRENGTH_MIN,
     STEREO_WIDTH_DEFAULT,
     STEREO_WIDTH_MAX,
     STEREO_WIDTH_MIN,
     STRENGTH_DEFAULT,
     STRENGTH_MAX,
     STRENGTH_MIN,
+    VOICE_ENHANCE_DEFAULT,
+    VOICE_ENHANCE_MAX,
+    VOICE_ENHANCE_MIN,
     AppSettings,
+    NoiseModel,
     StereoMode,
 )
 from biglinux_microphone.ui.components import (
@@ -42,6 +61,7 @@ from biglinux_microphone.ui.components import (
     create_preferences_group,
 )
 from biglinux_microphone.ui.spectrum_widget import SpectrumAnalyzerWidget
+from biglinux_microphone.utils.async_utils import Debouncer
 from biglinux_microphone.utils.i18n import _
 from biglinux_microphone.utils.tooltip_helper import TooltipHelper
 
@@ -103,13 +123,13 @@ class MainView(Adw.NavigationPage):
         self._loading = False
 
         # Timer for debounced EQ config updates
-        self._eq_config_timer: int = 0
+        self._eq_debouncer = Debouncer(delay_ms=100)
 
         # Timer for debounced settings save
-        self._save_settings_timer: int = 0
+        self._save_debouncer = Debouncer(delay_ms=500)
 
         # Timer for debounced monitor delay
-        self._monitor_delay_timer: int = 0
+        self._monitor_delay_debouncer = Debouncer(delay_ms=300)
 
         # Timer for polling external state changes (e.g., plasmoid)
         self._state_poll_timer: int = 0
@@ -121,7 +141,20 @@ class MainView(Adw.NavigationPage):
 
     def _setup_ui(self) -> None:
         """Set up the UI layout."""
-        # Main scrolled content
+        # Top-level vertical box: spectrum on top, scrolled content below
+        outer_box = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=0)
+
+        # === Spectrum Analyzer (stays visible during loading) ===
+        spectrum_clamp = Adw.Clamp()
+        spectrum_clamp.set_maximum_size(600)
+        spectrum_clamp.set_margin_top(12)
+        spectrum_clamp.set_margin_start(12)
+        spectrum_clamp.set_margin_end(12)
+        spectrum_frame = self._create_spectrum_section()
+        spectrum_clamp.set_child(spectrum_frame)
+        outer_box.append(spectrum_clamp)
+
+        # Scrolled content below spectrum
         scrolled = Gtk.ScrolledWindow()
         scrolled.set_policy(Gtk.PolicyType.NEVER, Gtk.PolicyType.AUTOMATIC)
         scrolled.set_vexpand(True)
@@ -134,12 +167,8 @@ class MainView(Adw.NavigationPage):
         clamp.set_margin_start(12)
         clamp.set_margin_end(12)
 
-        # Main box
+        # Main box (without spectrum — it's above)
         main_box = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=16)
-
-        # === Spectrum Analyzer ===
-        spectrum_frame = self._create_spectrum_section()
-        main_box.append(spectrum_frame)
 
         # === Noise Reduction Toggle ===
         toggle_group = self._create_noise_reduction_section()
@@ -157,6 +186,10 @@ class MainView(Adw.NavigationPage):
         gate_group = self._create_gate_section()
         main_box.append(gate_group)
 
+        # === Volume Normalizer (Compressor) ===
+        compressor_group = self._create_compressor_section()
+        main_box.append(compressor_group)
+
         # === Voice Effects (Expander) ===
         stereo_group = self._create_stereo_section()
         main_box.append(stereo_group)
@@ -167,7 +200,41 @@ class MainView(Adw.NavigationPage):
 
         clamp.set_child(main_box)
         scrolled.set_child(clamp)
-        self.set_child(scrolled)
+
+        # Wrap scrolled content in overlay for loading spinner (spectrum stays visible)
+        self._overlay = Gtk.Overlay()
+        self._overlay.set_child(scrolled)
+
+        # Loading indicator (hidden by default)
+        # Use a full-size container with opaque background
+        self._loading_box = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=12)
+        self._loading_box.set_halign(Gtk.Align.FILL)
+        self._loading_box.set_valign(Gtk.Align.FILL)
+        self._loading_box.set_hexpand(True)
+        self._loading_box.set_vexpand(True)
+        self._loading_box.add_css_class("background")
+
+        # Inner box for centering spinner + label
+        loading_inner = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=12)
+        loading_inner.set_halign(Gtk.Align.CENTER)
+        loading_inner.set_valign(Gtk.Align.CENTER)
+        loading_inner.set_vexpand(True)
+
+        self._loading_spinner = Adw.Spinner()
+        self._loading_spinner.set_size_request(48, 48)
+        loading_inner.append(self._loading_spinner)
+
+        self._loading_label = Gtk.Label(label=_("Applying settings…"))
+        self._loading_label.add_css_class("title-3")
+        loading_inner.append(self._loading_label)
+
+        self._loading_box.append(loading_inner)
+
+        self._loading_box.set_visible(False)
+        self._overlay.add_overlay(self._loading_box)
+
+        outer_box.append(self._overlay)
+        self.set_child(outer_box)
 
         # Setup tooltips after UI is created
         self._setup_tooltips()
@@ -184,15 +251,19 @@ class MainView(Adw.NavigationPage):
 
         # Gate section
         self._add_tooltip(self._gate_expander, "gate_toggle")
-        self._add_tooltip(self._threshold_row, "gate_threshold")
-        self._add_tooltip(self._range_row, "gate_range")
-        self._add_tooltip(self._attack_row, "gate_attack")
-        self._add_tooltip(self._hold_row, "gate_hold")
-        self._add_tooltip(self._release_row, "gate_release")
+        self._add_tooltip(self._gate_intensity_row, "gate_intensity")
+
+        # Compressor section
+        self._add_tooltip(self._compressor_expander, "compressor_toggle")
+        self._add_tooltip(self._compressor_intensity_row, "compressor_intensity")
 
         # Noise Reduction section
         self._add_tooltip(self._nr_expander, "noise_reduction_toggle")
         self._add_tooltip(self._strength_row, "noise_reduction_strength")
+        self._add_tooltip(self._speech_strength_row, "voice_preservation")
+        self._add_tooltip(self._lookahead_row, "lookahead")
+        self._add_tooltip(self._voice_enhance_row, "voice_enhance")
+        self._add_tooltip(self._model_select_row, "model_select")
 
         # Voice Effects section
         self._add_tooltip(self._stereo_expander, "stereo_toggle")
@@ -236,8 +307,10 @@ class MainView(Adw.NavigationPage):
 
         # Expander with switch (Noise Reduction)
         self._nr_expander, self._main_switch = create_expander_row_with_switch(
-            _("Activate Noise Reduction"),
-            subtitle=_("Removes background noise (keyboard, fan) using AI."),
+            _("Noise Reduction"),
+            subtitle=_(
+                "Removes background noise like fan, keyboard, and air conditioning."
+            ),
             icon_name="audio-input-microphone-symbolic",
             active=False,  # Will be set by _load_state
             expanded=False,
@@ -245,12 +318,22 @@ class MainView(Adw.NavigationPage):
         )
         group.add(self._nr_expander)
 
+        # AI Model selector (DNS3 / VCTK / Blending) — first item
+        self._model_select_row = create_combo_row(
+            _("AI Model"),
+            options=[
+                _("Maximum Cleaning"),
+                _("Natural Voice"),
+                _("Smart (both combined)"),
+            ],
+            selected_index=0,
+            on_selected=self._on_model_select_changed,
+        )
+        self._nr_expander.add_row(self._model_select_row)
+
         # Strength slider
         self._strength_row, self._strength_scale = create_action_row_with_scale(
-            _("Cleanup Intensity"),
-            subtitle=_(
-                "If you want sounds other than the voice to be captured, reduce the filter intensity."
-            ),
+            _("Noise Removal Intensity"),
             min_value=STRENGTH_MIN,
             max_value=STRENGTH_MAX,
             value=STRENGTH_DEFAULT,
@@ -258,13 +341,69 @@ class MainView(Adw.NavigationPage):
             digits=0,
             on_changed=self._on_strength_changed,
             marks=[
-                (0.0, _("Smooth")),
+                (0.0, _("Light")),
                 (0.5, _("Medium")),
-                (1.0, _("Strong")),
+                (1.0, _("Maximum")),
             ],
         )
         self._strength_row.set_icon_name("audio-volume-high-symbolic")
         self._nr_expander.add_row(self._strength_row)
+
+        # Speech Strength slider
+        self._speech_strength_row, self._speech_strength_scale = (
+            create_action_row_with_scale(
+                _("Filter During Speech"),
+                min_value=SPEECH_STRENGTH_MIN,
+                max_value=SPEECH_STRENGTH_MAX,
+                value=SPEECH_STRENGTH_DEFAULT,
+                step=0.05,
+                digits=0,
+                on_changed=self._on_speech_strength_changed,
+                marks=[
+                    (0.0, _("Off")),
+                    (0.5, _("Medium")),
+                    (1.0, _("Maximum")),
+                ],
+            )
+        )
+        self._nr_expander.add_row(self._speech_strength_row)
+
+        # Lookahead slider
+        self._lookahead_row, self._lookahead_scale = create_action_row_with_scale(
+            _("Syllable Protection"),
+            min_value=LOOKAHEAD_MS_MIN,
+            max_value=LOOKAHEAD_MS_MAX,
+            value=LOOKAHEAD_MS_DEFAULT,
+            step=LOOKAHEAD_MS_STEP,
+            digits=0,
+            on_changed=self._on_lookahead_changed,
+            marks=[
+                (0, _("Off")),
+                (50, _("Normal")),
+                (100, "100ms"),
+                (200, _("Maximum")),
+            ],
+        )
+        self._nr_expander.add_row(self._lookahead_row)
+
+        # Voice Enhancement slider
+        self._voice_enhance_row, self._voice_enhance_scale = (
+            create_action_row_with_scale(
+                _("Voice Recovery"),
+                min_value=VOICE_ENHANCE_MIN,
+                max_value=VOICE_ENHANCE_MAX,
+                value=VOICE_ENHANCE_DEFAULT,
+                step=0.05,
+                digits=0,
+                on_changed=self._on_voice_enhance_changed,
+                marks=[
+                    (0.0, _("Off")),
+                    (0.5, _("Medium")),
+                    (1.0, _("Maximum")),
+                ],
+            )
+        )
+        self._nr_expander.add_row(self._voice_enhance_row)
 
         return group
 
@@ -272,40 +411,46 @@ class MainView(Adw.NavigationPage):
     # Helpers
     # =========================================================================
 
-    def _to_log_scale(self, value: float, min_val: float, max_val: float) -> float:
-        """Convert linear slider position (0-100) to logarithmic value."""
-        import math
+    def _create_compressor_section(self) -> Adw.PreferencesGroup:
+        """Create volume normalizer (compressor) section."""
+        group = create_preferences_group("", "")
 
-        # Avoid log(0)
-        if min_val <= 0:
-            min_val = 0.1
+        self._compressor_expander, self._compressor_switch = (
+            create_expander_row_with_switch(
+                _("Volume Normalizer"),
+                subtitle=_(
+                    "Evens out volume — loud sounds get softer, quiet sounds get louder."
+                ),
+                icon_name="audio-volume-medium-symbolic",
+                active=False,
+                expanded=False,
+                on_toggled=self._on_compressor_toggled,
+            )
+        )
+        group.add(self._compressor_expander)
 
-        min_log = math.log(min_val)
-        max_log = math.log(max_val)
+        self._compressor_intensity_row, self._compressor_intensity_scale = (
+            create_action_row_with_scale(
+                _("Intensity"),
+                min_value=COMPRESSOR_INTENSITY_MIN,
+                max_value=COMPRESSOR_INTENSITY_MAX,
+                value=COMPRESSOR_INTENSITY_DEFAULT,
+                step=COMPRESSOR_INTENSITY_STEP,
+                digits=2,
+                on_changed=self._on_compressor_intensity_changed,
+                marks=[
+                    (0.0, _("Light")),
+                    (0.5, _("Balanced")),
+                    (1.0, _("Maximum")),
+                ],
+            )
+        )
+        self._compressor_expander.add_row(self._compressor_intensity_row)
 
-        # Scale 0-100 to min_log-max_log
-        log_val = min_log + (value / 100.0) * (max_log - min_log)
-
-        return math.exp(log_val)
-
-    def _from_log_scale(self, value: float, min_val: float, max_val: float) -> float:
-        """Convert logarithmic value to linear slider position (0-100)."""
-        import math
-
-        if min_val <= 0:
-            min_val = 0.1
-
-        # Clamp value
-        value = max(min_val, min(value, max_val))
-
-        min_log = math.log(min_val)
-        max_log = math.log(max_val)
-
-        # Inverse log mapping
-        return ((math.log(value) - min_log) / (max_log - min_log)) * 100.0
+        return group
 
     def _create_gate_section(self) -> Adw.PreferencesGroup:
-        """Create gate filter section as expander."""
+        """Create gate filter section as expander with single intensity slider."""
         group = create_preferences_group("", "")
 
         # Expander with switch
@@ -321,103 +466,24 @@ class MainView(Adw.NavigationPage):
         )
         group.add(self._gate_expander)
 
-        # Threshold (Linear, optimized for -30dB center)
-        # Range: -60dB to 0dB. Center (-30dB) is exactly 50%.
-        self._threshold_row, self._threshold_scale = create_action_row_with_scale(
-            _("Sensitivity (Threshold)"),
-            subtitle="Activates at -30 dB",
-            min_value=0,
-            max_value=100,
-            value=50,  # Default -30dB map
-            step=1,
-            digits=0,
-            on_changed=self._on_threshold_scale_changed,
-            marks=[
-                (0, _("Low")),
-                (50, _("Medium")),
-                (100, _("High")),
-            ],
+        # Single intensity slider
+        self._gate_intensity_row, self._gate_intensity_scale = (
+            create_action_row_with_scale(
+                _("Intensity"),
+                min_value=GATE_INTENSITY_MIN,
+                max_value=GATE_INTENSITY_MAX,
+                value=GATE_INTENSITY_DEFAULT,
+                step=GATE_INTENSITY_STEP,
+                digits=2,
+                on_changed=self._on_gate_intensity_changed,
+                marks=[
+                    (0.0, _("Light")),
+                    (0.5, _("Balanced")),
+                    (1.0, _("Maximum")),
+                ],
+            )
         )
-        self._gate_expander.add_row(self._threshold_row)
-
-        # Range/Reduction (Linear, optimized for -80dB max)
-        # Range: -80dB to 0dB.
-        self._range_row, self._range_scale = create_action_row_with_scale(
-            _("Silence Reduction"),
-            subtitle="Reduction amount (-60 dB)",
-            min_value=0,
-            max_value=100,
-            value=75,  # -60dB is 75% of -80dB
-            step=1,
-            digits=0,
-            on_changed=self._on_range_scale_changed,
-            marks=[
-                (0, "0%"),
-                (50, "50%"),
-                (100, "100%"),
-            ],
-        )
-        self._gate_expander.add_row(self._range_row)
-
-        # Attack (Logarithmic)
-        # Range: 1ms to 400ms. Default 20ms.
-        # Log center of 1-400 is sqrt(1*400) = 20ms. Matches default exactly.
-        self._attack_row, self._attack_scale = create_action_row_with_scale(
-            _("Attack (Opening)"),
-            subtitle="How fast gate opens (20.0 ms)",
-            min_value=0,
-            max_value=100,
-            value=50,  # Exactly 20ms now
-            step=1,
-            digits=0,
-            on_changed=self._on_attack_changed,
-            marks=[
-                (0, "1ms"),
-                (50, "20ms"),
-                (100, "400ms"),
-            ],
-        )
-        self._gate_expander.add_row(self._attack_row)
-
-        # Hold (Logarithmic)
-        # Range: 50ms to 1800ms. Default 300ms.
-        # Log center is sqrt(50*1800) = 300ms. Matches default exactly.
-        self._hold_row, self._hold_scale = create_action_row_with_scale(
-            _("Hold"),
-            subtitle="Min open time (300.0 ms)",
-            min_value=0,
-            max_value=100,
-            value=50,  # Exactly 300ms now
-            step=1,
-            digits=0,
-            on_changed=self._on_hold_changed,
-            marks=[
-                (0, "50ms"),
-                (50, "300ms"),
-                (100, "1.8s"),
-            ],
-        )
-        self._gate_expander.add_row(self._hold_row)
-
-        # Release (Logarithmic)
-        # Range: 10ms to 2250ms. Default 150ms.
-        # Log center is sqrt(10*2250) = 150ms. Matches default exactly.
-        self._release_row, self._release_scale = create_action_row_with_scale(
-            _("Release"),
-            subtitle="Decay time (150.0 ms)",
-            min_value=0,
-            max_value=100,
-            value=50,  # Exactly 150ms now
-            step=1,
-            digits=0,
-            on_changed=self._on_release_changed,
-            marks=[
-                (0, "10ms"),
-                (50, "150ms"),
-                (100, "2.2s"),
-            ],
-        )
-        self._gate_expander.add_row(self._release_row)
+        self._gate_expander.add_row(self._gate_intensity_row)
 
         return group
 
@@ -594,14 +660,33 @@ class MainView(Adw.NavigationPage):
             # Strength
             self._strength_scale.set_value(self._settings.noise_reduction.strength)
 
+            # Dual-strength VAD params
+            self._speech_strength_scale.set_value(
+                self._settings.noise_reduction.speech_strength
+            )
+            self._lookahead_scale.set_value(self._settings.noise_reduction.lookahead_ms)
+
+            # Unified controls
+            self._voice_enhance_scale.set_value(
+                self._settings.noise_reduction.voice_enhance
+            )
+
+            # AI Model selector: derive combo index from model + blending
+            nr = self._settings.noise_reduction
+            if nr.model_blending:
+                model_index = 2  # Intelligent Blending
+            elif nr.model == NoiseModel.GTCRN_VCTK:
+                model_index = 1  # VCTK
+            else:
+                model_index = 0  # DNS3
+            self._model_select_row.set_selected(model_index)
+
             # Bluetooth
             self._bt_switch.set_active(self._settings.bluetooth.auto_switch_headset)
 
             # Headphone Monitor
             self._monitor_switch.set_active(self._settings.monitor.enabled)
-            self._monitor_switch.set_active(self._settings.monitor.enabled)
             self._monitor_delay_scale.set_value(self._settings.monitor.delay_ms)
-            self._strength_row.set_sensitive(is_enabled)
 
             # Start monitor if enabled
             if self._settings.monitor.enabled:
@@ -615,91 +700,28 @@ class MainView(Adw.NavigationPage):
 
             # Gate
             self._gate_switch.set_active(self._settings.gate.enabled)
-
-            # Map Gate values to slider positions
-
-            # Threshold: -60 to 0. Linear.
-            # val = map(db, -60, 0, 0, 100)
-            t_min, t_max = -60, 0
-            t_val = max(t_min, min(self._settings.gate.threshold_db, t_max))
-            t_pos = ((t_val - t_min) / (t_max - t_min)) * 100
-            self._threshold_scale.set_value(t_pos)
-            self._threshold_row.set_subtitle(
-                f"Activates at {self._settings.gate.threshold_db} dB"
-            )
-
-            # Range: -80 to 0. Linear.
-            r_target = -80
-            r_val = self._settings.gate.range_db  # e.g. -60
-            r_pos = (r_val / r_target) * 100 if r_target != 0 else 0
-            self._range_scale.set_value(r_pos)
-            self._range_row.set_subtitle(
-                _("Reduction amount ({reduction} dB)").format(reduction=r_val)
-            )
-
-            # Attack: Log 1..400
-            a_pos = self._from_log_scale(self._settings.gate.attack_ms, 1.0, 400.0)
-            self._attack_scale.set_value(a_pos)
-            self._attack_row.set_subtitle(
-                f"How fast gate opens ({self._settings.gate.attack_ms:.1f} ms)"
-            )
-
-            # Hold: Log 50..1800
-            h_pos = self._from_log_scale(self._settings.gate.hold_ms, 50.0, 1800.0)
-            self._hold_scale.set_value(h_pos)
-            self._hold_row.set_subtitle(
-                f"Min open time ({self._settings.gate.hold_ms:.1f} ms)"
-            )
-
-            # Release: Log 10..2250
-            rel_pos = self._from_log_scale(self._settings.gate.release_ms, 10.0, 2250.0)
-            self._release_scale.set_value(rel_pos)
-            self._release_row.set_subtitle(
-                f"Decay time ({self._settings.gate.release_ms:.1f} ms)"
-            )
-
+            self._gate_intensity_scale.set_value(self._settings.gate.intensity)
             self._update_gate_sensitivity()
             # Sync gate state to PipeWire service
             self._pipewire.set_gate_enabled(self._settings.gate.enabled)
-            self._pipewire.set_gate_threshold(self._settings.gate.threshold_db)
-            self._pipewire.set_gate_range(self._settings.gate.range_db)
+            self._pipewire.set_gate_threshold(int(self._settings.gate.threshold_db))
+            self._pipewire.set_gate_range(int(self._settings.gate.range_db))
             self._pipewire.set_gate_attack(self._settings.gate.attack_ms)
             self._pipewire.set_gate_hold(self._settings.gate.hold_ms)
             self._pipewire.set_gate_release(self._settings.gate.release_ms)
 
-            # Update subtitles with loaded values
-            self._threshold_row.set_subtitle(
-                _("Activates at {threshold} dB").format(
-                    threshold=self._settings.gate.threshold_db
-                )
-            )
-            self._range_row.set_subtitle(
-                _("Reduction amount ({reduction} dB)").format(
-                    reduction=self._settings.gate.range_db
-                )
-            )
-            self._attack_row.set_subtitle(
-                _("How fast gate opens ({attack:.1f} ms)").format(
-                    attack=self._settings.gate.attack_ms
-                )
-            )
-            self._hold_row.set_subtitle(
-                _("Min open time ({hold:.1f} ms)").format(
-                    hold=self._settings.gate.hold_ms
-                )
-            )
-            self._release_row.set_subtitle(
-                _("Decay time ({release:.1f} ms)").format(
-                    release=self._settings.gate.release_ms
-                )
+            # Compressor (Volume Normalizer)
+            self._compressor_switch.set_active(self._settings.compressor.enabled)
+            self._compressor_intensity_scale.set_value(
+                self._settings.compressor.intensity
             )
 
             # Strength subtitle
             strength_percent = int(self._settings.noise_reduction.strength * 100)
             self._strength_row.set_subtitle(
-                _(
-                    "If you want sounds other than the voice to be captured, reduce the filter intensity. ({percent}%)"
-                ).format(percent=strength_percent)
+                _("Removal aggressiveness. ({percent}%)").format(
+                    percent=strength_percent
+                )
             )
 
             # Monitor Delay subtitle
@@ -769,9 +791,14 @@ class MainView(Adw.NavigationPage):
 
         # Noise reduction intensity depends on main toggle
         self._strength_row.set_sensitive(nr_enabled)
+        self._speech_strength_row.set_sensitive(nr_enabled)
+        self._lookahead_row.set_sensitive(nr_enabled)
+        self._voice_enhance_row.set_sensitive(nr_enabled)
+        self._model_select_row.set_sensitive(nr_enabled)
 
         # All sections depend on noise reduction except Bluetooth
         self._gate_expander.set_sensitive(nr_enabled)
+        self._compressor_expander.set_sensitive(nr_enabled)
         self._stereo_expander.set_sensitive(nr_enabled)
         self._eq_expander.set_sensitive(nr_enabled)
 
@@ -784,11 +811,7 @@ class MainView(Adw.NavigationPage):
     def _update_gate_sensitivity(self) -> None:
         """Update gate controls sensitivity."""
         enabled = self._gate_switch.get_active()
-        self._threshold_row.set_sensitive(enabled)
-        self._range_row.set_sensitive(enabled)
-        self._attack_row.set_sensitive(enabled)
-        self._hold_row.set_sensitive(enabled)
-        self._release_row.set_sensitive(enabled)
+        self._gate_intensity_row.set_sensitive(enabled)
 
     def _update_stereo_sensitivity(self) -> None:
         """Update stereo controls sensitivity."""
@@ -859,18 +882,13 @@ class MainView(Adw.NavigationPage):
         should_run = self._settings.noise_reduction.enabled
 
         if should_run:
-            if self._pipewire.is_enabled():
-                # Already running, just update config (restart service to flush changes)
-                self._pipewire.apply_config(
-                    self._settings, on_complete=self._schedule_monitor_restart
-                )
-            else:
-                # Not running, need to start
-                # Use idle_add to run async start logic
-                GLib.idle_add(self._start_noise_reduction)
+            # apply_config handles both fresh start and restart internally
+            self._show_loading()
+            self._pipewire.apply_config(
+                self._settings, on_complete=self._on_restart_complete
+            )
         else:
             # Noise reduction disabled, stop service
-            # Use idle_add to run async stop logic
             GLib.idle_add(self._stop_noise_reduction)
 
     def _on_main_toggle(self, active: bool) -> None:
@@ -891,57 +909,25 @@ class MainView(Adw.NavigationPage):
         self._update_service_state()
         self._update_all_controls_sensitivity()
 
-    def _start_noise_reduction(self) -> bool:
-        """Start noise reduction in background thread."""
-        import asyncio
-        import threading
-
-        def _run_in_thread():
-            async def _start() -> None:
-                success = await self._pipewire.start(self._settings)
-                if success:
-                    logger.info("Noise reduction started successfully")
-
-                    if self._on_toast:
-                        GLib.idle_add(self._on_toast, "Noise reduction enabled", 2)
-
-                    # Update monitor to use filtered source
-                    GLib.idle_add(self._update_monitor_state)
-                else:
-                    GLib.idle_add(lambda: self._main_switch.set_active(False))
-                    logger.error("Failed to start noise reduction")
-                    if self._on_toast:
-                        GLib.idle_add(
-                            self._on_toast, "Failed to start noise reduction", 4
-                        )
-
-            loop = asyncio.new_event_loop()
-            asyncio.set_event_loop(loop)
-            try:
-                loop.run_until_complete(_start())
-            finally:
-                loop.close()
-
-        thread = threading.Thread(target=_run_in_thread, daemon=True)
-        thread.start()
-
-        return False
-
     def _stop_noise_reduction(self) -> bool:
         """Stop noise reduction in background thread."""
         import asyncio
         import threading
+
+        self._show_loading()
 
         def _run_in_thread():
             async def _stop() -> None:
                 await self._pipewire.stop()
                 logger.info("Noise reduction stopped")
 
+                GLib.idle_add(self._hide_loading)
+
                 # Update monitor to use raw source
                 GLib.idle_add(self._update_monitor_state)
 
                 if self._on_toast:
-                    GLib.idle_add(self._on_toast, "Noise reduction disabled", 2)
+                    GLib.idle_add(self._on_toast, _("Noise reduction disabled"), 2)
 
             loop = asyncio.new_event_loop()
             asyncio.set_event_loop(loop)
@@ -966,36 +952,40 @@ class MainView(Adw.NavigationPage):
             logger.info("Restarting audio monitor after service update")
             self._audio_monitor.restart()
 
-    def _schedule_eq_config_update(self) -> None:
-        """Schedule EQ config file update with debouncing."""
-        # Cancel previous timer if exists
-        if self._eq_config_timer:
-            GLib.source_remove(self._eq_config_timer)
+    def _show_loading(self) -> None:
+        """Show loading spinner overlay during pipeline restart."""
+        self._loading_box.set_visible(True)
 
-        # Schedule config update after 500ms of inactivity
-        self._eq_config_timer = GLib.timeout_add(500, self._apply_eq_config_update)
+    def _hide_loading(self) -> None:
+        """Hide loading spinner overlay."""
+        self._loading_box.set_visible(False)
 
-    def _apply_eq_config_update(self) -> bool:
-        """Apply EQ config update to PipeWire config file.
+    def _on_restart_complete(self) -> None:
+        """Callback after pipeline restart completes.
 
-        Note: This is no longer needed since EQ band changes use live updates.
-        Keeping the method for compatibility but it does nothing.
+        Validates the actual pipeline state and reverts UI if the
+        restart failed.
         """
-        self._eq_config_timer = 0
-        # Removed apply_config() - EQ bands use live pw-cli updates, no restart needed
-        return False  # Don't repeat
+        self._hide_loading()
+        actual_state = self._pipewire.is_enabled()
+        desired_state = self._settings.noise_reduction.enabled
+
+        if desired_state and not actual_state:
+            logger.error("Pipeline restart completed but filter is not running")
+            # Revert toggle to reflect reality
+            self._loading = True
+            self._main_switch.set_active(False)
+            self._settings.noise_reduction.enabled = False
+            self._settings_service.save(self._settings)
+            self._loading = False
+        elif not desired_state and actual_state:
+            logger.warning("Pipeline still running after stop was requested")
+
+        self._schedule_monitor_restart()
 
     def _schedule_settings_save(self) -> None:
         """Schedule a debounced settings save."""
-        if self._save_settings_timer:
-            GLib.source_remove(self._save_settings_timer)
-        self._save_settings_timer = GLib.timeout_add(500, self._save_settings_debounced)
-
-    def _save_settings_debounced(self) -> bool:
-        """Save settings to disk (called by timer)."""
-        self._save_settings_timer = 0
-        self._settings_service.save(self._settings)
-        return False
+        self._save_debouncer.call(self._settings_service.save, self._settings)
 
     def _start_state_polling(self) -> None:
         """Start polling for external state changes (e.g., from plasmoid)."""
@@ -1045,14 +1035,91 @@ class MainView(Adw.NavigationPage):
 
         strength_percent = int(value * 100)
         self._strength_row.set_subtitle(
-            _(
-                "Removal aggressiveness. High values clean more but may alter voice. ({percent}%)"
-            ).format(percent=strength_percent)
+            _("Removal aggressiveness. ({percent}%)").format(percent=strength_percent)
         )
         self._settings.noise_reduction.strength = value
         # Debounce save to avoid blocking UI with disk I/O
         self._schedule_settings_save()
         self._pipewire.set_strength(value)
+
+    def _on_speech_strength_changed(self, value: float) -> None:
+        """Handle speech strength slider change."""
+        if self._loading:
+            return
+        pct = int(value * 100)
+        self._speech_strength_row.set_subtitle(
+            _("Filter intensity during speech ({percent}%)").format(percent=pct)
+        )
+        self._settings.noise_reduction.speech_strength = value
+        self._schedule_settings_save()
+        self._pipewire.set_speech_strength(value)
+
+    def _on_lookahead_changed(self, value: float) -> None:
+        """Handle lookahead slider change."""
+        if self._loading:
+            return
+        ms = int(value)
+        self._lookahead_row.set_subtitle(_("Pre-buffer: {ms} ms").format(ms=ms))
+        self._settings.noise_reduction.lookahead_ms = ms
+        self._schedule_settings_save()
+        self._pipewire.set_lookahead_ms(ms)
+
+    def _on_voice_enhance_changed(self, value: float) -> None:
+        if self._loading:
+            return
+        pct = int(value * 100)
+        self._voice_enhance_row.set_subtitle(
+            _("Harmonic recovery: {percent}%").format(percent=pct)
+        )
+        self._settings.noise_reduction.voice_enhance = value
+        self._schedule_settings_save()
+        self._pipewire.set_voice_enhance(value)
+
+    def _on_model_select_changed(self, index: int) -> None:
+        """Handle AI model selector change.
+
+        Index 0 = DNS3, 1 = VCTK, 2 = Intelligent Blending.
+        """
+        if self._loading:
+            return
+
+        if index == 0:
+            model = NoiseModel.GTCRN_DNS3
+            blending = False
+        elif index == 1:
+            model = NoiseModel.GTCRN_VCTK
+            blending = False
+        else:
+            model = NoiseModel.GTCRN_DNS3
+            blending = True
+
+        self._settings.noise_reduction.model = model
+        self._settings.noise_reduction.model_blending = blending
+        self._schedule_settings_save()
+        self._pipewire.set_model(model)
+        self._pipewire.set_model_blending(blending)
+
+    def _on_compressor_toggled(self, active: bool) -> None:
+        """Handle compressor toggle."""
+        if self._loading:
+            return
+
+        self._settings.compressor.enabled = active
+        self._schedule_settings_save()
+        if self._settings.noise_reduction.enabled:
+            self._show_loading()
+            self._pipewire.apply_config(
+                self._settings, on_complete=self._on_restart_complete
+            )
+
+    def _on_compressor_intensity_changed(self, value: float) -> None:
+        """Handle compressor intensity slider change."""
+        if self._loading:
+            return
+
+        self._settings.compressor.intensity = value
+        self._schedule_settings_save()
+        self._pipewire.set_compressor_intensity(value)
 
     def _on_gate_toggled(self, active: bool) -> None:
         """Handle gate toggle."""
@@ -1063,91 +1130,22 @@ class MainView(Adw.NavigationPage):
         logger.info("Gate toggled: %s", active)
 
         self._settings.gate.enabled = active
-        self._settings_service.save(self._settings)
         self._update_gate_sensitivity()
-
-        # Sync state to PipeWire service
-        self._pipewire.set_gate_enabled(active)
-
-        if self._pipewire.is_enabled():
+        self._schedule_settings_save()
+        if self._settings.noise_reduction.enabled:
+            self._show_loading()
             self._pipewire.apply_config(
-                self._settings, on_complete=self._schedule_monitor_restart
+                self._settings, on_complete=self._on_restart_complete
             )
 
-    def _on_threshold_scale_changed(self, value: float) -> None:
-        """Handle gate threshold scale change."""
+    def _on_gate_intensity_changed(self, value: float) -> None:
+        """Handle gate intensity slider change."""
         if self._loading:
             return
 
-        # Map 0-100% -> -60dB to 0dB
-        t_min = -60
-        t_max = 0
-        threshold_db = int(t_min + (value / 100.0 * (t_max - t_min)))
-
-        logger.debug("Threshold changed: %.1f%% -> %d dB", value, threshold_db)
-
-        self._settings.gate.threshold_db = threshold_db
-        self._threshold_row.set_subtitle(f"Activates at {threshold_db} dB")
+        self._settings.gate.intensity = value
         self._schedule_settings_save()
-        self._pipewire.set_gate_threshold(threshold_db)
-
-    def _on_range_scale_changed(self, value: float) -> None:
-        """Handle gate range scale change."""
-        if self._loading:
-            return
-
-        # Map 0-100% -> 0dB to -80dB
-        r_max_red = -80
-        range_db = int((value / 100.0) * r_max_red)
-
-        logger.debug("Range changed: %.1f%% -> %d dB", value, range_db)
-
-        self._settings.gate.range_db = range_db
-        self._range_row.set_subtitle(f"Reduction amount ({range_db} dB)")
-        self._schedule_settings_save()
-        self._pipewire.set_gate_range(range_db)
-
-    def _on_attack_changed(self, value: float) -> None:
-        """Handle gate attack change."""
-        if self._loading:
-            return
-
-        # Log Scale 1..400
-        ms = self._to_log_scale(value, 1.0, 400.0)
-        ms = round(ms, 1)
-
-        self._attack_row.set_subtitle(f"How fast gate opens ({ms:.1f} ms)")
-        self._settings.gate.attack_ms = ms
-        self._schedule_settings_save()
-        self._pipewire.set_gate_attack(ms)
-
-    def _on_hold_changed(self, value: float) -> None:
-        """Handle gate hold change."""
-        if self._loading:
-            return
-
-        # Log Scale 50..1800
-        ms = self._to_log_scale(value, 50.0, 1800.0)
-        ms = round(ms, 1)
-
-        self._hold_row.set_subtitle(f"Min open time ({ms:.1f} ms)")
-        self._settings.gate.hold_ms = ms
-        self._schedule_settings_save()
-        self._pipewire.set_gate_hold(ms)
-
-    def _on_release_changed(self, value: float) -> None:
-        """Handle gate release change."""
-        if self._loading:
-            return
-
-        # Log Scale 10..2250
-        ms = self._to_log_scale(value, 10.0, 2250.0)
-        ms = round(ms, 1)
-
-        self._release_row.set_subtitle(f"Decay time ({ms:.1f} ms)")
-        self._settings.gate.release_ms = ms
-        self._schedule_settings_save()
-        self._pipewire.set_gate_release(ms)
+        self._pipewire.set_gate_intensity(value)
 
     def _on_stereo_toggled(self, active: bool) -> None:
         """Handle stereo toggle."""
@@ -1165,9 +1163,10 @@ class MainView(Adw.NavigationPage):
         self._pipewire.set_stereo_enabled(active)
 
         # Stereo enable/disable requires restart (structural change)
-        if self._pipewire.is_enabled():
+        if self._settings.noise_reduction.enabled:
+            self._show_loading()
             self._pipewire.apply_config(
-                self._settings, on_complete=self._schedule_monitor_restart
+                self._settings, on_complete=self._on_restart_complete
             )
         else:
             # If disabled, we still need to restart monitor to update channel mixing logic
@@ -1230,9 +1229,10 @@ class MainView(Adw.NavigationPage):
             self._update_stereo_sensitivity()
 
             self._pipewire.set_stereo_mode(mode)
-            if self._pipewire.is_enabled():
+            if self._settings.noise_reduction.enabled:
+                self._show_loading()
                 self._pipewire.apply_config(
-                    self._settings, on_complete=self._schedule_monitor_restart
+                    self._settings, on_complete=self._on_restart_complete
                 )
             else:
                 # If disabled, we still need to restart monitor to update channel mixing logic
@@ -1330,8 +1330,6 @@ class MainView(Adw.NavigationPage):
         logger.debug("EQ band %d changed: %.1f dB", index, value)
 
         # Debounce EQ updates to avoid spamming the service
-        if self._eq_config_timer:
-            GLib.source_remove(self._eq_config_timer)
 
         # Update settings immediately
         if index < len(self._settings.equalizer.bands):
@@ -1349,15 +1347,13 @@ class MainView(Adw.NavigationPage):
                 self._eq_preset_combo.set_selected(idx)
 
         # Schedule service update
-        self._eq_config_timer = GLib.timeout_add(100, self._apply_eq_config)
+        self._eq_debouncer.call(self._apply_eq_config)
         self._schedule_settings_save()
 
-    def _apply_eq_config(self) -> bool:
+    def _apply_eq_config(self) -> None:
         """Apply accumulated EQ changes to service."""
         logger.debug("Applying accumulated EQ changes")
         self._pipewire.set_eq_bands(list(self._settings.equalizer.bands))
-        self._eq_config_timer = 0
-        return False
 
     def restore_defaults(self) -> None:
         """Restore all settings to default values."""
@@ -1433,11 +1429,19 @@ class MainView(Adw.NavigationPage):
             # Start monitor with current delay
             source = self._get_monitor_source()
             channels = self._get_monitor_channels()
-            self._monitor_service.start_monitor(
+            success = self._monitor_service.start_monitor(
                 source=source,
                 delay_ms=self._settings.monitor.delay_ms,
                 channels=channels,
             )
+            if not success:
+                logger.warning("Failed to start monitor, reverting toggle")
+                self._loading = True
+                self._monitor_switch.set_active(False)
+                self._settings.monitor.enabled = False
+                self._settings_service.save(self._settings)
+                self._monitor_delay_row.set_sensitive(False)
+                self._loading = False
         else:
             # Stop monitor
             self._monitor_service.stop_monitor()
@@ -1459,19 +1463,12 @@ class MainView(Adw.NavigationPage):
         self._settings_service.save(self._settings)
 
         # Debounce monitor update to avoid spamming process restarts
-        if self._monitor_delay_timer:
-            GLib.source_remove(self._monitor_delay_timer)
+        self._monitor_delay_debouncer.call(self._apply_monitor_delay, delay_ms)
 
-        self._monitor_delay_timer = GLib.timeout_add(
-            300, self._apply_monitor_delay, delay_ms
-        )
-
-    def _apply_monitor_delay(self, delay_ms: int) -> bool:
+    def _apply_monitor_delay(self, delay_ms: int) -> None:
         """Apply monitor delay after debounce."""
-        self._monitor_delay_timer = 0
         if self._settings.monitor.enabled:
             self._monitor_service.set_delay(delay_ms)
-        return False
 
     def _get_monitor_channels(self) -> int:
         """Get appropriate channel count for monitor based on stereo settings."""

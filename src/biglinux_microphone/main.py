@@ -9,7 +9,13 @@ the GTK4/Libadwaita application.
 import argparse
 import logging
 import sys
+from pathlib import Path
 from typing import NoReturn
+
+# Ensure package is importable when running directly (python main.py)
+_src_dir = str(Path(__file__).resolve().parent.parent)
+if _src_dir not in sys.path:
+    sys.path.insert(0, _src_dir)
 
 import gi
 

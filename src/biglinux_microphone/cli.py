@@ -7,13 +7,12 @@ filter chain, including starting/stopping the filter process.
 """
 
 import argparse
+import contextlib
 import re
-import signal
 import subprocess
 import sys
 import time
 from pathlib import Path
-
 
 # =============================================================================
 # Configuration Paths
@@ -25,6 +24,7 @@ CONFIG_PATH = (
 LEGACY_PATHS = [
     Path.home() / ".config/pipewire/filter-chain.conf.d/source-rnnoise-config.conf",
     Path.home() / ".config/pipewire/filter-chain.conf.d/source-rnnoise-smart.conf",
+    Path.home() / ".config/pipewire/filter-chain.conf.d/source-gtcrn-smart.conf",
 ]
 
 
@@ -44,22 +44,18 @@ def find_filter_pids() -> list[int]:
             if "/usr/bin/pipewire -c filter-chain.conf" in line:
                 parts = line.split()
                 if len(parts) > 1:
-                    try:
+                    with contextlib.suppress(ValueError):
                         pids.append(int(parts[1]))
-                    except ValueError:
-                        pass
         return pids
-    except Exception:
+    except OSError:
         return []
 
 
 def kill_filter_processes() -> None:
     """Kill all running pipewire filter-chain processes."""
     for pid in find_filter_pids():
-        try:
+        with contextlib.suppress(OSError):
             subprocess.run(["kill", str(pid)], capture_output=True, check=False)
-        except Exception:
-            pass
 
 
 def start_filter_process() -> bool:
@@ -72,7 +68,7 @@ def start_filter_process() -> bool:
             stderr=subprocess.DEVNULL,
         )
         return True
-    except Exception as e:
+    except OSError as e:
         print(f"Error starting pipewire: {e}", file=sys.stderr)
         return False
 
@@ -166,9 +162,19 @@ def generate_config() -> bool:
         settings = load_settings()
 
         config = FilterChainConfig(
+            hpf_enabled=settings.hpf.enabled,
+            hpf_frequency=settings.hpf.frequency,
             noise_reduction_enabled=True,
             noise_reduction_model=settings.noise_reduction.model,
             noise_reduction_strength=settings.noise_reduction.strength,
+            compressor_enabled=settings.compressor.enabled,
+            compressor_threshold_db=settings.compressor.threshold_db,
+            compressor_ratio=settings.compressor.ratio,
+            compressor_attack_ms=settings.compressor.attack_ms,
+            compressor_release_ms=settings.compressor.release_ms,
+            compressor_makeup_gain_db=settings.compressor.makeup_gain_db,
+            compressor_knee_db=settings.compressor.knee_db,
+            compressor_rms_peak=settings.compressor.rms_peak,
             gate_enabled=settings.gate.enabled,
             gate_threshold_db=settings.gate.threshold_db,
             gate_range_db=settings.gate.range_db,
@@ -207,7 +213,10 @@ def remove_config() -> None:
 
 def check_status() -> bool:
     """Check if the noise reduction is enabled."""
-    return CONFIG_PATH.exists()
+    if CONFIG_PATH.exists():
+        return True
+    # Also detect legacy GTCRN config (pre-migration state)
+    return any(path.exists() for path in LEGACY_PATHS)
 
 
 # =============================================================================
@@ -220,10 +229,14 @@ def cmd_start() -> int:
     # Kill any existing filter processes
     kill_filter_processes()
 
+    # Remove legacy configs so PipeWire doesn't load old filters
+    for path in LEGACY_PATHS:
+        if path.exists():
+            path.unlink()
+
     # Generate config if it doesn't exist
-    if not CONFIG_PATH.exists():
-        if not generate_config():
-            return 1
+    if not CONFIG_PATH.exists() and not generate_config():
+        return 1
 
     # Ensure main filter-chain config exists (with RT priority)
     # This must be imported inside the function to avoid circular imports if placed at top level

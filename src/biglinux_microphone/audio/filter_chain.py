@@ -141,20 +141,39 @@ class FilterChainConfig:
     All parameters needed to generate a PipeWire filter-chain config.
     """
 
+    # High-pass filter (rumble removal, before AI)
+    # NOTE: Disabled by default — GTCRN plugin has a built-in HP80 biquad.
+    # Enable only if using a higher cutoff or a different AI plugin.
+    hpf_enabled: bool = False
+    hpf_frequency: float = 80.0
+
     # Noise reduction
     noise_reduction_enabled: bool = True
-    noise_reduction_model: NoiseModel = NoiseModel.GTCRN_FULL_QUALITY
+    noise_reduction_model: NoiseModel = NoiseModel.GTCRN_DNS3
     noise_reduction_strength: float = 1.0
+    noise_reduction_speech_strength: float = 1.0
+    noise_reduction_lookahead_ms: int = 100
+    noise_reduction_voice_enhance: float = 0.50
+    noise_reduction_model_blending: bool = False
+    # Compressor (after AI, before gate)
+    compressor_enabled: bool = False
+    compressor_threshold_db: float = -20.0
+    compressor_ratio: float = 3.0
+    compressor_attack_ms: float = 10.0
+    compressor_release_ms: float = 100.0
+    compressor_makeup_gain_db: float = 6.0
+    compressor_knee_db: float = 3.0
+    compressor_rms_peak: float = 0.2
 
     # Gate filter
     gate_enabled: bool = True
-    gate_threshold_db: int = -40  # Level below which gate closes
+    gate_threshold_db: int = -30  # Level below which gate closes
     gate_range_db: int = (
         -60
     )  # Reduction amount when gate closes (more negative = quieter)
     gate_attack_ms: float = 10.0  # Fast attack to catch speech
-    gate_hold_ms: float = 300.0  # Hold time to avoid choppy speech
-    gate_release_ms: float = 150.0  # Release time for smooth transitions
+    gate_hold_ms: float = 400.0  # Hold time to avoid choppy speech
+    gate_release_ms: float = 200.0  # Release time for smooth transitions
 
     # Stereo enhancement
     stereo_mode: StereoMode = StereoMode.MONO
@@ -229,7 +248,7 @@ class FilterChainGenerator:
                     }}'''
 
     def _generate_ai_node(self) -> str:
-        """Generate AI noise reduction node (GTCRN or FastEnhancer)."""
+        """Generate AI noise reduction node (GTCRN)."""
         c = self._config
 
         library = GTCRN_LIBRARY
@@ -247,6 +266,39 @@ class FilterChainGenerator:
                             "Enable" = 1.0
                             "Strength" = {c.noise_reduction_strength}
                             "Model" = {model_control}
+                            "SpeechStrength" = {c.noise_reduction_speech_strength}
+                            "LookaheadMs" = {c.noise_reduction_lookahead_ms}
+                            "VoiceEnhance" = {c.noise_reduction_voice_enhance}
+                            "ModelBlend" = {1.0 if c.noise_reduction_model_blending else 0.0}
+                        }}
+                    }}'''
+
+    def _generate_hpf_node(self) -> str:
+        """Generate high-pass filter node (PipeWire builtin bq_highpass)."""
+        c = self._config
+        return f"""                    {{
+                        type = builtin
+                        name = "hpf"
+                        label = bq_highpass
+                        control = {{ "Freq" = {c.hpf_frequency:.1f} "Q" = 0.707 }}
+                    }}"""
+
+    def _generate_compressor_node(self) -> str:
+        """Generate SC4 mono compressor node."""
+        c = self._config
+        return f'''                    {{
+                        type = ladspa
+                        name = "compressor"
+                        plugin = "{SC4_LIBRARY}"
+                        label = "{SC4_LABEL}"
+                        control = {{
+                            "RMS/peak" = {c.compressor_rms_peak:.2f}
+                            "Attack time (ms)" = {c.compressor_attack_ms:.1f}
+                            "Release time (ms)" = {c.compressor_release_ms:.1f}
+                            "Threshold level (dB)" = {c.compressor_threshold_db:.1f}
+                            "Ratio (1:n)" = {c.compressor_ratio:.1f}
+                            "Knee radius (dB)" = {c.compressor_knee_db:.1f}
+                            "Makeup gain (dB)" = {c.compressor_makeup_gain_db:.1f}
                         }}
                     }}'''
 
@@ -308,38 +360,49 @@ context.modules = [
         """Generate mono (non-stereo) configuration."""
         c = self._config
 
-        # Build list of active filters in order: ai -> gate -> eq
-        # AI noise reduction comes first to clean the signal,
-        # then gate works on clean audio, then EQ for tonal shaping
-        active_filters = []
-        nodes = []
+        # Build list of active filters in order: hpf -> compressor -> ai -> gate -> eq
+        # HPF removes rumble first, compressor evens volume before AI,
+        # AI cleans noise, gate mutes residual noise in silence, EQ shapes tone.
+        # Each entry: (name, input_port, output_port)
+        active_filters: list[tuple[str, str, str]] = []
+        nodes: list[str] = []
+
+        if c.hpf_enabled:
+            active_filters.append(("hpf", "In", "Out"))
+            nodes.append(self._generate_hpf_node())
+
+        if c.compressor_enabled:
+            active_filters.append(("compressor", "Input", "Output"))
+            nodes.append(self._generate_compressor_node())
 
         if c.noise_reduction_enabled:
-            active_filters.append("ai")
+            active_filters.append(("ai", "Input", "Output"))
             nodes.append(self._generate_ai_node())
 
         if c.gate_enabled:
-            active_filters.append("gate")
+            active_filters.append(("gate", "Input", "Output"))
             nodes.append(self._generate_gate_node())
 
         if c.eq_enabled:
-            active_filters.append("eq")
+            active_filters.append(("eq", "Input", "Output"))
             nodes.append(self._generate_eq_node())
 
         # If no filters enabled, return minimal passthrough config
         if not active_filters:
             return self._generate_passthrough_config()
 
-        # Build links between active filters
+        # Build links between active filters (respecting port name conventions)
         links = []
         for i in range(len(active_filters) - 1):
-            src = active_filters[i]
-            dst = active_filters[i + 1]
-            links.append(f'{{ output = "{src}:Output" input = "{dst}:Input" }}')
+            src_name, _, src_out = active_filters[i]
+            dst_name, dst_in, _ = active_filters[i + 1]
+            links.append(
+                f'{{ output = "{src_name}:{src_out}" input = "{dst_name}:{dst_in}" }}'
+            )
 
         # Determine input and output nodes
-        first_filter = active_filters[0]
-        last_filter = active_filters[-1]
+        first_name, first_in, _ = active_filters[0]
+        last_name, _, last_out = active_filters[-1]
 
         # Format nodes and links for config
         nodes_str = "\n".join(nodes)
@@ -361,8 +424,8 @@ context.modules = [
                 links = [
                     {links_str}
                 ]
-                inputs = [ "{first_filter}:Input" ]
-                outputs = [ "{last_filter}:Output" ]
+                inputs = [ "{first_name}:{first_in}" ]
+                outputs = [ "{last_name}:{last_out}" ]
             }}
             audio.channels = 1
             capture.props = {{
@@ -429,22 +492,30 @@ context.modules = [
         """
         c = self._config
 
-        # Build list of active filters in order: ai -> gate -> eq
-        # AI noise reduction comes first to clean the signal,
-        # then gate works on clean audio, then EQ for tonal shaping
-        active_filters = []
-        nodes = []
+        # Build list of active filters in order: hpf -> compressor -> ai -> gate -> eq
+        # Each entry: (name, input_port, output_port)
+        active_filters: list[tuple[str, str, str]] = []
+        nodes: list[str] = []
+
+        if c.hpf_enabled:
+            active_filters.append(("hpf", "In", "Out"))
+            nodes.append(self._generate_hpf_node())
+
+        # RADIO mode has its own compressor — skip standard one to avoid duplicate
+        if c.compressor_enabled and c.stereo_mode != StereoMode.RADIO:
+            active_filters.append(("compressor", "Input", "Output"))
+            nodes.append(self._generate_compressor_node())
 
         if c.noise_reduction_enabled:
-            active_filters.append("ai")
+            active_filters.append(("ai", "Input", "Output"))
             nodes.append(self._generate_ai_node())
 
         if c.gate_enabled:
-            active_filters.append("gate")
+            active_filters.append(("gate", "Input", "Output"))
             nodes.append(self._generate_gate_node())
 
         if c.eq_enabled:
-            active_filters.append("eq")
+            active_filters.append(("eq", "Input", "Output"))
             nodes.append(self._generate_eq_node())
 
         # If no filters enabled, return minimal passthrough config
@@ -454,31 +525,39 @@ context.modules = [
         # Build links between active filters (mono chain)
         links = []
         for i in range(len(active_filters) - 1):
-            src = active_filters[i]
-            dst = active_filters[i + 1]
-            links.append(f'{{ output = "{src}:Output" input = "{dst}:Input" }}')
+            src_name, _, src_out = active_filters[i]
+            dst_name, dst_in, _ = active_filters[i + 1]
+            links.append(
+                f'{{ output = "{src_name}:{src_out}" input = "{dst_name}:{dst_in}" }}'
+            )
 
         # Determine input node and the output of mono chain
-        first_filter = active_filters[0]
-        last_filter = active_filters[-1]
+        first_name, first_in, _ = active_filters[0]
+        last_name, _, last_out = active_filters[-1]
 
         # Dispatch to specific mode generators
         if c.stereo_mode == StereoMode.RADIO:
-            return self._generate_radio_mode(nodes, links, first_filter, last_filter)
+            return self._generate_radio_mode(
+                nodes, links, first_name, first_in, last_name, last_out
+            )
         elif c.stereo_mode == StereoMode.VOICE_CHANGER:
-            return self._generate_pitch_mode(nodes, links, first_filter, last_filter)
+            return self._generate_pitch_mode(
+                nodes, links, first_name, first_in, last_name, last_out
+            )
         else:
             # DUAL_MONO - simple stereo duplication
             return self._generate_dual_mono_stereo(
-                nodes, links, first_filter, last_filter
+                nodes, links, first_name, first_in, last_name, last_out
             )
 
     def _generate_dual_mono_stereo(
         self,
         nodes: list[str],
         links: list[str],
-        first_filter: str,
-        last_filter: str,
+        first_name: str,
+        first_in: str,
+        last_name: str,
+        last_out: str,
     ) -> str:
         """Generate stereo config using simple channel duplication (DUAL_MONO mode)."""
         # Add stereo split nodes
@@ -505,7 +584,7 @@ context.modules = [
                     }""")
 
         # Add link from last mono filter to stereo tee
-        links.append(f'{{ output = "{last_filter}:Output" input = "copy_tee:In" }}')
+        links.append(f'{{ output = "{last_name}:{last_out}" input = "copy_tee:In" }}')
 
         # Add stereo split links
         links.append('{ output = "copy_tee:Out" input = "copy_left:In" }')
@@ -532,7 +611,7 @@ context.modules = [
                 links = [
                     {links_str}
                 ]
-                inputs = [ "{first_filter}:Input" ]
+                inputs = [ "{first_name}:{first_in}" ]
                 outputs = [ "copy_left:Out" "{right_output}" ]
             }}
             capture.props = {{
@@ -556,8 +635,10 @@ context.modules = [
         self,
         nodes: list[str],
         links: list[str],
-        first_filter: str,
-        last_filter: str,
+        first_name: str,
+        first_in: str,
+        last_name: str,
+        last_out: str,
     ) -> str:
         """Generate RADIO mode config with SC4 compressor.
 
@@ -568,7 +649,7 @@ context.modules = [
 
         # SC4 compressor parameters for radio voice
         # More width = more aggressive compression
-        ratio = 4.0 + (c.stereo_width * 6.0)  # 4:1 to 10:1
+        ratio = 3.0 + (c.stereo_width * 3.0)  # 3:1 to 6:1
         threshold = -15.0 - (c.stereo_width * 10.0)  # -15dB to -25dB
         attack = 10.0  # Fast attack (10ms)
         release = 100.0 + (c.stereo_width * 100.0)  # 100-200ms
@@ -583,7 +664,7 @@ context.modules = [
                         plugin = "{SC4_LIBRARY}"
                         label = "{SC4_LABEL}"
                         control = {{
-                            "RMS/peak" = 0.5
+                            "RMS/peak" = 0.2
                             "Attack time (ms)" = {attack:.1f}
                             "Release time (ms)" = {release:.1f}
                             "Threshold level (dB)" = {threshold:.1f}
@@ -617,7 +698,7 @@ context.modules = [
 
         # Links: mono chain -> compressor -> stereo split
         links.append(
-            f'{{ output = "{last_filter}:Output" input = "compressor:Input" }}'
+            f'{{ output = "{last_name}:{last_out}" input = "compressor:Input" }}'
         )
         links.append('{ output = "compressor:Output" input = "copy_tee:In" }')
         links.append('{ output = "copy_tee:Out" input = "copy_left:In" }')
@@ -643,7 +724,7 @@ context.modules = [
                 links = [
                     {links_str}
                 ]
-                inputs = [ "{first_filter}:Input" ]
+                inputs = [ "{first_name}:{first_in}" ]
                 outputs = [ "copy_left:Out" "copy_right:Out" ]
             }}
             capture.props = {{
@@ -667,8 +748,10 @@ context.modules = [
         self,
         nodes: list[str],
         links: list[str],
-        first_filter: str,
-        last_filter: str,
+        first_name: str,
+        first_in: str,
+        last_name: str,
+        last_out: str,
     ) -> str:
         """Generate VOICE_CHANGER mode config.
 
@@ -751,7 +834,7 @@ context.modules = [
                     }""")
 
         # Links: mono chain -> pitch -> stereo split
-        links.append(f'{{ output = "{last_filter}:Output" input = "pitch:Input" }}')
+        links.append(f'{{ output = "{last_name}:{last_out}" input = "pitch:Input" }}')
         links.append('{ output = "pitch:Output" input = "pitch_gain:Input" }')
         links.append('{ output = "pitch_gain:Output" input = "copy_tee:In" }')
         links.append('{ output = "copy_tee:Out" input = "copy_left:In" }')
@@ -777,7 +860,7 @@ context.modules = [
                 links = [
                     {links_str}
                 ]
-                inputs = [ "{first_filter}:Input" ]
+                inputs = [ "{first_name}:{first_in}" ]
                 outputs = [ "copy_left:Out" "copy_right:Out" ]
             }}
             capture.props = {{
@@ -842,10 +925,10 @@ context.modules = [
 
 def generate_config_for_settings(
     noise_reduction_enabled: bool = True,
-    noise_reduction_model: NoiseModel = NoiseModel.GTCRN_FULL_QUALITY,
+    noise_reduction_model: NoiseModel = NoiseModel.GTCRN_DNS3,
     noise_reduction_strength: float = 1.0,
     gate_enabled: bool = True,
-    gate_threshold_db: int = -40,
+    gate_threshold_db: int = -30,
     gate_range_db: int = -60,
     stereo_mode: StereoMode = StereoMode.MONO,
 ) -> str:

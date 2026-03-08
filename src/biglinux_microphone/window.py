@@ -200,6 +200,10 @@ class MicrophoneWindow(Adw.ApplicationWindow):
         menu_button.set_icon_name("open-menu-symbolic")
         menu_button.set_menu_model(menu)
         menu_button.set_tooltip_text(_("Main menu"))
+        menu_button.update_property(
+            [Gtk.AccessibleProperty.LABEL],
+            [_("Main menu")],
+        )
 
         return menu_button
 

@@ -690,3 +690,99 @@ msgstr "Personalizado"
 # File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/config.py, line: 608
 msgid "Manual adjustment."
 msgstr "Ajuste manual."
+
+#
+msgid   "High Frequency Pass-through"
+msgstr  "Passagem de Alta Frequência"
+
+#
+msgid   "Preserve original audio above 8 kHz for natural sound."
+msgstr  "Preserva o áudio original acima de 8 kHz para um som natural."
+
+#
+msgid   "Comfort Noise"
+msgstr  "Ruído de Conforto"
+
+#
+msgid   "Add subtle background noise during silence to avoid dead air."
+msgstr  "Adiciona ruído de fundo sutil durante o silêncio para evitar 'ar morto'."
+
+#
+msgid   "Spectral Smoothing"
+msgstr  "Suavização Espectral"
+
+#
+msgid   "Smooth spectral artifacts during speech for cleaner audio."
+msgstr  "Suaviza artefatos espectrais durante a fala para um áudio mais limpo."
+
+#
+msgid   "Gain Compensation"
+msgstr  "Compensação de Ganho"
+
+#
+msgid   "Restore volume lost during noise reduction."
+msgstr  "Restaura o volume perdido durante a redução de ruído."
+
+#
+msgid   "Musical Noise Removal"
+msgstr  "Remoção de Ruído Musical"
+
+#
+msgid   "Remove tonal artifacts left by noise reduction."
+msgstr  "Remove artefatos tonais deixados pela redução de ruído."
+
+#
+msgid   "Transient Sharpening"
+msgstr  "Realce de Transientes"
+
+#
+msgid   "Restore attack of consonants softened by noise reduction."
+msgstr  "Restaura o ataque das consoantes suavizadas pela redução de ruído."
+
+#
+msgid   "Adaptive Noise Floor"
+msgstr  "Piso de Ruído Adaptativo"
+
+#
+msgid   "Dynamically adjust noise floor estimate during silence."
+msgstr  "Ajusta dinamicamente a estimativa do piso de ruído durante o silêncio."
+
+#
+msgid   "Bandwidth Extension"
+msgstr  "Extensão de Banda"
+
+#
+msgid   "Synthesize high frequencies from model output."
+msgstr  "Sintetiza altas frequências a partir da saída do modelo."
+
+#
+msgid   "Psychoacoustic Masking"
+msgstr  "Mascaramento Psicoacústico"
+
+#
+msgid   "Use auditory masking model to hide residual noise."
+msgstr  "Usa modelo de mascaramento auditivo para ocultar ruído residual."
+
+#
+msgid   "Adaptive HF Ducking"
+msgstr  "Ducking Adaptativo de HF"
+
+#
+msgid   "Attenuate high frequencies based on noise level."
+msgstr  "Atenua altas frequências baseado no nível de ruído."
+
+#
+msgid   "Envelope Matching"
+msgstr  "Correspondência de Envelope"
+
+#
+msgid   "Match output loudness to input for natural dynamics."
+msgstr  "Iguala o volume da saída à entrada para dinâmica natural."
+
+#
+msgid   "Model Blending"
+msgstr  "Mesclagem de Modelos"
+
+#
+msgid   "Blend two AI models for improved noise reduction."
+msgstr  "Mescla dois modelos de IA para melhorar a redução de ruído."

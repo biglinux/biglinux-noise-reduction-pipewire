@@ -89,12 +89,11 @@ class NoiseModel(IntEnum):
 
     Models are organized by plugin type:
     - 0-9: GTCRN models
-    - 10-19: FastEnhancer models
     """
 
     # GTCRN models (model control: 0 or 1)
-    GTCRN_LOW_LATENCY = 0  # GTCRN simple model - lower latency
-    GTCRN_FULL_QUALITY = 1  # GTCRN full model - best quality
+    GTCRN_DNS3 = 0  # GTCRN DNS3 model - highest quality, strongest noise reduction
+    GTCRN_VCTK = 1  # GTCRN VCTK model - lower quality, lighter noise reduction
 
 
 class StereoMode(Enum):
@@ -120,21 +119,21 @@ class VisualizerStyle(IntEnum):
 
 MODEL_NAMES: dict[NoiseModel, str] = {
     # GTCRN models
-    NoiseModel.GTCRN_LOW_LATENCY: "GTCRN - Low Latency",
-    NoiseModel.GTCRN_FULL_QUALITY: "GTCRN - Full Quality",
+    NoiseModel.GTCRN_DNS3: "GTCRN - DNS3",
+    NoiseModel.GTCRN_VCTK: "GTCRN - VCTK",
 }
 
 MODEL_DESCRIPTIONS: dict[NoiseModel, str] = {
     # GTCRN models
-    NoiseModel.GTCRN_LOW_LATENCY: "GTCRN simple model - Lower latency, suitable for real-time communication",
-    NoiseModel.GTCRN_FULL_QUALITY: "GTCRN full model - Best noise reduction quality, slightly higher CPU usage",
+    NoiseModel.GTCRN_DNS3: "GTCRN DNS3 model - Highest quality noise reduction with built-in 80Hz highpass",
+    NoiseModel.GTCRN_VCTK: "GTCRN VCTK model - Lower quality, lighter noise reduction",
 }
 
 # Plugin to model mapping
 PLUGIN_MODELS: dict[AIPlugin, list[NoiseModel]] = {
     AIPlugin.GTCRN: [
-        NoiseModel.GTCRN_LOW_LATENCY,
-        NoiseModel.GTCRN_FULL_QUALITY,
+        NoiseModel.GTCRN_DNS3,
+        NoiseModel.GTCRN_VCTK,
     ],
 }
 
@@ -162,31 +161,84 @@ STRENGTH_MAX = 1.0
 STRENGTH_DEFAULT = 1.0
 STRENGTH_STEP = 0.05
 
+# Speech Strength (dual-strength VAD)
+SPEECH_STRENGTH_MIN = 0.0
+SPEECH_STRENGTH_MAX = 1.0
+SPEECH_STRENGTH_DEFAULT = 1.0
+SPEECH_STRENGTH_STEP = 0.05
+
+# Lookahead (ms)
+LOOKAHEAD_MS_MIN = 0
+LOOKAHEAD_MS_MAX = 200
+LOOKAHEAD_MS_DEFAULT = 0
+LOOKAHEAD_MS_STEP = 5
+
+# Voice Enhancement (unified control: 0.0 = off, 1.0 = max)
+VOICE_ENHANCE_MIN = 0.0
+VOICE_ENHANCE_MAX = 1.0
+VOICE_ENHANCE_DEFAULT = 0.0
+VOICE_ENHANCE_STEP = 0.05
+
+# Model Blending (toggle)
+MODEL_BLENDING_DEFAULT = False
+
 # Gate Filter
-GATE_THRESHOLD_MIN = -60
-GATE_THRESHOLD_MAX = 0
-GATE_THRESHOLD_DEFAULT = -30
-GATE_THRESHOLD_STEP = 1
+# Gate (Silence Filter)
+GATE_INTENSITY_MIN = 0.0
+GATE_INTENSITY_MAX = 1.0
+GATE_INTENSITY_DEFAULT = 0.5
+GATE_INTENSITY_STEP = 0.05
 
-GATE_RANGE_MIN = -90
-GATE_RANGE_MAX = 0
-GATE_RANGE_DEFAULT = -60
-GATE_RANGE_STEP = 1
 
-GATE_ATTACK_MIN = 0.1
-GATE_ATTACK_MAX = 500.0
-GATE_ATTACK_DEFAULT = 20.0
-GATE_ATTACK_STEP = 1.0
+@dataclass
+class GateConfig:
+    """Configuration for gate filter.
 
-GATE_HOLD_MIN = 0.0
-GATE_HOLD_MAX = 1000.0
-GATE_HOLD_DEFAULT = 300.0
-GATE_HOLD_STEP = 10.0
+    Uses a single 'intensity' parameter (0.0-1.0) that maps to all
+    gate parameters, optimized for voice gating.
+    """
 
-GATE_RELEASE_MIN = 0.0
-GATE_RELEASE_MAX = 1000.0
-GATE_RELEASE_DEFAULT = 150.0
-GATE_RELEASE_STEP = 10.0
+    enabled: bool = True
+    intensity: float = GATE_INTENSITY_DEFAULT
+
+    @property
+    def threshold_db(self) -> float:
+        """Map intensity to threshold: -50 (light) to -25 (heavy).
+
+        Higher threshold = gate closes earlier (more aggressive at
+        silencing background noise).
+        """
+        return -50.0 + self.intensity * 25.0
+
+    @property
+    def range_db(self) -> float:
+        """Map intensity to range: -40 (light) to -80 (heavy).
+
+        More negative = deeper silencing when gate is closed.
+        """
+        return -40.0 - self.intensity * 40.0
+
+    @property
+    def attack_ms(self) -> float:
+        """Fixed fast attack so speech comes through immediately."""
+        return 10.0
+
+    @property
+    def hold_ms(self) -> float:
+        """Map intensity to hold: 500 (light) to 200 (heavy).
+
+        Shorter hold = faster silence after speech stops.
+        """
+        return 500.0 - self.intensity * 300.0
+
+    @property
+    def release_ms(self) -> float:
+        """Map intensity to release: 300 (light) to 100 (heavy).
+
+        Shorter release = faster fade to silence.
+        """
+        return 300.0 - self.intensity * 200.0
+
 
 # Transient Suppressor (for click removal)
 TRANSIENT_ATTACK_MIN = -1.0
@@ -197,13 +249,13 @@ TRANSIENT_ATTACK_STEP = 0.1
 # Stereo Enhancement
 STEREO_WIDTH_MIN = 0.0
 STEREO_WIDTH_MAX = 1.0
-STEREO_WIDTH_DEFAULT = 0.75
+STEREO_WIDTH_DEFAULT = 0.7
 STEREO_WIDTH_STEP = 0.05
 
 
 CROSSFEED_MIN = 0.0
 CROSSFEED_MAX = 1.0
-CROSSFEED_DEFAULT = 0.45
+CROSSFEED_DEFAULT = 0.3
 CROSSFEED_STEP = 0.05
 
 # Equalizer (10-band)
@@ -230,20 +282,96 @@ class NoiseReductionConfig:
     """Configuration for AI noise reduction."""
 
     enabled: bool = True
-    model: NoiseModel = NoiseModel.GTCRN_FULL_QUALITY
+    model: NoiseModel = NoiseModel.GTCRN_DNS3
     strength: float = STRENGTH_DEFAULT
+    speech_strength: float = SPEECH_STRENGTH_DEFAULT
+    lookahead_ms: int = LOOKAHEAD_MS_DEFAULT
+    voice_enhance: float = VOICE_ENHANCE_DEFAULT
+    model_blending: bool = MODEL_BLENDING_DEFAULT
+
+
+# Compressor
+COMPRESSOR_INTENSITY_MIN = 0.0
+COMPRESSOR_INTENSITY_MAX = 1.0
+COMPRESSOR_INTENSITY_DEFAULT = 1.0
+COMPRESSOR_INTENSITY_STEP = 0.05
 
 
 @dataclass
-class GateConfig:
-    """Configuration for gate filter."""
+class CompressorConfig:
+    """Configuration for SC4 mono compressor.
+
+    Uses a single 'intensity' parameter (0.0-1.0) that maps to all
+    SC4m parameters, optimized for voice normalization.
+    """
 
     enabled: bool = True
-    threshold_db: int = GATE_THRESHOLD_DEFAULT
-    range_db: int = GATE_RANGE_DEFAULT
-    attack_ms: float = GATE_ATTACK_DEFAULT
-    hold_ms: float = GATE_HOLD_DEFAULT
-    release_ms: float = GATE_RELEASE_DEFAULT
+    intensity: float = COMPRESSOR_INTENSITY_DEFAULT
+
+    @property
+    def threshold_db(self) -> float:
+        """Map intensity to threshold: -20 (light) to -40 (heavy).
+
+        Lower threshold = more of the signal gets compressed,
+        catching both loud and moderate speech.
+        """
+        return -20.0 - self.intensity * 20.0
+
+    @property
+    def ratio(self) -> float:
+        """Map intensity to ratio: 3:1 (light) to 10:1 (heavy).
+
+        Moderate ratios avoid "pumping" artifacts. Combined with
+        slow attack/release this works as a leveler, not a limiter.
+        """
+        return 3.0 + self.intensity * 7.0
+
+    @property
+    def attack_ms(self) -> float:
+        """Slow attack to avoid modulating individual syllables.
+
+        150 ms lets transients pass naturally; the compressor only
+        reacts to sustained level changes (e.g. moving away from mic).
+        """
+        return 150.0
+
+    @property
+    def release_ms(self) -> float:
+        """Slow release to keep gain stable during pauses.
+
+        800 ms prevents the level from bouncing between words.
+        """
+        return 800.0
+
+    @property
+    def makeup_gain_db(self) -> float:
+        """Map intensity to makeup gain: +6 (light) to +18 (heavy)."""
+        return 6.0 + self.intensity * 12.0
+
+    @property
+    def knee_db(self) -> float:
+        """Wide soft knee for transparent leveling."""
+        return 12.0 + self.intensity * 4.0
+
+    @property
+    def rms_peak(self) -> float:
+        """Pure RMS detection — measures average energy, not peaks.
+
+        This is key for leveling: RMS ignores consonant transients
+        and only responds to the overall voice energy envelope.
+        """
+        return 0.0
+
+
+@dataclass
+class HpfConfig:
+    """Configuration for high-pass filter (rumble removal).
+
+    Disabled by default — GTCRN plugin has a built-in HP80 biquad.
+    """
+
+    enabled: bool = False
+    frequency: float = 80.0
 
 
 @dataclass
@@ -259,7 +387,7 @@ class StereoConfig:
     """Configuration for stereo enhancement."""
 
     enabled: bool = True
-    mode: StereoMode = StereoMode.DUAL_MONO
+    mode: StereoMode = StereoMode.MONO
     width: float = STEREO_WIDTH_DEFAULT
 
     crossfeed_enabled: bool = False
@@ -270,11 +398,11 @@ class StereoConfig:
 class EqualizerConfig:
     """Configuration for parametric equalizer."""
 
-    enabled: bool = False
+    enabled: bool = True
     bands: list[float] = field(
-        default_factory=lambda: [EQ_BAND_DEFAULT] * EQ_BAND_COUNT
+        default_factory=lambda: [0.0, 0.0, 0.0, 1.0, 0.0, 1.0, 2.0, 3.0, 1.0, 0.0]
     )
-    preset: str = "flat"
+    preset: str = "default_voice"
 
 
 @dataclass
@@ -316,6 +444,8 @@ class AppSettings:
 
     noise_reduction: NoiseReductionConfig = field(default_factory=NoiseReductionConfig)
     gate: GateConfig = field(default_factory=GateConfig)
+    compressor: CompressorConfig = field(default_factory=CompressorConfig)
+    hpf: HpfConfig = field(default_factory=HpfConfig)
     stereo: StereoConfig = field(default_factory=StereoConfig)
     equalizer: EqualizerConfig = field(default_factory=EqualizerConfig)
     transient: TransientConfig = field(default_factory=TransientConfig)
@@ -354,17 +484,31 @@ class AppSettings:
                 enabled=nr.get("enabled", True),
                 model=NoiseModel(nr.get("model", 0)),
                 strength=nr.get("strength", STRENGTH_DEFAULT),
+                speech_strength=nr.get("speech_strength", SPEECH_STRENGTH_DEFAULT),
+                lookahead_ms=nr.get("lookahead_ms", LOOKAHEAD_MS_DEFAULT),
+                voice_enhance=nr.get("voice_enhance", VOICE_ENHANCE_DEFAULT),
+                model_blending=nr.get("model_blending", MODEL_BLENDING_DEFAULT),
             )
 
         if "gate" in data:
             g = data["gate"]
             settings.gate = GateConfig(
                 enabled=g.get("enabled", True),
-                threshold_db=g.get("threshold_db", GATE_THRESHOLD_DEFAULT),
-                range_db=g.get("range_db", GATE_RANGE_DEFAULT),
-                attack_ms=g.get("attack_ms", GATE_ATTACK_DEFAULT),
-                hold_ms=g.get("hold_ms", GATE_HOLD_DEFAULT),
-                release_ms=g.get("release_ms", GATE_RELEASE_DEFAULT),
+                intensity=g.get("intensity", GATE_INTENSITY_DEFAULT),
+            )
+
+        if "compressor" in data:
+            comp = data["compressor"]
+            settings.compressor = CompressorConfig(
+                enabled=comp.get("enabled", False),
+                intensity=comp.get("intensity", COMPRESSOR_INTENSITY_DEFAULT),
+            )
+
+        if "hpf" in data:
+            h = data["hpf"]
+            settings.hpf = HpfConfig(
+                enabled=h.get("enabled", False),
+                frequency=h.get("frequency", 80.0),
             )
 
         if "stereo" in data:
@@ -563,6 +707,11 @@ def get_model_control_value(model: NoiseModel) -> int:
 # =============================================================================
 
 EQ_PRESETS: dict[str, dict[str, Any]] = {
+    "default_voice": {
+        "name": _("Default Voice"),
+        "description": _("Subtle presence boost for clear speech."),
+        "bands": [0.0, 0.0, 0.0, 1.0, 0.0, 1.0, 2.0, 3.0, 1.0, 0.0],
+    },
     "flat": {
         "name": _("Natural (No Effects)"),
         "description": _("Original sound without changes."),

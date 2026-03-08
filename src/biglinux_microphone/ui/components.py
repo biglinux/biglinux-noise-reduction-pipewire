@@ -66,6 +66,10 @@ def create_action_row_with_switch(
     switch = Gtk.Switch()
     switch.set_active(active)
     switch.set_valign(Gtk.Align.CENTER)
+    switch.update_property(
+        [Gtk.AccessibleProperty.LABEL],
+        [title],
+    )
 
     if on_toggled:
         switch.connect("notify::active", lambda s, _: on_toggled(s.get_active()))
@@ -127,6 +131,10 @@ def create_action_row_with_scale(
     scale.set_hexpand(True)
     scale.set_size_request(200, -1)
     scale.set_valign(Gtk.Align.CENTER)
+    scale.update_property(
+        [Gtk.AccessibleProperty.LABEL],
+        [title],
+    )
 
     # Add marks if provided
     if marks:
@@ -317,6 +325,10 @@ def create_icon_button(
 
     if tooltip:
         button.set_tooltip_text(tooltip)
+        button.update_property(
+            [Gtk.AccessibleProperty.LABEL],
+            [tooltip],
+        )
 
     if style_class:
         button.add_css_class(style_class)
@@ -441,6 +453,10 @@ def create_action_button(
         button = Gtk.Button(label=label)
 
     button.set_valign(Gtk.Align.CENTER)
+    button.update_property(
+        [Gtk.AccessibleProperty.LABEL],
+        [label],
+    )
 
     if style:
         button.add_css_class(style)
@@ -637,6 +653,10 @@ def create_expander_row_with_switch(
     switch = Gtk.Switch()
     switch.set_active(active)
     switch.set_valign(Gtk.Align.CENTER)
+    switch.update_property(
+        [Gtk.AccessibleProperty.LABEL],
+        [title],
+    )
 
     if on_toggled:
         switch.connect("notify::active", lambda s, _: on_toggled(s.get_active()))
@@ -690,6 +710,11 @@ def create_compact_eq_slider(
     scale.set_draw_value(False)
     scale.set_size_request(-1, 100)
     scale.set_vexpand(True)
+    freq_str = f"{freq // 1000}k Hz" if freq >= 1000 else f"{freq} Hz"
+    scale.update_property(
+        [Gtk.AccessibleProperty.LABEL],
+        [f"EQ {freq_str}"],
+    )
 
     # Add center mark
     scale.add_mark(0.0, Gtk.PositionType.RIGHT, None)

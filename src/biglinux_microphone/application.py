@@ -226,7 +226,7 @@ class MicrophoneApplication(Adw.Application):
         about.add_credit_section(
             _("Technologies used"),
             [
-                "GTCRN (Neural Network for Speech Enhancement)",
+                "GTCRN (Gated Temporal Convolutional Recurrent Network)",
                 "PipeWire Audio Server",
                 "GTK Development Team",
                 "Libadwaita Project",
@@ -248,4 +248,4 @@ class MicrophoneApplication(Adw.Application):
     ) -> None:
         """Handle preferences action - show toast with hint."""
         if self._window is not None:
-            self._window.show_toast("Use expanders to access settings", 2)
+            self._window.show_toast(_("Use expanders to access settings"), 2)

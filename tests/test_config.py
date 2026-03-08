@@ -15,10 +15,8 @@ from biglinux_microphone.config import (
     APP_ID,
     APP_NAME,
     EQ_BAND_COUNT,
-    EQ_BAND_DEFAULT,
     EQ_PRESETS,
-    GATE_RANGE_DEFAULT,
-    GATE_THRESHOLD_DEFAULT,
+    GATE_INTENSITY_DEFAULT,
     STEREO_WIDTH_DEFAULT,
     STRENGTH_DEFAULT,
     AppSettings,
@@ -44,18 +42,18 @@ class TestNoiseReductionConfig:
         """Test default configuration values."""
         config = NoiseReductionConfig()
         assert config.enabled is True
-        assert config.model == NoiseModel.GTCRN_FULL_QUALITY
+        assert config.model == NoiseModel.GTCRN_DNS3
         assert config.strength == STRENGTH_DEFAULT
 
     def test_custom_values(self) -> None:
         """Test custom configuration values."""
         config = NoiseReductionConfig(
             enabled=False,
-            model=NoiseModel.GTCRN_LOW_LATENCY,
+            model=NoiseModel.GTCRN_VCTK,
             strength=0.5,
         )
         assert config.enabled is False
-        assert config.model == NoiseModel.GTCRN_LOW_LATENCY
+        assert config.model == NoiseModel.GTCRN_VCTK
         assert config.strength == 0.5
 
 
@@ -66,19 +64,23 @@ class TestGateConfig:
         """Test default gate configuration."""
         config = GateConfig()
         assert config.enabled is True
-        assert config.threshold_db == GATE_THRESHOLD_DEFAULT
-        assert config.range_db == GATE_RANGE_DEFAULT
+        assert config.intensity == GATE_INTENSITY_DEFAULT
 
     def test_custom_values(self) -> None:
         """Test custom gate configuration."""
         config = GateConfig(
             enabled=False,
-            threshold_db=-50,
-            range_db=-20,
+            intensity=0.8,
         )
         assert config.enabled is False
-        assert config.threshold_db == -50
-        assert config.range_db == -20
+        assert config.intensity == 0.8
+
+    def test_derived_properties(self) -> None:
+        """Test that derived properties scale with intensity."""
+        low = GateConfig(intensity=0.0)
+        high = GateConfig(intensity=1.0)
+        assert low.threshold_db < high.threshold_db
+        assert low.range_db > high.range_db
 
 
 class TestStereoConfig:
@@ -88,7 +90,7 @@ class TestStereoConfig:
         """Test default stereo configuration."""
         config = StereoConfig()
         assert config.enabled is True
-        assert config.mode == StereoMode.DUAL_MONO
+        assert config.mode == StereoMode.MONO
         assert config.width == STEREO_WIDTH_DEFAULT
 
     def test_radio_mode(self) -> None:
@@ -106,10 +108,10 @@ class TestEqualizerConfig:
     def test_default_values(self) -> None:
         """Test default equalizer configuration."""
         config = EqualizerConfig()
-        assert config.enabled is False
+        assert config.enabled is True
         assert len(config.bands) == EQ_BAND_COUNT
-        assert all(b == EQ_BAND_DEFAULT for b in config.bands)
-        assert config.preset == "flat"
+        assert config.bands == [0.0, 0.0, 0.0, 1.0, 0.0, 1.0, 2.0, 3.0, 1.0, 0.0]
+        assert config.preset == "default_voice"
 
     def test_custom_bands(self) -> None:
         """Test custom EQ bands."""
@@ -166,16 +168,16 @@ class TestAppSettings:
         assert "ui" in data
         assert "bluetooth" in data
 
-        # Verify enums are converted to values (GTCRN_FULL_QUALITY = 1)
-        assert data["noise_reduction"]["model"] == 1
-        assert data["stereo"]["mode"] == "dual_mono"
+        # Verify enums are converted to values (GTCRN_DNS3 = 0)
+        assert data["noise_reduction"]["model"] == 0
+        assert data["stereo"]["mode"] == "mono"
         assert data["ui"]["visualizer_style"] == 0
 
     def test_from_dict(self) -> None:
         """Test settings deserialization from dictionary."""
         data = {
             "noise_reduction": {"enabled": False, "model": 1, "strength": 0.8},
-            "gate": {"enabled": False, "threshold_db": -45, "range_db": -10},
+            "gate": {"enabled": False, "intensity": 0.8},
             "stereo": {"enabled": True, "mode": "radio"},
             "equalizer": {"enabled": True, "preset": "voice_boost"},
             "window": {"width": 800, "height": 600},
@@ -186,11 +188,11 @@ class TestAppSettings:
         settings = AppSettings.from_dict(data)
 
         assert settings.noise_reduction.enabled is False
-        assert settings.noise_reduction.model == NoiseModel.GTCRN_FULL_QUALITY
+        assert settings.noise_reduction.model == NoiseModel.GTCRN_VCTK
         assert settings.noise_reduction.strength == 0.8
 
         assert settings.gate.enabled is False
-        assert settings.gate.threshold_db == -45
+        assert settings.gate.intensity == 0.8
 
         assert settings.stereo.enabled is True
         assert settings.stereo.mode == StereoMode.RADIO
@@ -210,7 +212,7 @@ class TestAppSettings:
         original = AppSettings(
             noise_reduction=NoiseReductionConfig(
                 enabled=True,
-                model=NoiseModel.GTCRN_FULL_QUALITY,
+                model=NoiseModel.GTCRN_DNS3,
                 strength=0.9,
             ),
             stereo=StereoConfig(
@@ -250,7 +252,7 @@ class TestSettingsIO:
             ):
                 settings = AppSettings(
                     noise_reduction=NoiseReductionConfig(strength=0.75),
-                    gate=GateConfig(threshold_db=-42),
+                    gate=GateConfig(intensity=0.7),
                 )
 
                 # Save settings
@@ -262,7 +264,7 @@ class TestSettingsIO:
                 with open(tmp_settings_file) as f:
                     data = json.load(f)
                     assert data["noise_reduction"]["strength"] == 0.75
-                    assert data["gate"]["threshold_db"] == -42
+                    assert data["gate"]["intensity"] == 0.7
 
     def test_load_corrupted_json(self) -> None:
         """Test loading corrupted JSON file."""
@@ -281,8 +283,8 @@ class TestEnumerations:
 
     def test_noise_model_values(self) -> None:
         """Test NoiseModel enumeration values."""
-        assert NoiseModel.GTCRN_LOW_LATENCY == 0
-        assert NoiseModel.GTCRN_FULL_QUALITY == 1
+        assert NoiseModel.GTCRN_DNS3 == 0
+        assert NoiseModel.GTCRN_VCTK == 1
 
     def test_stereo_mode_values(self) -> None:
         """Test StereoMode enumeration values."""
