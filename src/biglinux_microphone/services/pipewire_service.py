@@ -13,6 +13,7 @@ from __future__ import annotations
 
 import asyncio
 import logging
+import os
 import subprocess
 import threading
 from collections.abc import Callable
@@ -180,7 +181,7 @@ class PipeWireService:
                 ["pw-cli", "list-objects"],
                 capture_output=True,
                 text=True,
-                timeout=3,
+                timeout=5,
             )
             if result.returncode == 0:
                 return "Noise Canceling Microphone" in result.stdout
@@ -193,7 +194,7 @@ class PipeWireService:
                 ["pw-dump"],
                 capture_output=True,
                 text=True,
-                timeout=5,
+                timeout=8,
             )
             if result.returncode == 0:
                 import json
@@ -258,28 +259,48 @@ class PipeWireService:
             ensure_daemon_config()
             self._generate_config(settings)
 
-            # Start filter-chain as a separate background process
-            subprocess.Popen(
+            # Start filter-chain as a separate background process, capture PID
+            proc = subprocess.Popen(
                 ["/usr/bin/pipewire", "-c", "filter-chain.conf"],
                 stdout=subprocess.DEVNULL,
                 stderr=subprocess.DEVNULL,
                 start_new_session=True,
             )
+            pid = proc.pid
 
-            # Wait briefly for the filter-chain to initialize
-            await asyncio.sleep(0.5)
+            # Wait for filter to register in PipeWire graph.
+            # Uses process-aware polling: if the process dies, fail immediately
+            # instead of waiting the full timeout. Polls every 0.5s, up to 10s.
+            max_wait = 10.0
+            poll_interval = 0.5
+            elapsed = 0.0
+            await asyncio.sleep(poll_interval)
+            elapsed += poll_interval
 
-            # Verify startup (retry for up to 3 seconds)
-            for _ in range(6):
-                await asyncio.sleep(0.5)
+            while elapsed < max_wait:
+                # Check if process is still alive
+                try:
+                    os.kill(pid, 0)
+                except OSError:
+                    logger.error(
+                        "Filter-chain process (PID %d) died during startup", pid
+                    )
+                    break
+
                 if self.is_enabled():
-                    logger.info("Noise reduction started via filter-chain process")
+                    logger.info(
+                        "Noise reduction started via filter-chain process "
+                        "(PID %d, %.1fs)", pid, elapsed,
+                    )
                     self._cached_node_id = None
                     await self._configure_filter_source()
                     return True
 
+                await asyncio.sleep(poll_interval)
+                elapsed += poll_interval
+
             logger.error(
-                "Failed to start noise reduction - process not found after timeout"
+                "Failed to start noise reduction - not detected after %.1fs", elapsed
             )
             if self._config_file.exists():
                 self._config_file.unlink()
@@ -289,7 +310,7 @@ class PipeWireService:
             logger.exception("Error starting noise reduction")
             if self._config_file.exists():
                 self._config_file.unlink()
-            return
+            return False
 
     async def _configure_filter_source(self) -> None:
         """Configure the filter source after startup."""

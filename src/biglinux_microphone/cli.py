@@ -8,6 +8,7 @@ filter chain, including starting/stopping the filter process.
 
 import argparse
 import contextlib
+import os
 import re
 import subprocess
 import sys
@@ -56,21 +57,6 @@ def kill_filter_processes() -> None:
     for pid in find_filter_pids():
         with contextlib.suppress(OSError):
             subprocess.run(["kill", str(pid)], capture_output=True, check=False)
-
-
-def start_filter_process() -> bool:
-    """Start the pipewire filter-chain process."""
-    try:
-        subprocess.Popen(
-            ["/usr/bin/pipewire", "-c", "filter-chain.conf"],
-            start_new_session=True,
-            stdout=subprocess.DEVNULL,
-            stderr=subprocess.DEVNULL,
-        )
-        return True
-    except OSError as e:
-        print(f"Error starting pipewire: {e}", file=sys.stderr)
-        return False
 
 
 # =============================================================================
@@ -244,16 +230,64 @@ def cmd_start() -> int:
 
     ensure_daemon_config()
 
-    # Start the filter process
-    if not start_filter_process():
+    # Start the filter process and monitor its PID
+    try:
+        proc = subprocess.Popen(
+            ["/usr/bin/pipewire", "-c", "filter-chain.conf"],
+            start_new_session=True,
+            stdout=subprocess.DEVNULL,
+            stderr=subprocess.DEVNULL,
+        )
+    except OSError as e:
+        print(f"Error starting pipewire: {e}", file=sys.stderr)
         return 1
 
-    # Wait for filter to initialize and configure source
-    time.sleep(2)
+    # Wait for filter to register in PipeWire graph.
+    # Process-aware polling: if the process dies, fail immediately.
+    pid = proc.pid
+    max_wait = 10.0
+    poll_interval = 0.5
+    elapsed = 0.0
+    time.sleep(poll_interval)
+    elapsed += poll_interval
+    started = False
+
+    while elapsed < max_wait:
+        # Check if process is still alive
+        try:
+            os.kill(pid, 0)
+        except OSError:
+            print(
+                f"Filter-chain process (PID {pid}) died during startup",
+                file=sys.stderr,
+            )
+            break
+
+        try:
+            result = subprocess.run(
+                ["pw-cli", "list-objects"],
+                capture_output=True,
+                text=True,
+                timeout=5,
+            )
+            if result.returncode == 0 and "Noise Canceling Microphone" in result.stdout:
+                started = True
+                break
+        except Exception:
+            pass
+
+        time.sleep(poll_interval)
+        elapsed += poll_interval
+
+    if not started:
+        print(
+            f"Warning: filter not detected after {elapsed:.1f}s", file=sys.stderr
+        )
+
     configure_filter_source()
 
-    # Retry configuration for stability
-    time.sleep(2)
+    # Brief retry for stability
+    time.sleep(1)
     configure_filter_source()
 
     return 0
