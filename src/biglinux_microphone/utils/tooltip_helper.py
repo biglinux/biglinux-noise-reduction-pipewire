@@ -38,7 +38,8 @@ def _is_x11_backend() -> bool:
 TOOLTIPS = {
     # Main toggle
     "noise_reduction_toggle": _(
-        "Reduces unwanted background noise from your microphone.\n\n"
+        "Reduces unwanted background noise from your microphone\n"
+        "using the GTCRN neural network.\n\n"
         "Removes sounds like fans, air conditioning, keyboard typing,\n"
         "and other ambient noise, keeping only your voice clear."
     ),
@@ -55,7 +56,7 @@ TOOLTIPS = {
     ),
     "noise_reduction_strength": _(
         "How much noise to remove.\n\n"
-        "• Light: Removes only the most obvious noises\n"
+        "• Low: Removes only the most obvious noises\n"
         "• Medium: Good for most situations\n"
         "• Maximum: Removes as much noise as possible\n\n"
         "If the voice sounds distorted, reduce this slider."
@@ -96,7 +97,7 @@ TOOLTIPS = {
     ),
     "compressor_intensity": _(
         "How much volume correction to apply.\n\n"
-        "• Light: Gentle correction, very natural sound\n"
+        "• Low: Gentle correction, very natural sound\n"
         "• Balanced: Good for most people\n"
         "• Maximum: Strong leveling — whisper and shout\n"
         "  come out at similar volume\n\n"
@@ -111,7 +112,7 @@ TOOLTIPS = {
     ),
     "gate_intensity": _(
         "Controls how aggressively the gate removes residual noise.\n\n"
-        "• Light: Only mutes during long silences\n"
+        "• Low: Only mutes during long silences\n"
         "• Balanced: Good for most voices\n"
         "• Maximum: Complete silence between words\n\n"
         "Start at Balanced and adjust to taste."

@@ -70,7 +70,7 @@ msgstr  ""
 # File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/ui/main_view.py, line: 364
 # File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/ui/main_view.py, line: 462
 # File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/ui/main_view.py, line: 569
-msgid   "Light"
+msgid   "Low"
 msgstr  ""
 
 #
@@ -417,7 +417,8 @@ msgstr  ""
 
 #
 # File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/utils/tooltip_helper.py, line: 41
-msgid   "Reduces unwanted background noise from your microphone.\n"
+msgid   "Reduces unwanted background noise from your microphone\n"
+        "using the GTCRN neural network.\n"
         "\n"
         "Removes sounds like fans, air conditioning, keyboard typing,\n"
         "and other ambient noise, keeping only your voice clear."
@@ -440,7 +441,7 @@ msgstr  ""
 # File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/utils/tooltip_helper.py, line: 57
 msgid   "How much noise to remove.\n"
         "\n"
-        "• Light: Removes only the most obvious noises\n"
+        "• Low: Removes only the most obvious noises\n"
         "• Medium: Good for most situations\n"
         "• Maximum: Removes as much noise as possible\n"
         "\n"
@@ -501,7 +502,7 @@ msgstr  ""
 # File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/utils/tooltip_helper.py, line: 98
 msgid   "How much volume correction to apply.\n"
         "\n"
-        "• Light: Gentle correction, very natural sound\n"
+        "• Low: Gentle correction, very natural sound\n"
         "• Balanced: Good for most people\n"
         "• Maximum: Strong leveling — whisper and shout\n"
         "  come out at similar volume\n"
@@ -523,7 +524,7 @@ msgstr  ""
 # File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/utils/tooltip_helper.py, line: 113
 msgid   "Controls how aggressively the gate removes residual noise.\n"
         "\n"
-        "• Light: Only mutes during long silences\n"
+        "• Low: Only mutes during long silences\n"
         "• Balanced: Good for most voices\n"
         "• Maximum: Complete silence between words\n"
         "\n"

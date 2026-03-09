@@ -361,7 +361,7 @@ class MainView(Adw.NavigationPage):
             digits=0,
             on_changed=self._on_strength_changed,
             marks=[
-                (0.0, _("Light")),
+                (0.0, _("Low")),
                 (0.5, _("Medium")),
                 (1.0, _("Maximum")),
             ],
@@ -459,7 +459,7 @@ class MainView(Adw.NavigationPage):
                 digits=2,
                 on_changed=self._on_compressor_intensity_changed,
                 marks=[
-                    (0.0, _("Light")),
+                    (0.0, _("Low")),
                     (0.5, _("Balanced")),
                     (1.0, _("Maximum")),
                 ],
@@ -566,7 +566,7 @@ class MainView(Adw.NavigationPage):
                 digits=2,
                 on_changed=self._on_gate_intensity_changed,
                 marks=[
-                    (0.0, _("Light")),
+                    (0.0, _("Low")),
                     (0.5, _("Balanced")),
                     (1.0, _("Maximum")),
                 ],
