@@ -425,7 +425,7 @@ msgid   "Reduces unwanted background noise from your microphone\n"
 msgstr  ""
 
 #
-# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/utils/tooltip_helper.py, line: 47
+# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/utils/tooltip_helper.py, line: 48
 msgid   "Choose how noise is cleaned:\n"
         "\n"
         "• Maximum Cleaning (DNS3): Removes the most noise possible.\n"
@@ -438,7 +438,7 @@ msgid   "Choose how noise is cleaned:\n"
 msgstr  ""
 
 #
-# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/utils/tooltip_helper.py, line: 57
+# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/utils/tooltip_helper.py, line: 58
 msgid   "How much noise to remove.\n"
         "\n"
         "• Low: Removes only the most obvious noises\n"
@@ -449,7 +449,7 @@ msgid   "How much noise to remove.\n"
 msgstr  ""
 
 #
-# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/utils/tooltip_helper.py, line: 64
+# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/utils/tooltip_helper.py, line: 65
 msgid   "Whether to keep filtering active while you are speaking.\n"
         "\n"
         "• Off: Filter pauses during speech — voice sounds\n"
@@ -461,7 +461,7 @@ msgid   "Whether to keep filtering active while you are speaking.\n"
 msgstr  ""
 
 #
-# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/utils/tooltip_helper.py, line: 72
+# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/utils/tooltip_helper.py, line: 73
 msgid   "Prevents the beginning of words from being cut off.\n"
         "\n"
         "Keeps a small audio buffer so the filter can react\n"
@@ -474,7 +474,7 @@ msgid   "Prevents the beginning of words from being cut off.\n"
 msgstr  ""
 
 #
-# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/utils/tooltip_helper.py, line: 81
+# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/utils/tooltip_helper.py, line: 82
 msgid   "Restores voice quality that may be lost during filtering.\n"
         "\n"
         "When noise removal is aggressive, the voice can sound\n"
@@ -488,7 +488,7 @@ msgid   "Restores voice quality that may be lost during filtering.\n"
 msgstr  ""
 
 #
-# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/utils/tooltip_helper.py, line: 91
+# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/utils/tooltip_helper.py, line: 92
 msgid   "Evens out the volume of your voice.\n"
         "\n"
         "If you speak too loud, it lowers the volume.\n"
@@ -499,7 +499,7 @@ msgid   "Evens out the volume of your voice.\n"
 msgstr  ""
 
 #
-# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/utils/tooltip_helper.py, line: 98
+# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/utils/tooltip_helper.py, line: 99
 msgid   "How much volume correction to apply.\n"
         "\n"
         "• Low: Gentle correction, very natural sound\n"
@@ -511,7 +511,7 @@ msgid   "How much volume correction to apply.\n"
 msgstr  ""
 
 #
-# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/utils/tooltip_helper.py, line: 107
+# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/utils/tooltip_helper.py, line: 108
 msgid   "Silence filter that mutes the mic when you're not speaking.\n"
         "\n"
         "Works after noise reduction. Eliminates any residual\n"
@@ -521,7 +521,7 @@ msgid   "Silence filter that mutes the mic when you're not speaking.\n"
 msgstr  ""
 
 #
-# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/utils/tooltip_helper.py, line: 113
+# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/utils/tooltip_helper.py, line: 114
 msgid   "Controls how aggressively the gate removes residual noise.\n"
         "\n"
         "• Low: Only mutes during long silences\n"
@@ -532,7 +532,7 @@ msgid   "Controls how aggressively the gate removes residual noise.\n"
 msgstr  ""
 
 #
-# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/utils/tooltip_helper.py, line: 121
+# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/utils/tooltip_helper.py, line: 122
 msgid   "Voice effects and stereo processing.\n"
         "\n"
         "Converts your mono microphone to stereo or applies\n"
@@ -540,7 +540,7 @@ msgid   "Voice effects and stereo processing.\n"
 msgstr  ""
 
 #
-# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/utils/tooltip_helper.py, line: 126
+# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/utils/tooltip_helper.py, line: 127
 msgid   "Choose the voice effect:\n"
         "\n"
         "• Dual Mono: Duplicates signal to both channels (stereo)\n"
@@ -549,7 +549,7 @@ msgid   "Choose the voice effect:\n"
 msgstr  ""
 
 #
-# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/utils/tooltip_helper.py, line: 132
+# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/utils/tooltip_helper.py, line: 133
 msgid   "Intensity of the selected effect.\n"
         "\n"
         "• Studio: Amount of vocal processing\n"
@@ -557,7 +557,7 @@ msgid   "Intensity of the selected effect.\n"
 msgstr  ""
 
 #
-# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/utils/tooltip_helper.py, line: 138
+# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/utils/tooltip_helper.py, line: 139
 msgid   "Equalizer to adjust the tone of your voice.\n"
         "\n"
         "Increase or decrease specific frequencies\n"
@@ -565,7 +565,7 @@ msgid   "Equalizer to adjust the tone of your voice.\n"
 msgstr  ""
 
 #
-# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/utils/tooltip_helper.py, line: 143
+# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/utils/tooltip_helper.py, line: 144
 msgid   "Quick presets for common use cases:\n"
         "\n"
         "• Flat: No changes\n"
@@ -576,7 +576,7 @@ msgid   "Quick presets for common use cases:\n"
 msgstr  ""
 
 #
-# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/utils/tooltip_helper.py, line: 151
+# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/utils/tooltip_helper.py, line: 152
 msgid   "Adjust individual frequency bands:\n"
         "\n"
         "• Left bands (31-250 Hz): Bass and low frequencies\n"
@@ -587,14 +587,14 @@ msgid   "Adjust individual frequency bands:\n"
 msgstr  ""
 
 #
-# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/utils/tooltip_helper.py, line: 159
+# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/utils/tooltip_helper.py, line: 160
 msgid   "Show additional controls for fine-tuning your audio.\n"
         "\n"
         "Includes equalizer, AI model selection, and visualizer options."
 msgstr  ""
 
 #
-# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/utils/tooltip_helper.py, line: 164
+# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/utils/tooltip_helper.py, line: 165
 msgid   "Activate audio loopback (Monitor).\n"
         "\n"
         "Allows hearing your own processed voice to test adjustments.\n"
@@ -602,7 +602,7 @@ msgid   "Activate audio loopback (Monitor).\n"
 msgstr  ""
 
 #
-# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/utils/tooltip_helper.py, line: 169
+# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/utils/tooltip_helper.py, line: 170
 msgid   "Add an extra delay to the monitor return.\n"
         "\n"
         "Useful for checking audio/video sync in recordings or to avoid "
@@ -610,14 +610,14 @@ msgid   "Add an extra delay to the monitor return.\n"
 msgstr  ""
 
 #
-# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/utils/tooltip_helper.py, line: 175
+# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/utils/tooltip_helper.py, line: 176
 msgid   "Automatically switches your headset between listening mode and call "
         "mode when you use the microphone. Note: Using the headset microphone "
         "generally reduces both headphone and microphone quality."
 msgstr  ""
 
 #
-# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/utils/tooltip_helper.py, line: 180
+# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/utils/tooltip_helper.py, line: 181
 msgid   "Choose how the audio visualizer displays:\n"
         "\n"
         "• Modern Waves: Smooth wave animation\n"
