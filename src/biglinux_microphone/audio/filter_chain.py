@@ -362,9 +362,10 @@ context.modules = [
         """Generate mono (non-stereo) configuration."""
         c = self._config
 
-        # Build list of active filters in order: hpf -> compressor -> ai -> gate -> eq
-        # HPF removes rumble first, compressor evens volume before AI,
-        # AI cleans noise, gate mutes residual noise in silence, EQ shapes tone.
+        # Build list of active filters in order: hpf -> transient -> compressor -> ai -> gate -> eq
+        # HPF removes rumble first, transient suppresses clicks/plosives,
+        # compressor evens volume before AI, AI cleans noise,
+        # gate mutes residual noise in silence, EQ shapes tone.
         # Each entry: (name, input_port, output_port)
         active_filters: list[tuple[str, str, str]] = []
         nodes: list[str] = []
@@ -372,6 +373,10 @@ context.modules = [
         if c.hpf_enabled:
             active_filters.append(("hpf", "In", "Out"))
             nodes.append(self._generate_hpf_node())
+
+        if c.transient_enabled:
+            active_filters.append(("transient", "Input", "Output"))
+            nodes.append(self._generate_transient_node())
 
         if c.compressor_enabled:
             active_filters.append(("compressor", "Input", "Output"))
@@ -496,7 +501,7 @@ context.modules = [
         """
         c = self._config
 
-        # Build list of active filters in order: hpf -> compressor -> ai -> gate -> eq
+        # Build list of active filters in order: hpf -> transient -> compressor -> ai -> gate -> eq
         # Each entry: (name, input_port, output_port)
         active_filters: list[tuple[str, str, str]] = []
         nodes: list[str] = []
@@ -504,6 +509,10 @@ context.modules = [
         if c.hpf_enabled:
             active_filters.append(("hpf", "In", "Out"))
             nodes.append(self._generate_hpf_node())
+
+        if c.transient_enabled:
+            active_filters.append(("transient", "Input", "Output"))
+            nodes.append(self._generate_transient_node())
 
         # RADIO mode has its own compressor — skip standard one to avoid duplicate
         if c.compressor_enabled and c.stereo_mode != StereoMode.RADIO:

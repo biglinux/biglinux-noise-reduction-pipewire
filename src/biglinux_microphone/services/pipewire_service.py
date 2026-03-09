@@ -1115,6 +1115,8 @@ class PipeWireService:
         config = FilterChainConfig(
             hpf_enabled=settings.hpf.enabled,
             hpf_frequency=settings.hpf.frequency,
+            transient_enabled=settings.transient.enabled,
+            transient_attack=settings.transient.attack,
             noise_reduction_enabled=settings.noise_reduction.enabled,
             noise_reduction_model=settings.noise_reduction.model,
             noise_reduction_strength=settings.noise_reduction.strength,

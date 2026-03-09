@@ -50,6 +50,10 @@ class FilterChainState:
     hpf_enabled: bool = False
     hpf_frequency: float = 80.0
 
+    # Transient settings
+    transient_enabled: bool = False
+    transient_attack: float = -0.5
+
     # Compressor settings
     compressor_enabled: bool = True
     compressor_intensity: float = 1.0
@@ -95,6 +99,8 @@ class FilterChainState:
         return FilterChainConfig(
             hpf_enabled=self.hpf_enabled,
             hpf_frequency=self.hpf_frequency,
+            transient_enabled=self.transient_enabled,
+            transient_attack=self.transient_attack,
             noise_reduction_enabled=self.noise_reduction_enabled,
             noise_reduction_model=self.noise_reduction_model,
             noise_reduction_strength=self.noise_reduction_strength,

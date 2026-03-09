@@ -45,6 +45,10 @@ from biglinux_microphone.config import (
     STRENGTH_DEFAULT,
     STRENGTH_MAX,
     STRENGTH_MIN,
+    TRANSIENT_ATTACK_DEFAULT,
+    TRANSIENT_ATTACK_MAX,
+    TRANSIENT_ATTACK_MIN,
+    TRANSIENT_ATTACK_STEP,
     VOICE_ENHANCE_DEFAULT,
     VOICE_ENHANCE_MAX,
     VOICE_ENHANCE_MIN,
@@ -190,6 +194,14 @@ class MainView(Adw.NavigationPage):
         compressor_group = self._create_compressor_section()
         main_box.append(compressor_group)
 
+        # === High-Pass Filter ===
+        hpf_group = self._create_hpf_section()
+        main_box.append(hpf_group)
+
+        # === Transient Suppressor ===
+        transient_group = self._create_transient_section()
+        main_box.append(transient_group)
+
         # === Voice Effects (Expander) ===
         stereo_group = self._create_stereo_section()
         main_box.append(stereo_group)
@@ -256,6 +268,14 @@ class MainView(Adw.NavigationPage):
         # Compressor section
         self._add_tooltip(self._compressor_expander, "compressor_toggle")
         self._add_tooltip(self._compressor_intensity_row, "compressor_intensity")
+
+        # HPF section
+        self._add_tooltip(self._hpf_expander, "hpf_toggle")
+        self._add_tooltip(self._hpf_freq_row, "hpf_frequency")
+
+        # Transient section
+        self._add_tooltip(self._transient_expander, "transient_toggle")
+        self._add_tooltip(self._transient_attack_row, "transient_attack")
 
         # Noise Reduction section
         self._add_tooltip(self._nr_expander, "noise_reduction_toggle")
@@ -446,6 +466,75 @@ class MainView(Adw.NavigationPage):
             )
         )
         self._compressor_expander.add_row(self._compressor_intensity_row)
+
+        return group
+
+    def _create_hpf_section(self) -> Adw.PreferencesGroup:
+        """Create high-pass filter section."""
+        group = create_preferences_group("", "")
+
+        self._hpf_expander, self._hpf_switch = create_expander_row_with_switch(
+            _("High-Pass Filter"),
+            subtitle=_("Removes low-frequency rumble"),
+            icon_name="audio-volume-low-symbolic",
+            active=False,
+            expanded=False,
+            on_toggled=self._on_hpf_toggled,
+        )
+        group.add(self._hpf_expander)
+
+        self._hpf_freq_row, self._hpf_freq_scale = create_action_row_with_scale(
+            _("Frequency (Hz)"),
+            min_value=20,
+            max_value=500,
+            value=80,
+            step=5,
+            digits=0,
+            on_changed=self._on_hpf_freq_changed,
+            marks=[
+                (20, "20"),
+                (80, "80"),
+                (200, "200"),
+                (500, "500"),
+            ],
+        )
+        self._hpf_expander.add_row(self._hpf_freq_row)
+
+        return group
+
+    def _create_transient_section(self) -> Adw.PreferencesGroup:
+        """Create transient suppressor section."""
+        group = create_preferences_group("", "")
+
+        self._transient_expander, self._transient_switch = (
+            create_expander_row_with_switch(
+                _("Transient Suppressor"),
+                subtitle=_("Suppresses clicks and plosives"),
+                icon_name="audio-input-microphone-symbolic",
+                active=False,
+                expanded=False,
+                on_toggled=self._on_transient_toggled,
+            )
+        )
+        group.add(self._transient_expander)
+
+        self._transient_attack_row, self._transient_attack_scale = (
+            create_action_row_with_scale(
+                _("Attack"),
+                min_value=TRANSIENT_ATTACK_MIN,
+                max_value=TRANSIENT_ATTACK_MAX,
+                value=TRANSIENT_ATTACK_DEFAULT,
+                step=TRANSIENT_ATTACK_STEP,
+                digits=1,
+                on_changed=self._on_transient_attack_changed,
+                marks=[
+                    (-1.0, "-1.0"),
+                    (-0.5, "-0.5"),
+                    (0.0, "0"),
+                ],
+            )
+        )
+        self._transient_expander.add_row(self._transient_attack_row)
 
         return group
 
@@ -721,6 +810,14 @@ class MainView(Adw.NavigationPage):
                 self._settings.compressor.intensity
             )
 
+            # HPF
+            self._hpf_switch.set_active(self._settings.hpf.enabled)
+            self._hpf_freq_scale.set_value(self._settings.hpf.frequency)
+
+            # Transient
+            self._transient_switch.set_active(self._settings.transient.enabled)
+            self._transient_attack_scale.set_value(self._settings.transient.attack)
+
             # Strength subtitle
             strength_percent = int(self._settings.noise_reduction.strength * 100)
             self._strength_row.set_subtitle(
@@ -804,6 +901,8 @@ class MainView(Adw.NavigationPage):
         # All sections depend on noise reduction except Bluetooth
         self._gate_expander.set_sensitive(nr_enabled)
         self._compressor_expander.set_sensitive(nr_enabled)
+        self._hpf_expander.set_sensitive(nr_enabled)
+        self._transient_expander.set_sensitive(nr_enabled)
         self._stereo_expander.set_sensitive(nr_enabled)
         self._eq_expander.set_sensitive(nr_enabled)
 
@@ -1162,6 +1261,58 @@ class MainView(Adw.NavigationPage):
         self._settings.compressor.intensity = value
         self._schedule_settings_save()
         self._pipewire.set_compressor_intensity(value)
+
+    def _on_hpf_toggled(self, active: bool) -> None:
+        """Handle high-pass filter toggle."""
+        if self._loading:
+            return
+
+        self._settings.hpf.enabled = active
+        self._settings_service.save(self._settings)
+        if self._settings.noise_reduction.enabled:
+            self._show_loading()
+            self._pipewire.apply_config(
+                self._settings, on_complete=self._on_restart_complete
+            )
+
+    def _on_hpf_freq_changed(self, value: float) -> None:
+        """Handle HPF frequency change."""
+        if self._loading:
+            return
+
+        self._settings.hpf.frequency = value
+        self._settings_service.save(self._settings)
+        if self._settings.hpf.enabled and self._settings.noise_reduction.enabled:
+            self._show_loading()
+            self._pipewire.apply_config(
+                self._settings, on_complete=self._on_restart_complete
+            )
+
+    def _on_transient_toggled(self, active: bool) -> None:
+        """Handle transient suppressor toggle."""
+        if self._loading:
+            return
+
+        self._settings.transient.enabled = active
+        self._settings_service.save(self._settings)
+        if self._settings.noise_reduction.enabled:
+            self._show_loading()
+            self._pipewire.apply_config(
+                self._settings, on_complete=self._on_restart_complete
+            )
+
+    def _on_transient_attack_changed(self, value: float) -> None:
+        """Handle transient attack change."""
+        if self._loading:
+            return
+
+        self._settings.transient.attack = value
+        self._settings_service.save(self._settings)
+        if self._settings.transient.enabled and self._settings.noise_reduction.enabled:
+            self._show_loading()
+            self._pipewire.apply_config(
+                self._settings, on_complete=self._on_restart_complete
+            )
 
     def _on_gate_toggled(self, active: bool) -> None:
         """Handle gate toggle."""
