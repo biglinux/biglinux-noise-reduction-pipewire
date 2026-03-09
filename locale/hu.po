@@ -116,6 +116,30 @@ msgstr "Intenzitás"
 msgid "Balanced"
 msgstr "Kiegyensúlyozott"
 # 
+# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/ui/main_view.py, line: 477
+msgid "High-Pass Filter"
+msgstr "Magasáteresztő szűrő"
+# 
+# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/ui/main_view.py, line: 478
+msgid "Removes low-frequency rumble"
+msgstr "Eltávolítja az alacsony frekvenciájú zúgást"
+# 
+# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/ui/main_view.py, line: 487
+msgid "Frequency (Hz)"
+msgstr "Frekvencia (Hz)"
+# 
+# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/ui/main_view.py, line: 511
+msgid "Transient Suppressor"
+msgstr "Átmeneti elnyomó"
+# 
+# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/ui/main_view.py, line: 512
+msgid "Suppresses clicks and plosives"
+msgstr "Elnyomja a kattintásokat és a plózívokat."
+# 
+# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/ui/main_view.py, line: 523
+msgid "Attack"
+msgstr "Támadás"
+# 
 # File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/ui/main_view.py, line: 308
 msgid "Silence Filter (Gate)"
 msgstr "Csend Szűrő (Kapuk)"

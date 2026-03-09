@@ -116,6 +116,30 @@ msgstr "Intensitate"
 msgid "Balanced"
 msgstr "Echilibrat"
 # 
+# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/ui/main_view.py, line: 477
+msgid "High-Pass Filter"
+msgstr "Filtru trece-înalt"
+# 
+# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/ui/main_view.py, line: 478
+msgid "Removes low-frequency rumble"
+msgstr "Elimină zgomotul de frecvență joasă."
+# 
+# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/ui/main_view.py, line: 487
+msgid "Frequency (Hz)"
+msgstr "Frecvență (Hz)"
+# 
+# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/ui/main_view.py, line: 511
+msgid "Transient Suppressor"
+msgstr "Supresor Transient"
+# 
+# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/ui/main_view.py, line: 512
+msgid "Suppresses clicks and plosives"
+msgstr "Suprimă clicurile și plosivele"
+# 
+# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/ui/main_view.py, line: 523
+msgid "Attack"
+msgstr "Atac"
+# 
 # File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/ui/main_view.py, line: 308
 msgid "Silence Filter (Gate)"
 msgstr "Filtru de tăcere (Gate)"
