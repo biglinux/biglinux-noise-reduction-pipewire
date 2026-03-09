@@ -251,6 +251,10 @@ msgstr "0秒"
 # 
 # File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/ui/main_view.py, line: 731
 # 
+# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/ui/main_view.py, line: 731
+# 
+# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/ui/main_view.py, line: 731
+# 
 # File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/ui/main_view.py, line: 642
 # 
 # File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/ui/main_view.py, line: 642
