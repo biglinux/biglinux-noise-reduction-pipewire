@@ -94,7 +94,7 @@ class NoiseModel(IntEnum):
 
     # GTCRN models (model control: 0 or 1)
     GTCRN_DNS3 = 0  # GTCRN DNS3 model - highest quality, strongest noise reduction
-    GTCRN_VCTK = 1  # GTCRN VCTK model - lower quality, lighter noise reduction
+    GTCRN_VCTK = 1  # GTCRN VCTK model - lower quality, lower noise reduction
 
 
 class StereoMode(Enum):
@@ -127,7 +127,7 @@ MODEL_NAMES: dict[NoiseModel, str] = {
 MODEL_DESCRIPTIONS: dict[NoiseModel, str] = {
     # GTCRN models
     NoiseModel.GTCRN_DNS3: "GTCRN DNS3 model - Highest quality noise reduction with built-in 80Hz highpass",
-    NoiseModel.GTCRN_VCTK: "GTCRN VCTK model - Lower quality, lighter noise reduction",
+    NoiseModel.GTCRN_VCTK: "GTCRN VCTK model - Lower quality, lower noise reduction",
 }
 
 # Plugin to model mapping
@@ -204,7 +204,7 @@ class GateConfig:
 
     @property
     def threshold_db(self) -> float:
-        """Map intensity to threshold: -50 (light) to -15 (heavy).
+        """Map intensity to threshold: -50 (low) to -15 (heavy).
 
         Uses sqrt curve so "Balanced" (0.5) ≈ -25 dB (previous max).
         Higher threshold = gate closes earlier (more aggressive).
@@ -213,7 +213,7 @@ class GateConfig:
 
     @property
     def range_db(self) -> float:
-        """Map intensity to range: -40 (light) to -90 (heavy).
+        """Map intensity to range: -40 (low) to -90 (heavy).
 
         Uses sqrt curve so "Balanced" (0.5) ≈ -75 dB.
         More negative = deeper silencing when gate is closed.
@@ -227,7 +227,7 @@ class GateConfig:
 
     @property
     def hold_ms(self) -> float:
-        """Map intensity to hold: 500 (light) to 100 (heavy).
+        """Map intensity to hold: 500 (low) to 100 (heavy).
 
         Uses sqrt curve so "Balanced" (0.5) ≈ 217 ms (was 200 ms).
         Shorter hold = faster silence after speech stops.
@@ -310,7 +310,7 @@ class CompressorConfig:
 
     @property
     def threshold_db(self) -> float:
-        """Map intensity to threshold: -20 (light) to -40 (heavy).
+        """Map intensity to threshold: -20 (low) to -40 (heavy).
 
         Lower threshold = more of the signal gets compressed,
         catching both loud and moderate speech.
@@ -319,7 +319,7 @@ class CompressorConfig:
 
     @property
     def ratio(self) -> float:
-        """Map intensity to ratio: 3:1 (light) to 10:1 (heavy).
+        """Map intensity to ratio: 3:1 (low) to 10:1 (heavy).
 
         Moderate ratios avoid "pumping" artifacts. Combined with
         slow attack/release this works as a leveler, not a limiter.
@@ -345,7 +345,7 @@ class CompressorConfig:
 
     @property
     def makeup_gain_db(self) -> float:
-        """Map intensity to makeup gain: +6 (light) to +18 (heavy)."""
+        """Map intensity to makeup gain: +6 (low) to +18 (heavy)."""
         return 6.0 + self.intensity * 12.0
 
     @property
