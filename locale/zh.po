@@ -56,26 +56,6 @@ msgstr "智能（两者结合）"
 msgid "Noise Removal Intensity"
 msgstr "噪声去除强度"
 # 
-# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/ui/main_view.py, line: 344
-# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/ui/main_view.py, line: 442
-# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/ui/main_view.py, line: 480
-msgid "Low"
-msgstr "光"
-# 
-# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/ui/main_view.py, line: 257
-# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/ui/main_view.py, line: 332
-msgid "Medium"
-msgstr "中等"
-# 
-# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/ui/main_view.py, line: 346
-# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/ui/main_view.py, line: 365
-# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/ui/main_view.py, line: 384
-# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/ui/main_view.py, line: 402
-# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/ui/main_view.py, line: 444
-# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/ui/main_view.py, line: 482
-msgid "Maximum"
-msgstr "最大值"
-# 
 # File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/ui/main_view.py, line: 355
 msgid "Filter During Speech"
 msgstr "语音期间过滤"
@@ -90,13 +70,13 @@ msgstr "关闭"
 msgid "Syllable Protection"
 msgstr "音节保护"
 # 
-# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/ui/main_view.py, line: 1148
-msgid "Normal"
-msgstr "正常"
-# 
 # File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/ui/main_view.py, line: 392
 msgid "Voice Recovery"
 msgstr "语音恢复"
+# 
+# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/ui/main_view.py, line: 428
+msgid "Noise Gate"
+msgstr "噪声门"
 # 
 # File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/ui/main_view.py, line: 420
 msgid "Volume Normalizer"
@@ -111,11 +91,6 @@ msgstr "平衡音量——响亮的声音变得更柔和，安静的声音变得
 msgid "Intensity"
 msgstr "强度"
 # 
-# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/ui/main_view.py, line: 443
-# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/ui/main_view.py, line: 481
-msgid "Balanced"
-msgstr "平衡"
-# 
 # File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/ui/main_view.py, line: 477
 msgid "High-Pass Filter"
 msgstr "高通滤波器"
@@ -127,18 +102,6 @@ msgstr "去除低频隆隆声"
 # File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/ui/main_view.py, line: 487
 msgid "Frequency (Hz)"
 msgstr "频率 (Hz)"
-# 
-# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/ui/main_view.py, line: 511
-msgid "Transient Suppressor"
-msgstr "瞬态抑制器"
-# 
-# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/ui/main_view.py, line: 512
-msgid "Suppresses clicks and plosives"
-msgstr "抑制点击声和爆破音"
-# 
-# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/ui/main_view.py, line: 523
-msgid "Attack"
-msgstr "攻击"
 # 
 # File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/ui/main_view.py, line: 308
 msgid "Silence Filter (Gate)"
@@ -247,6 +210,10 @@ msgstr "监控反馈延迟。用于检查同步。"
 msgid "0s"
 msgstr "0秒"
 # 
+# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/ui/main_view.py, line: 716
+# 
+# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/ui/main_view.py, line: 716
+# 
 # File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/ui/main_view.py, line: 731
 # 
 # File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/ui/main_view.py, line: 731
@@ -327,6 +294,24 @@ msgstr "3秒"
 msgid "5s"
 msgstr "5秒"
 # 
+# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/ui/main_view.py, line: 785
+# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/ui/main_view.py, line: 1321
+#, python-brace-format
+msgid "Silence threshold: {percent}%"
+msgstr "静音阈值：{percent}%"
+# 
+# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/ui/main_view.py, line: 804
+# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/ui/main_view.py, line: 1269
+#, python-brace-format
+msgid "Volume correction: {percent}%"
+msgstr "音量修正：{percent}%"
+# 
+# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/ui/main_view.py, line: 813
+# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/ui/main_view.py, line: 1290
+#, python-brace-format
+msgid "Cutoff: {hz} Hz"
+msgstr "截止频率：{hz} Hz"
+# 
 # File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/ui/main_view.py, line: 722
 # File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/ui/main_view.py, line: 1038
 #, python-brace-format
@@ -353,10 +338,15 @@ msgstr "在讲话期间过滤强度（{percent}％）"
 msgid "Pre-buffer: {ms} ms"
 msgstr "预缓冲：{ms} 毫秒"
 # 
-# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/ui/main_view.py, line: 1072
+# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/ui/main_view.py, line: 1207
 #, python-brace-format
-msgid "Harmonic recovery: {percent}%"
-msgstr "谐波恢复：{percent}%"
+msgid "Voice recovery: {percent}%"
+msgstr "语音恢复：{percent}%"
+# 
+# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/ui/main_view.py, line: 1218
+#, python-brace-format
+msgid "Noise gate: {percent}%"
+msgstr "噪声门：{percent}%"
 # 
 # File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/ui/main_view.py, line: 1135
 msgid "Radio Effect Intensity"
@@ -384,6 +374,10 @@ msgstr "语音音调（音高）"
 # File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/ui/main_view.py, line: 1147
 msgid "Deep"
 msgstr "深度"
+# 
+# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/ui/main_view.py, line: 1148
+msgid "Normal"
+msgstr "正常"
 # 
 # File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/ui/main_view.py, line: 1149
 msgid "Sharp"
@@ -442,66 +436,66 @@ msgstr ""
 "  在您说话时使用VCTK。\n"
 "  最佳效果，但使用更多处理能力。"
 # 
-# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/utils/tooltip_helper.py, line: 57
+# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/utils/tooltip_helper.py, line: 58
 msgid ""
 "How much noise to remove.\n"
 "\n"
-"• Low: Removes only the most obvious noises\n"
-"• Medium: Good for most situations\n"
-"• Maximum: Removes as much noise as possible\n"
+"• 1: Removes only the most obvious noises\n"
+"• 3: Good for most situations\n"
+"• 5: Removes as much noise as possible\n"
 "\n"
 "If the voice sounds distorted, reduce this slider."
 msgstr ""
 "去除多少噪音。\n"
 "\n"
-"• 轻度：仅去除最明显的噪音\n"
-"• 中度：适用于大多数情况\n"
-"• 最大：尽可能去除更多噪音\n"
+"• 1：仅去除最明显的噪音\n"
+"• 3：适用于大多数情况\n"
+"• 5：尽可能去除更多噪音\n"
 "\n"
 "如果声音听起来失真，请降低此滑块。"
 # 
-# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/utils/tooltip_helper.py, line: 64
+# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/utils/tooltip_helper.py, line: 65
 msgid ""
 "Whether to keep filtering active while you are speaking.\n"
 "\n"
 "• Off: Filter pauses during speech — voice sounds\n"
 "  completely natural, but noise may leak through\n"
-"• Medium: Applies partial filtering during speech\n"
-"• Maximum: Full filtering at all times, cleanest result\n"
+"• 3: Applies partial filtering during speech\n"
+"• 5: Full filtering at all times, cleanest result\n"
 "\n"
-"Default: Maximum. Reduce if your voice sounds thin or robotic."
+"Default: 5. Reduce if your voice sounds thin or robotic."
 msgstr ""
 "在您说话时是否保持过滤器激活。\n"
 "\n"
 "• 关闭：说话时过滤器暂停——声音听起来\n"
 "  完全自然，但噪音可能会泄漏\n"
-"• 中等：在说话时应用部分过滤\n"
-"• 最大：始终进行完全过滤，效果最干净\n"
+"• 3：在说话时应用部分过滤\n"
+"• 5：始终全过滤，效果最干净\n"
 "\n"
-"默认：最大。如果您的声音听起来很单薄或机器人化，请减少。"
+"默认：5。如果您的声音听起来细或机器人，请减少。"
 # 
-# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/utils/tooltip_helper.py, line: 72
+# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/utils/tooltip_helper.py, line: 73
 msgid ""
 "Prevents the beginning of words from being cut off.\n"
 "\n"
 "Keeps a small audio buffer so the filter can react\n"
 "before you start speaking.\n"
-"• Off (0ms): No delay, but may clip the first syllable\n"
-"• Normal (50ms): Recommended for most people\n"
-"• Maximum (200ms): Safest for fast speakers\n"
+"• Off: No delay, but may clip the first syllable\n"
+"• 50ms: Recommended for most people\n"
+"• 200ms: Safest for fast speakers\n"
 "\n"
 "Higher values add a small delay to the audio."
 msgstr ""
 "防止单词开头被截断。\n"
 "\n"
 "保持一个小的音频缓冲区，以便过滤器可以在您开始说话之前做出反应。\n"
-"• 关闭 (0毫秒)：没有延迟，但可能会剪切第一个音节\n"
-"• 正常 (50毫秒)：推荐给大多数人\n"
-"• 最大 (200毫秒)：对快速说话者最安全\n"
+"• 关闭：没有延迟，但可能会剪切第一个音节\n"
+"• 50毫秒：推荐给大多数人\n"
+"• 200毫秒：对于快速说话者最安全\n"
 "\n"
 "更高的值会给音频增加一个小的延迟。"
 # 
-# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/utils/tooltip_helper.py, line: 81
+# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/utils/tooltip_helper.py, line: 82
 msgid ""
 "Restores voice quality that may be lost during filtering.\n"
 "\n"
@@ -509,21 +503,45 @@ msgid ""
 "muffled or thin. This control brings back naturalness.\n"
 "\n"
 "• Off: No recovery\n"
-"• Medium: Good balance for most voices\n"
-"• Maximum: Maximum voice restoration\n"
+"• 3: Good balance for most voices\n"
+"• 5: Maximum voice restoration\n"
 "\n"
-"Recommended: keep between Medium and Maximum."
+"Recommended: keep between 3 and 5."
 msgstr ""
-"恢复在过滤过程中可能丢失的语音质量。\n"
+"恢复在过滤过程中可能丢失的声音质量。\n"
 "\n"
-"当噪声消除过于激进时，声音可能听起来\n"
-"模糊或单薄。此控制可恢复自然感。\n"
+"当噪声去除过于激进时，声音可能听起来\n"
+"模糊或单薄。此控制可以恢复自然感。\n"
 "\n"
 "• 关闭：无恢复\n"
-"• 中等：适合大多数声音的良好平衡\n"
-"• 最大：最大语音恢复\n"
+"• 3：适合大多数声音的良好平衡\n"
+"• 5：最大声音恢复\n"
 "\n"
-"推荐：保持在中等和最大之间。"
+"推荐：保持在3到5之间。"
+# 
+# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/utils/tooltip_helper.py, line: 91
+msgid ""
+"Suppresses non-vocal sounds between speech.\n"
+"\n"
+"Detects and reduces noises like paper rustling,\n"
+"candy wrappers, and mouse clicks that happen\n"
+"when you're not talking.\n"
+"\n"
+"• Off: No extra suppression\n"
+"• 3: Moderate suppression\n"
+"• 5: Aggressive suppression\n"
+"\n"
+"If speech sounds cut or clipped, lower this value."
+msgstr ""
+"在语音之间抑制非语音声音。\n"
+"\n"
+"检测并减少在您不说话时发生的噪音，如纸张沙沙声、糖果包装声和鼠标点击声。\n"
+"\n"
+"• 关闭：无额外抑制\n"
+"• 3：中等抑制\n"
+"• 5：强力抑制\n"
+"\n"
+"如果语音声音被切断或截断，请降低此值。"
 # 
 # File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/utils/tooltip_helper.py, line: 91
 msgid ""
@@ -543,25 +561,25 @@ msgstr ""
 "非常适合会议、直播和录音\n"
 "在这些场合中，音量的一致性很重要。"
 # 
-# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/utils/tooltip_helper.py, line: 98
+# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/utils/tooltip_helper.py, line: 109
 msgid ""
 "How much volume correction to apply.\n"
 "\n"
-"• Low: Gentle correction, very natural sound\n"
-"• Balanced: Good for most people\n"
-"• Maximum: Strong leveling — whisper and shout\n"
+"• 1: Gentle correction, very natural sound\n"
+"• 3: Good for most people\n"
+"• 5: Strong leveling — whisper and shout\n"
 "  come out at similar volume\n"
 "\n"
-"Start with Balanced and adjust to taste."
+"Start with 3 and adjust to taste."
 msgstr ""
 "应用多少音量修正。\n"
 "\n"
-"• 轻度：温和修正，非常自然的声音\n"
-"• 平衡：适合大多数人\n"
-"• 最大：强烈的音量平衡——低语和大喊\n"
-"  的音量相似\n"
+"• 1：轻微修正，非常自然的声音\n"
+"• 3：适合大多数人\n"
+"• 5：强烈平衡——低语和喊叫\n"
+"  以相似的音量出现\n"
 "\n"
-"从平衡开始，根据个人喜好进行调整。"
+"从3开始，根据个人喜好进行调整。"
 # 
 # File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/utils/tooltip_helper.py, line: 107
 msgid ""
@@ -578,23 +596,23 @@ msgstr ""
 "\n"
 "当您停止说话时，完全安静。"
 # 
-# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/utils/tooltip_helper.py, line: 113
+# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/utils/tooltip_helper.py, line: 124
 msgid ""
 "Controls how aggressively the gate removes residual noise.\n"
 "\n"
-"• Low: Only mutes during long silences\n"
-"• Balanced: Good for most voices\n"
-"• Maximum: Complete silence between words\n"
+"• 1: Only mutes during long silences\n"
+"• 3: Good for most voices\n"
+"• 5: Complete silence between words\n"
 "\n"
-"Start at Balanced and adjust to taste."
+"Start at 3 and adjust to taste."
 msgstr ""
 "控制门如何积极地去除残余噪音。\n"
 "\n"
-"• 轻：仅在长时间静默时静音\n"
-"• 平衡：适合大多数声音\n"
-"• 最大：单词之间完全静音\n"
+"• 1：仅在长时间静默时静音\n"
+"• 3：适合大多数声音\n"
+"• 5：单词之间完全静音\n"
 "\n"
-"从平衡开始，根据需要进行调整。"
+"从3开始，根据需要进行调整。"
 # 
 # File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/utils/tooltip_helper.py, line: 121
 msgid ""

@@ -56,26 +56,6 @@ msgstr "Έξυπνος (και οι δύο συνδυασμένοι)"
 msgid "Noise Removal Intensity"
 msgstr "Ένταση Αφαίρεσης Θορύβου"
 # 
-# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/ui/main_view.py, line: 344
-# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/ui/main_view.py, line: 442
-# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/ui/main_view.py, line: 480
-msgid "Low"
-msgstr "Φως"
-# 
-# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/ui/main_view.py, line: 257
-# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/ui/main_view.py, line: 332
-msgid "Medium"
-msgstr "Μεσαίο"
-# 
-# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/ui/main_view.py, line: 346
-# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/ui/main_view.py, line: 365
-# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/ui/main_view.py, line: 384
-# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/ui/main_view.py, line: 402
-# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/ui/main_view.py, line: 444
-# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/ui/main_view.py, line: 482
-msgid "Maximum"
-msgstr "Μέγιστο"
-# 
 # File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/ui/main_view.py, line: 355
 msgid "Filter During Speech"
 msgstr "Φίλτρο κατά τη διάρκεια ομιλίας"
@@ -90,13 +70,13 @@ msgstr "Απενεργοποιημένο"
 msgid "Syllable Protection"
 msgstr "Προστασία Συλλαβών"
 # 
-# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/ui/main_view.py, line: 1148
-msgid "Normal"
-msgstr "Κανονικός"
-# 
 # File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/ui/main_view.py, line: 392
 msgid "Voice Recovery"
 msgstr "Ανάκτηση Φωνής"
+# 
+# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/ui/main_view.py, line: 428
+msgid "Noise Gate"
+msgstr "Πύλη Θορύβου"
 # 
 # File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/ui/main_view.py, line: 420
 msgid "Volume Normalizer"
@@ -111,11 +91,6 @@ msgstr "Εξισώνει την ένταση — οι δυνατοί ήχοι γ
 msgid "Intensity"
 msgstr "Ένταση"
 # 
-# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/ui/main_view.py, line: 443
-# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/ui/main_view.py, line: 481
-msgid "Balanced"
-msgstr "Ισορροπημένο"
-# 
 # File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/ui/main_view.py, line: 477
 msgid "High-Pass Filter"
 msgstr "Φίλτρο Υψηλών Συχνοτήτων"
@@ -127,18 +102,6 @@ msgstr "Αφαιρεί τον χαμηλής συχνότητας θόρυβο."
 # File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/ui/main_view.py, line: 487
 msgid "Frequency (Hz)"
 msgstr "Συχνότητα (Hz)"
-# 
-# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/ui/main_view.py, line: 511
-msgid "Transient Suppressor"
-msgstr "Περιοδικός Ανασταλτής"
-# 
-# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/ui/main_view.py, line: 512
-msgid "Suppresses clicks and plosives"
-msgstr "Καταστέλλει τα κλικ και τις εκρήξεις."
-# 
-# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/ui/main_view.py, line: 523
-msgid "Attack"
-msgstr "Επίθεση"
 # 
 # File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/ui/main_view.py, line: 308
 msgid "Silence Filter (Gate)"
@@ -259,6 +222,24 @@ msgstr "3σ"
 msgid "5s"
 msgstr "5σ"
 # 
+# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/ui/main_view.py, line: 785
+# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/ui/main_view.py, line: 1321
+#, python-brace-format
+msgid "Silence threshold: {percent}%"
+msgstr "Όριο σιωπής: {percent}%"
+# 
+# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/ui/main_view.py, line: 804
+# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/ui/main_view.py, line: 1269
+#, python-brace-format
+msgid "Volume correction: {percent}%"
+msgstr "Διόρθωση έντασης: {percent}%"
+# 
+# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/ui/main_view.py, line: 813
+# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/ui/main_view.py, line: 1290
+#, python-brace-format
+msgid "Cutoff: {hz} Hz"
+msgstr "Αποκοπή: {hz} Hz"
+# 
 # File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/ui/main_view.py, line: 722
 # File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/ui/main_view.py, line: 1038
 #, python-brace-format
@@ -285,10 +266,15 @@ msgstr "Φίλτρο έντασης κατά τη διάρκεια της ομι
 msgid "Pre-buffer: {ms} ms"
 msgstr "Προ-buffer: {ms} ms"
 # 
-# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/ui/main_view.py, line: 1072
+# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/ui/main_view.py, line: 1207
 #, python-brace-format
-msgid "Harmonic recovery: {percent}%"
-msgstr "Αρμονική αποκατάσταση: {percent}%"
+msgid "Voice recovery: {percent}%"
+msgstr "Ανάκτηση φωνής: {percent}%"
+# 
+# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/ui/main_view.py, line: 1218
+#, python-brace-format
+msgid "Noise gate: {percent}%"
+msgstr "Πύλη θορύβου: {percent}%"
 # 
 # File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/ui/main_view.py, line: 1135
 msgid "Radio Effect Intensity"
@@ -316,6 +302,10 @@ msgstr "Φωνητική Τονικότητα (Ύψος)"
 # File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/ui/main_view.py, line: 1147
 msgid "Deep"
 msgstr "Βαθιά"
+# 
+# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/ui/main_view.py, line: 1148
+msgid "Normal"
+msgstr "Κανονικός"
 # 
 # File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/ui/main_view.py, line: 1149
 msgid "Sharp"
@@ -375,53 +365,53 @@ msgstr ""
 "  σιωπής και το VCTK ενώ μιλάτε. \n"
 "  Καλύτερο αποτέλεσμα, αλλά απαιτεί περισσότερη επεξεργαστική ισχύ."
 # 
-# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/utils/tooltip_helper.py, line: 57
+# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/utils/tooltip_helper.py, line: 58
 msgid ""
 "How much noise to remove.\n"
 "\n"
-"• Low: Removes only the most obvious noises\n"
-"• Medium: Good for most situations\n"
-"• Maximum: Removes as much noise as possible\n"
+"• 1: Removes only the most obvious noises\n"
+"• 3: Good for most situations\n"
+"• 5: Removes as much noise as possible\n"
 "\n"
 "If the voice sounds distorted, reduce this slider."
 msgstr ""
 "Πόσο θόρυβο να αφαιρεθεί.\n"
 "\n"
-"• Ελαφρύ: Αφαιρεί μόνο τους πιο προφανείς θορύβους\n"
-"• Μεσαίο: Καλή επιλογή για τις περισσότερες καταστάσεις\n"
-"• Μέγιστο: Αφαιρεί όσο το δυνατόν περισσότερο θόρυβο\n"
+"• 1: Αφαιρεί μόνο τους πιο προφανείς θορύβους\n"
+"• 3: Καλή επιλογή για τις περισσότερες καταστάσεις\n"
+"• 5: Αφαιρεί όσο το δυνατόν περισσότερο θόρυβο\n"
 "\n"
 "Αν η φωνή ακούγεται παραμορφωμένη, μειώστε αυτόν τον ρυθμιστή."
 # 
-# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/utils/tooltip_helper.py, line: 64
+# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/utils/tooltip_helper.py, line: 65
 msgid ""
 "Whether to keep filtering active while you are speaking.\n"
 "\n"
 "• Off: Filter pauses during speech — voice sounds\n"
 "  completely natural, but noise may leak through\n"
-"• Medium: Applies partial filtering during speech\n"
-"• Maximum: Full filtering at all times, cleanest result\n"
+"• 3: Applies partial filtering during speech\n"
+"• 5: Full filtering at all times, cleanest result\n"
 "\n"
-"Default: Maximum. Reduce if your voice sounds thin or robotic."
+"Default: 5. Reduce if your voice sounds thin or robotic."
 msgstr ""
 "Εάν θα διατηρήσετε το φίλτρο ενεργό ενώ μιλάτε.\n"
 "\n"
 "• Απενεργοποιημένο: Το φίλτρο παύει κατά τη διάρκεια της ομιλίας — η φωνή ακούγεται\n"
 "  εντελώς φυσική, αλλά μπορεί να διαρρεύσει θόρυβος\n"
-"• Μεσαίο: Εφαρμόζει μερικό φιλτράρισμα κατά τη διάρκεια της ομιλίας\n"
-"• Μέγιστο: Πλήρες φιλτράρισμα ανά πάσα στιγμή, καθαρότερο αποτέλεσμα\n"
+"• 3: Εφαρμόζει μερικό φιλτράρισμα κατά τη διάρκεια της ομιλίας\n"
+"• 5: Πλήρες φιλτράρισμα ανά πάσα στιγμή, καθαρότερο αποτέλεσμα\n"
 "\n"
-"Προεπιλογή: Μέγιστο. Μειώστε αν η φωνή σας ακούγεται λεπτή ή ρομποτική."
+"Προεπιλογή: 5. Μειώστε αν η φωνή σας ακούγεται λεπτή ή ρομποτική."
 # 
-# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/utils/tooltip_helper.py, line: 72
+# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/utils/tooltip_helper.py, line: 73
 msgid ""
 "Prevents the beginning of words from being cut off.\n"
 "\n"
 "Keeps a small audio buffer so the filter can react\n"
 "before you start speaking.\n"
-"• Off (0ms): No delay, but may clip the first syllable\n"
-"• Normal (50ms): Recommended for most people\n"
-"• Maximum (200ms): Safest for fast speakers\n"
+"• Off: No delay, but may clip the first syllable\n"
+"• 50ms: Recommended for most people\n"
+"• 200ms: Safest for fast speakers\n"
 "\n"
 "Higher values add a small delay to the audio."
 msgstr ""
@@ -429,13 +419,13 @@ msgstr ""
 "\n"
 "Διατηρεί ένα μικρό ηχητικό buffer ώστε το φίλτρο να μπορεί να αντιδράσει\n"
 "πριν αρχίσετε να μιλάτε.\n"
-"• Απενεργοποιημένο (0ms): Χωρίς καθυστέρηση, αλλά μπορεί να κόψει την πρώτη συλλαβή\n"
-"• Κανονικό (50ms): Συνιστάται για τους περισσότερους ανθρώπους\n"
-"• Μέγιστο (200ms): Ασφαλέστερο για γρήγορους ομιλητές\n"
+"• Απενεργοποιημένο: Καμία καθυστέρηση, αλλά μπορεί να κόψει την πρώτη συλλαβή\n"
+"• 50ms: Συνιστάται για τους περισσότερους ανθρώπους\n"
+"• 200ms: Πιο ασφαλές για γρήγορους ομιλητές\n"
 "\n"
 "Υψηλότερες τιμές προσθέτουν μια μικρή καθυστέρηση στον ήχο."
 # 
-# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/utils/tooltip_helper.py, line: 81
+# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/utils/tooltip_helper.py, line: 82
 msgid ""
 "Restores voice quality that may be lost during filtering.\n"
 "\n"
@@ -443,10 +433,10 @@ msgid ""
 "muffled or thin. This control brings back naturalness.\n"
 "\n"
 "• Off: No recovery\n"
-"• Medium: Good balance for most voices\n"
-"• Maximum: Maximum voice restoration\n"
+"• 3: Good balance for most voices\n"
+"• 5: Maximum voice restoration\n"
 "\n"
-"Recommended: keep between Medium and Maximum."
+"Recommended: keep between 3 and 5."
 msgstr ""
 "Αποκαθιστά την ποιότητα φωνής που μπορεί να χαθεί κατά τη διάρκεια της φιλτραρίσματος.\n"
 "\n"
@@ -454,10 +444,36 @@ msgstr ""
 "θαμπή ή λεπτή. Αυτός ο έλεγχος επαναφέρει τη φυσικότητα.\n"
 "\n"
 "• Απενεργοποιημένο: Καμία αποκατάσταση\n"
-"• Μεσαίο: Καλή ισορροπία για τις περισσότερες φωνές\n"
-"• Μέγιστο: Μέγιστη αποκατάσταση φωνής\n"
+"• 3: Καλή ισορροπία για τις περισσότερες φωνές\n"
+"• 5: Μέγιστη αποκατάσταση φωνής\n"
 "\n"
-"Συνιστάται: να διατηρείται μεταξύ Μεσαίου και Μέγιστου."
+"Συνιστάται: να διατηρείται μεταξύ 3 και 5."
+# 
+# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/utils/tooltip_helper.py, line: 91
+msgid ""
+"Suppresses non-vocal sounds between speech.\n"
+"\n"
+"Detects and reduces noises like paper rustling,\n"
+"candy wrappers, and mouse clicks that happen\n"
+"when you're not talking.\n"
+"\n"
+"• Off: No extra suppression\n"
+"• 3: Moderate suppression\n"
+"• 5: Aggressive suppression\n"
+"\n"
+"If speech sounds cut or clipped, lower this value."
+msgstr ""
+"Καταστέλλει τους μη φωνητικούς ήχους μεταξύ της ομιλίας.\n"
+"\n"
+"Ανιχνεύει και μειώνει θορύβους όπως το θρόισμα χαρτιού,\n"
+"τα περιτυλίγματα καραμελών και τα κλικ του ποντικιού που συμβαίνουν\n"
+"όταν δεν μιλάτε.\n"
+"\n"
+"• Απενεργοποιημένο: Καμία επιπλέον καταστολή\n"
+"• 3: Μέτρια καταστολή\n"
+"• 5: Επιθετική καταστολή\n"
+"\n"
+"Εάν οι ήχοι ομιλίας είναι κομμένοι ή αποσπασματικοί, μειώστε αυτή την τιμή."
 # 
 # File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/utils/tooltip_helper.py, line: 91
 msgid ""
@@ -477,25 +493,25 @@ msgstr ""
 "Ιδανικό για συναντήσεις, ροές και ηχογραφήσεις\n"
 "όπου η σταθερή ένταση έχει σημασία."
 # 
-# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/utils/tooltip_helper.py, line: 98
+# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/utils/tooltip_helper.py, line: 109
 msgid ""
 "How much volume correction to apply.\n"
 "\n"
-"• Low: Gentle correction, very natural sound\n"
-"• Balanced: Good for most people\n"
-"• Maximum: Strong leveling — whisper and shout\n"
+"• 1: Gentle correction, very natural sound\n"
+"• 3: Good for most people\n"
+"• 5: Strong leveling — whisper and shout\n"
 "  come out at similar volume\n"
 "\n"
-"Start with Balanced and adjust to taste."
+"Start with 3 and adjust to taste."
 msgstr ""
 "Πόσο διόρθωση έντασης να εφαρμόσετε.\n"
 "\n"
-"• Ελαφρύ: Ήπια διόρθωση, πολύ φυσικός ήχος\n"
-"• Ισορροπημένο: Καλή επιλογή για τους περισσότερους\n"
-"• Μέγιστο: Ισχυρή εξομάλυνση — ψίθυροι και κραυγές\n"
-"  βγαίνουν με παρόμοια ένταση\n"
+"• 1: Ήπια διόρθωση, πολύ φυσικός ήχος\n"
+"• 3: Καλή για τους περισσότερους ανθρώπους\n"
+"• 5: Ισχυρή εξομάλυνση — ψίθυρος και κραυγή\n"
+"  βγαίνουν σε παρόμοια ένταση\n"
 "\n"
-"Ξεκινήστε με Ισορροπημένο και προσαρμόστε κατά βούληση."
+"Ξεκινήστε με 3 και προσαρμόστε κατά βούληση."
 # 
 # File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/utils/tooltip_helper.py, line: 107
 msgid ""
@@ -513,23 +529,23 @@ msgstr ""
 "\n"
 "Όταν σταματήσετε να μιλάτε, υπάρχει πλήρης σιωπή."
 # 
-# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/utils/tooltip_helper.py, line: 113
+# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/utils/tooltip_helper.py, line: 124
 msgid ""
 "Controls how aggressively the gate removes residual noise.\n"
 "\n"
-"• Low: Only mutes during long silences\n"
-"• Balanced: Good for most voices\n"
-"• Maximum: Complete silence between words\n"
+"• 1: Only mutes during long silences\n"
+"• 3: Good for most voices\n"
+"• 5: Complete silence between words\n"
 "\n"
-"Start at Balanced and adjust to taste."
+"Start at 3 and adjust to taste."
 msgstr ""
 "Ελέγχει πόσο επιθετικά η πύλη αφαιρεί τον υπολειπόμενο θόρυβο.\n"
 "\n"
-"• Ελαφρύ: Μόνο σιγή κατά τη διάρκεια μεγάλων σιωπών\n"
-"• Ισορροπημένο: Καλή επιλογή για τις περισσότερες φωνές\n"
-"• Μέγιστο: Πλήρης σιγή μεταξύ των λέξεων\n"
+"• 1: Μόνο σιγή κατά τη διάρκεια μεγάλων σιωπών\n"
+"• 3: Καλή για τις περισσότερες φωνές\n"
+"• 5: Πλήρης σιγή μεταξύ των λέξεων\n"
 "\n"
-"Ξεκινήστε με Ισορροπημένο και προσαρμόστε κατά βούληση."
+"Ξεκινήστε από το 3 και ρυθμίστε κατά βούληση."
 # 
 # File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/utils/tooltip_helper.py, line: 121
 msgid ""

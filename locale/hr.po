@@ -56,26 +56,6 @@ msgstr "Pametan (oba kombinirana)"
 msgid "Noise Removal Intensity"
 msgstr "Intenzitet uklanjanja šuma"
 # 
-# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/ui/main_view.py, line: 344
-# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/ui/main_view.py, line: 442
-# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/ui/main_view.py, line: 480
-msgid "Low"
-msgstr "Svjetlo"
-# 
-# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/ui/main_view.py, line: 257
-# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/ui/main_view.py, line: 332
-msgid "Medium"
-msgstr "Srednji"
-# 
-# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/ui/main_view.py, line: 346
-# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/ui/main_view.py, line: 365
-# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/ui/main_view.py, line: 384
-# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/ui/main_view.py, line: 402
-# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/ui/main_view.py, line: 444
-# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/ui/main_view.py, line: 482
-msgid "Maximum"
-msgstr "Maksimalno"
-# 
 # File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/ui/main_view.py, line: 355
 msgid "Filter During Speech"
 msgstr "Filtriraj tijekom govora"
@@ -90,13 +70,13 @@ msgstr "Isključeno"
 msgid "Syllable Protection"
 msgstr "Zaštita slogova"
 # 
-# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/ui/main_view.py, line: 1148
-msgid "Normal"
-msgstr "Normalan"
-# 
 # File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/ui/main_view.py, line: 392
 msgid "Voice Recovery"
 msgstr "Obnova glasa"
+# 
+# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/ui/main_view.py, line: 428
+msgid "Noise Gate"
+msgstr "Šum vrata"
 # 
 # File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/ui/main_view.py, line: 420
 msgid "Volume Normalizer"
@@ -111,11 +91,6 @@ msgstr "Izjednačava glasnoću — glasni zvukovi postaju tiši, tihi zvukovi po
 msgid "Intensity"
 msgstr "Intenzitet"
 # 
-# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/ui/main_view.py, line: 443
-# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/ui/main_view.py, line: 481
-msgid "Balanced"
-msgstr "Izbalansirano"
-# 
 # File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/ui/main_view.py, line: 477
 msgid "High-Pass Filter"
 msgstr "Visokopropusni filtar"
@@ -127,18 +102,6 @@ msgstr "Uklanja niske frekvencije šum."
 # File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/ui/main_view.py, line: 487
 msgid "Frequency (Hz)"
 msgstr "Frekvencija (Hz)"
-# 
-# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/ui/main_view.py, line: 511
-msgid "Transient Suppressor"
-msgstr "Prijenosni suzbijatelj"
-# 
-# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/ui/main_view.py, line: 512
-msgid "Suppresses clicks and plosives"
-msgstr "Potiskuje klikove i plosive zvukove"
-# 
-# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/ui/main_view.py, line: 523
-msgid "Attack"
-msgstr "Napad"
 # 
 # File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/ui/main_view.py, line: 308
 msgid "Silence Filter (Gate)"
@@ -259,6 +222,24 @@ msgstr "3s"
 msgid "5s"
 msgstr "5s"
 # 
+# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/ui/main_view.py, line: 785
+# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/ui/main_view.py, line: 1321
+#, python-brace-format
+msgid "Silence threshold: {percent}%"
+msgstr "Prag tišine: {postotak}%"
+# 
+# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/ui/main_view.py, line: 804
+# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/ui/main_view.py, line: 1269
+#, python-brace-format
+msgid "Volume correction: {percent}%"
+msgstr "Ispravak volumena: {percent}%"
+# 
+# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/ui/main_view.py, line: 813
+# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/ui/main_view.py, line: 1290
+#, python-brace-format
+msgid "Cutoff: {hz} Hz"
+msgstr "Prekid: {hz} Hz"
+# 
 # File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/ui/main_view.py, line: 722
 # File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/ui/main_view.py, line: 1038
 #, python-brace-format
@@ -285,10 +266,15 @@ msgstr "Intenzitet filtra tijekom govora ({postotak}%)"
 msgid "Pre-buffer: {ms} ms"
 msgstr "Pre-bufer: {ms} ms"
 # 
-# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/ui/main_view.py, line: 1072
+# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/ui/main_view.py, line: 1207
 #, python-brace-format
-msgid "Harmonic recovery: {percent}%"
-msgstr "Harmoničko oporavak: {percent}%"
+msgid "Voice recovery: {percent}%"
+msgstr "Obnova glasa: {percent}%"
+# 
+# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/ui/main_view.py, line: 1218
+#, python-brace-format
+msgid "Noise gate: {percent}%"
+msgstr "Šum vrata: {percent}%"
 # 
 # File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/ui/main_view.py, line: 1135
 msgid "Radio Effect Intensity"
@@ -316,6 +302,10 @@ msgstr "Tonacija glasa (Visina)"
 # File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/ui/main_view.py, line: 1147
 msgid "Deep"
 msgstr "Duboko"
+# 
+# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/ui/main_view.py, line: 1148
+msgid "Normal"
+msgstr "Normalan"
 # 
 # File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/ui/main_view.py, line: 1149
 msgid "Sharp"
@@ -375,53 +365,53 @@ msgstr ""
 "  tišine i VCTK dok govorite. \n"
 "  Najbolji rezultat, ali koristi više procesorske snage."
 # 
-# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/utils/tooltip_helper.py, line: 57
+# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/utils/tooltip_helper.py, line: 58
 msgid ""
 "How much noise to remove.\n"
 "\n"
-"• Low: Removes only the most obvious noises\n"
-"• Medium: Good for most situations\n"
-"• Maximum: Removes as much noise as possible\n"
+"• 1: Removes only the most obvious noises\n"
+"• 3: Good for most situations\n"
+"• 5: Removes as much noise as possible\n"
 "\n"
 "If the voice sounds distorted, reduce this slider."
 msgstr ""
 "Koliko buke ukloniti.\n"
 "\n"
-"• Lagano: Uklanja samo naj očitije šumove\n"
-"• Srednje: Dobar za većinu situacija\n"
-"• Maksimalno: Uklanja što je više moguće buke\n"
+"• 1: Uklanja samo naj očitije šumove\n"
+"• 3: Dobar za većinu situacija\n"
+"• 5: Uklanja što je više moguće buke\n"
 "\n"
 "Ako glas zvuči izobličeno, smanjite ovaj klizač."
 # 
-# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/utils/tooltip_helper.py, line: 64
+# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/utils/tooltip_helper.py, line: 65
 msgid ""
 "Whether to keep filtering active while you are speaking.\n"
 "\n"
 "• Off: Filter pauses during speech — voice sounds\n"
 "  completely natural, but noise may leak through\n"
-"• Medium: Applies partial filtering during speech\n"
-"• Maximum: Full filtering at all times, cleanest result\n"
+"• 3: Applies partial filtering during speech\n"
+"• 5: Full filtering at all times, cleanest result\n"
 "\n"
-"Default: Maximum. Reduce if your voice sounds thin or robotic."
+"Default: 5. Reduce if your voice sounds thin or robotic."
 msgstr ""
 "Hoće li filtriranje ostati aktivno dok govorite.\n"
 "\n"
-"• Isključeno: Filtriranje se pauzira tijekom govora — glas zvuči potpuno prirodno, ali buka može "
-"proći\n"
-"• Srednje: Primjenjuje djelomično filtriranje tijekom govora\n"
-"• Maksimalno: Puno filtriranje u svim trenucima, najčišći rezultat\n"
+"• Isključeno: Filtriranje se pauzira tijekom govora — glas zvuči\n"
+"  potpuno prirodno, ali buka može proći\n"
+"• 3: Primjenjuje djelomično filtriranje tijekom govora\n"
+"• 5: Puno filtriranje u svim trenucima, najčišći rezultat\n"
 "\n"
-"Zadano: Maksimalno. Smanjite ako vaš glas zvuči tanko ili robotski."
+"Zadano: 5. Smanjite ako vaš glas zvuči tanko ili robotski."
 # 
-# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/utils/tooltip_helper.py, line: 72
+# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/utils/tooltip_helper.py, line: 73
 msgid ""
 "Prevents the beginning of words from being cut off.\n"
 "\n"
 "Keeps a small audio buffer so the filter can react\n"
 "before you start speaking.\n"
-"• Off (0ms): No delay, but may clip the first syllable\n"
-"• Normal (50ms): Recommended for most people\n"
-"• Maximum (200ms): Safest for fast speakers\n"
+"• Off: No delay, but may clip the first syllable\n"
+"• 50ms: Recommended for most people\n"
+"• 200ms: Safest for fast speakers\n"
 "\n"
 "Higher values add a small delay to the audio."
 msgstr ""
@@ -429,13 +419,13 @@ msgstr ""
 "\n"
 "Drži mali audio međuspremnik kako bi filtar mogao reagirati\n"
 "prije nego što počnete govoriti.\n"
-"• Isključeno (0ms): Nema kašnjenja, ali može odsjeći prvu slog\n"
-"• Normalno (50ms): Preporučuje se za većinu ljudi\n"
-"• Maksimalno (200ms): Najsigurnije za brze govornike\n"
+"• Isključeno: Nema kašnjenja, ali može odsjeći prvu slog\n"
+"• 50ms: Preporučeno za većinu ljudi\n"
+"• 200ms: Najsigurnije za brze govornike\n"
 "\n"
 "Veće vrijednosti dodaju malo kašnjenje u audio."
 # 
-# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/utils/tooltip_helper.py, line: 81
+# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/utils/tooltip_helper.py, line: 82
 msgid ""
 "Restores voice quality that may be lost during filtering.\n"
 "\n"
@@ -443,10 +433,10 @@ msgid ""
 "muffled or thin. This control brings back naturalness.\n"
 "\n"
 "• Off: No recovery\n"
-"• Medium: Good balance for most voices\n"
-"• Maximum: Maximum voice restoration\n"
+"• 3: Good balance for most voices\n"
+"• 5: Maximum voice restoration\n"
 "\n"
-"Recommended: keep between Medium and Maximum."
+"Recommended: keep between 3 and 5."
 msgstr ""
 "Obnavlja kvalitetu glasa koja se može izgubiti tijekom filtriranja.\n"
 "\n"
@@ -454,10 +444,36 @@ msgstr ""
 "prigušeno ili tanko. Ova kontrola vraća prirodnost.\n"
 "\n"
 "• Isključeno: Nema oporavka\n"
-"• Srednje: Dobar balans za većinu glasova\n"
-"• Maksimalno: Maksimalna obnova glasa\n"
+"• 3: Dobar balans za većinu glasova\n"
+"• 5: Maksimalna obnova glasa\n"
 "\n"
-"Preporučeno: držati između Srednje i Maksimalno."
+"Preporučeno: držati između 3 i 5."
+# 
+# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/utils/tooltip_helper.py, line: 91
+msgid ""
+"Suppresses non-vocal sounds between speech.\n"
+"\n"
+"Detects and reduces noises like paper rustling,\n"
+"candy wrappers, and mouse clicks that happen\n"
+"when you're not talking.\n"
+"\n"
+"• Off: No extra suppression\n"
+"• 3: Moderate suppression\n"
+"• 5: Aggressive suppression\n"
+"\n"
+"If speech sounds cut or clipped, lower this value."
+msgstr ""
+"Potiskuje nevokalne zvukove između govora.\n"
+"\n"
+"Otkriva i smanjuje šumove poput šuštanja papira,\n"
+"omota slatkiša i klikova miša koji se javljaju\n"
+"kada ne govorite.\n"
+"\n"
+"• Isključeno: Nema dodatnog potiskivanja\n"
+"• 3: Umjereno potiskivanje\n"
+"• 5: Agresivno potiskivanje\n"
+"\n"
+"Ako su zvukovi govora prekinuti ili izrezani, smanjite ovu vrijednost."
 # 
 # File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/utils/tooltip_helper.py, line: 91
 msgid ""
@@ -477,25 +493,25 @@ msgstr ""
 "Idealno za sastanke, prijenose i snimke\n"
 "gdje je dosljedna glasnoća važna."
 # 
-# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/utils/tooltip_helper.py, line: 98
+# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/utils/tooltip_helper.py, line: 109
 msgid ""
 "How much volume correction to apply.\n"
 "\n"
-"• Low: Gentle correction, very natural sound\n"
-"• Balanced: Good for most people\n"
-"• Maximum: Strong leveling — whisper and shout\n"
+"• 1: Gentle correction, very natural sound\n"
+"• 3: Good for most people\n"
+"• 5: Strong leveling — whisper and shout\n"
 "  come out at similar volume\n"
 "\n"
-"Start with Balanced and adjust to taste."
+"Start with 3 and adjust to taste."
 msgstr ""
 "Koliko korekcije volumena primijeniti.\n"
 "\n"
-"• Lagano: Nježna korekcija, vrlo prirodan zvuk\n"
-"• Uravnoteženo: Dobar za većinu ljudi\n"
-"• Maksimalno: Jaka razina — šapti i povici\n"
+"• 1: Nježna korekcija, vrlo prirodan zvuk\n"
+"• 3: Dobar za većinu ljudi\n"
+"• 5: Jako izjednačavanje — šapti i povici\n"
 "  izlaze na sličnom volumenu\n"
 "\n"
-"Započnite s Uravnoteženim i prilagodite prema ukusu."
+"Započnite s 3 i prilagodite prema ukusu."
 # 
 # File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/utils/tooltip_helper.py, line: 107
 msgid ""
@@ -513,23 +529,23 @@ msgstr ""
 "\n"
 "Kada prestanete govoriti, nastaje potpuna tišina."
 # 
-# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/utils/tooltip_helper.py, line: 113
+# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/utils/tooltip_helper.py, line: 124
 msgid ""
 "Controls how aggressively the gate removes residual noise.\n"
 "\n"
-"• Low: Only mutes during long silences\n"
-"• Balanced: Good for most voices\n"
-"• Maximum: Complete silence between words\n"
+"• 1: Only mutes during long silences\n"
+"• 3: Good for most voices\n"
+"• 5: Complete silence between words\n"
 "\n"
-"Start at Balanced and adjust to taste."
+"Start at 3 and adjust to taste."
 msgstr ""
-"Kontrolira koliko agresivno vrata uklanja preostali šum.\n"
+"Kontrolira koliko agresivno vrata uklanjaju preostali šum.\n"
 "\n"
-"• Lagano: Mute samo tijekom dugih tišina\n"
-"• Uravnoteženo: Dobar za većinu glasova\n"
-"• Maksimalno: Potpuna tišina između riječi\n"
+"• 1: Mute samo tijekom dugih tišina\n"
+"• 3: Dobar za većinu glasova\n"
+"• 5: Potpuna tišina između riječi\n"
 "\n"
-"Započnite s Uravnoteženo i prilagodite prema ukusu."
+"Započnite s 3 i prilagodite prema ukusu."
 # 
 # File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/utils/tooltip_helper.py, line: 121
 msgid ""

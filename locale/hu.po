@@ -56,26 +56,6 @@ msgstr "Okos (mindkettő kombinálva)"
 msgid "Noise Removal Intensity"
 msgstr "Zajeltávolítás Intenzitás"
 # 
-# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/ui/main_view.py, line: 344
-# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/ui/main_view.py, line: 442
-# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/ui/main_view.py, line: 480
-msgid "Low"
-msgstr "Fény"
-# 
-# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/ui/main_view.py, line: 257
-# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/ui/main_view.py, line: 332
-msgid "Medium"
-msgstr "Közepes"
-# 
-# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/ui/main_view.py, line: 346
-# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/ui/main_view.py, line: 365
-# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/ui/main_view.py, line: 384
-# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/ui/main_view.py, line: 402
-# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/ui/main_view.py, line: 444
-# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/ui/main_view.py, line: 482
-msgid "Maximum"
-msgstr "Maximum"
-# 
 # File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/ui/main_view.py, line: 355
 msgid "Filter During Speech"
 msgstr "Beszéd közbeni szűrés"
@@ -90,13 +70,13 @@ msgstr "Ki."
 msgid "Syllable Protection"
 msgstr "Szótagvédelem"
 # 
-# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/ui/main_view.py, line: 1148
-msgid "Normal"
-msgstr "Normál"
-# 
 # File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/ui/main_view.py, line: 392
 msgid "Voice Recovery"
 msgstr "Hangvisszaállítás"
+# 
+# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/ui/main_view.py, line: 428
+msgid "Noise Gate"
+msgstr "Zajszűrő"
 # 
 # File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/ui/main_view.py, line: 420
 msgid "Volume Normalizer"
@@ -111,11 +91,6 @@ msgstr "Kiegyenlíti a hangerőt — a hangos hangok halkabbá válnak, a csende
 msgid "Intensity"
 msgstr "Intenzitás"
 # 
-# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/ui/main_view.py, line: 443
-# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/ui/main_view.py, line: 481
-msgid "Balanced"
-msgstr "Kiegyensúlyozott"
-# 
 # File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/ui/main_view.py, line: 477
 msgid "High-Pass Filter"
 msgstr "Magasáteresztő szűrő"
@@ -127,18 +102,6 @@ msgstr "Eltávolítja az alacsony frekvenciájú zúgást"
 # File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/ui/main_view.py, line: 487
 msgid "Frequency (Hz)"
 msgstr "Frekvencia (Hz)"
-# 
-# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/ui/main_view.py, line: 511
-msgid "Transient Suppressor"
-msgstr "Átmeneti elnyomó"
-# 
-# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/ui/main_view.py, line: 512
-msgid "Suppresses clicks and plosives"
-msgstr "Elnyomja a kattintásokat és a plózívokat."
-# 
-# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/ui/main_view.py, line: 523
-msgid "Attack"
-msgstr "Támadás"
 # 
 # File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/ui/main_view.py, line: 308
 msgid "Silence Filter (Gate)"
@@ -259,6 +222,24 @@ msgstr "3s"
 msgid "5s"
 msgstr "5s"
 # 
+# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/ui/main_view.py, line: 785
+# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/ui/main_view.py, line: 1321
+#, python-brace-format
+msgid "Silence threshold: {percent}%"
+msgstr "Csend küszöb: {percent}%"
+# 
+# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/ui/main_view.py, line: 804
+# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/ui/main_view.py, line: 1269
+#, python-brace-format
+msgid "Volume correction: {percent}%"
+msgstr "Hangerő korrekció: {percent}%"
+# 
+# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/ui/main_view.py, line: 813
+# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/ui/main_view.py, line: 1290
+#, python-brace-format
+msgid "Cutoff: {hz} Hz"
+msgstr "Vágási frekvencia: {hz} Hz"
+# 
 # File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/ui/main_view.py, line: 722
 # File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/ui/main_view.py, line: 1038
 #, python-brace-format
@@ -285,10 +266,15 @@ msgstr "Beszéd közbeni szűrő intenzitás ({percent}%)"
 msgid "Pre-buffer: {ms} ms"
 msgstr "Előbuffer: {ms} ms"
 # 
-# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/ui/main_view.py, line: 1072
+# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/ui/main_view.py, line: 1207
 #, python-brace-format
-msgid "Harmonic recovery: {percent}%"
-msgstr "Harmonikus helyreállítás: {percent}%"
+msgid "Voice recovery: {percent}%"
+msgstr "Hangvisszaállítás: {percent}%"
+# 
+# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/ui/main_view.py, line: 1218
+#, python-brace-format
+msgid "Noise gate: {percent}%"
+msgstr "Zajszűrő: {percent}%"
 # 
 # File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/ui/main_view.py, line: 1135
 msgid "Radio Effect Intensity"
@@ -316,6 +302,10 @@ msgstr "Hangszín (Frekvencia)"
 # File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/ui/main_view.py, line: 1147
 msgid "Deep"
 msgstr "Mély"
+# 
+# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/ui/main_view.py, line: 1148
+msgid "Normal"
+msgstr "Normál"
 # 
 # File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/ui/main_view.py, line: 1149
 msgid "Sharp"
@@ -375,65 +365,65 @@ msgstr ""
 "  és VCTK-t, amikor beszélsz.\n"
 "  Legjobb eredmény, de több feldolgozási teljesítményt igényel."
 # 
-# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/utils/tooltip_helper.py, line: 57
+# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/utils/tooltip_helper.py, line: 58
 msgid ""
 "How much noise to remove.\n"
 "\n"
-"• Low: Removes only the most obvious noises\n"
-"• Medium: Good for most situations\n"
-"• Maximum: Removes as much noise as possible\n"
+"• 1: Removes only the most obvious noises\n"
+"• 3: Good for most situations\n"
+"• 5: Removes as much noise as possible\n"
 "\n"
 "If the voice sounds distorted, reduce this slider."
 msgstr ""
 "Mennyi zajt távolítsunk el.\n"
 "\n"
-"• Enyhe: Csak a legnyilvánvalóbb zajokat távolítja el\n"
-"• Közepes: Jól működik a legtöbb helyzetben\n"
-"• Maximális: A lehető legtöbb zajt távolítja el\n"
+"• 1: Csak a legnyilvánvalóbb zajokat távolítja el\n"
+"• 3: Jól működik a legtöbb helyzetben\n"
+"• 5: A lehető legtöbb zajt távolítja el\n"
 "\n"
 "Ha a hang torzítva szól, csökkentse ezt a csúszkát."
 # 
-# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/utils/tooltip_helper.py, line: 64
+# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/utils/tooltip_helper.py, line: 65
 msgid ""
 "Whether to keep filtering active while you are speaking.\n"
 "\n"
 "• Off: Filter pauses during speech — voice sounds\n"
 "  completely natural, but noise may leak through\n"
-"• Medium: Applies partial filtering during speech\n"
-"• Maximum: Full filtering at all times, cleanest result\n"
+"• 3: Applies partial filtering during speech\n"
+"• 5: Full filtering at all times, cleanest result\n"
 "\n"
-"Default: Maximum. Reduce if your voice sounds thin or robotic."
+"Default: 5. Reduce if your voice sounds thin or robotic."
 msgstr ""
-"Beszéd közben aktív maradjon-e a szűrés.\n"
+"Beszéd közben aktívan tartsa-e a szűrést.\n"
 "\n"
 "• Ki: A szűrés szünetel a beszéd alatt — a hang teljesen természetes, de zaj szivároghat át\n"
-"• Közepes: Részleges szűrés alkalmazása beszéd közben\n"
-"• Maximális: Teljes szűrés folyamatosan, a legtisztább eredmény\n"
+"• 3: Részleges szűrés alkalmazása beszéd közben\n"
+"• 5: Teljes szűrés folyamatosan, a legtisztább eredmény\n"
 "\n"
-"Alapértelmezett: Maximális. Csökkentse, ha a hangja vékonynak vagy robotikusnak hangzik."
+"Alapértelmezett: 5. Csökkentse, ha a hangja vékonynak vagy robotikusnak hangzik."
 # 
-# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/utils/tooltip_helper.py, line: 72
+# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/utils/tooltip_helper.py, line: 73
 msgid ""
 "Prevents the beginning of words from being cut off.\n"
 "\n"
 "Keeps a small audio buffer so the filter can react\n"
 "before you start speaking.\n"
-"• Off (0ms): No delay, but may clip the first syllable\n"
-"• Normal (50ms): Recommended for most people\n"
-"• Maximum (200ms): Safest for fast speakers\n"
+"• Off: No delay, but may clip the first syllable\n"
+"• 50ms: Recommended for most people\n"
+"• 200ms: Safest for fast speakers\n"
 "\n"
 "Higher values add a small delay to the audio."
 msgstr ""
 "Megakadályozza, hogy a szavak eleje levágódjon.\n"
 "\n"
 "Kis audio puffert tart fenn, hogy a szűrő reagálni tudjon, mielőtt beszélni kezdene.\n"
-"• Ki (0ms): Nincs késleltetés, de levághatja az első szótagot\n"
-"• Normál (50ms): Ajánlott a legtöbb ember számára\n"
-"• Maximális (200ms): Legbiztonságosabb gyors beszélők számára\n"
+"• Ki: Nincs késleltetés, de levághatja az első szótagot\n"
+"• 50 ms: Ajánlott a legtöbb ember számára\n"
+"• 200 ms: Legbiztonságosabb gyors beszélők számára\n"
 "\n"
 "A magasabb értékek kis késleltetést adnak az audióhoz."
 # 
-# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/utils/tooltip_helper.py, line: 81
+# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/utils/tooltip_helper.py, line: 82
 msgid ""
 "Restores voice quality that may be lost during filtering.\n"
 "\n"
@@ -441,10 +431,10 @@ msgid ""
 "muffled or thin. This control brings back naturalness.\n"
 "\n"
 "• Off: No recovery\n"
-"• Medium: Good balance for most voices\n"
-"• Maximum: Maximum voice restoration\n"
+"• 3: Good balance for most voices\n"
+"• 5: Maximum voice restoration\n"
 "\n"
-"Recommended: keep between Medium and Maximum."
+"Recommended: keep between 3 and 5."
 msgstr ""
 "Visszaállítja a szűrés során esetlegesen elveszett hangminőséget.\n"
 "\n"
@@ -452,10 +442,36 @@ msgstr ""
 "természetességet.\n"
 "\n"
 "• Ki: Nincs helyreállítás\n"
-"• Közepes: Jó egyensúly a legtöbb hanghoz\n"
-"• Maximális: Maximális hanghelyreállítás\n"
+"• 3: Jó egyensúly a legtöbb hanghoz\n"
+"• 5: Maximális hanghelyreállítás\n"
 "\n"
-"Ajánlott: tartsa Közepes és Maximális között."
+"Ajánlott: 3 és 5 között tartani."
+# 
+# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/utils/tooltip_helper.py, line: 91
+msgid ""
+"Suppresses non-vocal sounds between speech.\n"
+"\n"
+"Detects and reduces noises like paper rustling,\n"
+"candy wrappers, and mouse clicks that happen\n"
+"when you're not talking.\n"
+"\n"
+"• Off: No extra suppression\n"
+"• 3: Moderate suppression\n"
+"• 5: Aggressive suppression\n"
+"\n"
+"If speech sounds cut or clipped, lower this value."
+msgstr ""
+"Elnyomja a beszéd közötti nem vokális hangokat.\n"
+"\n"
+"Észleli és csökkenti az olyan zajokat, mint a papír zörgése,\n"
+"cukorka csomagolása és az egérkattintások, amelyek akkor\n"
+"történnek, amikor nem beszél.\n"
+"\n"
+"• Ki: Nincs extra elnyomás\n"
+"• 3: Mérsékelt elnyomás\n"
+"• 5: Aggresszív elnyomás\n"
+"\n"
+"Ha a beszédhangok megszakadnak vagy vágottak, csökkentse ezt az értéket."
 # 
 # File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/utils/tooltip_helper.py, line: 91
 msgid ""
@@ -475,25 +491,25 @@ msgstr ""
 "Ideális találkozókhoz, közvetítésekhez és felvételekhez,\n"
 "ahol a következetes hangerő fontos."
 # 
-# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/utils/tooltip_helper.py, line: 98
+# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/utils/tooltip_helper.py, line: 109
 msgid ""
 "How much volume correction to apply.\n"
 "\n"
-"• Low: Gentle correction, very natural sound\n"
-"• Balanced: Good for most people\n"
-"• Maximum: Strong leveling — whisper and shout\n"
+"• 1: Gentle correction, very natural sound\n"
+"• 3: Good for most people\n"
+"• 5: Strong leveling — whisper and shout\n"
 "  come out at similar volume\n"
 "\n"
-"Start with Balanced and adjust to taste."
+"Start with 3 and adjust to taste."
 msgstr ""
-"Mennyi hangerő-korrekciót kell alkalmazni.\n"
+"Mennyi hangerő-korrekciót alkalmazzon.\n"
 "\n"
-"• Enyhe: Kíméletes korrekció, nagyon természetes hangzás\n"
-"• Kiegyensúlyozott: Jól működik a legtöbb ember számára\n"
-"• Maximális: Erős szintbeállítás — a suttogás és a kiabálás\n"
-"  hasonló hangerőn jelenik meg\n"
+"• 1: Enyhe korrekció, nagyon természetes hangzás\n"
+"• 3: Jól működik a legtöbb ember számára\n"
+"• 5: Erős szintbeállítás — a suttogás és a kiabálás\n"
+"  hasonló hangerőn szólal meg\n"
 "\n"
-"Kezdj a Kiegyensúlyozott beállítással, és állítsd be az ízlésed szerint."
+"Kezdje a 3-as értékkel, és állítsa be az ízlésének megfelelően."
 # 
 # File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/utils/tooltip_helper.py, line: 107
 msgid ""
@@ -510,23 +526,23 @@ msgstr ""
 "\n"
 "Amikor abbahagyod a beszédet, teljes csend van."
 # 
-# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/utils/tooltip_helper.py, line: 113
+# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/utils/tooltip_helper.py, line: 124
 msgid ""
 "Controls how aggressively the gate removes residual noise.\n"
 "\n"
-"• Low: Only mutes during long silences\n"
-"• Balanced: Good for most voices\n"
-"• Maximum: Complete silence between words\n"
+"• 1: Only mutes during long silences\n"
+"• 3: Good for most voices\n"
+"• 5: Complete silence between words\n"
 "\n"
-"Start at Balanced and adjust to taste."
+"Start at 3 and adjust to taste."
 msgstr ""
 "Irányítja, hogy mennyire agresszíven távolítja el a kapu a maradék zajt.\n"
 "\n"
-"• Enyhe: Csak hosszú csendek alatt némít\n"
-"• Kiegyensúlyozott: Jól működik a legtöbb hangnál\n"
-"• Maximális: Teljes csend a szavak között\n"
+"• 1: Csak hosszú csendek alatt némít\n"
+"• 3: Jól működik a legtöbb hangnál\n"
+"• 5: Teljes csend a szavak között\n"
 "\n"
-"Kezdj a Kiegyensúlyozott beállítással, és állítsd be az ízlésed szerint."
+"Kezdj 3-nál, és állítsd be az ízlésed szerint."
 # 
 # File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/utils/tooltip_helper.py, line: 121
 msgid ""
