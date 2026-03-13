@@ -62,9 +62,6 @@ AMP_LABEL = "amp"
 SC4_LIBRARY = "/usr/lib/ladspa/sc4m_1916.so"
 SC4_LABEL = "sc4m"
 
-# Transient Mangler (transient_1206) - for click/transient suppression
-TRANSIENT_LIBRARY = "/usr/lib/ladspa/transient_1206.so"
-TRANSIENT_LABEL = "transient"
 
 # Pitch Scale (pitch_scale_1193) - high quality pitch shifting
 PITCH_SCALE_LIBRARY = "/usr/lib/ladspa/pitch_scale_1193.so"
@@ -74,6 +71,10 @@ PITCH_SCALE_LABEL = "pitchScale"
 # Multiband EQ (mbeq_1197) - 15-band graphic equalizer
 MBEQ_LIBRARY = "/usr/lib/ladspa/mbeq_1197.so"
 MBEQ_LABEL = "mbeq"
+
+# Hard Limiter (hard_limiter_1413) - safety limiter to prevent clipping
+LIMITER_LIBRARY = "/usr/lib/ladspa/hard_limiter_1413.so"
+LIMITER_LABEL = "hardLimiter"
 
 # MBEQ frequency bands (Hz) - plugin has 15 bands
 MBEQ_BANDS = [
@@ -142,9 +143,7 @@ class FilterChainConfig:
     """
 
     # High-pass filter (rumble removal, before AI)
-    # NOTE: Disabled by default — GTCRN plugin has a built-in HP80 biquad.
-    # Enable only if using a higher cutoff or a different AI plugin.
-    hpf_enabled: bool = False
+    hpf_enabled: bool = True
     hpf_frequency: float = 80.0
 
     # Noise reduction
@@ -154,7 +153,8 @@ class FilterChainConfig:
     noise_reduction_speech_strength: float = 1.0
     noise_reduction_lookahead_ms: int = 100
     noise_reduction_voice_enhance: float = 0.50
-    noise_reduction_model_blending: bool = False
+    noise_reduction_model_blending: float = 0.0
+    noise_reduction_noise_gate: float = 0.5
     # Compressor (after AI, before gate)
     compressor_enabled: bool = False
     compressor_threshold_db: float = -20.0
@@ -185,10 +185,6 @@ class FilterChainConfig:
     # Equalizer
     eq_enabled: bool = False
     eq_bands: list[float] = field(default_factory=lambda: [0.0] * 10)
-
-    # Transient Suppressor
-    transient_enabled: bool = False
-    transient_attack: float = -0.5
 
 
 # ============================================================================
@@ -269,18 +265,24 @@ class FilterChainGenerator:
                             "SpeechStrength" = {c.noise_reduction_speech_strength}
                             "LookaheadMs" = {c.noise_reduction_lookahead_ms}
                             "VoiceEnhance" = {c.noise_reduction_voice_enhance}
-                            "ModelBlend" = {1.0 if c.noise_reduction_model_blending else 0.0}
+                            "ModelBlend" = {c.noise_reduction_model_blending}
+                            "NoiseGate" = {c.noise_reduction_noise_gate}
                         }}
                     }}'''
 
-    def _generate_hpf_node(self) -> str:
-        """Generate high-pass filter node (PipeWire builtin bq_highpass)."""
+    def _generate_hpf_node(self, bypass: bool = False) -> str:
+        """Generate high-pass filter node (PipeWire builtin bq_highpass).
+
+        Args:
+            bypass: If True, set frequency to 5 Hz (inaudible passthrough).
+        """
         c = self._config
+        freq = 5.0 if bypass else c.hpf_frequency
         return f"""                    {{
                         type = builtin
                         name = "hpf"
                         label = bq_highpass
-                        control = {{ "Freq" = {c.hpf_frequency:.1f} "Q" = 0.707 }}
+                        control = {{ "Freq" = {freq:.1f} "Q" = 0.707 }}
                     }}"""
 
     def _generate_compressor_node(self) -> str:
@@ -302,18 +304,22 @@ class FilterChainGenerator:
                         }}
                     }}'''
 
-    def _generate_transient_node(self) -> str:
-        """Generate transient suppressor node for click removal."""
-        c = self._config
+    def _generate_limiter_node(self) -> str:
+        """Generate hard limiter node to prevent output clipping.
 
+        Always active when the compressor is enabled.
+        Limit at -1 dB prevents digital clipping while remaining
+        transparent for signals that are already within range.
+        """
         return f'''                    {{
                         type = ladspa
-                        name = "transient"
-                        plugin = "{TRANSIENT_LIBRARY}"
-                        label = "{TRANSIENT_LABEL}"
+                        name = "limiter"
+                        plugin = "{LIMITER_LIBRARY}"
+                        label = "{LIMITER_LABEL}"
                         control = {{
-                            "Attack speed" = {c.transient_attack}
-                            "Sustain time" = 0.0
+                            "dB limit" = -1.0
+                            "Wet level" = 1.0
+                            "Residue level" = 0.0
                         }}
                     }}'''
 
@@ -362,21 +368,20 @@ context.modules = [
         """Generate mono (non-stereo) configuration."""
         c = self._config
 
-        # Build list of active filters in order: hpf -> transient -> compressor -> ai -> gate -> eq
-        # HPF removes rumble first, transient suppresses clicks/plosives,
-        # compressor evens volume before AI, AI cleans noise,
-        # gate mutes residual noise in silence, EQ shapes tone.
+        # Build list of active filters in order:
+        # hpf -> compressor -> ai -> eq -> limiter -> gate
+        # HPF removes rumble first, compressor evens volume before AI, AI cleans noise,
+        # EQ shapes tone, gate mutes residual noise in silence last.
+        # NOTE: EQ must come before gate to work around a PipeWire 1.6.1 crash
+        # when gate_1410.so is loaded before mbeq_1197.so in the filter graph.
         # Each entry: (name, input_port, output_port)
         active_filters: list[tuple[str, str, str]] = []
         nodes: list[str] = []
 
-        if c.hpf_enabled:
-            active_filters.append(("hpf", "In", "Out"))
-            nodes.append(self._generate_hpf_node())
-
-        if c.transient_enabled:
-            active_filters.append(("transient", "Input", "Output"))
-            nodes.append(self._generate_transient_node())
+        # Always include HPF so frequency can be changed live via pw-cli.
+        # When disabled, frequency is set to 5 Hz (inaudible passthrough).
+        active_filters.append(("hpf", "In", "Out"))
+        nodes.append(self._generate_hpf_node(bypass=not c.hpf_enabled))
 
         if c.compressor_enabled:
             active_filters.append(("compressor", "Input", "Output"))
@@ -386,13 +391,20 @@ context.modules = [
             active_filters.append(("ai", "Input", "Output"))
             nodes.append(self._generate_ai_node())
 
+        # Always include EQ node (before gate) to avoid PipeWire 1.6.1 crash.
+        # When disabled, all bands are 0 dB (transparent passthrough).
+        active_filters.append(("eq", "Input", "Output"))
+        nodes.append(self._generate_eq_node(bypass=not c.eq_enabled))
+
+        # Hard limiter prevents output clipping when compressor
+        # pushes a hot signal over 0 dBFS.
+        if c.compressor_enabled:
+            active_filters.append(("limiter", "Input", "Output"))
+            nodes.append(self._generate_limiter_node())
+
         if c.gate_enabled:
             active_filters.append(("gate", "Input", "Output"))
             nodes.append(self._generate_gate_node())
-
-        if c.eq_enabled:
-            active_filters.append(("eq", "Input", "Output"))
-            nodes.append(self._generate_eq_node())
 
         # If no filters enabled, return minimal passthrough config
         if not active_filters:
@@ -454,16 +466,23 @@ context.modules = [
 ]
 '''
 
-    def _generate_eq_node(self) -> str:
-        """Generate the EQ LADSPA node configuration."""
+    def _generate_eq_node(self, bypass: bool = False) -> str:
+        """Generate the EQ LADSPA node configuration.
+
+        Args:
+            bypass: If True, all bands are set to 0 dB (passthrough).
+                    Used to keep the node in the graph when EQ is disabled,
+                    avoiding a PipeWire 1.6.1 crash on certain node counts.
+        """
         c = self._config
 
         # Map our 10-band EQ to MBEQ's 15 bands
         # Create all 15 bands, using 0 for unmapped bands
         mbeq_values = [0.0] * 15
-        for i, band_val in enumerate(c.eq_bands):
-            if i < len(EQ_BAND_TO_MBEQ_INDEX):
-                mbeq_values[EQ_BAND_TO_MBEQ_INDEX[i]] = band_val
+        if not bypass:
+            for i, band_val in enumerate(c.eq_bands):
+                if i < len(EQ_BAND_TO_MBEQ_INDEX):
+                    mbeq_values[EQ_BAND_TO_MBEQ_INDEX[i]] = band_val
 
         return f'''
                     # Multiband EQ (15 bands)
@@ -501,18 +520,17 @@ context.modules = [
         """
         c = self._config
 
-        # Build list of active filters in order: hpf -> transient -> compressor -> ai -> gate -> eq
+        # Build list of active filters in order:
+        # hpf -> compressor -> ai -> eq -> limiter -> gate
+        # NOTE: EQ must come before gate — see mono config comment.
         # Each entry: (name, input_port, output_port)
         active_filters: list[tuple[str, str, str]] = []
         nodes: list[str] = []
 
-        if c.hpf_enabled:
-            active_filters.append(("hpf", "In", "Out"))
-            nodes.append(self._generate_hpf_node())
-
-        if c.transient_enabled:
-            active_filters.append(("transient", "Input", "Output"))
-            nodes.append(self._generate_transient_node())
+        # Always include HPF so frequency can be changed live via pw-cli.
+        # When disabled, frequency is set to 5 Hz (inaudible passthrough).
+        active_filters.append(("hpf", "In", "Out"))
+        nodes.append(self._generate_hpf_node(bypass=not c.hpf_enabled))
 
         # RADIO mode has its own compressor — skip standard one to avoid duplicate
         if c.compressor_enabled and c.stereo_mode != StereoMode.RADIO:
@@ -523,13 +541,20 @@ context.modules = [
             active_filters.append(("ai", "Input", "Output"))
             nodes.append(self._generate_ai_node())
 
+        # Always include EQ node (before gate) to avoid PipeWire 1.6.1 crash.
+        # When disabled, all bands are 0 dB (transparent passthrough).
+        active_filters.append(("eq", "Input", "Output"))
+        nodes.append(self._generate_eq_node(bypass=not c.eq_enabled))
+
+        # Hard limiter prevents output clipping.
+        has_gain_stage = c.compressor_enabled and c.stereo_mode != StereoMode.RADIO
+        if has_gain_stage:
+            active_filters.append(("limiter", "Input", "Output"))
+            nodes.append(self._generate_limiter_node())
+
         if c.gate_enabled:
             active_filters.append(("gate", "Input", "Output"))
             nodes.append(self._generate_gate_node())
-
-        if c.eq_enabled:
-            active_filters.append(("eq", "Input", "Output"))
-            nodes.append(self._generate_eq_node())
 
         # If no filters enabled, return minimal passthrough config
         if not active_filters:

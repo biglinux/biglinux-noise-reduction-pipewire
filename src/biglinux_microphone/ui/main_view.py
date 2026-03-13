@@ -36,6 +36,9 @@ from biglinux_microphone.config import (
     LOOKAHEAD_MS_MAX,
     LOOKAHEAD_MS_MIN,
     LOOKAHEAD_MS_STEP,
+    NOISE_GATE_DEFAULT,
+    NOISE_GATE_MAX,
+    NOISE_GATE_MIN,
     SPEECH_STRENGTH_DEFAULT,
     SPEECH_STRENGTH_MAX,
     SPEECH_STRENGTH_MIN,
@@ -45,10 +48,6 @@ from biglinux_microphone.config import (
     STRENGTH_DEFAULT,
     STRENGTH_MAX,
     STRENGTH_MIN,
-    TRANSIENT_ATTACK_DEFAULT,
-    TRANSIENT_ATTACK_MAX,
-    TRANSIENT_ATTACK_MIN,
-    TRANSIENT_ATTACK_STEP,
     VOICE_ENHANCE_DEFAULT,
     VOICE_ENHANCE_MAX,
     VOICE_ENHANCE_MIN,
@@ -198,10 +197,6 @@ class MainView(Adw.NavigationPage):
         hpf_group = self._create_hpf_section()
         main_box.append(hpf_group)
 
-        # === Transient Suppressor ===
-        transient_group = self._create_transient_section()
-        main_box.append(transient_group)
-
         # === Voice Effects (Expander) ===
         stereo_group = self._create_stereo_section()
         main_box.append(stereo_group)
@@ -273,16 +268,13 @@ class MainView(Adw.NavigationPage):
         self._add_tooltip(self._hpf_expander, "hpf_toggle")
         self._add_tooltip(self._hpf_freq_row, "hpf_frequency")
 
-        # Transient section
-        self._add_tooltip(self._transient_expander, "transient_toggle")
-        self._add_tooltip(self._transient_attack_row, "transient_attack")
-
         # Noise Reduction section
         self._add_tooltip(self._nr_expander, "noise_reduction_toggle")
         self._add_tooltip(self._strength_row, "noise_reduction_strength")
         self._add_tooltip(self._speech_strength_row, "voice_preservation")
         self._add_tooltip(self._lookahead_row, "lookahead")
         self._add_tooltip(self._voice_enhance_row, "voice_enhance")
+        self._add_tooltip(self._noise_gate_row, "noise_gate")
         self._add_tooltip(self._model_select_row, "model_select")
 
         # Voice Effects section
@@ -361,9 +353,11 @@ class MainView(Adw.NavigationPage):
             digits=0,
             on_changed=self._on_strength_changed,
             marks=[
-                (0.0, _("Low")),
-                (0.5, _("Medium")),
-                (1.0, _("Maximum")),
+                (0.0, "1"),
+                (0.25, "2"),
+                (0.5, "3"),
+                (0.75, "4"),
+                (1.0, "5"),
             ],
         )
         self._strength_row.set_icon_name("audio-volume-high-symbolic")
@@ -381,8 +375,10 @@ class MainView(Adw.NavigationPage):
                 on_changed=self._on_speech_strength_changed,
                 marks=[
                     (0.0, _("Off")),
-                    (0.5, _("Medium")),
-                    (1.0, _("Maximum")),
+                    (0.25, "2"),
+                    (0.5, "3"),
+                    (0.75, "4"),
+                    (1.0, "5"),
                 ],
             )
         )
@@ -399,9 +395,9 @@ class MainView(Adw.NavigationPage):
             on_changed=self._on_lookahead_changed,
             marks=[
                 (0, _("Off")),
-                (50, _("Normal")),
+                (50, "50ms"),
                 (100, "100ms"),
-                (200, _("Maximum")),
+                (200, "200ms"),
             ],
         )
         self._nr_expander.add_row(self._lookahead_row)
@@ -418,12 +414,33 @@ class MainView(Adw.NavigationPage):
                 on_changed=self._on_voice_enhance_changed,
                 marks=[
                     (0.0, _("Off")),
-                    (0.5, _("Medium")),
-                    (1.0, _("Maximum")),
+                    (0.25, "2"),
+                    (0.5, "3"),
+                    (0.75, "4"),
+                    (1.0, "5"),
                 ],
             )
         )
         self._nr_expander.add_row(self._voice_enhance_row)
+
+        # Noise Gate slider (spectral flatness + HF click detection)
+        self._noise_gate_row, self._noise_gate_scale = create_action_row_with_scale(
+            _("Noise Gate"),
+            min_value=NOISE_GATE_MIN,
+            max_value=NOISE_GATE_MAX,
+            value=NOISE_GATE_DEFAULT,
+            step=0.05,
+            digits=0,
+            on_changed=self._on_noise_gate_changed,
+            marks=[
+                (0.0, _("Off")),
+                (0.25, "2"),
+                (0.5, "3"),
+                (0.75, "4"),
+                (1.0, "5"),
+            ],
+        )
+        self._nr_expander.add_row(self._noise_gate_row)
 
         return group
 
@@ -459,9 +476,11 @@ class MainView(Adw.NavigationPage):
                 digits=2,
                 on_changed=self._on_compressor_intensity_changed,
                 marks=[
-                    (0.0, _("Low")),
-                    (0.5, _("Balanced")),
-                    (1.0, _("Maximum")),
+                    (0.0, "1"),
+                    (0.25, "2"),
+                    (0.5, "3"),
+                    (0.75, "4"),
+                    (1.0, "5"),
                 ],
             )
         )
@@ -502,42 +521,6 @@ class MainView(Adw.NavigationPage):
 
         return group
 
-    def _create_transient_section(self) -> Adw.PreferencesGroup:
-        """Create transient suppressor section."""
-        group = create_preferences_group("", "")
-
-        self._transient_expander, self._transient_switch = (
-            create_expander_row_with_switch(
-                _("Transient Suppressor"),
-                subtitle=_("Suppresses clicks and plosives"),
-                icon_name="audio-input-microphone-symbolic",
-                active=False,
-                expanded=False,
-                on_toggled=self._on_transient_toggled,
-            )
-        )
-        group.add(self._transient_expander)
-
-        self._transient_attack_row, self._transient_attack_scale = (
-            create_action_row_with_scale(
-                _("Attack"),
-                min_value=TRANSIENT_ATTACK_MIN,
-                max_value=TRANSIENT_ATTACK_MAX,
-                value=TRANSIENT_ATTACK_DEFAULT,
-                step=TRANSIENT_ATTACK_STEP,
-                digits=1,
-                on_changed=self._on_transient_attack_changed,
-                marks=[
-                    (-1.0, "-1.0"),
-                    (-0.5, "-0.5"),
-                    (0.0, "0"),
-                ],
-            )
-        )
-        self._transient_expander.add_row(self._transient_attack_row)
-
-        return group
-
     def _create_gate_section(self) -> Adw.PreferencesGroup:
         """Create gate filter section as expander with single intensity slider."""
         group = create_preferences_group("", "")
@@ -566,9 +549,11 @@ class MainView(Adw.NavigationPage):
                 digits=2,
                 on_changed=self._on_gate_intensity_changed,
                 marks=[
-                    (0.0, _("Low")),
-                    (0.5, _("Balanced")),
-                    (1.0, _("Maximum")),
+                    (0.0, "1"),
+                    (0.25, "2"),
+                    (0.5, "3"),
+                    (0.75, "4"),
+                    (1.0, "5"),
                 ],
             )
         )
@@ -759,10 +744,11 @@ class MainView(Adw.NavigationPage):
             self._voice_enhance_scale.set_value(
                 self._settings.noise_reduction.voice_enhance
             )
+            self._noise_gate_scale.set_value(self._settings.noise_reduction.noise_gate)
 
             # AI Model selector: derive combo index from model + blending
             nr = self._settings.noise_reduction
-            if nr.model_blending:
+            if nr.model_blending > 0.5:
                 model_index = 2  # Intelligent Blending
             elif nr.model == NoiseModel.GTCRN_VCTK:
                 model_index = 1  # VCTK
@@ -795,6 +781,11 @@ class MainView(Adw.NavigationPage):
             # Gate
             self._gate_switch.set_active(self._settings.gate.enabled)
             self._gate_intensity_scale.set_value(self._settings.gate.intensity)
+            self._gate_intensity_row.set_subtitle(
+                _("Silence threshold: {percent}%").format(
+                    percent=int(self._settings.gate.intensity * 100)
+                )
+            )
             self._update_gate_sensitivity()
             # Sync gate state to PipeWire service
             self._pipewire.set_gate_enabled(self._settings.gate.enabled)
@@ -809,14 +800,18 @@ class MainView(Adw.NavigationPage):
             self._compressor_intensity_scale.set_value(
                 self._settings.compressor.intensity
             )
+            self._compressor_intensity_row.set_subtitle(
+                _("Volume correction: {percent}%").format(
+                    percent=int(self._settings.compressor.intensity * 100)
+                )
+            )
 
             # HPF
             self._hpf_switch.set_active(self._settings.hpf.enabled)
             self._hpf_freq_scale.set_value(self._settings.hpf.frequency)
-
-            # Transient
-            self._transient_switch.set_active(self._settings.transient.enabled)
-            self._transient_attack_scale.set_value(self._settings.transient.attack)
+            self._hpf_freq_row.set_subtitle(
+                _("Cutoff: {hz} Hz").format(hz=int(self._settings.hpf.frequency))
+            )
 
             # Strength subtitle
             strength_percent = int(self._settings.noise_reduction.strength * 100)
@@ -896,13 +891,13 @@ class MainView(Adw.NavigationPage):
         self._speech_strength_row.set_sensitive(nr_enabled)
         self._lookahead_row.set_sensitive(nr_enabled)
         self._voice_enhance_row.set_sensitive(nr_enabled)
+        self._noise_gate_row.set_sensitive(nr_enabled)
         self._model_select_row.set_sensitive(nr_enabled)
 
         # All sections depend on noise reduction except Bluetooth
         self._gate_expander.set_sensitive(nr_enabled)
         self._compressor_expander.set_sensitive(nr_enabled)
         self._hpf_expander.set_sensitive(nr_enabled)
-        self._transient_expander.set_sensitive(nr_enabled)
         self._stereo_expander.set_sensitive(nr_enabled)
         self._eq_expander.set_sensitive(nr_enabled)
 
@@ -1209,11 +1204,22 @@ class MainView(Adw.NavigationPage):
             return
         pct = int(value * 100)
         self._voice_enhance_row.set_subtitle(
-            _("Harmonic recovery: {percent}%").format(percent=pct)
+            _("Voice recovery: {percent}%").format(percent=pct)
         )
         self._settings.noise_reduction.voice_enhance = value
         self._schedule_settings_save()
         self._pipewire.set_voice_enhance(value)
+
+    def _on_noise_gate_changed(self, value: float) -> None:
+        if self._loading:
+            return
+        pct = int(value * 100)
+        self._noise_gate_row.set_subtitle(
+            _("Noise gate: {percent}%").format(percent=pct)
+        )
+        self._settings.noise_reduction.noise_gate = value
+        self._schedule_settings_save()
+        self._pipewire.set_noise_gate(value)
 
     def _on_model_select_changed(self, index: int) -> None:
         """Handle AI model selector change.
@@ -1225,13 +1231,13 @@ class MainView(Adw.NavigationPage):
 
         if index == 0:
             model = NoiseModel.GTCRN_DNS3
-            blending = False
+            blending = 0.0
         elif index == 1:
             model = NoiseModel.GTCRN_VCTK
-            blending = False
+            blending = 0.0
         else:
             model = NoiseModel.GTCRN_DNS3
-            blending = True
+            blending = 1.0
 
         self._settings.noise_reduction.model = model
         self._settings.noise_reduction.model_blending = blending
@@ -1258,6 +1264,10 @@ class MainView(Adw.NavigationPage):
         if self._loading:
             return
 
+        pct = int(value * 100)
+        self._compressor_intensity_row.set_subtitle(
+            _("Volume correction: {percent}%").format(percent=pct)
+        )
         self._settings.compressor.intensity = value
         self._schedule_settings_save()
         self._pipewire.set_compressor_intensity(value)
@@ -1269,50 +1279,19 @@ class MainView(Adw.NavigationPage):
 
         self._settings.hpf.enabled = active
         self._settings_service.save(self._settings)
-        if self._settings.noise_reduction.enabled:
-            self._show_loading()
-            self._pipewire.apply_config(
-                self._settings, on_complete=self._on_restart_complete
-            )
+        self._pipewire.set_hpf_enabled(active)
 
     def _on_hpf_freq_changed(self, value: float) -> None:
         """Handle HPF frequency change."""
         if self._loading:
             return
 
+        hz = int(value)
+        self._hpf_freq_row.set_subtitle(_("Cutoff: {hz} Hz").format(hz=hz))
         self._settings.hpf.frequency = value
         self._settings_service.save(self._settings)
-        if self._settings.hpf.enabled and self._settings.noise_reduction.enabled:
-            self._show_loading()
-            self._pipewire.apply_config(
-                self._settings, on_complete=self._on_restart_complete
-            )
-
-    def _on_transient_toggled(self, active: bool) -> None:
-        """Handle transient suppressor toggle."""
-        if self._loading:
-            return
-
-        self._settings.transient.enabled = active
-        self._settings_service.save(self._settings)
-        if self._settings.noise_reduction.enabled:
-            self._show_loading()
-            self._pipewire.apply_config(
-                self._settings, on_complete=self._on_restart_complete
-            )
-
-    def _on_transient_attack_changed(self, value: float) -> None:
-        """Handle transient attack change."""
-        if self._loading:
-            return
-
-        self._settings.transient.attack = value
-        self._settings_service.save(self._settings)
-        if self._settings.transient.enabled and self._settings.noise_reduction.enabled:
-            self._show_loading()
-            self._pipewire.apply_config(
-                self._settings, on_complete=self._on_restart_complete
-            )
+        if self._settings.hpf.enabled:
+            self._pipewire.set_hpf_frequency(value)
 
     def _on_gate_toggled(self, active: bool) -> None:
         """Handle gate toggle."""
@@ -1337,6 +1316,10 @@ class MainView(Adw.NavigationPage):
         if self._loading:
             return
 
+        pct = int(value * 100)
+        self._gate_intensity_row.set_subtitle(
+            _("Silence threshold: {percent}%").format(percent=pct)
+        )
         self._settings.gate.intensity = value
         self._schedule_settings_save()
         self._pipewire.set_gate_intensity(value)
@@ -1469,15 +1452,12 @@ class MainView(Adw.NavigationPage):
         logger.info("EQ toggled: %s", active)
 
         self._settings.equalizer.enabled = active
-        # Structural change requires restart — save immediately (not debounced)
         self._settings_service.save(self._settings)
         logger.info("EQ settings saved: enabled=%s", active)
         self._update_eq_sensitivity()
 
-        # Sync state to PipeWire service
+        # Live update via pw-cli (EQ node is always present, bands set to 0 dB when off)
         self._pipewire.set_eq_enabled(active)
-
-        self._update_service_state()
 
     def _on_eq_preset_selected(self, index: int) -> None:
         """Handle EQ preset selection."""
@@ -1743,7 +1723,9 @@ class MainView(Adw.NavigationPage):
                 channels=channels,
             )
             if not success:
-                logger.warning("Failed to restart monitor after NR change, reverting toggle")
+                logger.warning(
+                    "Failed to restart monitor after NR change, reverting toggle"
+                )
                 self._loading = True
                 try:
                     self._monitor_switch.set_active(False)

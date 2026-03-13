@@ -42,21 +42,18 @@ class FilterChainState:
     noise_reduction_model: NoiseModel = NoiseModel.GTCRN_DNS3
     noise_reduction_strength: float = 1.0
     noise_reduction_speech_strength: float = 1.0
-    noise_reduction_lookahead_ms: int = 0
-    noise_reduction_voice_enhance: float = 0.0
-    noise_reduction_model_blending: bool = False
+    noise_reduction_lookahead_ms: int = 50
+    noise_reduction_voice_enhance: float = 0.25
+    noise_reduction_model_blending: float = 0.0
+    noise_reduction_noise_gate: float = 0.5
 
-    # HPF settings (disabled — GTCRN plugin has built-in HP80)
-    hpf_enabled: bool = False
+    # HPF settings
+    hpf_enabled: bool = True
     hpf_frequency: float = 80.0
-
-    # Transient settings
-    transient_enabled: bool = False
-    transient_attack: float = -0.5
 
     # Compressor settings
     compressor_enabled: bool = True
-    compressor_intensity: float = 1.0
+    compressor_intensity: float = 0.5
 
     # Gate settings
     gate_enabled: bool = True
@@ -99,8 +96,6 @@ class FilterChainState:
         return FilterChainConfig(
             hpf_enabled=self.hpf_enabled,
             hpf_frequency=self.hpf_frequency,
-            transient_enabled=self.transient_enabled,
-            transient_attack=self.transient_attack,
             noise_reduction_enabled=self.noise_reduction_enabled,
             noise_reduction_model=self.noise_reduction_model,
             noise_reduction_strength=self.noise_reduction_strength,
@@ -108,6 +103,7 @@ class FilterChainState:
             noise_reduction_lookahead_ms=self.noise_reduction_lookahead_ms,
             noise_reduction_voice_enhance=self.noise_reduction_voice_enhance,
             noise_reduction_model_blending=self.noise_reduction_model_blending,
+            noise_reduction_noise_gate=self.noise_reduction_noise_gate,
             compressor_enabled=self.compressor_enabled,
             compressor_threshold_db=self._compressor.threshold_db,
             compressor_ratio=self._compressor.ratio,

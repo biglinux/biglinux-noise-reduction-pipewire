@@ -171,8 +171,6 @@ def generate_config() -> bool:
             stereo_width=settings.stereo.width,
             eq_enabled=settings.equalizer.enabled,
             eq_bands=settings.equalizer.bands,
-            transient_enabled=settings.transient.enabled,
-            transient_attack=settings.transient.attack,
         )
 
         generator = FilterChainGenerator(config)
@@ -280,9 +278,7 @@ def cmd_start() -> int:
         elapsed += poll_interval
 
     if not started:
-        print(
-            f"Warning: filter not detected after {elapsed:.1f}s", file=sys.stderr
-        )
+        print(f"Warning: filter not detected after {elapsed:.1f}s", file=sys.stderr)
 
     configure_filter_source()
 

@@ -75,9 +75,10 @@ class PipeWireService:
         self._noise_reduction_model = NoiseModel.GTCRN_DNS3
         self._noise_reduction_strength = 1.0
         self._noise_reduction_speech_strength = 1.0
-        self._noise_reduction_lookahead_ms = 0
+        self._noise_reduction_lookahead_ms = 50
         self._noise_reduction_voice_enhance = 0.50
-        self._noise_reduction_model_blending = False
+        self._noise_reduction_model_blending = 0.0
+        self._noise_reduction_noise_gate = 0.5
         self._gate_enabled = True
         self._gate_threshold_db = -30
         self._gate_range_db = -60
@@ -88,6 +89,8 @@ class PipeWireService:
         self._stereo_width = 0.7
 
         self._crossfeed_enabled = False
+        self._hpf_enabled = True
+        self._hpf_frequency = 80.0
         self._eq_enabled = True
         self._eq_bands = [0.0, 0.0, 0.0, 1.0, 0.0, 1.0, 2.0, 3.0, 1.0, 0.0]
 
@@ -149,6 +152,7 @@ class PipeWireService:
         self._noise_reduction_lookahead_ms = settings.noise_reduction.lookahead_ms
         self._noise_reduction_voice_enhance = settings.noise_reduction.voice_enhance
         self._noise_reduction_model_blending = settings.noise_reduction.model_blending
+        self._noise_reduction_noise_gate = settings.noise_reduction.noise_gate
         self._gate_enabled = settings.gate.enabled
         self._gate_threshold_db = settings.gate.threshold_db
         self._gate_range_db = settings.gate.range_db
@@ -159,6 +163,8 @@ class PipeWireService:
         self._stereo_width = settings.stereo.width
 
         self._crossfeed_enabled = settings.stereo.crossfeed_enabled
+        self._hpf_enabled = settings.hpf.enabled
+        self._hpf_frequency = settings.hpf.frequency
         self._eq_enabled = settings.equalizer.enabled
         self._eq_bands = list(settings.equalizer.bands)
         logger.debug("Synchronized state from settings")
@@ -260,12 +266,16 @@ class PipeWireService:
             self._generate_config(settings)
 
             # Start filter-chain as a separate background process, capture PID
-            proc = subprocess.Popen(
-                ["/usr/bin/pipewire", "-c", "filter-chain.conf"],
-                stdout=subprocess.DEVNULL,
-                stderr=subprocess.DEVNULL,
-                start_new_session=True,
-            )
+            try:
+                proc = subprocess.Popen(
+                    ["/usr/bin/pipewire", "-c", "filter-chain.conf"],
+                    stdout=subprocess.DEVNULL,
+                    stderr=subprocess.DEVNULL,
+                    start_new_session=True,
+                )
+            except FileNotFoundError:
+                logger.error("pipewire binary not found at /usr/bin/pipewire")
+                return False
             pid = proc.pid
 
             # Wait for filter to register in PipeWire graph.
@@ -290,7 +300,9 @@ class PipeWireService:
                 if self.is_enabled():
                     logger.info(
                         "Noise reduction started via filter-chain process "
-                        "(PID %d, %.1fs)", pid, elapsed,
+                        "(PID %d, %.1fs)",
+                        pid,
+                        elapsed,
                     )
                     self._cached_node_id = None
                     await self._configure_filter_source()
@@ -510,13 +522,45 @@ class PipeWireService:
             return self._update_param_live("ai:VoiceEnhance", value)
         return True
 
-    def get_model_blending(self) -> bool:
+    def get_model_blending(self) -> float:
         return self._noise_reduction_model_blending
 
-    def set_model_blending(self, enabled: bool) -> bool:
-        self._noise_reduction_model_blending = enabled
+    def set_model_blending(self, value: float) -> bool:
+        self._noise_reduction_model_blending = value
         if self.is_enabled():
-            return self._update_param_live("ai:ModelBlend", 1.0 if enabled else 0.0)
+            return self._update_param_live("ai:ModelBlend", value)
+        return True
+
+    def set_noise_gate(self, value: float) -> bool:
+        """Set noise gate intensity with live update."""
+        value = max(0.0, min(1.0, value))
+        self._noise_reduction_noise_gate = value
+        if self.is_enabled():
+            return self._update_param_live("ai:NoiseGate", value)
+        return True
+
+    # =========================================================================
+    # High-Pass Filter Parameters
+    # =========================================================================
+
+    def set_hpf_enabled(self, enabled: bool) -> bool:
+        """Enable or disable HPF via live update.
+
+        HPF node is always present in the filter chain.
+        When disabled, frequency is set to 5 Hz (inaudible passthrough).
+        When enabled, current frequency is restored.
+        """
+        self._hpf_enabled = enabled
+        if self.is_enabled():
+            freq = self._hpf_frequency if enabled else 5.0
+            return self._update_param_live("hpf:Freq", freq)
+        return True
+
+    def set_hpf_frequency(self, freq: float) -> bool:
+        """Set HPF frequency with live update."""
+        self._hpf_frequency = freq
+        if self.is_enabled() and self._hpf_enabled:
+            return self._update_param_live("hpf:Freq", freq)
         return True
 
     # =========================================================================
@@ -541,11 +585,11 @@ class PipeWireService:
         updates = {
             "compressor:Threshold level (dB)": comp.threshold_db,
             "compressor:Ratio (1:n)": comp.ratio,
-            "compressor:Makeup gain (dB)": comp.makeup_gain_db,
             "compressor:Attack time (ms)": comp.attack_ms,
             "compressor:Release time (ms)": comp.release_ms,
             "compressor:Knee radius (dB)": comp.knee_db,
             "compressor:RMS/peak": comp.rms_peak,
+            "compressor:Makeup gain (dB)": comp.makeup_gain_db,
         }
         for param, val in updates.items():
             if not self._update_param_live(param, val):
@@ -808,7 +852,11 @@ class PipeWireService:
 
     def set_eq_enabled(self, enabled: bool) -> bool:
         """
-        Enable or disable equalizer.
+        Enable or disable equalizer via live update.
+
+        EQ node is always present in the filter chain (PipeWire 1.6.1 workaround).
+        When disabled, all bands are set to 0 dB (passthrough) via pw-cli.
+        When enabled, current band values are restored.
 
         Args:
             enabled: True to enable EQ
@@ -817,7 +865,17 @@ class PipeWireService:
             bool: True if update successful
         """
         self._eq_enabled = enabled
-        return self._requires_restart()
+
+        if self.is_enabled():
+            success = True
+            for i, value in enumerate(self._eq_bands):
+                mbeq_index = EQ_BAND_TO_MBEQ_INDEX[i]
+                param_name = f"eq:{MBEQ_PARAM_NAMES[mbeq_index]}"
+                target = value if enabled else 0.0
+                if not self._update_param_live(param_name, target):
+                    success = False
+            return success
+        return True
 
     def get_eq_bands(self) -> list[float]:
         """Get current EQ band values."""
@@ -1115,8 +1173,6 @@ class PipeWireService:
         config = FilterChainConfig(
             hpf_enabled=settings.hpf.enabled,
             hpf_frequency=settings.hpf.frequency,
-            transient_enabled=settings.transient.enabled,
-            transient_attack=settings.transient.attack,
             noise_reduction_enabled=settings.noise_reduction.enabled,
             noise_reduction_model=settings.noise_reduction.model,
             noise_reduction_strength=settings.noise_reduction.strength,

@@ -56,26 +56,26 @@ TOOLTIPS = {
     ),
     "noise_reduction_strength": _(
         "How much noise to remove.\n\n"
-        "• Low: Removes only the most obvious noises\n"
-        "• Medium: Good for most situations\n"
-        "• Maximum: Removes as much noise as possible\n\n"
+        "• 1: Removes only the most obvious noises\n"
+        "• 3: Good for most situations\n"
+        "• 5: Removes as much noise as possible\n\n"
         "If the voice sounds distorted, reduce this slider."
     ),
     "voice_preservation": _(
         "Whether to keep filtering active while you are speaking.\n\n"
         "• Off: Filter pauses during speech — voice sounds\n"
         "  completely natural, but noise may leak through\n"
-        "• Medium: Applies partial filtering during speech\n"
-        "• Maximum: Full filtering at all times, cleanest result\n\n"
-        "Default: Maximum. Reduce if your voice sounds thin or robotic."
+        "• 3: Applies partial filtering during speech\n"
+        "• 5: Full filtering at all times, cleanest result\n\n"
+        "Default: 5. Reduce if your voice sounds thin or robotic."
     ),
     "lookahead": _(
         "Prevents the beginning of words from being cut off.\n\n"
         "Keeps a small audio buffer so the filter can react\n"
         "before you start speaking.\n"
-        "• Off (0ms): No delay, but may clip the first syllable\n"
-        "• Normal (50ms): Recommended for most people\n"
-        "• Maximum (200ms): Safest for fast speakers\n\n"
+        "• Off: No delay, but may clip the first syllable\n"
+        "• 50ms: Recommended for most people\n"
+        "• 200ms: Safest for fast speakers\n\n"
         "Higher values add a small delay to the audio."
     ),
     "voice_enhance": _(
@@ -83,9 +83,19 @@ TOOLTIPS = {
         "When noise removal is aggressive, the voice can sound\n"
         "muffled or thin. This control brings back naturalness.\n\n"
         "• Off: No recovery\n"
-        "• Medium: Good balance for most voices\n"
-        "• Maximum: Maximum voice restoration\n\n"
-        "Recommended: keep between Medium and Maximum."
+        "• 3: Good balance for most voices\n"
+        "• 5: Maximum voice restoration\n\n"
+        "Recommended: keep between 3 and 5."
+    ),
+    "noise_gate": _(
+        "Suppresses non-vocal sounds between speech.\n\n"
+        "Detects and reduces noises like paper rustling,\n"
+        "candy wrappers, and mouse clicks that happen\n"
+        "when you're not talking.\n\n"
+        "• Off: No extra suppression\n"
+        "• 3: Moderate suppression\n"
+        "• 5: Aggressive suppression\n\n"
+        "If speech sounds cut or clipped, lower this value."
     ),
     # Compressor (Volume Normalizer) section
     "compressor_toggle": _(
@@ -97,11 +107,11 @@ TOOLTIPS = {
     ),
     "compressor_intensity": _(
         "How much volume correction to apply.\n\n"
-        "• Low: Gentle correction, very natural sound\n"
-        "• Balanced: Good for most people\n"
-        "• Maximum: Strong leveling — whisper and shout\n"
+        "• 1: Gentle correction, very natural sound\n"
+        "• 3: Good for most people\n"
+        "• 5: Strong leveling — whisper and shout\n"
         "  come out at similar volume\n\n"
-        "Start with Balanced and adjust to taste."
+        "Start with 3 and adjust to taste."
     ),
     # Gate Filter section
     "gate_toggle": _(
@@ -112,10 +122,10 @@ TOOLTIPS = {
     ),
     "gate_intensity": _(
         "Controls how aggressively the gate removes residual noise.\n\n"
-        "• Low: Only mutes during long silences\n"
-        "• Balanced: Good for most voices\n"
-        "• Maximum: Complete silence between words\n\n"
-        "Start at Balanced and adjust to taste."
+        "• 1: Only mutes during long silences\n"
+        "• 3: Good for most voices\n"
+        "• 5: Complete silence between words\n\n"
+        "Start at 3 and adjust to taste."
     ),
     # Voice Effects section
     "stereo_toggle": _(

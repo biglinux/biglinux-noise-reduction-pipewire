@@ -171,17 +171,23 @@ SPEECH_STRENGTH_STEP = 0.05
 # Lookahead (ms)
 LOOKAHEAD_MS_MIN = 0
 LOOKAHEAD_MS_MAX = 200
-LOOKAHEAD_MS_DEFAULT = 0
+LOOKAHEAD_MS_DEFAULT = 50
 LOOKAHEAD_MS_STEP = 5
 
 # Voice Enhancement (unified control: 0.0 = off, 1.0 = max)
 VOICE_ENHANCE_MIN = 0.0
 VOICE_ENHANCE_MAX = 1.0
-VOICE_ENHANCE_DEFAULT = 0.0
+VOICE_ENHANCE_DEFAULT = 0.25
 VOICE_ENHANCE_STEP = 0.05
 
-# Model Blending (toggle)
-MODEL_BLENDING_DEFAULT = False
+# Model Blending (0.0 = off, 1.0 = dual-model VAD-switched)
+MODEL_BLENDING_DEFAULT = 0.0
+
+# Noise Gate (spectral flatness + HF click detection in LADSPA plugin)
+NOISE_GATE_MIN = 0.0
+NOISE_GATE_MAX = 1.0
+NOISE_GATE_DEFAULT = 0.5
+NOISE_GATE_STEP = 0.05
 
 # Gate Filter
 # Gate (Silence Filter)
@@ -240,12 +246,6 @@ class GateConfig:
         return 10.0
 
 
-# Transient Suppressor (for click removal)
-TRANSIENT_ATTACK_MIN = -1.0
-TRANSIENT_ATTACK_MAX = 0.0
-TRANSIENT_ATTACK_DEFAULT = -0.5  # Moderate suppression
-TRANSIENT_ATTACK_STEP = 0.1
-
 # Stereo Enhancement
 STEREO_WIDTH_MIN = 0.0
 STEREO_WIDTH_MAX = 1.0
@@ -287,13 +287,14 @@ class NoiseReductionConfig:
     speech_strength: float = SPEECH_STRENGTH_DEFAULT
     lookahead_ms: int = LOOKAHEAD_MS_DEFAULT
     voice_enhance: float = VOICE_ENHANCE_DEFAULT
-    model_blending: bool = MODEL_BLENDING_DEFAULT
+    model_blending: float = MODEL_BLENDING_DEFAULT
+    noise_gate: float = NOISE_GATE_DEFAULT
 
 
 # Compressor
 COMPRESSOR_INTENSITY_MIN = 0.0
 COMPRESSOR_INTENSITY_MAX = 1.0
-COMPRESSOR_INTENSITY_DEFAULT = 1.0
+COMPRESSOR_INTENSITY_DEFAULT = 0.5
 COMPRESSOR_INTENSITY_STEP = 0.05
 
 
@@ -301,8 +302,7 @@ COMPRESSOR_INTENSITY_STEP = 0.05
 class CompressorConfig:
     """Configuration for SC4 mono compressor.
 
-    Uses a single 'intensity' parameter (0.0-1.0) that maps to all
-    SC4m parameters, optimized for voice normalization.
+    Uses 'intensity' (0.0-1.0) to control threshold, ratio, and makeup gain.
     """
 
     enabled: bool = True
@@ -310,76 +310,40 @@ class CompressorConfig:
 
     @property
     def threshold_db(self) -> float:
-        """Map intensity to threshold: -20 (low) to -40 (heavy).
-
-        Lower threshold = more of the signal gets compressed,
-        catching both loud and moderate speech.
-        """
-        return -20.0 - self.intensity * 20.0
+        return -15.0 - self.intensity * 15.0
 
     @property
     def ratio(self) -> float:
-        """Map intensity to ratio: 3:1 (low) to 10:1 (heavy).
-
-        Moderate ratios avoid "pumping" artifacts. Combined with
-        slow attack/release this works as a leveler, not a limiter.
-        """
-        return 3.0 + self.intensity * 7.0
+        return 2.0 + self.intensity * 4.0
 
     @property
     def attack_ms(self) -> float:
-        """Slow attack to avoid modulating individual syllables.
-
-        150 ms lets transients pass naturally; the compressor only
-        reacts to sustained level changes (e.g. moving away from mic).
-        """
-        return 150.0
+        return 10.0
 
     @property
     def release_ms(self) -> float:
-        """Slow release to keep gain stable during pauses.
-
-        800 ms prevents the level from bouncing between words.
-        """
-        return 800.0
+        return 100.0
 
     @property
     def makeup_gain_db(self) -> float:
-        """Map intensity to makeup gain: +6 (low) to +18 (heavy)."""
-        return 6.0 + self.intensity * 12.0
+        """Makeup gain compensates for compression-induced level loss."""
+        return 2.0 + self.intensity * 8.0
 
     @property
     def knee_db(self) -> float:
-        """Wide soft knee for transparent leveling."""
-        return 12.0 + self.intensity * 4.0
+        return 3.0 + self.intensity * 5.0
 
     @property
     def rms_peak(self) -> float:
-        """Pure RMS detection — measures average energy, not peaks.
-
-        This is key for leveling: RMS ignores consonant transients
-        and only responds to the overall voice energy envelope.
-        """
         return 0.0
 
 
 @dataclass
 class HpfConfig:
-    """Configuration for high-pass filter (rumble removal).
+    """Configuration for high-pass filter (rumble removal)."""
 
-    Disabled by default — GTCRN plugin has a built-in HP80 biquad.
-    """
-
-    enabled: bool = False
+    enabled: bool = True
     frequency: float = 80.0
-
-
-@dataclass
-class TransientConfig:
-    """Configuration for transient suppressor (click removal)."""
-
-    enabled: bool = False
-    attack: float = TRANSIENT_ATTACK_DEFAULT
 
 
 @dataclass
@@ -448,7 +412,6 @@ class AppSettings:
     hpf: HpfConfig = field(default_factory=HpfConfig)
     stereo: StereoConfig = field(default_factory=StereoConfig)
     equalizer: EqualizerConfig = field(default_factory=EqualizerConfig)
-    transient: TransientConfig = field(default_factory=TransientConfig)
     window: WindowConfig = field(default_factory=WindowConfig)
     ui: UIConfig = field(default_factory=UIConfig)
     bluetooth: BluetoothConfig = field(default_factory=BluetoothConfig)
@@ -487,7 +450,8 @@ class AppSettings:
                 speech_strength=nr.get("speech_strength", SPEECH_STRENGTH_DEFAULT),
                 lookahead_ms=nr.get("lookahead_ms", LOOKAHEAD_MS_DEFAULT),
                 voice_enhance=nr.get("voice_enhance", VOICE_ENHANCE_DEFAULT),
-                model_blending=nr.get("model_blending", MODEL_BLENDING_DEFAULT),
+                model_blending=float(nr.get("model_blending", MODEL_BLENDING_DEFAULT)),
+                noise_gate=nr.get("noise_gate", NOISE_GATE_DEFAULT),
             )
 
         if "gate" in data:
@@ -533,13 +497,6 @@ class AppSettings:
                 enabled=eq.get("enabled", False),
                 bands=eq.get("bands", [EQ_BAND_DEFAULT] * EQ_BAND_COUNT),
                 preset=eq.get("preset", "flat"),
-            )
-
-        if "transient" in data:
-            tr = data["transient"]
-            settings.transient = TransientConfig(
-                enabled=tr.get("enabled", False),
-                attack=tr.get("attack", TRANSIENT_ATTACK_DEFAULT),
             )
 
         if "window" in data:

@@ -167,8 +167,7 @@ class MicrophoneWindow(Adw.ApplicationWindow):
     def _on_restore_defaults(self, action=None, param=None) -> None:
         """Handle reset defaults action."""
         # Confirm dialog
-        dialog = Adw.MessageDialog(
-            transient_for=self,
+        dialog = Adw.AlertDialog(
             heading=_("Restore settings?"),
             body=_("This will return all adjustments to their original defaults."),
         )
@@ -179,9 +178,9 @@ class MicrophoneWindow(Adw.ApplicationWindow):
         dialog.set_close_response("cancel")
 
         dialog.connect("response", self._on_restore_confirmed)
-        dialog.present()
+        dialog.choose(self, None, None)
 
-    def _on_restore_confirmed(self, dialog: Adw.MessageDialog, response: str) -> None:
+    def _on_restore_confirmed(self, dialog: Adw.AlertDialog, response: str) -> None:
         """Handle restore confirmation."""
         if response == "restore" and hasattr(self, "_main_view"):
             self._main_view.restore_defaults()

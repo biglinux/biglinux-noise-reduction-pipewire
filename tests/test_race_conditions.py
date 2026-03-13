@@ -89,8 +89,9 @@ class TestSettingsPropagation:
         content = service._config_file.read_text()
         assert '"ai"' in content
         assert '"gate"' in content
-        # EQ should NOT be present (disabled in mock settings)
-        assert '"eq"' not in content
+        # EQ node always present (PipeWire 1.6.1 workaround), but bands at 0 dB
+        assert '"eq"' in content
+        assert '"50Hz gain (low shelving)" = 0.0' in content
 
     def test_start_filter_chain_process_propagates_settings(self, tmp_path: Path) -> None:
         """_start_filter_chain_process must pass settings to _generate_config."""
@@ -413,7 +414,7 @@ class TestFilterChainConfigFromSettings:
         ai_pos = content.index('"ai"')
         gate_pos = content.index('"gate"')
         eq_pos = content.index('"eq"')
-        assert compressor_pos < ai_pos < gate_pos < eq_pos, \
+        assert compressor_pos < ai_pos < eq_pos < gate_pos, \
             "Filter chain order is wrong"
 
     def test_only_nr_enabled(self, tmp_path: Path) -> None:
@@ -435,7 +436,8 @@ class TestFilterChainConfigFromSettings:
 
         assert '"ai"' in content
         assert '"gate"' not in content
-        assert '"eq"' not in content
+        # EQ node always present (PipeWire 1.6.1 workaround), bands at 0 dB
+        assert '"eq"' in content
         assert '"compressor"' not in content
 
     def test_settings_strength_value_in_config(self, tmp_path: Path) -> None:
