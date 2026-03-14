@@ -25,7 +25,6 @@ CONFIG_PATH = (
 LEGACY_PATHS = [
     Path.home() / ".config/pipewire/filter-chain.conf.d/source-rnnoise-config.conf",
     Path.home() / ".config/pipewire/filter-chain.conf.d/source-rnnoise-smart.conf",
-    Path.home() / ".config/pipewire/filter-chain.conf.d/source-gtcrn-smart.conf",
 ]
 
 
@@ -136,16 +135,58 @@ def configure_filter_source() -> bool:
 # =============================================================================
 
 
+def detect_hardware_source() -> str:
+    """Detect the hardware microphone source name.
+
+    Returns the default source excluding our own filter nodes.
+    """
+    try:
+        result = subprocess.run(
+            ["pactl", "get-default-source"],
+            capture_output=True,
+            text=True,
+            timeout=5,
+            check=False,
+        )
+        if result.returncode == 0:
+            name = result.stdout.strip()
+            if name and not name.startswith("big-"):
+                return name
+    except Exception:
+        pass
+    return ""
+
+
+def set_pipewire_quantum(quantum: int) -> None:
+    """Set PipeWire force-quantum via pw-metadata."""
+    with contextlib.suppress(Exception):
+        subprocess.run(
+            ["pw-metadata", "-n", "settings", "0",
+             "clock.force-quantum", str(quantum)],
+            capture_output=True,
+            timeout=3,
+            check=False,
+        )
+
+
 def generate_config() -> bool:
     """Generate the filter chain configuration from user settings."""
     from biglinux_microphone.audio.filter_chain import (
         FilterChainConfig,
         FilterChainGenerator,
     )
-    from biglinux_microphone.config import load_settings
+    from biglinux_microphone.config import StereoMode, load_settings
 
     try:
         settings = load_settings()
+
+        stereo_mode = (
+            settings.stereo.mode if settings.stereo.enabled else StereoMode.MONO
+        )
+
+        source_node_name = ""
+        if settings.echo_cancel.enabled:
+            source_node_name = detect_hardware_source()
 
         config = FilterChainConfig(
             hpf_enabled=settings.hpf.enabled,
@@ -153,6 +194,11 @@ def generate_config() -> bool:
             noise_reduction_enabled=True,
             noise_reduction_model=settings.noise_reduction.model,
             noise_reduction_strength=settings.noise_reduction.strength,
+            noise_reduction_speech_strength=settings.noise_reduction.speech_strength,
+            noise_reduction_lookahead_ms=settings.noise_reduction.lookahead_ms,
+            noise_reduction_voice_enhance=settings.noise_reduction.voice_enhance,
+            noise_reduction_model_blending=settings.noise_reduction.model_blending,
+            noise_reduction_noise_gate=settings.noise_reduction.noise_gate,
             compressor_enabled=settings.compressor.enabled,
             compressor_threshold_db=settings.compressor.threshold_db,
             compressor_ratio=settings.compressor.ratio,
@@ -167,10 +213,16 @@ def generate_config() -> bool:
             gate_attack_ms=settings.gate.attack_ms,
             gate_hold_ms=settings.gate.hold_ms,
             gate_release_ms=settings.gate.release_ms,
-            stereo_mode=settings.stereo.mode if settings.stereo.enabled else "mono",
+            stereo_mode=stereo_mode,
             stereo_width=settings.stereo.width,
+            crossfeed_enabled=settings.stereo.crossfeed_enabled,
             eq_enabled=settings.equalizer.enabled,
-            eq_bands=settings.equalizer.bands,
+            eq_bands=list(settings.equalizer.bands),
+            echo_cancel_enabled=settings.echo_cancel.enabled,
+            source_node_name=source_node_name,
+            echo_cancel_gain_control=settings.echo_cancel.gain_control,
+            echo_cancel_noise_suppression=settings.echo_cancel.noise_suppression,
+            echo_cancel_voice_detection=settings.echo_cancel.voice_detection,
         )
 
         generator = FilterChainGenerator(config)
@@ -210,6 +262,8 @@ def check_status() -> bool:
 
 def cmd_start() -> int:
     """Start noise reduction filter."""
+    from biglinux_microphone.config import load_settings
+
     # Kill any existing filter processes
     kill_filter_processes()
 
@@ -218,9 +272,17 @@ def cmd_start() -> int:
         if path.exists():
             path.unlink()
 
-    # Generate config if it doesn't exist
-    if not CONFIG_PATH.exists() and not generate_config():
+    # Always regenerate config from current settings to stay in sync
+    if not generate_config():
         return 1
+
+    # Set force-quantum for AEC if enabled (must be before starting filter)
+    try:
+        settings = load_settings()
+        if settings.echo_cancel.enabled:
+            set_pipewire_quantum(960)
+    except Exception:
+        pass
 
     # Ensure main filter-chain config exists (with RT priority)
     # This must be imported inside the function to avoid circular imports if placed at top level
@@ -291,6 +353,9 @@ def cmd_start() -> int:
 
 def cmd_stop() -> int:
     """Stop noise reduction filter."""
+    # Restore default quantum
+    set_pipewire_quantum(0)
+
     # Remove config files
     remove_config()
 

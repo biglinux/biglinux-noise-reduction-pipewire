@@ -7,7 +7,6 @@ Supports:
 - GTCRN AI noise reduction
 - Gate filter
 - Stereo enhancement modes
-- Radio voice compression
 - Voice pitch shifting
 """
 
@@ -58,7 +57,7 @@ SPATIALISER_LABEL = "matrixSpatialiser"
 AMP_LIBRARY = "/usr/lib/ladspa/amp_1181.so"
 AMP_LABEL = "amp"
 
-# SC4 Mono Compressor (sc4m_1916) - professional compressor for radio voice
+# SC4 Mono Compressor (sc4m_1916) - professional compressor for volume normalization
 SC4_LIBRARY = "/usr/lib/ladspa/sc4m_1916.so"
 SC4_LABEL = "sc4m"
 
@@ -186,6 +185,13 @@ class FilterChainConfig:
     eq_enabled: bool = False
     eq_bands: list[float] = field(default_factory=lambda: [0.0] * 10)
 
+    # Echo cancellation (WebRTC AEC)
+    echo_cancel_enabled: bool = False
+    source_node_name: str = ""  # Hardware mic node.name for AEC routing
+    echo_cancel_gain_control: bool = True
+    echo_cancel_noise_suppression: bool = False
+    echo_cancel_voice_detection: bool = True
+
 
 # ============================================================================
 # Filter Chain Generator
@@ -207,6 +213,89 @@ class FilterChainGenerator:
             config: Filter chain configuration
         """
         self._config = config
+
+    def _generate_echo_cancel_module(self) -> str:
+        """Generate the echo-cancel PipeWire module block.
+
+        Uses WebRTC AEC with monitor.mode to capture the default sink
+        output as reference signal for echo cancellation.
+        The AEC capture must target the hardware mic explicitly via
+        target.object to prevent WirePlumber from routing it to the
+        filter chain output (which would create a feedback loop).
+        Latency is 960/48000 (20ms = 2x WebRTC 480-sample frames).
+        """
+        capture_target = ""
+        if self._config.source_node_name:
+            safe_name = self._config.source_node_name.replace('"', '')
+            capture_target = f'\n                target.object = "{safe_name}"'
+        gc = "true" if self._config.echo_cancel_gain_control else "false"
+        ns = "true" if self._config.echo_cancel_noise_suppression else "false"
+        vd = "true" if self._config.echo_cancel_voice_detection else "false"
+        return f"""    {{
+        name = libpipewire-module-echo-cancel
+        args = {{
+            library.name = aec/libspa-aec-webrtc
+            node.latency = 960/48000
+            monitor.mode = true
+            audio.channels = 1
+            audio.rate = 48000
+            buffer.max_size = 250
+            aec.args = {{
+                webrtc.gain_control = {gc}
+                webrtc.noise_suppression = {ns}
+                webrtc.voice_detection = {vd}
+            }}
+            capture.props = {{
+                node.name = "big-aec-capture"{capture_target}
+            }}
+            source.props = {{
+                node.name = "big-aec-source"
+                node.description = "BigLinux AEC"
+                media.class = "Audio/Source"
+            }}
+        }}
+    }},"""
+
+    def _get_capture_props(self) -> str:
+        """Get capture.props block, targeting AEC source when echo cancel is active.
+
+        When AEC is enabled, node.passive is omitted so WirePlumber
+        respects target.object and routes the filter chain input
+        to big-aec-source instead of the hardware mic.
+        """
+        if self._config.echo_cancel_enabled:
+            return """            capture.props = {
+                target.object = "big-aec-source"
+            }"""
+        return """            capture.props = {
+                node.passive = true
+            }"""
+
+    def _get_playback_props(self, extra_props: str = "") -> str:
+        """Get playback.props block.
+
+        When AEC is enabled, filter.smart is removed because WirePlumber's
+        smart filter routing overrides capture target.object. Without
+        filter.smart, the node is a regular Audio/Source and PipeWire
+        respects target.object for capture routing.
+        """
+        if self._config.echo_cancel_enabled:
+            return f"""            playback.props = {{
+                node.pause-on-idle = false
+                node.latency = 960/48000
+                audio.rate = 48000{extra_props}
+                media.class = "Audio/Source"
+                node.name = "big-noise-canceling-output"
+                node.description = "{DEVICE_NAME}"
+            }}"""
+        return f"""            playback.props = {{
+                node.pause-on-idle = false
+                node.latency = 1024/48000
+                audio.rate = 48000{extra_props}
+                filter.smart = true
+                media.class = "Audio/Source"
+                filter.smart.name = "{FILTER_SMART_NAME}"
+            }}"""
 
     def generate(self) -> str:
         """
@@ -325,10 +414,14 @@ class FilterChainGenerator:
 
     def _generate_passthrough_config(self) -> str:
         """Generate passthrough config when no filters are enabled."""
+        aec_module = self._generate_echo_cancel_module() if self._config.echo_cancel_enabled else ""
+        capture_props = self._get_capture_props()
+        playback_props = self._get_playback_props()
         return f'''# BigLinux Microphone Enhanced Filter Chain
 # Auto-generated configuration - Passthrough (no filters)
 
 context.modules = [
+{aec_module}
     {{
         name = libpipewire-module-filter-chain
         args = {{
@@ -347,18 +440,8 @@ context.modules = [
                 outputs = [ "passthrough:Out" ]
             }}
             audio.channels = 1
-            capture.props = {{
-                node.passive = true
-            }}
-            playback.props = {{
-                node.pause-on-idle = false
-                node.latency = 1024/48000
-                node.always-process = true
-                audio.rate = 48000
-                filter.smart = true
-                media.class = "Audio/Source"
-                filter.smart.name = "{FILTER_SMART_NAME}"
-            }}
+{capture_props}
+{playback_props}
         }}
     }}
 ]
@@ -427,10 +510,17 @@ context.modules = [
         nodes_str = "\n".join(nodes)
         links_str = "\n                    ".join(links) if links else ""
 
+        aec_module = self._generate_echo_cancel_module() if c.echo_cancel_enabled else ""
+        capture_props = self._get_capture_props()
+        playback_props = self._get_playback_props(
+            extra_props='\n                audio.position = [ MONO ]'
+        )
+
         return f'''# BigLinux Microphone Enhanced Filter Chain
 # Auto-generated configuration - Mono output
 
 context.modules = [
+{aec_module}
     {{
         name = libpipewire-module-filter-chain
         args = {{
@@ -447,19 +537,8 @@ context.modules = [
                 outputs = [ "{last_name}:{last_out}" ]
             }}
             audio.channels = 1
-            capture.props = {{
-                node.passive = true
-            }}
-            playback.props = {{
-                node.pause-on-idle = false
-                node.latency = 1024/48000
-                node.always-process = true
-                audio.rate = 48000
-                audio.position = [ MONO ]
-                filter.smart = true
-                media.class = "Audio/Source"
-                filter.smart.name = "{FILTER_SMART_NAME}"
-            }}
+{capture_props}
+{playback_props}
 
         }}
     }}
@@ -515,7 +594,6 @@ context.modules = [
 
         Modes:
         - DUAL_MONO: Simple channel duplication (mono to both channels)
-        - RADIO: Professional radio voice with SC4 compression
         - VOICE_CHANGER: Pitch shifting effect
         """
         c = self._config
@@ -532,8 +610,7 @@ context.modules = [
         active_filters.append(("hpf", "In", "Out"))
         nodes.append(self._generate_hpf_node(bypass=not c.hpf_enabled))
 
-        # RADIO mode has its own compressor — skip standard one to avoid duplicate
-        if c.compressor_enabled and c.stereo_mode != StereoMode.RADIO:
+        if c.compressor_enabled:
             active_filters.append(("compressor", "Input", "Output"))
             nodes.append(self._generate_compressor_node())
 
@@ -547,7 +624,7 @@ context.modules = [
         nodes.append(self._generate_eq_node(bypass=not c.eq_enabled))
 
         # Hard limiter prevents output clipping.
-        has_gain_stage = c.compressor_enabled and c.stereo_mode != StereoMode.RADIO
+        has_gain_stage = c.compressor_enabled
         if has_gain_stage:
             active_filters.append(("limiter", "Input", "Output"))
             nodes.append(self._generate_limiter_node())
@@ -574,11 +651,7 @@ context.modules = [
         last_name, _, last_out = active_filters[-1]
 
         # Dispatch to specific mode generators
-        if c.stereo_mode == StereoMode.RADIO:
-            return self._generate_radio_mode(
-                nodes, links, first_name, first_in, last_name, last_out
-            )
-        elif c.stereo_mode == StereoMode.VOICE_CHANGER:
+        if c.stereo_mode == StereoMode.VOICE_CHANGER:
             return self._generate_pitch_mode(
                 nodes, links, first_name, first_in, last_name, last_out
             )
@@ -633,10 +706,22 @@ context.modules = [
         nodes_str = "\n".join(nodes)
         links_str = "\n                    ".join(links)
 
+        aec_module = self._generate_echo_cancel_module() if self._config.echo_cancel_enabled else ""
+        if self._config.echo_cancel_enabled:
+            capture_target = '\n                target.object = "big-aec-source"'
+            capture_passive = ""
+        else:
+            capture_target = ""
+            capture_passive = "\n                node.passive = true"
+        playback_props = self._get_playback_props(
+            extra_props='\n                audio.position = [ FL FR ]'
+        )
+
         return f'''# BigLinux Microphone Enhanced Filter Chain
 # Auto-generated configuration - Stereo output with Dual Mono
 
 context.modules = [
+{aec_module}
     {{
         name = libpipewire-module-filter-chain
         args = {{
@@ -653,134 +738,9 @@ context.modules = [
                 outputs = [ "copy_left:Out" "{right_output}" ]
             }}
             capture.props = {{
-                audio.position = [ MONO ]
-                node.passive = true
+                audio.position = [ MONO ]{capture_passive}{capture_target}
             }}
-            playback.props = {{
-                node.pause-on-idle = false
-                node.latency = 1024/48000
-                node.always-process = true
-                audio.rate = 48000
-                audio.position = [ FL FR ]
-                filter.smart = true
-                media.class = "Audio/Source"
-                filter.smart.name = "{FILTER_SMART_NAME}"
-            }}
-        }}
-    }}
-]
-'''
-
-    def _generate_radio_mode(
-        self,
-        nodes: list[str],
-        links: list[str],
-        first_name: str,
-        first_in: str,
-        last_name: str,
-        last_out: str,
-    ) -> str:
-        """Generate RADIO mode config with SC4 compressor.
-
-        Professional radio voice effect with compression for consistent,
-        punchy audio. Still outputs stereo (duplicated).
-        """
-        c = self._config
-
-        # SC4 compressor parameters for radio voice
-        # More width = more aggressive compression
-        ratio = 3.0 + (c.stereo_width * 3.0)  # 3:1 to 6:1
-        threshold = -15.0 - (c.stereo_width * 10.0)  # -15dB to -25dB
-        attack = 10.0  # Fast attack (10ms)
-        release = 100.0 + (c.stereo_width * 100.0)  # 100-200ms
-        makeup_gain = 2.0 + (c.stereo_width * 4.0)  # +2 to +6dB
-        knee = 3.0  # Soft knee
-
-        # Add SC4 compressor node
-        nodes.append(f"""                    # SC4 Mono Compressor for radio voice effect
-                    {{
-                        type = ladspa
-                        name = "compressor"
-                        plugin = "{SC4_LIBRARY}"
-                        label = "{SC4_LABEL}"
-                        control = {{
-                            "RMS/peak" = 0.2
-                            "Attack time (ms)" = {attack:.1f}
-                            "Release time (ms)" = {release:.1f}
-                            "Threshold level (dB)" = {threshold:.1f}
-                            "Ratio (1:n)" = {ratio:.1f}
-                            "Knee radius (dB)" = {knee:.1f}
-                            "Makeup gain (dB)" = {makeup_gain:.1f}
-                        }}
-                    }}""")
-
-        # Add stereo split nodes (duplicate compressed signal to both channels)
-        nodes.append("""                    # Copy node to tee the compressed signal
-                    {
-                        type = builtin
-                        name = "copy_tee"
-                        label = copy
-                    }""")
-
-        nodes.append("""                    # Left channel output
-                    {
-                        type = builtin
-                        name = "copy_left"
-                        label = copy
-                    }""")
-
-        nodes.append("""                    # Right channel output
-                    {
-                        type = builtin
-                        name = "copy_right"
-                        label = copy
-                    }""")
-
-        # Links: mono chain -> compressor -> stereo split
-        links.append(
-            f'{{ output = "{last_name}:{last_out}" input = "compressor:Input" }}'
-        )
-        links.append('{ output = "compressor:Output" input = "copy_tee:In" }')
-        links.append('{ output = "copy_tee:Out" input = "copy_left:In" }')
-        links.append('{ output = "copy_tee:Out" input = "copy_right:In" }')
-
-        # Format nodes and links for config
-        nodes_str = "\n".join(nodes)
-        links_str = "\n                    ".join(links)
-
-        return f'''# BigLinux Microphone Enhanced Filter Chain
-# Auto-generated configuration - Radio Voice Mode
-
-context.modules = [
-    {{
-        name = libpipewire-module-filter-chain
-        args = {{
-            node.description = "{DEVICE_NAME}"
-            media.name = "{DEVICE_NAME}"
-            filter.graph = {{
-                nodes = [
-{nodes_str}
-                ]
-                links = [
-                    {links_str}
-                ]
-                inputs = [ "{first_name}:{first_in}" ]
-                outputs = [ "copy_left:Out" "copy_right:Out" ]
-            }}
-            capture.props = {{
-                audio.position = [ MONO ]
-                node.passive = true
-            }}
-            playback.props = {{
-                node.pause-on-idle = false
-                node.latency = 1024/48000
-                node.always-process = true
-                audio.rate = 48000
-                audio.position = [ FL FR ]
-                filter.smart = true
-                media.class = "Audio/Source"
-                filter.smart.name = "{FILTER_SMART_NAME}"
-            }}
+{playback_props}
         }}
     }}
 ]
@@ -886,10 +846,22 @@ context.modules = [
         nodes_str = "\n".join(nodes)
         links_str = "\n                    ".join(links)
 
+        aec_module = self._generate_echo_cancel_module() if self._config.echo_cancel_enabled else ""
+        if self._config.echo_cancel_enabled:
+            capture_target = '\n                target.object = "big-aec-source"'
+            capture_passive = ""
+        else:
+            capture_target = ""
+            capture_passive = "\n                node.passive = true"
+        playback_props = self._get_playback_props(
+            extra_props='\n                audio.position = [ FL FR ]'
+        )
+
         return f'''# BigLinux Microphone Enhanced Filter Chain
 # Auto-generated configuration - {mode_name}
 
 context.modules = [
+{aec_module}
     {{
         name = libpipewire-module-filter-chain
         args = {{
@@ -906,19 +878,9 @@ context.modules = [
                 outputs = [ "copy_left:Out" "copy_right:Out" ]
             }}
             capture.props = {{
-                audio.position = [ MONO ]
-                node.passive = true
+                audio.position = [ MONO ]{capture_passive}{capture_target}
             }}
-            playback.props = {{
-                node.pause-on-idle = false
-                node.latency = 1024/48000
-                node.always-process = true
-                audio.rate = 48000
-                audio.position = [ FL FR ]
-                filter.smart = true
-                media.class = "Audio/Source"
-                filter.smart.name = "{FILTER_SMART_NAME}"
-            }}
+{playback_props}
         }}
     }}
 ]

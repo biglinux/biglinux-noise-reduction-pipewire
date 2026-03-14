@@ -44,18 +44,3 @@ class TestFilterChainEffects:
         assert "amp" in out3
         # 0.5 pitch -> 15dB gain (5.0 base + 10.0 boost)
         assert "15.00" in out3
-
-    def test_radio_mode_generation(self):
-        config = FilterChainConfig(
-            stereo_mode=StereoMode.RADIO,
-            stereo_width=0.5,
-            noise_reduction_enabled=False,
-        )
-        generator = FilterChainGenerator(config)
-        output = generator.generate()
-
-        assert "sc4m" in output
-        assert "Ratio (1:n)" in output
-        # Radio params check
-        # Ratio: 3.0 + (0.5 * 3.0) = 4.5
-        assert "4.5" in output

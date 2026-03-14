@@ -36,6 +36,16 @@ class SettingsService:
         self._ensure_directories()
         logger.debug("Settings service initialized")
 
+    @staticmethod
+    def _safe_profile_name(name: str) -> str:
+        """Sanitize profile name to prevent path traversal."""
+        import re
+
+        safe = re.sub(r"[^\w\-. ]", "", name).strip(". ")
+        if not safe:
+            raise ValueError(f"Invalid profile name: {name!r}")
+        return safe
+
     def _ensure_directories(self) -> None:
         """Ensure configuration directories exist."""
         CONFIG_DIR.mkdir(parents=True, exist_ok=True)
@@ -104,15 +114,20 @@ class SettingsService:
         """
         import json
 
-        profile_file = PROFILES_DIR / f"{name}.json"
+        try:
+            safe_name = self._safe_profile_name(name)
+        except ValueError:
+            logger.warning("Invalid profile name rejected: %s", name)
+            return False
+        profile_file = PROFILES_DIR / f"{safe_name}.json"
 
         try:
             with open(profile_file, "w", encoding="utf-8") as f:
                 json.dump(settings.to_dict(), f, indent=4)
-            logger.info("Profile saved: %s", name)
+            logger.info("Profile saved: %s", safe_name)
             return True
         except OSError:
-            logger.exception("Error saving profile: %s", name)
+            logger.exception("Error saving profile: %s", safe_name)
             return False
 
     def load_profile(self, name: str) -> AppSettings | None:
@@ -127,10 +142,15 @@ class SettingsService:
         """
         import json
 
-        profile_file = PROFILES_DIR / f"{name}.json"
+        try:
+            safe_name = self._safe_profile_name(name)
+        except ValueError:
+            logger.warning("Invalid profile name rejected: %s", name)
+            return None
+        profile_file = PROFILES_DIR / f"{safe_name}.json"
 
         if not profile_file.exists():
-            logger.warning("Profile not found: %s", name)
+            logger.warning("Profile not found: %s", safe_name)
             return None
 
         try:
@@ -138,7 +158,7 @@ class SettingsService:
                 data = json.load(f)
                 return AppSettings.from_dict(data)
         except (json.JSONDecodeError, OSError):
-            logger.exception("Error loading profile: %s", name)
+            logger.exception("Error loading profile: %s", safe_name)
             return None
 
     def delete_profile(self, name: str) -> bool:
@@ -151,15 +171,20 @@ class SettingsService:
         Returns:
             bool: True if delete successful
         """
-        profile_file = PROFILES_DIR / f"{name}.json"
+        try:
+            safe_name = self._safe_profile_name(name)
+        except ValueError:
+            logger.warning("Invalid profile name rejected: %s", name)
+            return False
+        profile_file = PROFILES_DIR / f"{safe_name}.json"
 
         if not profile_file.exists():
             return True  # Already deleted
 
         try:
             profile_file.unlink()
-            logger.info("Profile deleted: %s", name)
+            logger.info("Profile deleted: %s", safe_name)
             return True
         except OSError:
-            logger.exception("Error deleting profile: %s", name)
+            logger.exception("Error deleting profile: %s", safe_name)
             return False

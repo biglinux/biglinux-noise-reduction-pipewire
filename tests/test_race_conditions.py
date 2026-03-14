@@ -330,6 +330,7 @@ class TestPendingRestart:
         service._pending_settings = None
         service._pending_on_complete = None
         service._noise_reduction_enabled = True
+        service._restart_lock = threading.Lock()
 
         settings_with_gate = _make_settings()
         settings_with_gate.noise_reduction.enabled = True
@@ -354,6 +355,7 @@ class TestPendingRestart:
         service._is_updating = False
         service._restart_pending = False
         service._noise_reduction_enabled = True
+        service._restart_lock = threading.Lock()
         config_file = Path(tempfile.mktemp(suffix=".conf"))
         service._config_file = config_file
         config_file.parent.mkdir(parents=True, exist_ok=True)

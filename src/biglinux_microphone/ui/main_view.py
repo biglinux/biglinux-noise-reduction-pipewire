@@ -181,6 +181,10 @@ class MainView(Adw.NavigationPage):
         bt_group = self._create_bluetooth_section()
         main_box.append(bt_group)
 
+        # === Echo Cancellation ===
+        echo_group = self._create_echo_cancel_section()
+        main_box.append(echo_group)
+
         # === Headphone Monitor ===
         monitor_group = self._create_monitor_section()
         main_box.append(monitor_group)
@@ -295,6 +299,12 @@ class MainView(Adw.NavigationPage):
 
         # Add tooltips to EQ bands row (entire region)
         self._add_tooltip(self._eq_bands_row, "equalizer_bands")
+
+        # Echo Cancellation section
+        self._add_tooltip(self._echo_cancel_expander, "echo_cancel_toggle")
+        self._add_tooltip(self._aec_gain_row, "echo_cancel_gain")
+        self._add_tooltip(self._aec_ns_row, "echo_cancel_ns")
+        self._add_tooltip(self._aec_vad_row, "echo_cancel_vad")
 
     # =========================================================================
     # Section Builders
@@ -568,7 +578,7 @@ class MainView(Adw.NavigationPage):
         # Expander with switch
         self._stereo_expander, self._stereo_switch = create_expander_row_with_switch(
             _("Voice Effects"),
-            subtitle=_("Voice enhancement, studio sound and pitch shifter."),
+            subtitle=_("Voice enhancement and pitch shifter."),
             icon_name="audio-speakers-symbolic",
             active=False,
             expanded=False,
@@ -579,7 +589,6 @@ class MainView(Adw.NavigationPage):
         # Mode selection (Mono is handled by the switch, not a mode option)
         mode_names = [
             _("Dual Mono"),
-            _("Studio"),
             _("Voice Changer (Pitch)"),
         ]
 
@@ -669,6 +678,52 @@ class MainView(Adw.NavigationPage):
 
         return group
 
+    def _create_echo_cancel_section(self) -> Adw.PreferencesGroup:
+        """Create echo cancellation section."""
+        group = create_preferences_group("", "")
+
+        self._echo_cancel_expander, self._echo_cancel_switch = (
+            create_expander_row_with_switch(
+                _("Echo Cancellation"),
+                subtitle=_(
+                    "Reduces echo and feedback when using speakers"
+                ),
+                icon_name="audio-speakers-symbolic",
+                active=False,
+                expanded=False,
+                on_toggled=self._on_echo_cancel_toggled,
+            )
+        )
+
+        # AEC sub-options
+        self._aec_gain_row, self._aec_gain_switch = create_action_row_with_switch(
+            _("Automatic Gain Control"),
+            subtitle=_("Normalizes volume automatically"),
+            active=True,
+            on_toggled=self._on_aec_gain_toggled,
+        )
+        self._echo_cancel_expander.add_row(self._aec_gain_row)
+
+        self._aec_ns_row, self._aec_ns_switch = create_action_row_with_switch(
+            _("Noise Suppression"),
+            subtitle=_("WebRTC built-in noise filter"),
+            active=False,
+            on_toggled=self._on_aec_ns_toggled,
+        )
+        self._echo_cancel_expander.add_row(self._aec_ns_row)
+
+        self._aec_vad_row, self._aec_vad_switch = create_action_row_with_switch(
+            _("Voice Detection"),
+            subtitle=_("Applies processing only when speech is detected"),
+            active=True,
+            on_toggled=self._on_aec_vad_toggled,
+        )
+        self._echo_cancel_expander.add_row(self._aec_vad_row)
+
+        group.add(self._echo_cancel_expander)
+
+        return group
+
     def _create_bluetooth_section(self) -> Adw.PreferencesGroup:
         """Create bluetooth section (directly visible)."""
         group = create_preferences_group("", "")
@@ -713,7 +768,7 @@ class MainView(Adw.NavigationPage):
                 step=100,
                 digits=0,
                 on_changed=self._on_monitor_delay_changed,
-                marks=[(0, _("0s")), (1000, _("1s")), (3000, _("3s")), (5000, _("5s"))],
+                marks=[(0, _("0s")), (1000, _("1s")), (2000, _("2s")), (3000, _("3s")), (5000, _("5s"))],
             )
         )
         self._monitor_expander.add_row(self._monitor_delay_row)
@@ -758,6 +813,12 @@ class MainView(Adw.NavigationPage):
 
             # Bluetooth
             self._bt_switch.set_active(self._settings.bluetooth.auto_switch_headset)
+
+            # Echo Cancellation
+            self._echo_cancel_switch.set_active(self._settings.echo_cancel.enabled)
+            self._aec_gain_switch.set_active(self._settings.echo_cancel.gain_control)
+            self._aec_ns_switch.set_active(self._settings.echo_cancel.noise_suppression)
+            self._aec_vad_switch.set_active(self._settings.echo_cancel.voice_detection)
 
             # Headphone Monitor
             self._monitor_switch.set_active(self._settings.monitor.enabled)
@@ -837,7 +898,6 @@ class MainView(Adw.NavigationPage):
             # If mode is MONO, default to DUAL_MONO in the combo
             stereo_modes = [
                 StereoMode.DUAL_MONO,
-                StereoMode.RADIO,
                 StereoMode.VOICE_CHANGER,
             ]
             if mode in stereo_modes:
@@ -933,7 +993,6 @@ class MainView(Adw.NavigationPage):
         index = self._mode_combo.get_selected()
         stereo_modes = [
             StereoMode.DUAL_MONO,
-            StereoMode.RADIO,
             StereoMode.VOICE_CHANGER,
         ]
         return (
@@ -1353,17 +1412,7 @@ class MainView(Adw.NavigationPage):
         """Update stereo UI labels/marks based on mode."""
         width_percent = int(self._settings.stereo.width * 100)
 
-        if mode == StereoMode.RADIO:
-            self._width_row.set_title(_("Radio Effect Intensity"))
-            self._width_scale.clear_marks()
-            self._width_scale.add_mark(0.0, Gtk.PositionType.BOTTOM, _("Smooth"))
-            self._width_scale.add_mark(1.0, Gtk.PositionType.BOTTOM, _("Intense"))
-            self._width_row.set_subtitle(
-                _("Adjust compression and presence level. ({percent}%)").format(
-                    percent=width_percent
-                )
-            )
-        elif mode == StereoMode.VOICE_CHANGER:
+        if mode == StereoMode.VOICE_CHANGER:
             self._width_row.set_title(_("Voice Tonality (Pitch)"))
             self._width_scale.clear_marks()
             self._width_scale.add_mark(0.0, Gtk.PositionType.BOTTOM, _("Deep"))
@@ -1392,7 +1441,6 @@ class MainView(Adw.NavigationPage):
 
         stereo_modes = [
             StereoMode.DUAL_MONO,
-            StereoMode.RADIO,
             StereoMode.VOICE_CHANGER,
         ]
         if 0 <= index < len(stereo_modes):
@@ -1423,20 +1471,12 @@ class MainView(Adw.NavigationPage):
         logger.debug("Stereo width: %.2f", value)
 
         width_percent = int(value * 100)
-        mode = self._settings.stereo.mode
 
-        if mode == StereoMode.RADIO:
-            self._width_row.set_subtitle(
-                _("Adjust compression and presence level. ({percent}%)").format(
-                    percent=width_percent
-                )
+        self._width_row.set_subtitle(
+            _("Soundstage width. Higher = more immersive. ({percent}%)").format(
+                percent=width_percent
             )
-        else:
-            self._width_row.set_subtitle(
-                _("Soundstage width. Higher = more immersive. ({percent}%)").format(
-                    percent=width_percent
-                )
-            )
+        )
 
         self._settings.stereo.width = value
         self._schedule_settings_save()
@@ -1586,12 +1626,84 @@ class MainView(Adw.NavigationPage):
         self._settings_service.save(self._settings)
         self._pipewire.set_bluetooth_autoswitch(active)
 
+    def _on_echo_cancel_toggled(self, active: bool) -> None:
+        """Handle echo cancellation toggle."""
+        if self._loading:
+            return
+        logger.info("Echo cancel toggled: %s", active)
+
+        self._settings.echo_cancel.enabled = active
+
+        # AEC needs at least 2s monitor delay to avoid feedback artifacts
+        if active and self._settings.monitor.delay_ms < 2000:
+            self._settings.monitor.delay_ms = 2000
+            self._loading = True
+            self._monitor_delay_scale.set_value(2000)
+            self._loading = False
+            self._monitor_delay_row.set_subtitle(
+                _("Monitor feedback delay. Useful for checking sync. ({delay} ms)").format(
+                    delay=2000
+                )
+            )
+            if self._settings.monitor.enabled:
+                self._monitor_service.set_delay(2000)
+
+        self._settings_service.save(self._settings)
+
+        if self._settings.noise_reduction.enabled:
+            self._show_loading()
+            self._pipewire.apply_config(
+                self._settings, on_complete=self._on_restart_complete
+            )
+
+    def _on_aec_option_changed(self) -> None:
+        """Restart pipeline when an AEC sub-option changes."""
+        self._settings_service.save(self._settings)
+        if self._settings.echo_cancel.enabled and self._settings.noise_reduction.enabled:
+            self._show_loading()
+            self._pipewire.apply_config(
+                self._settings, on_complete=self._on_restart_complete
+            )
+
+    def _on_aec_gain_toggled(self, active: bool) -> None:
+        """Handle AEC gain control toggle."""
+        if self._loading:
+            return
+        self._settings.echo_cancel.gain_control = active
+        self._on_aec_option_changed()
+
+    def _on_aec_ns_toggled(self, active: bool) -> None:
+        """Handle AEC noise suppression toggle."""
+        if self._loading:
+            return
+        self._settings.echo_cancel.noise_suppression = active
+        self._on_aec_option_changed()
+
+    def _on_aec_vad_toggled(self, active: bool) -> None:
+        """Handle AEC voice detection toggle."""
+        if self._loading:
+            return
+        self._settings.echo_cancel.voice_detection = active
+        self._on_aec_option_changed()
+
     def _on_monitor_toggled(self, active: bool) -> None:
         """Handle headphone monitor toggle."""
         if self._loading:
             return
 
         logger.info("Headphone monitor toggled: %s", active)
+
+        # Enforce minimum delay when AEC is active
+        if active and self._settings.echo_cancel.enabled and self._settings.monitor.delay_ms < 2000:
+            self._settings.monitor.delay_ms = 2000
+            self._loading = True
+            self._monitor_delay_scale.set_value(2000)
+            self._loading = False
+            self._monitor_delay_row.set_subtitle(
+                _("Monitor feedback delay. Useful for checking sync. ({delay} ms)").format(
+                    delay=2000
+                )
+            )
 
         self._settings.monitor.enabled = active
         self._settings_service.save(self._settings)
@@ -1626,6 +1738,14 @@ class MainView(Adw.NavigationPage):
             return
 
         delay_ms = int(value)
+
+        # Enforce minimum delay when AEC is active
+        if self._settings.echo_cancel.enabled and delay_ms < 2000:
+            delay_ms = 2000
+            self._loading = True
+            self._monitor_delay_scale.set_value(2000)
+            self._loading = False
+
         logger.debug("Monitor delay: %d ms", delay_ms)
 
         self._monitor_delay_row.set_subtitle(
@@ -1665,11 +1785,11 @@ class MainView(Adw.NavigationPage):
 
     def _get_monitor_source(self) -> str:
         """Get the appropriate audio source for monitoring."""
+        import json
+        import subprocess
+
         # Prefer filtered source if noise reduction is active
         if self._settings.noise_reduction.enabled:
-            # Try to detect the filter source
-            import json
-            import subprocess
 
             try:
                 result = subprocess.run(

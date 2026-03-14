@@ -93,13 +93,13 @@ class TestStereoConfig:
         assert config.mode == StereoMode.MONO
         assert config.width == STEREO_WIDTH_DEFAULT
 
-    def test_radio_mode(self) -> None:
-        """Test RADIO stereo mode configuration."""
+    def test_voice_changer_mode(self) -> None:
+        """Test VOICE_CHANGER stereo mode configuration."""
         config = StereoConfig(
             enabled=True,
-            mode=StereoMode.RADIO,
+            mode=StereoMode.VOICE_CHANGER,
         )
-        assert config.mode == StereoMode.RADIO
+        assert config.mode == StereoMode.VOICE_CHANGER
 
 
 class TestEqualizerConfig:
@@ -178,7 +178,7 @@ class TestAppSettings:
         data = {
             "noise_reduction": {"enabled": False, "model": 1, "strength": 0.8},
             "gate": {"enabled": False, "intensity": 0.8},
-            "stereo": {"enabled": True, "mode": "radio"},
+            "stereo": {"enabled": True, "mode": "dual_mono"},
             "equalizer": {"enabled": True, "preset": "voice_boost"},
             "window": {"width": 800, "height": 600},
             "ui": {"visualizer_style": 1},
@@ -195,7 +195,7 @@ class TestAppSettings:
         assert settings.gate.intensity == 0.8
 
         assert settings.stereo.enabled is True
-        assert settings.stereo.mode == StereoMode.RADIO
+        assert settings.stereo.mode == StereoMode.DUAL_MONO
 
         assert settings.equalizer.enabled is True
         assert settings.equalizer.preset == "voice_boost"
@@ -217,7 +217,7 @@ class TestAppSettings:
             ),
             stereo=StereoConfig(
                 enabled=True,
-                mode=StereoMode.RADIO,
+                mode=StereoMode.VOICE_CHANGER,
                 width=0.8,
             ),
         )
@@ -290,7 +290,6 @@ class TestEnumerations:
         """Test StereoMode enumeration values."""
         assert StereoMode.MONO.value == "mono"
         assert StereoMode.DUAL_MONO.value == "dual_mono"
-        assert StereoMode.RADIO.value == "radio"
         assert StereoMode.VOICE_CHANGER.value == "voice_changer"
 
     def test_visualizer_style_values(self) -> None:

@@ -45,7 +45,7 @@ class TestFilterChainState:
             noise_reduction_model=NoiseModel.GTCRN_DNS3,
             noise_reduction_strength=0.8,
             gate_intensity=0.7,
-            stereo_mode=StereoMode.RADIO,
+            stereo_mode=StereoMode.VOICE_CHANGER,
             eq_enabled=True,
             eq_bands=eq_bands,
         )
@@ -53,7 +53,7 @@ class TestFilterChainState:
         assert state.noise_reduction_model == NoiseModel.GTCRN_DNS3
         assert state.noise_reduction_strength == 0.8
         assert state.gate_intensity == 0.7
-        assert state.stereo_mode == StereoMode.RADIO
+        assert state.stereo_mode == StereoMode.VOICE_CHANGER
         assert state.eq_enabled is True
         assert state.eq_bands == eq_bands
 

@@ -569,6 +569,7 @@ class SpectrumAnalyzerWidget(Gtk.DrawingArea):
         self._peak_hold = 0.0
         self.queue_draw()
 
-    def do_destroy(self) -> None:
-        """Clean up when widget is destroyed."""
+    def do_unroot(self) -> None:
+        """Clean up when widget is removed from the widget tree."""
         self._stop_animation()
+        super().do_unroot()

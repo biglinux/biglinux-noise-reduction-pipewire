@@ -1,11 +1,12 @@
 [Unit]
 Description=Restore BigLinux Microphone Noise Reduction State
-After=pipewire.service
-Wants=pipewire.service
+After=pipewire.service pipewire-pulse.service
+Wants=pipewire.service pipewire-pulse.service
 
 [Service]
 Type=oneshot
-ExecStart=/bin/sh -c 'if [ -f "$HOME/.config/pipewire/filter-chain.conf.d/source-ulunas-smart.conf" ] || [ -f "$HOME/.config/pipewire/filter-chain.conf.d/source-gtcrn-smart.conf" ]; then /usr/bin/pipewire-noise-remove start; fi'
+ExecStartPre=/bin/sleep 2
+ExecStart=/bin/sh -c 'if [ -f "$HOME/.config/pipewire/filter-chain.conf.d/source-gtcrn-smart.conf" ]; then /usr/bin/pipewire-noise-remove start; fi'
 RemainAfterExit=yes
 
 [Install]

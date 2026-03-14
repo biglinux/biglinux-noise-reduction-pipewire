@@ -70,6 +70,9 @@ class FilterChainState:
     eq_enabled: bool = True
     eq_bands: list[float] | None = None
 
+    # Echo cancellation settings
+    echo_cancel_enabled: bool = False
+
     def __post_init__(self) -> None:
         """Initialize default EQ bands if not provided."""
         if self.eq_bands is None:
@@ -123,6 +126,7 @@ class FilterChainState:
             crossfeed_enabled=self.crossfeed_enabled,
             eq_enabled=self.eq_enabled,
             eq_bands=list(self.eq_bands) if self.eq_bands else [0.0] * 10,
+            echo_cancel_enabled=self.echo_cancel_enabled,
         )
 
 

@@ -102,7 +102,6 @@ class StereoMode(Enum):
 
     MONO = "mono"
     DUAL_MONO = "dual_mono"
-    RADIO = "radio"  # Professional radio voice with compression
     VOICE_CHANGER = "voice_changer"  # Unified pitch shift
 
 
@@ -141,14 +140,12 @@ PLUGIN_MODELS: dict[AIPlugin, list[NoiseModel]] = {
 STEREO_MODE_NAMES: dict[StereoMode, str] = {
     StereoMode.MONO: "Mono (Original)",
     StereoMode.DUAL_MONO: "Dual Mono",
-    StereoMode.RADIO: "Radio Voice",
     StereoMode.VOICE_CHANGER: "Voice Changer",
 }
 
 STEREO_MODE_DESCRIPTIONS: dict[StereoMode, str] = {
     StereoMode.MONO: "No stereo processing, original mono signal",
     StereoMode.DUAL_MONO: "Simple copy to both channels",
-    StereoMode.RADIO: "Professional radio voice with compression",
     StereoMode.VOICE_CHANGER: "Adjust Pitch: 0% (Deep) to 100% (High)",
 }
 
@@ -177,7 +174,7 @@ LOOKAHEAD_MS_STEP = 5
 # Voice Enhancement (unified control: 0.0 = off, 1.0 = max)
 VOICE_ENHANCE_MIN = 0.0
 VOICE_ENHANCE_MAX = 1.0
-VOICE_ENHANCE_DEFAULT = 0.25
+VOICE_ENHANCE_DEFAULT = 0.0
 VOICE_ENHANCE_STEP = 0.05
 
 # Model Blending (0.0 = off, 1.0 = dual-model VAD-switched)
@@ -186,14 +183,14 @@ MODEL_BLENDING_DEFAULT = 0.0
 # Noise Gate (spectral flatness + HF click detection in LADSPA plugin)
 NOISE_GATE_MIN = 0.0
 NOISE_GATE_MAX = 1.0
-NOISE_GATE_DEFAULT = 0.5
+NOISE_GATE_DEFAULT = 0.0
 NOISE_GATE_STEP = 0.05
 
 # Gate Filter
 # Gate (Silence Filter)
 GATE_INTENSITY_MIN = 0.0
 GATE_INTENSITY_MAX = 1.0
-GATE_INTENSITY_DEFAULT = 0.5
+GATE_INTENSITY_DEFAULT = 0.25
 GATE_INTENSITY_STEP = 0.05
 
 
@@ -394,11 +391,26 @@ class BluetoothConfig:
 
 
 @dataclass
+class EchoCancelConfig:
+    """Configuration for acoustic echo cancellation (WebRTC AEC).
+
+    Uses PipeWire's libpipewire-module-echo-cancel with monitor.mode
+    to capture the speaker output as reference signal.
+    Latency is fixed at 960/48000 (20ms = 2x WebRTC 10ms frame).
+    """
+
+    enabled: bool = True
+    gain_control: bool = True
+    noise_suppression: bool = False
+    voice_detection: bool = False
+
+
+@dataclass
 class MonitorConfig:
     """Headphone monitor configuration."""
 
     enabled: bool = False
-    delay_ms: int = 0  # 0-5000ms
+    delay_ms: int = 2000  # 0-5000ms (2s default for AEC compatibility)
     volume: float = 1.0  # 0.0-2.0 (200%)
 
 
@@ -416,6 +428,7 @@ class AppSettings:
     ui: UIConfig = field(default_factory=UIConfig)
     bluetooth: BluetoothConfig = field(default_factory=BluetoothConfig)
     monitor: MonitorConfig = field(default_factory=MonitorConfig)
+    echo_cancel: EchoCancelConfig = field(default_factory=EchoCancelConfig)
 
     def to_dict(self) -> dict[str, Any]:
         """Convert settings to dictionary for JSON serialization."""
@@ -528,6 +541,15 @@ class AppSettings:
                 volume=mon.get("volume", 1.0),
             )
 
+        if "echo_cancel" in data:
+            ec = data["echo_cancel"]
+            settings.echo_cancel = EchoCancelConfig(
+                enabled=ec.get("enabled", False),
+                gain_control=ec.get("gain_control", True),
+                noise_suppression=ec.get("noise_suppression", False),
+                voice_detection=ec.get("voice_detection", True),
+            )
+
         return settings
 
 
@@ -554,7 +576,7 @@ def load_settings() -> AppSettings:
     except json.JSONDecodeError as e:
         logger.error("Error parsing settings file: %s", e)
         return AppSettings()
-    except OSError as e:
+    except (OSError, ValueError, KeyError, TypeError) as e:
         logger.error("Error reading settings file: %s", e)
         return AppSettings()
 

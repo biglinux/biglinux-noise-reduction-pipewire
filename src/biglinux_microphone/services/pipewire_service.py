@@ -61,6 +61,7 @@ class PipeWireService:
         self._restart_pending = False
         self._pending_settings = None
         self._pending_on_complete: Callable[[], None] | None = None
+        self._restart_lock = threading.Lock()
 
         # Live update queue
         self._update_queue = Queue()
@@ -94,6 +95,11 @@ class PipeWireService:
         self._eq_enabled = True
         self._eq_bands = [0.0, 0.0, 0.0, 1.0, 0.0, 1.0, 2.0, 3.0, 1.0, 0.0]
 
+        # Echo cancellation state
+        self._echo_cancel_enabled = False
+        self._current_hw_source: str = ""
+        self._source_monitor_id: int = 0
+
         # Paths
         self._config_file = CONFIG_PATH / CONFIG_FILE
 
@@ -122,12 +128,6 @@ class PipeWireService:
             / "pipewire"
             / "filter-chain.conf.d"
             / "source-rnnoise-smart.conf",
-            # Old GTCRN config
-            Path.home()
-            / ".config"
-            / "pipewire"
-            / "filter-chain.conf.d"
-            / "source-gtcrn-smart.conf",
         ]
 
         for path in legacy_paths:
@@ -167,6 +167,10 @@ class PipeWireService:
         self._hpf_frequency = settings.hpf.frequency
         self._eq_enabled = settings.equalizer.enabled
         self._eq_bands = list(settings.equalizer.bands)
+
+        # Echo cancellation
+        self._echo_cancel_enabled = settings.echo_cancel.enabled
+
         logger.debug("Synchronized state from settings")
 
     # =========================================================================
@@ -235,17 +239,18 @@ class PipeWireService:
         Returns:
             bool: True if started successfully
         """
-        if self._is_updating:
-            logger.warning("Already updating, ignoring start request")
-            return False
-
-        self._is_updating = True
+        with self._restart_lock:
+            if self._is_updating:
+                logger.warning("Already updating, ignoring start request")
+                return False
+            self._is_updating = True
         try:
             if settings:
                 self.sync_from_settings(settings)
             return await self._start_filter_chain_process(settings)
         finally:
-            self._is_updating = False
+            with self._restart_lock:
+                self._is_updating = False
 
     async def _start_filter_chain_process(self, settings=None) -> bool:
         """Internal: start the filter chain process and verify it's running.
@@ -325,9 +330,157 @@ class PipeWireService:
             return False
 
     async def _configure_filter_source(self) -> None:
-        """Configure the filter source after startup."""
-        # The filter source auto-connects in PipeWire
+        """Configure the filter source after startup.
+
+        When echo cancellation is active, filter.smart is disabled so the
+        node must be explicitly set as the default audio source.
+        Also sets force-quantum=960 to align with WebRTC AEC frame size.
+        Starts monitoring for default source changes.
+        """
+        if self._echo_cancel_enabled:
+            await self._set_default_source("big-noise-canceling-output")
+            self._set_pipewire_quantum(960)
+            self._current_hw_source = self._detect_hardware_source()
+            self._start_source_monitor()
         logger.debug("Filter source configuration complete")
+
+    def _start_source_monitor(self) -> None:
+        """Start periodic check for default source changes.
+
+        When AEC is active, polls every 3 seconds to detect if the user
+        switched the default microphone. If changed, triggers a pipeline
+        restart so the AEC re-targets the new hardware source.
+        """
+        self._stop_source_monitor()
+        try:
+            from gi.repository import GLib
+            self._source_monitor_id = GLib.timeout_add_seconds(
+                3, self._check_source_changed
+            )
+        except ImportError:
+            pass
+
+    def _stop_source_monitor(self) -> None:
+        """Stop the source change monitor."""
+        if self._source_monitor_id:
+            try:
+                from gi.repository import GLib
+                GLib.source_remove(self._source_monitor_id)
+            except ImportError:
+                pass
+            self._source_monitor_id = 0
+
+    def _check_source_changed(self) -> bool:
+        """Check if the default hardware source changed.
+
+        Called periodically by GLib timer. Runs detection in a thread
+        to avoid blocking the UI.
+
+        Returns:
+            True to keep the timer running, False to stop.
+        """
+        if not self._echo_cancel_enabled:
+            self._source_monitor_id = 0
+            return False
+
+        def _check() -> None:
+            current = self._detect_hardware_source()
+            if not current or current == self._current_hw_source:
+                return
+
+            logger.info(
+                "Default source changed: %s -> %s, restarting pipeline",
+                self._current_hw_source,
+                current,
+            )
+            self._current_hw_source = current
+
+            from biglinux_microphone.config import load_settings
+            settings = load_settings()
+            self.apply_config(settings)
+
+        thread = threading.Thread(target=_check, daemon=True)
+        thread.start()
+        return True
+
+    def _detect_hardware_source(self) -> str:
+        """Detect the hardware microphone node name via pactl.
+
+        Returns the current default source name (before our filter chain
+        replaces it). This is used as target.object for the AEC capture
+        to ensure it reads from the physical mic, not the filter output.
+        """
+        try:
+            result = subprocess.run(
+                ["pactl", "get-default-source"],
+                capture_output=True,
+                text=True,
+                timeout=5,
+            )
+            if result.returncode == 0:
+                name = result.stdout.strip()
+                if name and not name.startswith("big-"):
+                    logger.info("Detected hardware source: %s", name)
+                    return name
+        except Exception:
+            logger.warning("Failed to detect hardware source")
+        return ""
+
+    async def _set_default_source(self, node_name: str) -> None:
+        """Set a node as the default audio source by name."""
+        try:
+            import json as _json
+
+            result = subprocess.run(
+                ["pw-dump"],
+                capture_output=True,
+                text=True,
+                timeout=5,
+            )
+            if result.returncode != 0:
+                logger.warning("pw-dump failed when setting default source")
+                return
+
+            data = _json.loads(result.stdout)
+            for obj in data:
+                if obj.get("type") == "PipeWire:Interface:Node":
+                    props = obj.get("info", {}).get("props", {})
+                    if props.get("node.name") == node_name:
+                        node_id = str(props.get("object.id", ""))
+                        if node_id:
+                            subprocess.run(
+                                ["wpctl", "set-default", node_id],
+                                capture_output=True,
+                                timeout=3,
+                            )
+                            logger.info(
+                                "Set default source to %s (id=%s)",
+                                node_name,
+                                node_id,
+                            )
+                            return
+            logger.warning("Could not find node %s to set as default", node_name)
+        except Exception:
+            logger.exception("Error setting default source")
+
+    def _set_pipewire_quantum(self, quantum: int) -> None:
+        """Set PipeWire force-quantum via pw-metadata.
+
+        When echo cancellation is active, forces quantum=960 to align with
+        WebRTC AEC's 480-sample frame size (960 = 2×480). This prevents
+        buffer underruns caused by quantum mismatch (e.g. 4096 % 960 ≠ 0).
+        Pass 0 to restore automatic quantum selection.
+        """
+        try:
+            subprocess.run(
+                ["pw-metadata", "-n", "settings", "0",
+                 "clock.force-quantum", str(quantum)],
+                capture_output=True,
+                timeout=3,
+            )
+            logger.info("Set PipeWire force-quantum to %d", quantum)
+        except Exception:
+            logger.warning("Failed to set PipeWire force-quantum to %d", quantum)
 
     async def stop(self) -> bool:
         """
@@ -338,11 +491,11 @@ class PipeWireService:
         Returns:
             bool: True if stopped successfully
         """
-        if self._is_updating:
-            logger.warning("Already updating, ignoring stop request")
-            return False
-
-        self._is_updating = True
+        with self._restart_lock:
+            if self._is_updating:
+                logger.warning("Already updating, ignoring stop request")
+                return False
+            self._is_updating = True
         try:
             await self._stop_filter_chain()
             return not self.is_enabled()
@@ -351,7 +504,8 @@ class PipeWireService:
             logger.exception("Error stopping noise reduction")
             return False
         finally:
-            self._is_updating = False
+            with self._restart_lock:
+                self._is_updating = False
 
     async def _stop_filter_chain(self) -> None:
         """
@@ -436,6 +590,12 @@ class PipeWireService:
 
         # Invalidate cache
         self._cached_node_id = None
+
+        # Stop monitoring for source changes
+        self._stop_source_monitor()
+
+        # Restore default quantum (AEC may have forced it to 960)
+        self._set_pipewire_quantum(0)
 
         # Brief wait for process termination
         await asyncio.sleep(0.2)
@@ -761,8 +921,7 @@ class PipeWireService:
         Set stereo width with live update.
 
         Updates dependent parameters based on current mode:
-        - SPATIAL: Updates GVerb room size, reverb time, damping, etc.
-        - RADIO: Updates Compressor ratio, release, threshold, etc.
+        - VOICE_CHANGER: Updates Pitch co-efficient and gain.
         - HAAS/DUAL_MONO: Updates Delay time (if applicable).
 
         Args:
@@ -780,25 +939,7 @@ class PipeWireService:
         mode = self._stereo_mode
         success = True
 
-        if mode == StereoMode.RADIO:
-            # Re-calculate Compressor params matching filter_chain.py
-            ratio = 4.0 + (width * 6.0)
-            threshold = -15.0 - (width * 10.0)
-            release = 100.0 + (width * 100.0)
-            makeup_gain = 6.0 + (width * 6.0)
-
-            updates = {
-                "compressor:Ratio (1:n)": ratio,
-                "compressor:Threshold level (dB)": threshold,
-                "compressor:Release time (ms)": release,
-                "compressor:Makeup gain (dB)": makeup_gain,
-            }
-
-            for param, val in updates.items():
-                if not self._update_param_live(param, val):
-                    success = False
-
-        elif mode == StereoMode.VOICE_CHANGER:
+        if mode == StereoMode.VOICE_CHANGER:
             # Pitch mapping: [0.0, 1.0] -> [0.5, 2.0]
             # P = 0.5 * 4^width
             pitch_coeff = 0.5 * (4.0**width)
@@ -991,6 +1132,15 @@ class PipeWireService:
             return False
 
     # =========================================================================
+    # Echo Cancellation Parameters
+    # =========================================================================
+
+    def set_echo_cancel_enabled(self, enabled: bool) -> bool:
+        """Enable or disable echo cancellation (requires pipeline restart)."""
+        self._echo_cancel_enabled = enabled
+        return self._requires_restart()
+
+    # =========================================================================
     # Private Methods
     # =========================================================================
 
@@ -1180,6 +1330,7 @@ class PipeWireService:
             noise_reduction_lookahead_ms=settings.noise_reduction.lookahead_ms,
             noise_reduction_voice_enhance=settings.noise_reduction.voice_enhance,
             noise_reduction_model_blending=settings.noise_reduction.model_blending,
+            noise_reduction_noise_gate=settings.noise_reduction.noise_gate,
             compressor_enabled=settings.compressor.enabled,
             compressor_threshold_db=settings.compressor.threshold_db,
             compressor_ratio=settings.compressor.ratio,
@@ -1199,6 +1350,11 @@ class PipeWireService:
             crossfeed_enabled=settings.stereo.crossfeed_enabled,
             eq_enabled=settings.equalizer.enabled,
             eq_bands=list(settings.equalizer.bands),
+            echo_cancel_enabled=settings.echo_cancel.enabled,
+            source_node_name=self._detect_hardware_source() if settings.echo_cancel.enabled else "",
+            echo_cancel_gain_control=settings.echo_cancel.gain_control,
+            echo_cancel_noise_suppression=settings.echo_cancel.noise_suppression,
+            echo_cancel_voice_detection=settings.echo_cancel.voice_detection,
         )
 
         generator = FilterChainGenerator(config)
@@ -1231,14 +1387,18 @@ class PipeWireService:
         )
 
         if should_be_active:
-            if self._is_updating:
-                # A restart is already in progress; mark pending so the
-                # current restart's callback will trigger another one.
-                self._restart_pending = True
-                self._pending_settings = settings
-                self._pending_on_complete = on_complete
-                logger.debug("Restart already in progress, queuing pending restart")
-            else:
+            do_start = False
+            with self._restart_lock:
+                if self._is_updating:
+                    self._restart_pending = True
+                    self._pending_settings = settings
+                    self._pending_on_complete = on_complete
+                    logger.debug("Restart already in progress, queuing pending restart")
+                else:
+                    self._is_updating = True
+                    self._restart_pending = False
+                    do_start = True
+            if do_start:
                 self._run_restart_in_thread(on_complete, settings)
         elif on_complete:
             from gi.repository import GLib
@@ -1252,12 +1412,12 @@ class PipeWireService:
     ) -> None:
         """Run restart in a separate thread to avoid blocking GTK.
 
+        Caller MUST set _is_updating = True under _restart_lock before calling.
+
         Args:
             on_complete: Optional callback to run after restart finishes
             settings: Optional AppSettings to pass through the restart chain
         """
-        self._is_updating = True
-        self._restart_pending = False
 
         def _do_restart() -> None:
             loop = asyncio.new_event_loop()
@@ -1266,20 +1426,25 @@ class PipeWireService:
                 loop.run_until_complete(self._restart(settings))
             finally:
                 loop.close()
-                self._is_updating = False
 
             # Check if another restart was requested while we were restarting
-            if self._restart_pending:
-                pending_settings = getattr(self, "_pending_settings", None)
-                pending_callback = getattr(self, "_pending_on_complete", None)
-                self._restart_pending = False
-                self._pending_settings = None
-                self._pending_on_complete = None
+            with self._restart_lock:
+                if self._restart_pending:
+                    pending_settings = self._pending_settings
+                    pending_callback = self._pending_on_complete
+                    self._restart_pending = False
+                    self._pending_settings = None
+                    self._pending_on_complete = None
+                else:
+                    self._is_updating = False
+                    pending_settings = None
+                    pending_callback = None
+
+            if pending_settings is not None or pending_callback is not None:
                 logger.debug("Executing pending restart after previous completed")
-                # Regenerate config with latest settings and restart again
                 self._generate_config(pending_settings)
                 self._run_restart_in_thread(pending_callback, pending_settings)
-                return  # Don't call on_complete for the superseded restart
+                return
 
             if on_complete:
                 try:

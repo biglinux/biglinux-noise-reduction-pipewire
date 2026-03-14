@@ -73,7 +73,7 @@ def main() -> NoReturn:
 
     # Create and run application
     app = MicrophoneApplication()
-    exit_status = app.run(sys.argv)
+    exit_status = app.run(sys.argv[:1])
     sys.exit(exit_status)
 
 

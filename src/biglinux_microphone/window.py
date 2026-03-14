@@ -142,7 +142,6 @@ class MicrophoneWindow(Adw.ApplicationWindow):
                 icon_image.set_pixel_size(24)
                 icon_image.set_margin_start(8)
                 icon_image.set_margin_end(4)
-                icon_image.set_margin_end(4)
                 header.pack_start(icon_image)
             except Exception:
                 logger.exception("Error loading header icon")

@@ -136,13 +136,26 @@ TOOLTIPS = {
     "stereo_mode": _(
         "Choose the voice effect:\n\n"
         "• Dual Mono: Duplicates signal to both channels (stereo)\n"
-        "• Studio: Professional radio voice\n"
         "• Voice Changer: Changes voice pitch (deeper or higher)"
     ),
     "stereo_width": _(
         "Intensity of the selected effect.\n\n"
-        "• Studio: Amount of vocal processing\n"
         "• Voice Changer: Pitch (low to high)"
+    ),
+    # High-Pass Filter section
+    "hpf_toggle": _(
+        "High-pass filter that removes low frequencies.\n\n"
+        "Cuts rumble, hum, and other low-frequency noise\n"
+        "below the chosen frequency. Keeps your voice clear\n"
+        "without affecting speech quality."
+    ),
+    "hpf_frequency": _(
+        "Cut-off frequency for the high-pass filter.\n\n"
+        "Frequencies below this value are removed.\n"
+        "• 80 Hz: Removes deep rumble only\n"
+        "• 120 Hz: Good for most voices\n"
+        "• 200 Hz: Aggressive cut, may thin the voice\n\n"
+        "Default: 80 Hz."
     ),
     # Equalizer section
     "equalizer_toggle": _(
@@ -165,11 +178,6 @@ TOOLTIPS = {
         "• Right bands (4000-16000 Hz): Brightness and clarity\n\n"
         "Drag sliders up to boost, down to cut."
     ),
-    # Advanced toggle
-    "advanced_toggle": _(
-        "Show additional controls for fine-tuning your audio.\n\n"
-        "Includes equalizer, AI model selection, and visualizer options."
-    ),
     # Monitor section
     "monitor_toggle": _(
         "Activate audio loopback (Monitor).\n\n"
@@ -186,12 +194,28 @@ TOOLTIPS = {
         "Automatically switches your headset between listening mode and call mode when you use the microphone. "
         "Note: Using the headset microphone generally reduces both headphone and microphone quality."
     ),
-    # Visualizer
-    "visualizer_style": _(
-        "Choose how the audio visualizer displays:\n\n"
-        "• Modern Waves: Smooth wave animation\n"
-        "• Retro Bars: Classic equalizer bars\n"
-        "• Circular: Radial visualization"
+    # Echo Cancellation section
+    "echo_cancel_toggle": _(
+        "Enables acoustic echo cancellation using WebRTC AEC.\n\n"
+        "Reduces echo and feedback when using speakers instead of headphones. "
+        "Captures the speaker output and removes it from the microphone signal."
+    ),
+    "echo_cancel_gain": _(
+        "Automatic gain control for the echo canceller.\n\n"
+        "Adjusts the microphone volume automatically to keep\n"
+        "the signal level consistent. Disable if your voice\n"
+        "sounds unnaturally amplified or compressed."
+    ),
+    "echo_cancel_ns": _(
+        "Additional noise suppression inside the echo canceller.\n\n"
+        "Provides extra noise removal on top of the main GTCRN filter.\n"
+        "May reduce audio quality — only enable in very noisy environments."
+    ),
+    "echo_cancel_vad": _(
+        "Voice activity detection for the echo canceller.\n\n"
+        "Helps the AEC distinguish speech from noise.\n"
+        "Can improve echo removal accuracy but may interfere\n"
+        "with the main noise reduction. Disabled by default."
     ),
 }
 
