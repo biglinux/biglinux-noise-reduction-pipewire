@@ -115,17 +115,13 @@ msgstr "Автоматически отключает микрофон, когд
 msgid "Voice Effects"
 msgstr "Эффекты голоса"
 # 
-# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/ui/main_view.py, line: 426
-msgid "Voice enhancement, studio sound and pitch shifter."
-msgstr "Улучшение голоса, студийный звук и сдвиг высоты тона."
+# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/ui/main_view.py, line: 581
+msgid "Voice enhancement and pitch shifter."
+msgstr "Улучшение голоса и сдвиг высоты тона."
 # 
 # File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/ui/main_view.py, line: 436
 msgid "Dual Mono"
 msgstr "Двойной моно"
-# 
-# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/ui/main_view.py, line: 437
-msgid "Studio"
-msgstr "Студия"
 # 
 # File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/ui/main_view.py, line: 438
 msgid "Voice Changer (Pitch)"
@@ -182,6 +178,38 @@ msgstr "Группы"
 msgid "Adjust each frequency"
 msgstr "Настройте каждую частоту."
 # 
+# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/ui/main_view.py, line: 687
+msgid "Echo Cancellation"
+msgstr "Отмена эха"
+# 
+# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/ui/main_view.py, line: 689
+msgid "Reduces echo and feedback when using speakers"
+msgstr "Уменьшает эхо и обратную связь при использовании динамиков."
+# 
+# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/ui/main_view.py, line: 700
+msgid "Automatic Gain Control"
+msgstr "Автоматическое управление усилением"
+# 
+# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/ui/main_view.py, line: 701
+msgid "Normalizes volume automatically"
+msgstr "Автоматически нормализует громкость"
+# 
+# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/ui/main_view.py, line: 708
+msgid "Noise Suppression"
+msgstr "Подавление шума"
+# 
+# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/ui/main_view.py, line: 709
+msgid "WebRTC built-in noise filter"
+msgstr "Встроенный фильтр шума WebRTC"
+# 
+# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/ui/main_view.py, line: 716
+msgid "Voice Detection"
+msgstr "Обнаружение голоса"
+# 
+# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/ui/main_view.py, line: 717
+msgid "Applies processing only when speech is detected"
+msgstr "Применяет обработку только при обнаружении речи"
+# 
 # File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/ui/main_view.py, line: 533
 msgid "Bluetooth Headset Mode"
 msgstr "Режим Bluetooth-гарнитуры"
@@ -213,6 +241,10 @@ msgstr "0с"
 # File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/ui/main_view.py, line: 569
 msgid "1s"
 msgstr "1с"
+# 
+# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/ui/main_view.py, line: 771
+msgid "2s"
+msgstr "2s"
 # 
 # File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/ui/main_view.py, line: 569
 msgid "3s"
@@ -275,25 +307,6 @@ msgstr "Восстановление голоса: {percent}%"
 #, python-brace-format
 msgid "Noise gate: {percent}%"
 msgstr "Шумовой гейт: {percent}%"
-# 
-# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/ui/main_view.py, line: 1135
-msgid "Radio Effect Intensity"
-msgstr "Интенсивность радиовоздействия"
-# 
-# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/ui/main_view.py, line: 256
-# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/ui/main_view.py, line: 1137
-msgid "Smooth"
-msgstr "Плавный"
-# 
-# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/ui/main_view.py, line: 1138
-msgid "Intense"
-msgstr "Интенсивный"
-# 
-# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/ui/main_view.py, line: 1140
-# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/ui/main_view.py, line: 1207
-#, python-brace-format
-msgid "Adjust compression and presence level. ({percent}%)"
-msgstr "Настройте уровень сжатия и присутствия. ({percent}%)"
 # 
 # File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/ui/main_view.py, line: 1145
 msgid "Voice Tonality (Pitch)"
@@ -558,31 +571,60 @@ msgstr ""
 "Преобразует ваш моно микрофон в стерео или применяет\n"
 "профессиональные эффекты для стриминга и подкастов."
 # 
-# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/utils/tooltip_helper.py, line: 126
+# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/utils/tooltip_helper.py, line: 137
 msgid ""
 "Choose the voice effect:\n"
 "\n"
 "• Dual Mono: Duplicates signal to both channels (stereo)\n"
-"• Studio: Professional radio voice\n"
 "• Voice Changer: Changes voice pitch (deeper or higher)"
 msgstr ""
 "Выберите эффект голоса:\n"
 "\n"
 "• Двойной моно: Дублирует сигнал на оба канала (стерео)\n"
-"• Студийный: Профессиональный радиоголос\n"
 "• Изменение голоса: Изменяет высоту голоса (глубже или выше)"
 # 
-# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/utils/tooltip_helper.py, line: 132
+# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/utils/tooltip_helper.py, line: 142
 msgid ""
 "Intensity of the selected effect.\n"
 "\n"
-"• Studio: Amount of vocal processing\n"
 "• Voice Changer: Pitch (low to high)"
 msgstr ""
 "Интенсивность выбранного эффекта.\n"
 "\n"
-"• Студия: Количество обработки вокала\n"
-"• Изменитель голоса: Высота тона (низкая до высокой)"
+"• Изменение голоса: Высота (низкая до высокой)"
+# 
+# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/utils/tooltip_helper.py, line: 147
+msgid ""
+"High-pass filter that removes low frequencies.\n"
+"\n"
+"Cuts rumble, hum, and other low-frequency noise\n"
+"below the chosen frequency. Keeps your voice clear\n"
+"without affecting speech quality."
+msgstr ""
+"Высокочастотный фильтр, который удаляет низкие частоты.\n"
+"\n"
+"Убирает гул, гудение и другие низкочастотные шумы ниже выбранной частоты. Сохраняет четкость вашего "
+"голоса, не влияя на качество речи."
+# 
+# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/utils/tooltip_helper.py, line: 153
+msgid ""
+"Cut-off frequency for the high-pass filter.\n"
+"\n"
+"Frequencies below this value are removed.\n"
+"• 80 Hz: Removes deep rumble only\n"
+"• 120 Hz: Good for most voices\n"
+"• 200 Hz: Aggressive cut, may thin the voice\n"
+"\n"
+"Default: 80 Hz."
+msgstr ""
+"Частота среза для высокочастотного фильтра.\n"
+"\n"
+"Частоты ниже этого значения удаляются.\n"
+"• 80 Гц: Удаляет глубокий гул\n"
+"• 120 Гц: Хорошо подходит для большинства голосов\n"
+"• 200 Гц: Агрессивный срез, может сделать голос тоньше\n"
+"\n"
+"По умолчанию: 80 Гц."
 # 
 # File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/utils/tooltip_helper.py, line: 138
 msgid ""
@@ -631,16 +673,6 @@ msgstr ""
 "\n"
 "Перемещайте ползунки вверх для увеличения, вниз для уменьшения."
 # 
-# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/utils/tooltip_helper.py, line: 131
-msgid ""
-"Show additional controls for fine-tuning your audio.\n"
-"\n"
-"Includes equalizer, AI model selection, and visualizer options."
-msgstr ""
-"Показать дополнительные элементы управления для тонкой настройки вашего аудио.\n"
-"\n"
-"Включает эквалайзер, выбор модели ИИ и параметры визуализатора."
-# 
 # File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/utils/tooltip_helper.py, line: 136
 msgid ""
 "Activate audio loopback (Monitor).\n"
@@ -675,19 +707,57 @@ msgstr ""
 "используете микрофон. Примечание: Использование микрофона наушников обычно снижает качество как "
 "наушников, так и микрофона."
 # 
-# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/utils/tooltip_helper.py, line: 155
+# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/utils/tooltip_helper.py, line: 199
 msgid ""
-"Choose how the audio visualizer displays:\n"
+"Enables acoustic echo cancellation using WebRTC AEC.\n"
 "\n"
-"• Modern Waves: Smooth wave animation\n"
-"• Retro Bars: Classic equalizer bars\n"
-"• Circular: Radial visualization"
+"Reduces echo and feedback when using speakers instead of headphones. Captures the speaker output "
+"and removes it from the microphone signal."
 msgstr ""
-"Выберите, как аудиовизуализатор будет отображаться:\n"
+"Включает отмену акустической эха с использованием WebRTC AEC.\n"
 "\n"
-"• Современные волны: Плавная анимация волн\n"
-"• Ретро-бары: Классические эквалайзерные бары\n"
-"• Круговой: Радиальная визуализация"
+"Снижает эхо и обратную связь при использовании динамиков вместо наушников. Захватывает выходной "
+"сигнал динамика и удаляет его из сигнала микрофона."
+# 
+# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/utils/tooltip_helper.py, line: 204
+msgid ""
+"Automatic gain control for the echo canceller.\n"
+"\n"
+"Adjusts the microphone volume automatically to keep\n"
+"the signal level consistent. Disable if your voice\n"
+"sounds unnaturally amplified or compressed."
+msgstr ""
+"Автоматическое управление усилением для устройства подавления эха.\n"
+"\n"
+"Автоматически регулирует громкость микрофона, чтобы поддерживать\n"
+"постоянный уровень сигнала. Отключите, если ваш голос\n"
+"звучит ненормально усиленным или сжатым."
+# 
+# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/utils/tooltip_helper.py, line: 210
+msgid ""
+"Additional noise suppression inside the echo canceller.\n"
+"\n"
+"Provides extra noise removal on top of the main GTCRN filter.\n"
+"May reduce audio quality — only enable in very noisy environments."
+msgstr ""
+"Дополнительное подавление шума внутри устройства подавления эха.\n"
+"\n"
+"Обеспечивает дополнительное удаление шума поверх основного фильтра GTCRN.\n"
+"Может снизить качество звука — включайте только в очень шумных условиях."
+# 
+# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/utils/tooltip_helper.py, line: 215
+msgid ""
+"Voice activity detection for the echo canceller.\n"
+"\n"
+"Helps the AEC distinguish speech from noise.\n"
+"Can improve echo removal accuracy but may interfere\n"
+"with the main noise reduction. Disabled by default."
+msgstr ""
+"Обнаружение голосовой активности для устройства подавления эха.\n"
+"\n"
+"Помогает AEC различать речь и шум.\n"
+"Может улучшить точность удаления эха, но может мешать\n"
+"основному снижению шума. Отключено по умолчанию."
 # 
 # File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/config.py, line: 711
 msgid "Default Voice"

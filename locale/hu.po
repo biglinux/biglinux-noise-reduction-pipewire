@@ -115,17 +115,13 @@ msgstr "Automatikusan némítja a mikrofont, amikor nem beszél."
 msgid "Voice Effects"
 msgstr "Hanghatások"
 # 
-# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/ui/main_view.py, line: 426
-msgid "Voice enhancement, studio sound and pitch shifter."
-msgstr "Hangjavítás, stúdióhang és hangmagasság-változtató."
+# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/ui/main_view.py, line: 581
+msgid "Voice enhancement and pitch shifter."
+msgstr "Hangjavítás és hangmagasság módosító."
 # 
 # File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/ui/main_view.py, line: 436
 msgid "Dual Mono"
 msgstr "Kettős Mono"
-# 
-# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/ui/main_view.py, line: 437
-msgid "Studio"
-msgstr "Stúdió"
 # 
 # File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/ui/main_view.py, line: 438
 msgid "Voice Changer (Pitch)"
@@ -182,6 +178,38 @@ msgstr "Sávok"
 msgid "Adjust each frequency"
 msgstr "Állítsa be az egyes frekvenciákat."
 # 
+# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/ui/main_view.py, line: 687
+msgid "Echo Cancellation"
+msgstr "Visszhangcsökkentés"
+# 
+# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/ui/main_view.py, line: 689
+msgid "Reduces echo and feedback when using speakers"
+msgstr "Csökkenti az visszhangot és a visszajelzést hangszórók használatakor."
+# 
+# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/ui/main_view.py, line: 700
+msgid "Automatic Gain Control"
+msgstr "Automatikus Erősítés Szabályozás"
+# 
+# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/ui/main_view.py, line: 701
+msgid "Normalizes volume automatically"
+msgstr "Automatikusan normalizálja a hangerőt"
+# 
+# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/ui/main_view.py, line: 708
+msgid "Noise Suppression"
+msgstr "Zajcsökkentés"
+# 
+# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/ui/main_view.py, line: 709
+msgid "WebRTC built-in noise filter"
+msgstr "WebRTC beépített zajszűrő"
+# 
+# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/ui/main_view.py, line: 716
+msgid "Voice Detection"
+msgstr "Hangfelismerés"
+# 
+# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/ui/main_view.py, line: 717
+msgid "Applies processing only when speech is detected"
+msgstr "Feldolgozást csak akkor alkalmaz, ha beszédet észlel."
+# 
 # File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/ui/main_view.py, line: 533
 msgid "Bluetooth Headset Mode"
 msgstr "Bluetooth fejhallgató mód"
@@ -213,6 +241,10 @@ msgstr "0s"
 # File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/ui/main_view.py, line: 569
 msgid "1s"
 msgstr "1s"
+# 
+# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/ui/main_view.py, line: 771
+msgid "2s"
+msgstr "2s"
 # 
 # File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/ui/main_view.py, line: 569
 msgid "3s"
@@ -275,25 +307,6 @@ msgstr "Hangvisszaállítás: {percent}%"
 #, python-brace-format
 msgid "Noise gate: {percent}%"
 msgstr "Zajszűrő: {percent}%"
-# 
-# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/ui/main_view.py, line: 1135
-msgid "Radio Effect Intensity"
-msgstr "Rádióhatás Intenzitás"
-# 
-# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/ui/main_view.py, line: 256
-# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/ui/main_view.py, line: 1137
-msgid "Smooth"
-msgstr "Simogató"
-# 
-# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/ui/main_view.py, line: 1138
-msgid "Intense"
-msgstr "Intenzív"
-# 
-# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/ui/main_view.py, line: 1140
-# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/ui/main_view.py, line: 1207
-#, python-brace-format
-msgid "Adjust compression and presence level. ({percent}%)"
-msgstr "Állítsa be a tömörítést és a jelenlét szintet. ({percent}%)"
 # 
 # File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/ui/main_view.py, line: 1145
 msgid "Voice Tonality (Pitch)"
@@ -556,31 +569,60 @@ msgstr ""
 "A mono mikrofonodat sztereóra alakítja, vagy professzionális effekteket alkalmaz streaminghez és "
 "podcastinghoz."
 # 
-# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/utils/tooltip_helper.py, line: 126
+# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/utils/tooltip_helper.py, line: 137
 msgid ""
 "Choose the voice effect:\n"
 "\n"
 "• Dual Mono: Duplicates signal to both channels (stereo)\n"
-"• Studio: Professional radio voice\n"
 "• Voice Changer: Changes voice pitch (deeper or higher)"
 msgstr ""
-"Válassza ki a hanghatást:\n"
+"Válaszd ki a hanghatást:\n"
 "\n"
 "• Kettős Mono: Megkettőzi a jelet mindkét csatornára (sztereó)\n"
-"• Stúdió: Professzionális rádióhang\n"
-"• Hangváltó: Megváltoztatja a hangmagasságot (mélyebb vagy magasabb)"
+"• Hangváltó: Megváltoztatja a hang magasságát (mélyebb vagy magasabb)"
 # 
-# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/utils/tooltip_helper.py, line: 132
+# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/utils/tooltip_helper.py, line: 142
 msgid ""
 "Intensity of the selected effect.\n"
 "\n"
-"• Studio: Amount of vocal processing\n"
 "• Voice Changer: Pitch (low to high)"
 msgstr ""
-"A kiválasztott effekt intenzitása.\n"
+"A kiválasztott effektus intenzitása.\n"
 "\n"
-"• Stúdió: A vokális feldolgozás mennyisége\n"
 "• Hangváltó: Magasság (alacsony-tól magasig)"
+# 
+# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/utils/tooltip_helper.py, line: 147
+msgid ""
+"High-pass filter that removes low frequencies.\n"
+"\n"
+"Cuts rumble, hum, and other low-frequency noise\n"
+"below the chosen frequency. Keeps your voice clear\n"
+"without affecting speech quality."
+msgstr ""
+"Magasáteresztő szűrő, amely eltávolítja az alacsony frekvenciákat.\n"
+"\n"
+"Eltávolítja a zümmögést, búgást és egyéb alacsony frekvenciájú zajokat a választott frekvencia "
+"alatt. Tiszta hangot biztosít anélkül, hogy befolyásolná a beszéd minőségét."
+# 
+# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/utils/tooltip_helper.py, line: 153
+msgid ""
+"Cut-off frequency for the high-pass filter.\n"
+"\n"
+"Frequencies below this value are removed.\n"
+"• 80 Hz: Removes deep rumble only\n"
+"• 120 Hz: Good for most voices\n"
+"• 200 Hz: Aggressive cut, may thin the voice\n"
+"\n"
+"Default: 80 Hz."
+msgstr ""
+"Magasáteresztő szűrő vágási frekvenciája.\n"
+"\n"
+"A megadott érték alatti frekvenciák eltávolításra kerülnek.\n"
+"• 80 Hz: Csak a mély zúgás eltávolítása\n"
+"• 120 Hz: Jól működik a legtöbb hangnál\n"
+"• 200 Hz: Aggresszív vágás, vékonyíthatja a hangot\n"
+"\n"
+"Alapértelmezett: 80 Hz."
 # 
 # File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/utils/tooltip_helper.py, line: 138
 msgid ""
@@ -630,16 +672,6 @@ msgstr ""
 "\n"
 "Húzza felfelé a csúszkákat a növeléshez, lefelé a csökkentéshez."
 # 
-# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/utils/tooltip_helper.py, line: 131
-msgid ""
-"Show additional controls for fine-tuning your audio.\n"
-"\n"
-"Includes equalizer, AI model selection, and visualizer options."
-msgstr ""
-"További vezérlők megjelenítése a hang finomhangolásához.\n"
-"\n"
-"Tartalmazza az equalizert, az AI modell kiválasztását és a vizualizáló lehetőségeket."
-# 
 # File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/utils/tooltip_helper.py, line: 136
 msgid ""
 "Activate audio loopback (Monitor).\n"
@@ -674,19 +706,56 @@ msgstr ""
 "mikrofont. Megjegyzés: A fejhallgató mikrofonjának használata általában csökkenti a fejhallgató és "
 "a mikrofon minőségét."
 # 
-# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/utils/tooltip_helper.py, line: 155
+# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/utils/tooltip_helper.py, line: 199
 msgid ""
-"Choose how the audio visualizer displays:\n"
+"Enables acoustic echo cancellation using WebRTC AEC.\n"
 "\n"
-"• Modern Waves: Smooth wave animation\n"
-"• Retro Bars: Classic equalizer bars\n"
-"• Circular: Radial visualization"
+"Reduces echo and feedback when using speakers instead of headphones. Captures the speaker output "
+"and removes it from the microphone signal."
 msgstr ""
-"Válaszd ki, hogyan jelenjen meg az audió vizualizáló:\n"
+"Engedélyezi az akusztikus visszhangcsökkentést a WebRTC AEC használatával.\n"
 "\n"
-"• Modern Hullámok: Simogató hullám animáció\n"
-"• Retro Sávok: Klasszikus egyenlítő sávok\n"
-"• Körkörös: Radiális vizualizáció"
+"Csökkenti a visszhangot és a visszajelzést, amikor hangszórót használunk fejhallgató helyett. "
+"Rögzíti a hangszóró kimenetét, és eltávolítja azt a mikrofon jeléből."
+# 
+# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/utils/tooltip_helper.py, line: 204
+msgid ""
+"Automatic gain control for the echo canceller.\n"
+"\n"
+"Adjusts the microphone volume automatically to keep\n"
+"the signal level consistent. Disable if your voice\n"
+"sounds unnaturally amplified or compressed."
+msgstr ""
+"Automatikus erősítésszabályozás az echo eltávolítóhoz.\n"
+"\n"
+"Automatikusan beállítja a mikrofon hangerőszintjét, hogy a jel szintje állandó maradjon. Kapcsolja "
+"ki, ha a hangja természetellenesen felerősítettnek vagy tömörítettnek hangzik."
+# 
+# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/utils/tooltip_helper.py, line: 210
+msgid ""
+"Additional noise suppression inside the echo canceller.\n"
+"\n"
+"Provides extra noise removal on top of the main GTCRN filter.\n"
+"May reduce audio quality — only enable in very noisy environments."
+msgstr ""
+"További zajcsökkentés az echo eltávolítóban.\n"
+"\n"
+"További zajeltávolítást biztosít a fő GTCRN szűrőn felül.\n"
+"Csökkentheti a hangminőséget — csak nagyon zajos környezetben engedélyezze."
+# 
+# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/utils/tooltip_helper.py, line: 215
+msgid ""
+"Voice activity detection for the echo canceller.\n"
+"\n"
+"Helps the AEC distinguish speech from noise.\n"
+"Can improve echo removal accuracy but may interfere\n"
+"with the main noise reduction. Disabled by default."
+msgstr ""
+"Hangzás aktivitás észlelés az visszhang eltávolító számára.\n"
+"\n"
+"Segít az AEC-nek megkülönböztetni a beszédet a zajtól.\n"
+"Javíthatja a visszhang eltávolításának pontosságát, de zavarhatja\n"
+"a fő zajcsökkentést. Alapértelmezés szerint letiltva."
 # 
 # File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/config.py, line: 711
 msgid "Default Voice"

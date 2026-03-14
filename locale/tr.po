@@ -115,17 +115,13 @@ msgstr "Konuşmadığınızda mikrofonu otomatik olarak sessize alır."
 msgid "Voice Effects"
 msgstr "Ses Efektleri"
 # 
-# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/ui/main_view.py, line: 426
-msgid "Voice enhancement, studio sound and pitch shifter."
-msgstr "Ses iyileştirme, stüdyo sesi ve ton kaydırıcı."
+# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/ui/main_view.py, line: 581
+msgid "Voice enhancement and pitch shifter."
+msgstr "Ses iyileştirme ve ton kaydırıcı."
 # 
 # File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/ui/main_view.py, line: 436
 msgid "Dual Mono"
 msgstr "Çift Mono"
-# 
-# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/ui/main_view.py, line: 437
-msgid "Studio"
-msgstr "Stüdyo"
 # 
 # File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/ui/main_view.py, line: 438
 msgid "Voice Changer (Pitch)"
@@ -182,6 +178,38 @@ msgstr "Bantlar"
 msgid "Adjust each frequency"
 msgstr "Her frekansı ayarlayın."
 # 
+# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/ui/main_view.py, line: 687
+msgid "Echo Cancellation"
+msgstr "Eko İptali"
+# 
+# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/ui/main_view.py, line: 689
+msgid "Reduces echo and feedback when using speakers"
+msgstr "Hoparlör kullanırken yankı ve geri beslemeyi azaltır."
+# 
+# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/ui/main_view.py, line: 700
+msgid "Automatic Gain Control"
+msgstr "Otomatik Kazanç Kontrolü"
+# 
+# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/ui/main_view.py, line: 701
+msgid "Normalizes volume automatically"
+msgstr "Ses seviyesini otomatik olarak normalize eder."
+# 
+# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/ui/main_view.py, line: 708
+msgid "Noise Suppression"
+msgstr "Gürültü Bastırma"
+# 
+# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/ui/main_view.py, line: 709
+msgid "WebRTC built-in noise filter"
+msgstr "WebRTC yerleşik gürültü filtresi"
+# 
+# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/ui/main_view.py, line: 716
+msgid "Voice Detection"
+msgstr "Ses Tanıma"
+# 
+# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/ui/main_view.py, line: 717
+msgid "Applies processing only when speech is detected"
+msgstr "Ses algılandığında yalnızca işleme uygular."
+# 
 # File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/ui/main_view.py, line: 533
 msgid "Bluetooth Headset Mode"
 msgstr "Bluetooth Kulaklık Modu"
@@ -213,6 +241,10 @@ msgstr "0s"
 # File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/ui/main_view.py, line: 569
 msgid "1s"
 msgstr "1s"
+# 
+# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/ui/main_view.py, line: 771
+msgid "2s"
+msgstr "2s"
 # 
 # File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/ui/main_view.py, line: 569
 msgid "3s"
@@ -275,25 +307,6 @@ msgstr "Ses kurtarma: {percent}%"
 #, python-brace-format
 msgid "Noise gate: {percent}%"
 msgstr "Gürültü kapısı: {percent}%"
-# 
-# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/ui/main_view.py, line: 1135
-msgid "Radio Effect Intensity"
-msgstr "Radyo Efekti Yoğunluğu"
-# 
-# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/ui/main_view.py, line: 256
-# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/ui/main_view.py, line: 1137
-msgid "Smooth"
-msgstr "Pürüzsüz"
-# 
-# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/ui/main_view.py, line: 1138
-msgid "Intense"
-msgstr "Yoğun"
-# 
-# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/ui/main_view.py, line: 1140
-# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/ui/main_view.py, line: 1207
-#, python-brace-format
-msgid "Adjust compression and presence level. ({percent}%)"
-msgstr "Sıkıştırma ve varlık seviyesini ayarlayın. ({percent}%)"
 # 
 # File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/ui/main_view.py, line: 1145
 msgid "Voice Tonality (Pitch)"
@@ -552,31 +565,60 @@ msgstr ""
 "Mono mikrofonunuzu stereo'ya dönüştürür veya yayıncılık ve podcasting için profesyonel efektler "
 "uygular."
 # 
-# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/utils/tooltip_helper.py, line: 126
+# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/utils/tooltip_helper.py, line: 137
 msgid ""
 "Choose the voice effect:\n"
 "\n"
 "• Dual Mono: Duplicates signal to both channels (stereo)\n"
-"• Studio: Professional radio voice\n"
 "• Voice Changer: Changes voice pitch (deeper or higher)"
 msgstr ""
 "Ses efektini seçin:\n"
 "\n"
 "• İkili Mono: Sinyali her iki kanala (stereo) kopyalar\n"
-"• Stüdyo: Profesyonel radyo sesi\n"
 "• Ses Değiştirici: Ses tonunu değiştirir (daha derin veya daha yüksek)"
 # 
-# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/utils/tooltip_helper.py, line: 132
+# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/utils/tooltip_helper.py, line: 142
 msgid ""
 "Intensity of the selected effect.\n"
 "\n"
-"• Studio: Amount of vocal processing\n"
 "• Voice Changer: Pitch (low to high)"
 msgstr ""
 "Seçilen efektin yoğunluğu.\n"
 "\n"
-"• Stüdyo: Ses işleme miktarı\n"
 "• Ses Değiştirici: Ton (düşükten yükseğe)"
+# 
+# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/utils/tooltip_helper.py, line: 147
+msgid ""
+"High-pass filter that removes low frequencies.\n"
+"\n"
+"Cuts rumble, hum, and other low-frequency noise\n"
+"below the chosen frequency. Keeps your voice clear\n"
+"without affecting speech quality."
+msgstr ""
+"Düşük frekansları kaldıran yüksek geçiren filtre.\n"
+"\n"
+"Seçilen frekansın altındaki gürültü, hum ve diğer düşük frekanslı gürültüleri keser. Sesinizi net "
+"tutar, konuşma kalitesini etkilemez."
+# 
+# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/utils/tooltip_helper.py, line: 153
+msgid ""
+"Cut-off frequency for the high-pass filter.\n"
+"\n"
+"Frequencies below this value are removed.\n"
+"• 80 Hz: Removes deep rumble only\n"
+"• 120 Hz: Good for most voices\n"
+"• 200 Hz: Aggressive cut, may thin the voice\n"
+"\n"
+"Default: 80 Hz."
+msgstr ""
+"Yüksek geçiren filtre için kesim frekansı.\n"
+"\n"
+"Bu değerin altındaki frekanslar kaldırılır.\n"
+"• 80 Hz: Sadece derin gürültüyü kaldırır\n"
+"• 120 Hz: Çoğu ses için iyi\n"
+"• 200 Hz: Agresif kesim, sesi inceltebilir\n"
+"\n"
+"Varsayılan: 80 Hz."
 # 
 # File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/utils/tooltip_helper.py, line: 138
 msgid ""
@@ -625,16 +667,6 @@ msgstr ""
 "\n"
 "Kaydırıcıları yukarı çekerek artırın, aşağı çekerek azaltın."
 # 
-# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/utils/tooltip_helper.py, line: 131
-msgid ""
-"Show additional controls for fine-tuning your audio.\n"
-"\n"
-"Includes equalizer, AI model selection, and visualizer options."
-msgstr ""
-"Sesinizi ince ayar yapmak için ek kontrolleri gösterin.\n"
-"\n"
-"Ekolayzer, AI model seçimi ve görselleştirici seçeneklerini içerir."
-# 
 # File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/utils/tooltip_helper.py, line: 136
 msgid ""
 "Activate audio loopback (Monitor).\n"
@@ -669,19 +701,57 @@ msgstr ""
 "değiştirir. Not: Kulaklık mikrofonunu kullanmak genellikle hem kulaklık hem de mikrofon kalitesini "
 "düşürür."
 # 
-# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/utils/tooltip_helper.py, line: 155
+# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/utils/tooltip_helper.py, line: 199
 msgid ""
-"Choose how the audio visualizer displays:\n"
+"Enables acoustic echo cancellation using WebRTC AEC.\n"
 "\n"
-"• Modern Waves: Smooth wave animation\n"
-"• Retro Bars: Classic equalizer bars\n"
-"• Circular: Radial visualization"
+"Reduces echo and feedback when using speakers instead of headphones. Captures the speaker output "
+"and removes it from the microphone signal."
 msgstr ""
-"Ses görselleştiricisinin nasıl görüntüleneceğini seçin:\n"
+"WebRTC AEC kullanarak akustik yankı iptali sağlar.\n"
 "\n"
-"• Modern Dalgalar: Düzgün dalga animasyonu\n"
-"• Retro Çubuklar: Klasik eşitleyici çubukları\n"
-"• Dairesel: Radyal görselleştirme"
+"Kulaklık yerine hoparlör kullanıldığında yankı ve geri bildirimleri azaltır. Hoparlör çıkışını "
+"yakalar ve mikrofon sinyalinden çıkarır."
+# 
+# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/utils/tooltip_helper.py, line: 204
+msgid ""
+"Automatic gain control for the echo canceller.\n"
+"\n"
+"Adjusts the microphone volume automatically to keep\n"
+"the signal level consistent. Disable if your voice\n"
+"sounds unnaturally amplified or compressed."
+msgstr ""
+"Eko iptal cihazı için otomatik kazanç kontrolü.\n"
+"\n"
+"Mikrofon ses seviyesini otomatik olarak ayarlar\n"
+"sinyal seviyesini tutmak için. Sesiniz\n"
+"doğal olmayan şekilde artırılmış veya sıkıştırılmışsa devre dışı bırakın."
+# 
+# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/utils/tooltip_helper.py, line: 210
+msgid ""
+"Additional noise suppression inside the echo canceller.\n"
+"\n"
+"Provides extra noise removal on top of the main GTCRN filter.\n"
+"May reduce audio quality — only enable in very noisy environments."
+msgstr ""
+"Eko iptal cihazı içinde ek gürültü bastırma.\n"
+"\n"
+"Ana GTCRN filtresinin üzerine ek gürültü giderimi sağlar.\n"
+"Ses kalitesini azaltabilir — yalnızca çok gürültülü ortamlarda etkinleştirin."
+# 
+# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/utils/tooltip_helper.py, line: 215
+msgid ""
+"Voice activity detection for the echo canceller.\n"
+"\n"
+"Helps the AEC distinguish speech from noise.\n"
+"Can improve echo removal accuracy but may interfere\n"
+"with the main noise reduction. Disabled by default."
+msgstr ""
+"Yankı iptali için ses etkinliği tespiti.\n"
+"\n"
+"AEC'nin konuşmayı gürültüden ayırt etmesine yardımcı olur.\n"
+"Yankı kaldırma doğruluğunu artırabilir ancak ana gürültü azaltma ile çelişebilir. Varsayılan olarak "
+"devre dışı."
 # 
 # File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/config.py, line: 711
 msgid "Default Voice"

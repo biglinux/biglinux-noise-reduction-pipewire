@@ -115,17 +115,13 @@ msgstr "대화하지 않을 때 마이크를 자동으로 음소거합니다."
 msgid "Voice Effects"
 msgstr "음성 효과"
 # 
-# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/ui/main_view.py, line: 426
-msgid "Voice enhancement, studio sound and pitch shifter."
-msgstr "음성 향상, 스튜디오 사운드 및 피치 시프터."
+# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/ui/main_view.py, line: 581
+msgid "Voice enhancement and pitch shifter."
+msgstr "음성 향상 및 피치 시프터."
 # 
 # File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/ui/main_view.py, line: 436
 msgid "Dual Mono"
 msgstr "듀얼 모노"
-# 
-# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/ui/main_view.py, line: 437
-msgid "Studio"
-msgstr "스튜디오"
 # 
 # File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/ui/main_view.py, line: 438
 msgid "Voice Changer (Pitch)"
@@ -182,6 +178,38 @@ msgstr "밴드"
 msgid "Adjust each frequency"
 msgstr "각 주파수를 조정하십시오."
 # 
+# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/ui/main_view.py, line: 687
+msgid "Echo Cancellation"
+msgstr "에코 취소"
+# 
+# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/ui/main_view.py, line: 689
+msgid "Reduces echo and feedback when using speakers"
+msgstr "스피커 사용 시 에코와 피드백을 줄입니다."
+# 
+# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/ui/main_view.py, line: 700
+msgid "Automatic Gain Control"
+msgstr "자동 이득 제어"
+# 
+# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/ui/main_view.py, line: 701
+msgid "Normalizes volume automatically"
+msgstr "볼륨을 자동으로 정규화합니다."
+# 
+# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/ui/main_view.py, line: 708
+msgid "Noise Suppression"
+msgstr "소음 억제"
+# 
+# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/ui/main_view.py, line: 709
+msgid "WebRTC built-in noise filter"
+msgstr "WebRTC 내장 소음 필터"
+# 
+# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/ui/main_view.py, line: 716
+msgid "Voice Detection"
+msgstr "음성 인식"
+# 
+# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/ui/main_view.py, line: 717
+msgid "Applies processing only when speech is detected"
+msgstr "음성이 감지될 때만 처리를 적용합니다."
+# 
 # File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/ui/main_view.py, line: 533
 msgid "Bluetooth Headset Mode"
 msgstr "블루투스 헤드셋 모드"
@@ -213,6 +241,10 @@ msgstr "0초"
 # File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/ui/main_view.py, line: 569
 msgid "1s"
 msgstr "1초"
+# 
+# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/ui/main_view.py, line: 771
+msgid "2s"
+msgstr "2초"
 # 
 # File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/ui/main_view.py, line: 569
 msgid "3s"
@@ -275,25 +307,6 @@ msgstr "음성 복구: {percent}%"
 #, python-brace-format
 msgid "Noise gate: {percent}%"
 msgstr "노이즈 게이트: {percent}%"
-# 
-# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/ui/main_view.py, line: 1135
-msgid "Radio Effect Intensity"
-msgstr "라디오 효과 강도"
-# 
-# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/ui/main_view.py, line: 256
-# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/ui/main_view.py, line: 1137
-msgid "Smooth"
-msgstr "부드럽다"
-# 
-# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/ui/main_view.py, line: 1138
-msgid "Intense"
-msgstr "강렬한"
-# 
-# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/ui/main_view.py, line: 1140
-# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/ui/main_view.py, line: 1207
-#, python-brace-format
-msgid "Adjust compression and presence level. ({percent}%)"
-msgstr "압축 및 존재 수준 조정. ({percent}%)"
 # 
 # File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/ui/main_view.py, line: 1145
 msgid "Voice Tonality (Pitch)"
@@ -550,31 +563,59 @@ msgstr ""
 "\n"
 "모노 마이크를 스테레오로 변환하거나 스트리밍 및 팟캐스트를 위한 전문 효과를 적용합니다."
 # 
-# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/utils/tooltip_helper.py, line: 126
+# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/utils/tooltip_helper.py, line: 137
 msgid ""
 "Choose the voice effect:\n"
 "\n"
 "• Dual Mono: Duplicates signal to both channels (stereo)\n"
-"• Studio: Professional radio voice\n"
 "• Voice Changer: Changes voice pitch (deeper or higher)"
 msgstr ""
 "음성 효과를 선택하세요:\n"
 "\n"
 "• 듀얼 모노: 신호를 두 채널(스테레오)로 복제합니다.\n"
-"• 스튜디오: 전문 라디오 음성\n"
 "• 음성 변환기: 음성의 음높이를 변경합니다(더 깊거나 더 높음)."
 # 
-# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/utils/tooltip_helper.py, line: 132
+# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/utils/tooltip_helper.py, line: 142
 msgid ""
 "Intensity of the selected effect.\n"
 "\n"
-"• Studio: Amount of vocal processing\n"
 "• Voice Changer: Pitch (low to high)"
 msgstr ""
 "선택한 효과의 강도.\n"
 "\n"
-"• 스튜디오: 보컬 처리량\n"
-"• 보이스 체인저: 음조 (낮음에서 높음)"
+"• 음성 변환기: 음조 (낮음에서 높음)"
+# 
+# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/utils/tooltip_helper.py, line: 147
+msgid ""
+"High-pass filter that removes low frequencies.\n"
+"\n"
+"Cuts rumble, hum, and other low-frequency noise\n"
+"below the chosen frequency. Keeps your voice clear\n"
+"without affecting speech quality."
+msgstr ""
+"저주파를 제거하는 하이패스 필터입니다.\n"
+"\n"
+"선택한 주파수 이하의 덜컹거림, 허밍 및 기타 저주파 소음을 제거합니다. 음성의 선명도를 유지하면서 음성 품질에 영향을 주지 않습니다."
+# 
+# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/utils/tooltip_helper.py, line: 153
+msgid ""
+"Cut-off frequency for the high-pass filter.\n"
+"\n"
+"Frequencies below this value are removed.\n"
+"• 80 Hz: Removes deep rumble only\n"
+"• 120 Hz: Good for most voices\n"
+"• 200 Hz: Aggressive cut, may thin the voice\n"
+"\n"
+"Default: 80 Hz."
+msgstr ""
+"하이패스 필터의 컷오프 주파수.\n"
+"\n"
+"이 값 이하의 주파수는 제거됩니다.\n"
+"• 80 Hz: 깊은 저음만 제거\n"
+"• 120 Hz: 대부분의 목소리에 적합\n"
+"• 200 Hz: 공격적인 컷, 목소리를 얇게 만들 수 있음\n"
+"\n"
+"기본값: 80 Hz."
 # 
 # File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/utils/tooltip_helper.py, line: 138
 msgid ""
@@ -623,16 +664,6 @@ msgstr ""
 "\n"
 "슬라이더를 위로 드래그하여 증폭하고, 아래로 드래그하여 감소시킵니다."
 # 
-# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/utils/tooltip_helper.py, line: 131
-msgid ""
-"Show additional controls for fine-tuning your audio.\n"
-"\n"
-"Includes equalizer, AI model selection, and visualizer options."
-msgstr ""
-"오디오 미세 조정을 위한 추가 컨트롤을 표시합니다.\n"
-"\n"
-"이퀄라이저, AI 모델 선택 및 시각화 옵션이 포함됩니다."
-# 
 # File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/utils/tooltip_helper.py, line: 136
 msgid ""
 "Activate audio loopback (Monitor).\n"
@@ -663,19 +694,53 @@ msgid ""
 "quality."
 msgstr "마이크를 사용할 때 헤드셋을 자동으로 청취 모드와 통화 모드 간에 전환합니다. 참고: 헤드셋 마이크를 사용하면 일반적으로 헤드폰과 마이크 품질이 모두 저하됩니다."
 # 
-# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/utils/tooltip_helper.py, line: 155
+# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/utils/tooltip_helper.py, line: 199
 msgid ""
-"Choose how the audio visualizer displays:\n"
+"Enables acoustic echo cancellation using WebRTC AEC.\n"
 "\n"
-"• Modern Waves: Smooth wave animation\n"
-"• Retro Bars: Classic equalizer bars\n"
-"• Circular: Radial visualization"
+"Reduces echo and feedback when using speakers instead of headphones. Captures the speaker output "
+"and removes it from the microphone signal."
 msgstr ""
-"오디오 시각화 표시 방법 선택:\n"
+"WebRTC AEC를 사용하여 음향 에코 취소를 활성화합니다.\n"
 "\n"
-"• 현대적 파동: 부드러운 파동 애니메이션\n"
-"• 레트로 바: 클래식 이퀄라이저 바\n"
-"• 원형: 방사형 시각화"
+"헤드폰 대신 스피커를 사용할 때 에코와 피드백을 줄입니다. 스피커 출력을 캡처하고 마이크 신호에서 제거합니다."
+# 
+# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/utils/tooltip_helper.py, line: 204
+msgid ""
+"Automatic gain control for the echo canceller.\n"
+"\n"
+"Adjusts the microphone volume automatically to keep\n"
+"the signal level consistent. Disable if your voice\n"
+"sounds unnaturally amplified or compressed."
+msgstr ""
+"에코 취소기를 위한 자동 이득 제어.\n"
+"\n"
+"신호 레벨을 일관되게 유지하기 위해 마이크 볼륨을 자동으로 조정합니다. 목소리가 비정상적으로 증폭되거나 압축된 것처럼 들리면 비활성화하십시오."
+# 
+# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/utils/tooltip_helper.py, line: 210
+msgid ""
+"Additional noise suppression inside the echo canceller.\n"
+"\n"
+"Provides extra noise removal on top of the main GTCRN filter.\n"
+"May reduce audio quality — only enable in very noisy environments."
+msgstr ""
+"에코 취소기 내부의 추가 노이즈 억제.\n"
+"\n"
+"주요 GTCRN 필터 위에 추가 노이즈 제거를 제공합니다.\n"
+"오디오 품질이 저하될 수 있으므로 매우 시끄러운 환경에서만 활성화하십시오."
+# 
+# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/utils/tooltip_helper.py, line: 215
+msgid ""
+"Voice activity detection for the echo canceller.\n"
+"\n"
+"Helps the AEC distinguish speech from noise.\n"
+"Can improve echo removal accuracy but may interfere\n"
+"with the main noise reduction. Disabled by default."
+msgstr ""
+"에코 제거기를 위한 음성 활동 감지.\n"
+"\n"
+"AEC가 음성을 소음과 구별하는 데 도움을 줍니다.\n"
+"에코 제거 정확도를 향상시킬 수 있지만 주요 소음 감소에 간섭할 수 있습니다. 기본적으로 비활성화되어 있습니다."
 # 
 # File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/config.py, line: 711
 msgid "Default Voice"

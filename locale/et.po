@@ -115,17 +115,13 @@ msgstr "Automaatne mikrofoni vaigistamine, kui te ei räägi."
 msgid "Voice Effects"
 msgstr "Hääliefektid"
 # 
-# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/ui/main_view.py, line: 426
-msgid "Voice enhancement, studio sound and pitch shifter."
-msgstr "Hääle täiustamine, stuudio heli ja kõrguse muutja."
+# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/ui/main_view.py, line: 581
+msgid "Voice enhancement and pitch shifter."
+msgstr "Hääle täiustamine ja helikõrguse muutja."
 # 
 # File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/ui/main_view.py, line: 436
 msgid "Dual Mono"
 msgstr "Kaksikõlaline mono"
-# 
-# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/ui/main_view.py, line: 437
-msgid "Studio"
-msgstr "Stuudio"
 # 
 # File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/ui/main_view.py, line: 438
 msgid "Voice Changer (Pitch)"
@@ -182,6 +178,38 @@ msgstr "Bändid"
 msgid "Adjust each frequency"
 msgstr "Kohanda iga sagedust"
 # 
+# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/ui/main_view.py, line: 687
+msgid "Echo Cancellation"
+msgstr "Kaja tühistamine"
+# 
+# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/ui/main_view.py, line: 689
+msgid "Reduces echo and feedback when using speakers"
+msgstr "Vähendab kaja ja tagasisidet kõlarite kasutamisel."
+# 
+# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/ui/main_view.py, line: 700
+msgid "Automatic Gain Control"
+msgstr "Automaatne võimenduse juhtimine"
+# 
+# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/ui/main_view.py, line: 701
+msgid "Normalizes volume automatically"
+msgstr "Normaliseerib helitugevuse automaatselt"
+# 
+# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/ui/main_view.py, line: 708
+msgid "Noise Suppression"
+msgstr "Müraha summutamine"
+# 
+# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/ui/main_view.py, line: 709
+msgid "WebRTC built-in noise filter"
+msgstr "WebRTC sisseehitatud mürafilter"
+# 
+# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/ui/main_view.py, line: 716
+msgid "Voice Detection"
+msgstr "Hääletuvastus"
+# 
+# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/ui/main_view.py, line: 717
+msgid "Applies processing only when speech is detected"
+msgstr "Kasutab töötlemist ainult siis, kui kõnet tuvastatakse."
+# 
 # File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/ui/main_view.py, line: 533
 msgid "Bluetooth Headset Mode"
 msgstr "Bluetoothi kõrvaklappide režiim"
@@ -213,6 +241,10 @@ msgstr "0s"
 # File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/ui/main_view.py, line: 569
 msgid "1s"
 msgstr "1s"
+# 
+# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/ui/main_view.py, line: 771
+msgid "2s"
+msgstr "2s"
 # 
 # File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/ui/main_view.py, line: 569
 msgid "3s"
@@ -275,25 +307,6 @@ msgstr "Hääletuse taastamine: {percent}%"
 #, python-brace-format
 msgid "Noise gate: {percent}%"
 msgstr "Müra gate: {percent}%"
-# 
-# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/ui/main_view.py, line: 1135
-msgid "Radio Effect Intensity"
-msgstr "Raadioefekti intensiivsus"
-# 
-# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/ui/main_view.py, line: 256
-# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/ui/main_view.py, line: 1137
-msgid "Smooth"
-msgstr "Sileda"
-# 
-# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/ui/main_view.py, line: 1138
-msgid "Intense"
-msgstr "Intensiivne"
-# 
-# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/ui/main_view.py, line: 1140
-# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/ui/main_view.py, line: 1207
-#, python-brace-format
-msgid "Adjust compression and presence level. ({percent}%)"
-msgstr "Reguleeri tihendust ja kohaloleku taset. ({percent}%)"
 # 
 # File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/ui/main_view.py, line: 1145
 msgid "Voice Tonality (Pitch)"
@@ -557,31 +570,61 @@ msgstr ""
 "Muudab teie mono mikrofonit stereo või rakendab\n"
 "professionaalseid efekte voogedastamiseks ja podcasteerimiseks."
 # 
-# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/utils/tooltip_helper.py, line: 126
+# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/utils/tooltip_helper.py, line: 137
 msgid ""
 "Choose the voice effect:\n"
 "\n"
 "• Dual Mono: Duplicates signal to both channels (stereo)\n"
-"• Studio: Professional radio voice\n"
 "• Voice Changer: Changes voice pitch (deeper or higher)"
 msgstr ""
 "Vali hääliefekt:\n"
 "\n"
 "• Kahekordne mono: Korrutab signaali mõlemasse kanalisse (stereo)\n"
-"• Stuudio: Professionaalne raadiohääl\n"
-"• Häälenuancer: Muudab hääle kõrgust (sügavam või kõrgem)"
+"• Häälmuundur: Muudab hääle kõrgust (madalam või kõrgem)"
 # 
-# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/utils/tooltip_helper.py, line: 132
+# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/utils/tooltip_helper.py, line: 142
 msgid ""
 "Intensity of the selected effect.\n"
 "\n"
-"• Studio: Amount of vocal processing\n"
 "• Voice Changer: Pitch (low to high)"
 msgstr ""
 "Valitud efekti intensiivsus.\n"
 "\n"
-"• Stuudio: Hääle töötlemise kogus\n"
 "• Hääle muutja: Kõrgus (madalast kõrgele)"
+# 
+# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/utils/tooltip_helper.py, line: 147
+msgid ""
+"High-pass filter that removes low frequencies.\n"
+"\n"
+"Cuts rumble, hum, and other low-frequency noise\n"
+"below the chosen frequency. Keeps your voice clear\n"
+"without affecting speech quality."
+msgstr ""
+"Kõrgepassfilter, mis eemaldab madalad sagedused.\n"
+"\n"
+"Eemaldab müra, humi ja muu madalsagedusliku müra\n"
+"valitud sagedusest allpool. Hoiab teie hääle selgena\n"
+"ilma kõnekvaliteeti mõjutamata."
+# 
+# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/utils/tooltip_helper.py, line: 153
+msgid ""
+"Cut-off frequency for the high-pass filter.\n"
+"\n"
+"Frequencies below this value are removed.\n"
+"• 80 Hz: Removes deep rumble only\n"
+"• 120 Hz: Good for most voices\n"
+"• 200 Hz: Aggressive cut, may thin the voice\n"
+"\n"
+"Default: 80 Hz."
+msgstr ""
+"Kõrgsagedusfiltri lõikesagedus.\n"
+"\n"
+"Selle väärtuse all olevad sagedused eemaldatakse.\n"
+"• 80 Hz: Eemaldab sügava müra ainult\n"
+"• 120 Hz: Hea enamikule häältest\n"
+"• 200 Hz: Aggressiivne lõige, võib häält õhukeseks muuta\n"
+"\n"
+"Vaikimisi: 80 Hz."
 # 
 # File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/utils/tooltip_helper.py, line: 138
 msgid ""
@@ -630,16 +673,6 @@ msgstr ""
 "\n"
 "Looge liugureid üles, et suurendada, alla, et vähendada."
 # 
-# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/utils/tooltip_helper.py, line: 131
-msgid ""
-"Show additional controls for fine-tuning your audio.\n"
-"\n"
-"Includes equalizer, AI model selection, and visualizer options."
-msgstr ""
-"Kuvaa täiendavaid juhtnuppe oma heli häälestamiseks.\n"
-"\n"
-"Sisaldab ekvalaiserit, AI mudeli valikut ja visualiseerimisvõimalusi."
-# 
 # File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/utils/tooltip_helper.py, line: 136
 msgid ""
 "Activate audio loopback (Monitor).\n"
@@ -674,19 +707,57 @@ msgstr ""
 "mikrofoni. Märkus: Kõrvaklappide mikrofoni kasutamine vähendab tavaliselt nii kõrvaklappide kui ka "
 "mikrofoni kvaliteeti."
 # 
-# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/utils/tooltip_helper.py, line: 155
+# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/utils/tooltip_helper.py, line: 199
 msgid ""
-"Choose how the audio visualizer displays:\n"
+"Enables acoustic echo cancellation using WebRTC AEC.\n"
 "\n"
-"• Modern Waves: Smooth wave animation\n"
-"• Retro Bars: Classic equalizer bars\n"
-"• Circular: Radial visualization"
+"Reduces echo and feedback when using speakers instead of headphones. Captures the speaker output "
+"and removes it from the microphone signal."
 msgstr ""
-"Vali, kuidas helivisualisaator kuvatakse:\n"
+"Lubab akustilise kaja tühistamine WebRTC AEC-i abil.\n"
 "\n"
-"• Kaasaegsed lained: Sujuv laine animatsioon\n"
-"• Retro ribad: Klassikalised ekvalaiseriribad\n"
-"• Ringikujuline: Raadiuse visualiseerimine"
+"Vähendab kaja ja tagasisidet, kui kasutatakse kõlareid kõrvaklappide asemel. Salvestab kõlari "
+"väljundi ja eemaldab selle mikrofonisignaalist."
+# 
+# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/utils/tooltip_helper.py, line: 204
+msgid ""
+"Automatic gain control for the echo canceller.\n"
+"\n"
+"Adjusts the microphone volume automatically to keep\n"
+"the signal level consistent. Disable if your voice\n"
+"sounds unnaturally amplified or compressed."
+msgstr ""
+"Kaja reguleerimine kaja tühistamiseks.\n"
+"\n"
+"Reguleerib mikrofoni helitugevust automaatselt, et hoida\n"
+"signaali taset ühtlasena. Keela, kui su hääl\n"
+"kõlab ebanormaalselt võimendatuna või kokku surutuna."
+# 
+# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/utils/tooltip_helper.py, line: 210
+msgid ""
+"Additional noise suppression inside the echo canceller.\n"
+"\n"
+"Provides extra noise removal on top of the main GTCRN filter.\n"
+"May reduce audio quality — only enable in very noisy environments."
+msgstr ""
+"Lisamüra summutamine kaja tühistaja sees.\n"
+"\n"
+"Pakub täiendavat müra eemaldamist peamise GTCRN filtri peale. \n"
+"Võib vähendada helikvaliteeti — lülitage sisse ainult väga mürarikkas keskkonnas."
+# 
+# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/utils/tooltip_helper.py, line: 215
+msgid ""
+"Voice activity detection for the echo canceller.\n"
+"\n"
+"Helps the AEC distinguish speech from noise.\n"
+"Can improve echo removal accuracy but may interfere\n"
+"with the main noise reduction. Disabled by default."
+msgstr ""
+"Häältegevuse tuvastamine kaja tühistamiseks.\n"
+"\n"
+"Aitab AEC-l eristada kõnet müra hulgast.\n"
+"Võib parandada kaja eemaldamise täpsust, kuid võib segada\n"
+"peamist müra vähendamist. Vaikimisi keelatud."
 # 
 # File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/config.py, line: 711
 msgid "Default Voice"
