@@ -14,5 +14,5 @@ nix = { version = "0.29", default-features = false, features = ["mman", "signal"
 
 [profile.release]
 opt-level = "s"
-lto = true
+lto = "thin"
 strip = true
