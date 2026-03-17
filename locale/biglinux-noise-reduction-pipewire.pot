@@ -21,404 +21,463 @@ msgstr  ""
 #
 # #-#-#-#-#  biglinux-noise-reduction-pipewire.pot (biglinux-noise-reduction-pipewire)  #-#-#-#-#
 #
-# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/ui/main_view.py, line: 111
+# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/ui/main_view.py, line: 119
 # File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/config.py, line: 28
 msgid   "Microphone Settings"
 msgstr  ""
 
 #
-# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/ui/main_view.py, line: 238
+# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/ui/main_view.py, line: 250
 msgid   "Applying settings…"
 msgstr  ""
 
 #
-# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/ui/main_view.py, line: 332
+# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/ui/main_view.py, line: 347
 msgid   "Noise Reduction"
 msgstr  ""
 
 #
-# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/ui/main_view.py, line: 334
+# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/ui/main_view.py, line: 349
 msgid   "Removes background noise like fan, keyboard, and air conditioning."
 msgstr  ""
 
 #
-# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/ui/main_view.py, line: 345
+# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/ui/main_view.py, line: 360
 msgid   "AI Model"
 msgstr  ""
 
 #
-# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/ui/main_view.py, line: 347
+# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/ui/main_view.py, line: 362
 msgid   "Maximum Cleaning"
 msgstr  ""
 
 #
-# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/ui/main_view.py, line: 348
+# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/ui/main_view.py, line: 363
 msgid   "Natural Voice"
 msgstr  ""
 
 #
-# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/ui/main_view.py, line: 349
+# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/ui/main_view.py, line: 364
 msgid   "Smart (both combined)"
 msgstr  ""
 
 #
-# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/ui/main_view.py, line: 358
+# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/ui/main_view.py, line: 373
 msgid   "Noise Removal Intensity"
 msgstr  ""
 
 #
-# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/ui/main_view.py, line: 379
+# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/ui/main_view.py, line: 394
 msgid   "Filter During Speech"
 msgstr  ""
 
 #
-# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/ui/main_view.py, line: 387
-# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/ui/main_view.py, line: 407
-# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/ui/main_view.py, line: 426
-# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/ui/main_view.py, line: 446
+# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/ui/main_view.py, line: 402
+# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/ui/main_view.py, line: 422
+# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/ui/main_view.py, line: 440
 msgid   "Off"
 msgstr  ""
 
 #
-# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/ui/main_view.py, line: 399
+# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/ui/main_view.py, line: 414
 msgid   "Syllable Protection"
 msgstr  ""
 
 #
-# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/ui/main_view.py, line: 418
+# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/ui/main_view.py, line: 432
 msgid   "Voice Recovery"
 msgstr  ""
 
 #
-# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/ui/main_view.py, line: 438
-msgid   "Noise Gate"
-msgstr  ""
-
-#
-# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/ui/main_view.py, line: 467
+# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/ui/main_view.py, line: 461
 msgid   "Volume Normalizer"
 msgstr  ""
 
 #
-# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/ui/main_view.py, line: 469
+# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/ui/main_view.py, line: 463
 msgid   "Evens out volume — loud sounds get softer, quiet sounds get louder."
 msgstr  ""
 
 #
-# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/ui/main_view.py, line: 481
-# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/ui/main_view.py, line: 554
+# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/ui/main_view.py, line: 475
+# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/ui/main_view.py, line: 548
 msgid   "Intensity"
 msgstr  ""
 
 #
-# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/ui/main_view.py, line: 506
+# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/ui/main_view.py, line: 500
 msgid   "High-Pass Filter"
 msgstr  ""
 
 #
-# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/ui/main_view.py, line: 507
+# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/ui/main_view.py, line: 501
 msgid   "Removes low-frequency rumble"
 msgstr  ""
 
 #
-# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/ui/main_view.py, line: 516
+# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/ui/main_view.py, line: 510
 msgid   "Frequency (Hz)"
 msgstr  ""
 
 #
-# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/ui/main_view.py, line: 540
+# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/ui/main_view.py, line: 534
 msgid   "Silence Filter (Gate)"
 msgstr  ""
 
 #
-# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/ui/main_view.py, line: 542
+# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/ui/main_view.py, line: 536
 msgid   "Automatically silences the microphone when you are not talking."
 msgstr  ""
 
 #
-# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/ui/main_view.py, line: 580
+# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/ui/main_view.py, line: 574
 msgid   "Voice Effects"
 msgstr  ""
 
 #
-# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/ui/main_view.py, line: 581
+# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/ui/main_view.py, line: 575
 msgid   "Voice enhancement and pitch shifter."
 msgstr  ""
 
 #
-# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/ui/main_view.py, line: 591
+# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/ui/main_view.py, line: 585
 msgid   "Dual Mono"
 msgstr  ""
 
 #
-# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/ui/main_view.py, line: 592
+# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/ui/main_view.py, line: 586
 msgid   "Voice Changer (Pitch)"
 msgstr  ""
 
 #
-# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/ui/main_view.py, line: 596
+# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/ui/main_view.py, line: 590
 msgid   "Voice Style"
 msgstr  ""
 
 #
-# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/ui/main_view.py, line: 597
+# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/ui/main_view.py, line: 591
 msgid   "Choose how your voice sounds to others."
 msgstr  ""
 
 #
-# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/ui/main_view.py, line: 606
-# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/ui/main_view.py, line: 1427
+# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/ui/main_view.py, line: 600
+# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/ui/main_view.py, line: 1511
 msgid   "Stereo Expansion"
 msgstr  ""
 
 #
-# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/ui/main_view.py, line: 607
+# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/ui/main_view.py, line: 601
 msgid   "Soundstage width. Higher = more immersive."
 msgstr  ""
 
 #
-# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/ui/main_view.py, line: 615
-# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/ui/main_view.py, line: 1429
+# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/ui/main_view.py, line: 609
+# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/ui/main_view.py, line: 1513
 msgid   "Focus"
 msgstr  ""
 
 #
-# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/ui/main_view.py, line: 616
-# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/ui/main_view.py, line: 1430
+# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/ui/main_view.py, line: 610
+# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/ui/main_view.py, line: 1514
 msgid   "Wide"
 msgstr  ""
 
 #
-# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/ui/main_view.py, line: 631
+# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/ui/main_view.py, line: 625
 msgid   "Equalizer"
 msgstr  ""
 
 #
-# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/ui/main_view.py, line: 632
+# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/ui/main_view.py, line: 626
 msgid   "Fine-tuning of bass, mids, and treble."
 msgstr  ""
 
 #
-# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/ui/main_view.py, line: 643
+# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/ui/main_view.py, line: 637
 msgid   "Presets"
 msgstr  ""
 
 #
-# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/ui/main_view.py, line: 644
+# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/ui/main_view.py, line: 638
 msgid   "Ready-made adjustments for different situations."
 msgstr  ""
 
 #
-# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/ui/main_view.py, line: 653
+# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/ui/main_view.py, line: 647
 msgid   "Bands"
 msgstr  ""
 
 #
-# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/ui/main_view.py, line: 654
+# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/ui/main_view.py, line: 648
 msgid   "Adjust each frequency"
 msgstr  ""
 
 #
-# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/ui/main_view.py, line: 687
+# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/ui/main_view.py, line: 681
 msgid   "Echo Cancellation"
 msgstr  ""
 
 #
-# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/ui/main_view.py, line: 689
+# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/ui/main_view.py, line: 683
 msgid   "Reduces echo and feedback when using speakers"
 msgstr  ""
 
 #
-# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/ui/main_view.py, line: 700
+# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/ui/main_view.py, line: 694
 msgid   "Automatic Gain Control"
 msgstr  ""
 
 #
-# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/ui/main_view.py, line: 701
+# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/ui/main_view.py, line: 695
 msgid   "Normalizes volume automatically"
 msgstr  ""
 
 #
-# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/ui/main_view.py, line: 708
+# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/ui/main_view.py, line: 702
 msgid   "Noise Suppression"
 msgstr  ""
 
 #
-# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/ui/main_view.py, line: 709
+# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/ui/main_view.py, line: 703
 msgid   "WebRTC built-in noise filter"
 msgstr  ""
 
 #
-# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/ui/main_view.py, line: 716
+# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/ui/main_view.py, line: 710
 msgid   "Voice Detection"
 msgstr  ""
 
 #
-# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/ui/main_view.py, line: 717
+# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/ui/main_view.py, line: 711
 msgid   "Applies processing only when speech is detected"
 msgstr  ""
 
 #
-# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/ui/main_view.py, line: 733
+# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/ui/main_view.py, line: 726
+msgid   "Automatic Volume Control"
+msgstr  ""
+
+#
+# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/ui/main_view.py, line: 728
+msgid   "Keeps your microphone volume at a consistent level"
+msgstr  ""
+
+#
+# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/ui/main_view.py, line: 738
+msgid   "Signal Level"
+msgstr  ""
+
+#
+# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/ui/main_view.py, line: 747
+msgid   "Target signal peak the microphone should reach"
+msgstr  ""
+
+#
+# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/ui/main_view.py, line: 753
+msgid   "Minimum Volume"
+msgstr  ""
+
+#
+# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/ui/main_view.py, line: 762
+msgid   "AGC will not reduce volume below this level"
+msgstr  ""
+
+#
+# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/ui/main_view.py, line: 768
+msgid   "Maximum Volume"
+msgstr  ""
+
+#
+# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/ui/main_view.py, line: 777
+msgid   "AGC will not raise volume above this level"
+msgstr  ""
+
+#
+# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/ui/main_view.py, line: 783
+msgid   "Reactivity"
+msgstr  ""
+
+#
+# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/ui/main_view.py, line: 792
+msgid   "How fast the volume adjusts — higher is faster"
+msgstr  ""
+
+#
+# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/ui/main_view.py, line: 806
 msgid   "Bluetooth Headset Mode"
 msgstr  ""
 
 #
-# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/ui/main_view.py, line: 735
+# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/ui/main_view.py, line: 808
 msgid   "Automatically switch between headset listening and call modes."
 msgstr  ""
 
 #
-# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/ui/main_view.py, line: 751
+# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/ui/main_view.py, line: 824
 msgid   "Monitor Feedback"
 msgstr  ""
 
 #
-# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/ui/main_view.py, line: 752
+# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/ui/main_view.py, line: 825
 msgid   "Hear how your voice sounds"
 msgstr  ""
 
 #
-# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/ui/main_view.py, line: 763
+# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/ui/main_view.py, line: 836
 msgid   "Monitor Delay"
 msgstr  ""
 
 #
-# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/ui/main_view.py, line: 764
+# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/ui/main_view.py, line: 837
 msgid   "Monitor feedback delay. Useful for checking sync."
 msgstr  ""
 
 #
-# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/ui/main_view.py, line: 771
+# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/ui/main_view.py, line: 844
 msgid   "0s"
 msgstr  ""
 
 #
-# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/ui/main_view.py, line: 771
+# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/ui/main_view.py, line: 844
 msgid   "1s"
 msgstr  ""
 
 #
-# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/ui/main_view.py, line: 771
+# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/ui/main_view.py, line: 844
 msgid   "2s"
 msgstr  ""
 
 #
-# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/ui/main_view.py, line: 771
+# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/ui/main_view.py, line: 844
 msgid   "3s"
 msgstr  ""
 
 #
-# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/ui/main_view.py, line: 771
+# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/ui/main_view.py, line: 844
 msgid   "5s"
 msgstr  ""
 
 #
-# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/ui/main_view.py, line: 846
-# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/ui/main_view.py, line: 1380
+# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/ui/main_view.py, line: 903
+# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/ui/main_view.py, line: 1794
+#, python-brace-format
+msgid   "Target signal peak: {db:.0f} dBFS"
+msgstr  ""
+
+#
+# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/ui/main_view.py, line: 907
+# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/ui/main_view.py, line: 1810
+#, python-brace-format
+msgid   "AGC will not reduce volume below {v}%"
+msgstr  ""
+
+#
+# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/ui/main_view.py, line: 913
+# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/ui/main_view.py, line: 1825
+#, python-brace-format
+msgid   "AGC will not raise volume above {v}%"
+msgstr  ""
+
+#
+# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/ui/main_view.py, line: 942
+# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/ui/main_view.py, line: 1464
 #, python-brace-format
 msgid   "Silence threshold: {percent}%"
 msgstr  ""
 
 #
-# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/ui/main_view.py, line: 865
-# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/ui/main_view.py, line: 1328
+# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/ui/main_view.py, line: 961
+# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/ui/main_view.py, line: 1412
 #, python-brace-format
 msgid   "Volume correction: {percent}%"
 msgstr  ""
 
 #
-# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/ui/main_view.py, line: 874
-# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/ui/main_view.py, line: 1349
+# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/ui/main_view.py, line: 970
+# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/ui/main_view.py, line: 1433
 #, python-brace-format
 msgid   "Cutoff: {hz} Hz"
 msgstr  ""
 
 #
-# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/ui/main_view.py, line: 880
-# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/ui/main_view.py, line: 1232
+# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/ui/main_view.py, line: 976
+# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/ui/main_view.py, line: 1327
 #, python-brace-format
 msgid   "Removal aggressiveness. ({percent}%)"
 msgstr  ""
 
 #
-# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/ui/main_view.py, line: 888
-# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/ui/main_view.py, line: 1644
-# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/ui/main_view.py, line: 1703
-# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/ui/main_view.py, line: 1752
+# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/ui/main_view.py, line: 984
+# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/ui/main_view.py, line: 1728
+# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/ui/main_view.py, line: 1852
+# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/ui/main_view.py, line: 1901
 #, python-brace-format
 msgid   "Monitor feedback delay. Useful for checking sync. ({delay} ms)"
 msgstr  ""
 
 #
-# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/ui/main_view.py, line: 1088
+# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/ui/main_view.py, line: 1183
 msgid   "Noise reduction disabled"
 msgstr  ""
 
 #
-# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/ui/main_view.py, line: 1245
+# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/ui/main_view.py, line: 1340
 #, python-brace-format
 msgid   "Filter intensity during speech ({percent}%)"
 msgstr  ""
 
 #
-# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/ui/main_view.py, line: 1256
+# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/ui/main_view.py, line: 1351
 #, python-brace-format
 msgid   "Pre-buffer: {ms} ms"
 msgstr  ""
 
 #
-# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/ui/main_view.py, line: 1266
+# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/ui/main_view.py, line: 1361
 #, python-brace-format
 msgid   "Voice recovery: {percent}%"
 msgstr  ""
 
 #
-# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/ui/main_view.py, line: 1277
-#, python-brace-format
-msgid   "Noise gate: {percent}%"
-msgstr  ""
-
-#
-# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/ui/main_view.py, line: 1416
+# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/ui/main_view.py, line: 1500
 msgid   "Voice Tonality (Pitch)"
 msgstr  ""
 
 #
-# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/ui/main_view.py, line: 1418
+# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/ui/main_view.py, line: 1502
 msgid   "Deep"
 msgstr  ""
 
 #
-# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/ui/main_view.py, line: 1419
+# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/ui/main_view.py, line: 1503
 msgid   "Normal"
 msgstr  ""
 
 #
-# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/ui/main_view.py, line: 1420
+# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/ui/main_view.py, line: 1504
 msgid   "Sharp"
 msgstr  ""
 
 #
-# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/ui/main_view.py, line: 1423
+# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/ui/main_view.py, line: 1507
 #, python-brace-format
 msgid   "Adjust voice pitch. 0%=Deep, 50%=Normal, 100%=Sharp. ({percent}%)"
 msgstr  ""
 
 #
-# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/ui/main_view.py, line: 1432
-# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/ui/main_view.py, line: 1476
+# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/ui/main_view.py, line: 1516
+# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/ui/main_view.py, line: 1560
 #, python-brace-format
 msgid   "Soundstage width. Higher = more immersive. ({percent}%)"
 msgstr  ""
 
 #
-# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/ui/main_view.py, line: 1601
+# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/ui/main_view.py, line: 1685
 msgid   "Settings successfully restored"
 msgstr  ""
 
 #
-# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/ui/main_view.py, line: 1617
+# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/ui/main_view.py, line: 1701
 msgid   "All settings have been restored!"
 msgstr  ""
 
@@ -482,35 +541,21 @@ msgstr  ""
 
 #
 # File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/utils/tooltip_helper.py, line: 82
-msgid   "Restores voice quality that may be lost during filtering.\n"
+msgid   "Restores high-frequency detail lost during filtering.\n"
         "\n"
-        "When noise removal is aggressive, the voice can sound\n"
-        "muffled or thin. This control brings back naturalness.\n"
+        "Noise removal can make voices sound muffled or thin.\n"
+        "This control reconstructs the treble frequencies\n"
+        "to bring back clarity and presence.\n"
         "\n"
-        "• Off: No recovery\n"
+        "• Off: No HF reconstruction\n"
         "• 3: Good balance for most voices\n"
-        "• 5: Maximum voice restoration\n"
+        "• 5: Maximum clarity restoration\n"
         "\n"
         "Recommended: keep between 3 and 5."
 msgstr  ""
 
 #
-# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/utils/tooltip_helper.py, line: 91
-msgid   "Suppresses non-vocal sounds between speech.\n"
-        "\n"
-        "Detects and reduces noises like paper rustling,\n"
-        "candy wrappers, and mouse clicks that happen\n"
-        "when you're not talking.\n"
-        "\n"
-        "• Off: No extra suppression\n"
-        "• 3: Moderate suppression\n"
-        "• 5: Aggressive suppression\n"
-        "\n"
-        "If speech sounds cut or clipped, lower this value."
-msgstr  ""
-
-#
-# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/utils/tooltip_helper.py, line: 102
+# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/utils/tooltip_helper.py, line: 93
 msgid   "Evens out the volume of your voice.\n"
         "\n"
         "If you speak too loud, it lowers the volume.\n"
@@ -521,7 +566,7 @@ msgid   "Evens out the volume of your voice.\n"
 msgstr  ""
 
 #
-# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/utils/tooltip_helper.py, line: 109
+# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/utils/tooltip_helper.py, line: 100
 msgid   "How much volume correction to apply.\n"
         "\n"
         "• 1: Gentle correction, very natural sound\n"
@@ -533,7 +578,7 @@ msgid   "How much volume correction to apply.\n"
 msgstr  ""
 
 #
-# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/utils/tooltip_helper.py, line: 118
+# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/utils/tooltip_helper.py, line: 109
 msgid   "Silence filter that mutes the mic when you're not speaking.\n"
         "\n"
         "Works after noise reduction. Eliminates any residual\n"
@@ -543,7 +588,7 @@ msgid   "Silence filter that mutes the mic when you're not speaking.\n"
 msgstr  ""
 
 #
-# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/utils/tooltip_helper.py, line: 124
+# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/utils/tooltip_helper.py, line: 115
 msgid   "Controls how aggressively the gate removes residual noise.\n"
         "\n"
         "• 1: Only mutes during long silences\n"
@@ -554,7 +599,7 @@ msgid   "Controls how aggressively the gate removes residual noise.\n"
 msgstr  ""
 
 #
-# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/utils/tooltip_helper.py, line: 132
+# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/utils/tooltip_helper.py, line: 123
 msgid   "Voice effects and stereo processing.\n"
         "\n"
         "Converts your mono microphone to stereo or applies\n"
@@ -562,7 +607,7 @@ msgid   "Voice effects and stereo processing.\n"
 msgstr  ""
 
 #
-# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/utils/tooltip_helper.py, line: 137
+# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/utils/tooltip_helper.py, line: 128
 msgid   "Choose the voice effect:\n"
         "\n"
         "• Dual Mono: Duplicates signal to both channels (stereo)\n"
@@ -570,14 +615,14 @@ msgid   "Choose the voice effect:\n"
 msgstr  ""
 
 #
-# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/utils/tooltip_helper.py, line: 142
+# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/utils/tooltip_helper.py, line: 133
 msgid   "Intensity of the selected effect.\n"
         "\n"
         "• Voice Changer: Pitch (low to high)"
 msgstr  ""
 
 #
-# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/utils/tooltip_helper.py, line: 147
+# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/utils/tooltip_helper.py, line: 138
 msgid   "High-pass filter that removes low frequencies.\n"
         "\n"
         "Cuts rumble, hum, and other low-frequency noise\n"
@@ -586,7 +631,7 @@ msgid   "High-pass filter that removes low frequencies.\n"
 msgstr  ""
 
 #
-# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/utils/tooltip_helper.py, line: 153
+# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/utils/tooltip_helper.py, line: 144
 msgid   "Cut-off frequency for the high-pass filter.\n"
         "\n"
         "Frequencies below this value are removed.\n"
@@ -598,7 +643,7 @@ msgid   "Cut-off frequency for the high-pass filter.\n"
 msgstr  ""
 
 #
-# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/utils/tooltip_helper.py, line: 162
+# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/utils/tooltip_helper.py, line: 153
 msgid   "Equalizer to adjust the tone of your voice.\n"
         "\n"
         "Increase or decrease specific frequencies\n"
@@ -606,7 +651,7 @@ msgid   "Equalizer to adjust the tone of your voice.\n"
 msgstr  ""
 
 #
-# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/utils/tooltip_helper.py, line: 167
+# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/utils/tooltip_helper.py, line: 158
 msgid   "Quick presets for common use cases:\n"
         "\n"
         "• Flat: No changes\n"
@@ -617,7 +662,7 @@ msgid   "Quick presets for common use cases:\n"
 msgstr  ""
 
 #
-# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/utils/tooltip_helper.py, line: 175
+# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/utils/tooltip_helper.py, line: 166
 msgid   "Adjust individual frequency bands:\n"
         "\n"
         "• Left bands (31-250 Hz): Bass and low frequencies\n"
@@ -628,7 +673,7 @@ msgid   "Adjust individual frequency bands:\n"
 msgstr  ""
 
 #
-# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/utils/tooltip_helper.py, line: 183
+# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/utils/tooltip_helper.py, line: 174
 msgid   "Activate audio loopback (Monitor).\n"
         "\n"
         "Allows hearing your own processed voice to test adjustments.\n"
@@ -636,7 +681,7 @@ msgid   "Activate audio loopback (Monitor).\n"
 msgstr  ""
 
 #
-# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/utils/tooltip_helper.py, line: 188
+# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/utils/tooltip_helper.py, line: 179
 msgid   "Add an extra delay to the monitor return.\n"
         "\n"
         "Useful for checking audio/video sync in recordings or to avoid "
@@ -644,14 +689,14 @@ msgid   "Add an extra delay to the monitor return.\n"
 msgstr  ""
 
 #
-# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/utils/tooltip_helper.py, line: 194
+# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/utils/tooltip_helper.py, line: 185
 msgid   "Automatically switches your headset between listening mode and call "
         "mode when you use the microphone. Note: Using the headset microphone "
         "generally reduces both headphone and microphone quality."
 msgstr  ""
 
 #
-# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/utils/tooltip_helper.py, line: 199
+# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/utils/tooltip_helper.py, line: 190
 msgid   "Enables acoustic echo cancellation using WebRTC AEC.\n"
         "\n"
         "Reduces echo and feedback when using speakers instead of headphones. "
@@ -660,7 +705,7 @@ msgid   "Enables acoustic echo cancellation using WebRTC AEC.\n"
 msgstr  ""
 
 #
-# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/utils/tooltip_helper.py, line: 204
+# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/utils/tooltip_helper.py, line: 195
 msgid   "Automatic gain control for the echo canceller.\n"
         "\n"
         "Adjusts the microphone volume automatically to keep\n"
@@ -669,7 +714,7 @@ msgid   "Automatic gain control for the echo canceller.\n"
 msgstr  ""
 
 #
-# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/utils/tooltip_helper.py, line: 210
+# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/utils/tooltip_helper.py, line: 201
 msgid   "Additional noise suppression inside the echo canceller.\n"
         "\n"
         "Provides extra noise removal on top of the main GTCRN filter.\n"
@@ -677,7 +722,7 @@ msgid   "Additional noise suppression inside the echo canceller.\n"
 msgstr  ""
 
 #
-# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/utils/tooltip_helper.py, line: 215
+# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/utils/tooltip_helper.py, line: 206
 msgid   "Voice activity detection for the echo canceller.\n"
         "\n"
         "Helps the AEC distinguish speech from noise.\n"
@@ -686,102 +731,122 @@ msgid   "Voice activity detection for the echo canceller.\n"
 msgstr  ""
 
 #
-# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/config.py, line: 690
-msgid   "Default Voice"
+# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/utils/tooltip_helper.py, line: 213
+msgid   "Automatic Volume Control.\n"
+        "\n"
+        "Uses a compressor in the PipeWire filter chain to\n"
+        "automatically normalize your microphone level.\n"
+        "Keeps your voice at a consistent volume regardless\n"
+        "of how close or far you are from the microphone."
 msgstr  ""
 
 #
-# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/config.py, line: 691
-msgid   "Subtle presence boost for clear speech."
-msgstr  ""
-
-#
-# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/config.py, line: 695
-msgid   "Natural (No Effects)"
-msgstr  ""
-
-#
-# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/config.py, line: 696
-msgid   "Original sound without changes."
-msgstr  ""
-
-#
-# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/config.py, line: 700
-msgid   "Crystal Voice"
-msgstr  ""
-
-#
-# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/config.py, line: 701
-msgid   "Focuses on clarity and intelligibility."
-msgstr  ""
-
-#
-# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/config.py, line: 705
-msgid   "Radio Host"
-msgstr  ""
-
-#
-# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/config.py, line: 706
-msgid   "Full and deep voice (Broadcast)."
-msgstr  ""
-
-#
-# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/config.py, line: 710
-msgid   "Velvet Voice"
-msgstr  ""
-
-#
-# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/config.py, line: 711
-msgid   "Warm and pleasant tone."
-msgstr  ""
-
-#
-# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/config.py, line: 715
-msgid   "Extra Brightness"
-msgstr  ""
-
-#
-# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/config.py, line: 716
-msgid   "Enhance treble and details."
-msgstr  ""
-
-#
-# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/config.py, line: 720
-msgid   "Soften 'S' (De-esser)"
-msgstr  ""
-
-#
-# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/config.py, line: 721
-msgid   "Reduces sibilance and annoying high-pitched sounds."
-msgstr  ""
-
-#
-# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/config.py, line: 725
-msgid   "Remove Rumble"
-msgstr  ""
-
-#
-# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/config.py, line: 726
-msgid   "Eliminates low-frequency noise (trucks, bumps)."
-msgstr  ""
-
-#
-# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/config.py, line: 730
-msgid   "Present Voice"
-msgstr  ""
-
-#
-# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/config.py, line: 731
-msgid   "Brings the voice to the 'front' of the mix."
+# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/utils/tooltip_helper.py, line: 220
+msgid   "Target signal level for the microphone.\n"
+        "\n"
+        "Controls the output level of the automatic\n"
+        "volume normalizer.\n"
+        "100% = close to 0 dBFS (loudest).\n"
+        "70% ≈ −7 dBFS (comfortable). Default: 70%."
 msgstr  ""
 
 #
 # File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/config.py, line: 735
-msgid   "Custom"
+msgid   "Default Voice"
 msgstr  ""
 
 #
 # File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/config.py, line: 736
+msgid   "Subtle presence boost for clear speech."
+msgstr  ""
+
+#
+# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/config.py, line: 740
+msgid   "Natural (No Effects)"
+msgstr  ""
+
+#
+# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/config.py, line: 741
+msgid   "Original sound without changes."
+msgstr  ""
+
+#
+# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/config.py, line: 745
+msgid   "Crystal Voice"
+msgstr  ""
+
+#
+# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/config.py, line: 746
+msgid   "Focuses on clarity and intelligibility."
+msgstr  ""
+
+#
+# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/config.py, line: 750
+msgid   "Radio Host"
+msgstr  ""
+
+#
+# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/config.py, line: 751
+msgid   "Full and deep voice (Broadcast)."
+msgstr  ""
+
+#
+# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/config.py, line: 755
+msgid   "Velvet Voice"
+msgstr  ""
+
+#
+# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/config.py, line: 756
+msgid   "Warm and pleasant tone."
+msgstr  ""
+
+#
+# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/config.py, line: 760
+msgid   "Extra Brightness"
+msgstr  ""
+
+#
+# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/config.py, line: 761
+msgid   "Enhance treble and details."
+msgstr  ""
+
+#
+# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/config.py, line: 765
+msgid   "Soften 'S' (De-esser)"
+msgstr  ""
+
+#
+# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/config.py, line: 766
+msgid   "Reduces sibilance and annoying high-pitched sounds."
+msgstr  ""
+
+#
+# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/config.py, line: 770
+msgid   "Remove Rumble"
+msgstr  ""
+
+#
+# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/config.py, line: 771
+msgid   "Eliminates low-frequency noise (trucks, bumps)."
+msgstr  ""
+
+#
+# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/config.py, line: 775
+msgid   "Present Voice"
+msgstr  ""
+
+#
+# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/config.py, line: 776
+msgid   "Brings the voice to the 'front' of the mix."
+msgstr  ""
+
+#
+# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/config.py, line: 780
+msgid   "Custom"
+msgstr  ""
+
+#
+# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/config.py, line: 781
 msgid   "Manual adjustment."
 msgstr  ""
 

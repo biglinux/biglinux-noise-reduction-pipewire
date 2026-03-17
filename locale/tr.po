@@ -74,10 +74,6 @@ msgstr "Hece Koruma"
 msgid "Voice Recovery"
 msgstr "Ses Kurtarma"
 # 
-# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/ui/main_view.py, line: 428
-msgid "Noise Gate"
-msgstr "Gürültü Kapısı"
-# 
 # File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/ui/main_view.py, line: 420
 msgid "Volume Normalizer"
 msgstr "Ses Seviyesini Normalleştirici"
@@ -210,6 +206,46 @@ msgstr "Ses Tanıma"
 msgid "Applies processing only when speech is detected"
 msgstr "Ses algılandığında yalnızca işleme uygular."
 # 
+# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/ui/main_view.py, line: 726
+msgid "Automatic Volume Control"
+msgstr "Otomatik Ses Kontrolü"
+# 
+# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/ui/main_view.py, line: 728
+msgid "Keeps your microphone volume at a consistent level"
+msgstr "Mikrofon ses seviyenizi sabit bir seviyede tutar."
+# 
+# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/ui/main_view.py, line: 738
+msgid "Signal Level"
+msgstr "Sinyal Seviyesi"
+# 
+# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/ui/main_view.py, line: 747
+msgid "Target signal peak the microphone should reach"
+msgstr "Mikrofonun ulaşması gereken hedef sinyal zirvesi"
+# 
+# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/ui/main_view.py, line: 753
+msgid "Minimum Volume"
+msgstr "Minimum Hacim"
+# 
+# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/ui/main_view.py, line: 762
+msgid "AGC will not reduce volume below this level"
+msgstr "AGC, bu seviyenin altına ses seviyesini düşürmeyecek."
+# 
+# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/ui/main_view.py, line: 768
+msgid "Maximum Volume"
+msgstr "Maksimum Ses Seviyesi"
+# 
+# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/ui/main_view.py, line: 777
+msgid "AGC will not raise volume above this level"
+msgstr "AGC bu seviyenin üzerine ses seviyesini artırmayacaktır."
+# 
+# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/ui/main_view.py, line: 783
+msgid "Reactivity"
+msgstr "Reaktivite"
+# 
+# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/ui/main_view.py, line: 792
+msgid "How fast the volume adjusts — higher is faster"
+msgstr "Ses seviyesi ne kadar hızlı ayarlanıyor — daha yüksek, daha hızlıdır."
+# 
 # File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/ui/main_view.py, line: 533
 msgid "Bluetooth Headset Mode"
 msgstr "Bluetooth Kulaklık Modu"
@@ -253,6 +289,24 @@ msgstr "3s"
 # File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/ui/main_view.py, line: 569
 msgid "5s"
 msgstr "5s"
+# 
+# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/ui/main_view.py, line: 903
+# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/ui/main_view.py, line: 1794
+#, python-brace-format
+msgid "Target signal peak: {db:.0f} dBFS"
+msgstr "Hedef sinyal zirvesi: {db:.0f} dBFS"
+# 
+# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/ui/main_view.py, line: 907
+# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/ui/main_view.py, line: 1810
+#, python-brace-format
+msgid "AGC will not reduce volume below {v}%"
+msgstr "AGC, ses seviyesini {v}%'nin altına düşürmeyecek."
+# 
+# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/ui/main_view.py, line: 913
+# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/ui/main_view.py, line: 1825
+#, python-brace-format
+msgid "AGC will not raise volume above {v}%"
+msgstr "AGC, ses seviyesini {v}%'nin üzerine çıkarmayacaktır."
 # 
 # File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/ui/main_view.py, line: 785
 # File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/ui/main_view.py, line: 1321
@@ -302,11 +356,6 @@ msgstr "Ön bellek: {ms} ms"
 #, python-brace-format
 msgid "Voice recovery: {percent}%"
 msgstr "Ses kurtarma: {percent}%"
-# 
-# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/ui/main_view.py, line: 1218
-#, python-brace-format
-msgid "Noise gate: {percent}%"
-msgstr "Gürültü kapısı: {percent}%"
 # 
 # File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/ui/main_view.py, line: 1145
 msgid "Voice Tonality (Pitch)"
@@ -436,51 +485,28 @@ msgstr ""
 # 
 # File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/utils/tooltip_helper.py, line: 82
 msgid ""
-"Restores voice quality that may be lost during filtering.\n"
+"Restores high-frequency detail lost during filtering.\n"
 "\n"
-"When noise removal is aggressive, the voice can sound\n"
-"muffled or thin. This control brings back naturalness.\n"
+"Noise removal can make voices sound muffled or thin.\n"
+"This control reconstructs the treble frequencies\n"
+"to bring back clarity and presence.\n"
 "\n"
-"• Off: No recovery\n"
+"• Off: No HF reconstruction\n"
 "• 3: Good balance for most voices\n"
-"• 5: Maximum voice restoration\n"
+"• 5: Maximum clarity restoration\n"
 "\n"
 "Recommended: keep between 3 and 5."
 msgstr ""
-"Filtreleme sırasında kaybolabilecek ses kalitesini geri kazandırır.\n"
+"Filtreleme sırasında kaybolan yüksek frekans detaylarını geri kazandırır.\n"
 "\n"
-"Gürültü giderme aşırı olduğunda, ses boğuk veya ince gelebilir. Bu kontrol doğallığı geri getirir.\n"
+"Gürültü giderme, seslerin boğuk veya ince çıkmasına neden olabilir.\n"
+"Bu kontrol, netlik ve varlık kazandırmak için tiz frekansları yeniden yapılandırır.\n"
 "\n"
-"• Kapalı: Geri kazanım yok\n"
+"• Kapalı: HF yeniden yapılandırması yok\n"
 "• 3: Çoğu ses için iyi denge\n"
-"• 5: Maksimum ses onarımı\n"
+"• 5: Maksimum netlik restorasyonu\n"
 "\n"
 "Tavsiye edilen: 3 ile 5 arasında tutun."
-# 
-# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/utils/tooltip_helper.py, line: 91
-msgid ""
-"Suppresses non-vocal sounds between speech.\n"
-"\n"
-"Detects and reduces noises like paper rustling,\n"
-"candy wrappers, and mouse clicks that happen\n"
-"when you're not talking.\n"
-"\n"
-"• Off: No extra suppression\n"
-"• 3: Moderate suppression\n"
-"• 5: Aggressive suppression\n"
-"\n"
-"If speech sounds cut or clipped, lower this value."
-msgstr ""
-"Konuşma arasındaki ses dışı sesleri bastırır.\n"
-"\n"
-"Konuşmadığınızda meydana gelen kağıt hışırtısı, şeker ambalajı ve fare tıklamaları gibi gürültüleri "
-"algılar ve azaltır.\n"
-"\n"
-"• Kapalı: Ekstra bastırma yok\n"
-"• 3: Orta düzeyde bastırma\n"
-"• 5: Agresif bastırma\n"
-"\n"
-"Eğer konuşma sesleri kesik veya bozuksa, bu değeri düşürün."
 # 
 # File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/utils/tooltip_helper.py, line: 91
 msgid ""
@@ -752,6 +778,36 @@ msgstr ""
 "AEC'nin konuşmayı gürültüden ayırt etmesine yardımcı olur.\n"
 "Yankı kaldırma doğruluğunu artırabilir ancak ana gürültü azaltma ile çelişebilir. Varsayılan olarak "
 "devre dışı."
+# 
+# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/utils/tooltip_helper.py, line: 213
+msgid ""
+"Automatic Volume Control.\n"
+"\n"
+"Uses a compressor in the PipeWire filter chain to\n"
+"automatically normalize your microphone level.\n"
+"Keeps your voice at a consistent volume regardless\n"
+"of how close or far you are from the microphone."
+msgstr ""
+"Otomatik Ses Kontrolü.\n"
+"\n"
+"Mikrofon seviyenizi otomatik olarak normalleştirmek için PipeWire filtre zincirinde bir kompresör "
+"kullanır.\n"
+"Sesinizi, mikrofonunuza ne kadar yakın veya uzak olursanız olun, tutarlı bir ses seviyesinde tutar."
+# 
+# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/utils/tooltip_helper.py, line: 220
+msgid ""
+"Target signal level for the microphone.\n"
+"\n"
+"Controls the output level of the automatic\n"
+"volume normalizer.\n"
+"100% = close to 0 dBFS (loudest).\n"
+"70% ≈ −7 dBFS (comfortable). Default: 70%."
+msgstr ""
+"Mikrofon için hedef sinyal seviyesi.\n"
+"\n"
+"Otomatik ses normalleştiricinin çıkış seviyesini kontrol eder.\n"
+"%100 = 0 dBFS'e (en yüksek) yakın.\n"
+"%70 ≈ −7 dBFS (rahat). Varsayılan: %70."
 # 
 # File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/config.py, line: 711
 msgid "Default Voice"

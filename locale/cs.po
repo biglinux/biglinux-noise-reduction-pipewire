@@ -74,10 +74,6 @@ msgstr "Ochrana slabik"
 msgid "Voice Recovery"
 msgstr "Obnovení hlasu"
 # 
-# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/ui/main_view.py, line: 428
-msgid "Noise Gate"
-msgstr "Hluková brána"
-# 
 # File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/ui/main_view.py, line: 420
 msgid "Volume Normalizer"
 msgstr "Normalizátor hlasitosti"
@@ -210,6 +206,46 @@ msgstr "Detekce hlasu"
 msgid "Applies processing only when speech is detected"
 msgstr "Zpracovává pouze při detekci řeči"
 # 
+# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/ui/main_view.py, line: 726
+msgid "Automatic Volume Control"
+msgstr "Automatická regulace hlasitosti"
+# 
+# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/ui/main_view.py, line: 728
+msgid "Keeps your microphone volume at a consistent level"
+msgstr "Udržuje úroveň hlasitosti vašeho mikrofonu na konstantní úrovni."
+# 
+# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/ui/main_view.py, line: 738
+msgid "Signal Level"
+msgstr "Úroveň signálu"
+# 
+# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/ui/main_view.py, line: 747
+msgid "Target signal peak the microphone should reach"
+msgstr "Cílový signálový vrchol, kterého by měl mikrofon dosáhnout"
+# 
+# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/ui/main_view.py, line: 753
+msgid "Minimum Volume"
+msgstr "Minimální objem"
+# 
+# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/ui/main_view.py, line: 762
+msgid "AGC will not reduce volume below this level"
+msgstr "AGC nebude snižovat hlasitost pod tuto úroveň."
+# 
+# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/ui/main_view.py, line: 768
+msgid "Maximum Volume"
+msgstr "Maximální hlasitost"
+# 
+# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/ui/main_view.py, line: 777
+msgid "AGC will not raise volume above this level"
+msgstr "AGC nezvýší hlasitost nad tuto úroveň."
+# 
+# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/ui/main_view.py, line: 783
+msgid "Reactivity"
+msgstr "Reaktivita"
+# 
+# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/ui/main_view.py, line: 792
+msgid "How fast the volume adjusts — higher is faster"
+msgstr "Jak rychle se upravuje hlasitost — čím vyšší, tím rychlejší"
+# 
 # File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/ui/main_view.py, line: 533
 msgid "Bluetooth Headset Mode"
 msgstr "Režim Bluetooth sluchátek"
@@ -253,6 +289,24 @@ msgstr "3s"
 # File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/ui/main_view.py, line: 569
 msgid "5s"
 msgstr "5s"
+# 
+# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/ui/main_view.py, line: 903
+# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/ui/main_view.py, line: 1794
+#, python-brace-format
+msgid "Target signal peak: {db:.0f} dBFS"
+msgstr "Cílový signál vrcholu: {db:.0f} dBFS"
+# 
+# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/ui/main_view.py, line: 907
+# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/ui/main_view.py, line: 1810
+#, python-brace-format
+msgid "AGC will not reduce volume below {v}%"
+msgstr "AGC nebude snižovat hlasitost pod {v}%."
+# 
+# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/ui/main_view.py, line: 913
+# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/ui/main_view.py, line: 1825
+#, python-brace-format
+msgid "AGC will not raise volume above {v}%"
+msgstr "AGC nezvýší hlasitost nad {v}%."
 # 
 # File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/ui/main_view.py, line: 785
 # File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/ui/main_view.py, line: 1321
@@ -302,11 +356,6 @@ msgstr "Předvyrovnání: {ms} ms"
 #, python-brace-format
 msgid "Voice recovery: {percent}%"
 msgstr "Obnovení hlasu: {percent}%"
-# 
-# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/ui/main_view.py, line: 1218
-#, python-brace-format
-msgid "Noise gate: {percent}%"
-msgstr "Hluková brána: {percent}%"
 # 
 # File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/ui/main_view.py, line: 1145
 msgid "Voice Tonality (Pitch)"
@@ -439,53 +488,29 @@ msgstr ""
 # 
 # File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/utils/tooltip_helper.py, line: 82
 msgid ""
-"Restores voice quality that may be lost during filtering.\n"
+"Restores high-frequency detail lost during filtering.\n"
 "\n"
-"When noise removal is aggressive, the voice can sound\n"
-"muffled or thin. This control brings back naturalness.\n"
+"Noise removal can make voices sound muffled or thin.\n"
+"This control reconstructs the treble frequencies\n"
+"to bring back clarity and presence.\n"
 "\n"
-"• Off: No recovery\n"
+"• Off: No HF reconstruction\n"
 "• 3: Good balance for most voices\n"
-"• 5: Maximum voice restoration\n"
+"• 5: Maximum clarity restoration\n"
 "\n"
 "Recommended: keep between 3 and 5."
 msgstr ""
-"Obnovuje kvalitu hlasu, která může být ztracena během filtrování.\n"
+"Obnovuje vysokofrekvenční detaily ztracené během filtrování.\n"
 "\n"
-"Když je odstranění šumu agresivní, hlas může znít\n"
-"tlumeně nebo slabě. Tento ovladač vrací přirozenost.\n"
+"Odstranění šumu může způsobit, že hlasy zní tlumeně nebo tence.\n"
+"Tento ovladač rekonstrukčně obnovuje výškové frekvence\n"
+"a přináší zpět jasnost a přítomnost.\n"
 "\n"
-"• Vypnuto: Žádné obnovení\n"
+"• Vypnuto: Žádná rekonstrukce HF\n"
 "• 3: Dobrá rovnováha pro většinu hlasů\n"
-"• 5: Maximální obnova hlasu\n"
+"• 5: Maximální obnova jasnosti\n"
 "\n"
 "Doporučeno: udržujte mezi 3 a 5."
-# 
-# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/utils/tooltip_helper.py, line: 91
-msgid ""
-"Suppresses non-vocal sounds between speech.\n"
-"\n"
-"Detects and reduces noises like paper rustling,\n"
-"candy wrappers, and mouse clicks that happen\n"
-"when you're not talking.\n"
-"\n"
-"• Off: No extra suppression\n"
-"• 3: Moderate suppression\n"
-"• 5: Aggressive suppression\n"
-"\n"
-"If speech sounds cut or clipped, lower this value."
-msgstr ""
-"Potlačuje nevokální zvuky mezi řečí.\n"
-"\n"
-"Detekuje a snižuje hluky jako šustění papíru,\n"
-"obaly od cukrovinek a klikání myši, které se\n"
-"vyskytují, když nemluvíte.\n"
-"\n"
-"• Vypnuto: Žádné další potlačení\n"
-"• 3: Mírné potlačení\n"
-"• 5: Agresivní potlačení\n"
-"\n"
-"Pokud jsou zvuky řeči přerušované nebo zkreslené, snižte tuto hodnotu."
 # 
 # File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/utils/tooltip_helper.py, line: 91
 msgid ""
@@ -759,6 +784,38 @@ msgstr ""
 "Pomáhá AEC rozlišovat řeč od šumu.\n"
 "Může zlepšit přesnost odstranění ozvěny, ale může zasahovat\n"
 "do hlavního potlačení šumu. Ve výchozím nastavení je zakázáno."
+# 
+# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/utils/tooltip_helper.py, line: 213
+msgid ""
+"Automatic Volume Control.\n"
+"\n"
+"Uses a compressor in the PipeWire filter chain to\n"
+"automatically normalize your microphone level.\n"
+"Keeps your voice at a consistent volume regardless\n"
+"of how close or far you are from the microphone."
+msgstr ""
+"Automatická regulace hlasitosti.\n"
+"\n"
+"Používá kompresor v řetězci filtrů PipeWire k\n"
+"automatickému normalizování úrovně vašeho mikrofonu.\n"
+"Udržuje váš hlas na konzistentní hlasitosti bez ohledu\n"
+"na to, jak blízko nebo daleko jste od mikrofonu."
+# 
+# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/utils/tooltip_helper.py, line: 220
+msgid ""
+"Target signal level for the microphone.\n"
+"\n"
+"Controls the output level of the automatic\n"
+"volume normalizer.\n"
+"100% = close to 0 dBFS (loudest).\n"
+"70% ≈ −7 dBFS (comfortable). Default: 70%."
+msgstr ""
+"Cílová úroveň signálu pro mikrofon.\n"
+"\n"
+"Ovládá výstupní úroveň automatického\n"
+"normalizátoru hlasitosti.\n"
+"100 % = blízko 0 dBFS (nejhlasitější).\n"
+"70 % ≈ −7 dBFS (pohodlné). Výchozí: 70 %."
 # 
 # File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/config.py, line: 711
 msgid "Default Voice"

@@ -74,10 +74,6 @@ msgstr "음절 보호"
 msgid "Voice Recovery"
 msgstr "음성 복구"
 # 
-# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/ui/main_view.py, line: 428
-msgid "Noise Gate"
-msgstr "노이즈 게이트"
-# 
 # File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/ui/main_view.py, line: 420
 msgid "Volume Normalizer"
 msgstr "볼륨 정규화기"
@@ -210,6 +206,46 @@ msgstr "음성 인식"
 msgid "Applies processing only when speech is detected"
 msgstr "음성이 감지될 때만 처리를 적용합니다."
 # 
+# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/ui/main_view.py, line: 726
+msgid "Automatic Volume Control"
+msgstr "자동 볼륨 조절"
+# 
+# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/ui/main_view.py, line: 728
+msgid "Keeps your microphone volume at a consistent level"
+msgstr "마이크 볼륨을 일정한 수준으로 유지합니다."
+# 
+# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/ui/main_view.py, line: 738
+msgid "Signal Level"
+msgstr "신호 수준"
+# 
+# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/ui/main_view.py, line: 747
+msgid "Target signal peak the microphone should reach"
+msgstr "마이크가 도달해야 하는 목표 신호 피크"
+# 
+# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/ui/main_view.py, line: 753
+msgid "Minimum Volume"
+msgstr "최소 볼륨"
+# 
+# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/ui/main_view.py, line: 762
+msgid "AGC will not reduce volume below this level"
+msgstr "AGC는 이 수준 이하로 볼륨을 줄이지 않습니다."
+# 
+# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/ui/main_view.py, line: 768
+msgid "Maximum Volume"
+msgstr "최대 볼륨"
+# 
+# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/ui/main_view.py, line: 777
+msgid "AGC will not raise volume above this level"
+msgstr "AGC는 이 수준 이상으로 볼륨을 높이지 않습니다."
+# 
+# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/ui/main_view.py, line: 783
+msgid "Reactivity"
+msgstr "반응성"
+# 
+# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/ui/main_view.py, line: 792
+msgid "How fast the volume adjusts — higher is faster"
+msgstr "볼륨 조정 속도 — 높을수록 빠름"
+# 
 # File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/ui/main_view.py, line: 533
 msgid "Bluetooth Headset Mode"
 msgstr "블루투스 헤드셋 모드"
@@ -253,6 +289,24 @@ msgstr "3초"
 # File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/ui/main_view.py, line: 569
 msgid "5s"
 msgstr "5초"
+# 
+# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/ui/main_view.py, line: 903
+# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/ui/main_view.py, line: 1794
+#, python-brace-format
+msgid "Target signal peak: {db:.0f} dBFS"
+msgstr "대상 신호 피크: {db:.0f} dBFS"
+# 
+# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/ui/main_view.py, line: 907
+# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/ui/main_view.py, line: 1810
+#, python-brace-format
+msgid "AGC will not reduce volume below {v}%"
+msgstr "AGC는 볼륨을 {v}% 이하로 줄이지 않습니다."
+# 
+# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/ui/main_view.py, line: 913
+# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/ui/main_view.py, line: 1825
+#, python-brace-format
+msgid "AGC will not raise volume above {v}%"
+msgstr "AGC는 볼륨을 {v}% 이상으로 높이지 않습니다."
 # 
 # File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/ui/main_view.py, line: 785
 # File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/ui/main_view.py, line: 1321
@@ -302,11 +356,6 @@ msgstr "프리 버퍼: {ms} ms"
 #, python-brace-format
 msgid "Voice recovery: {percent}%"
 msgstr "음성 복구: {percent}%"
-# 
-# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/ui/main_view.py, line: 1218
-#, python-brace-format
-msgid "Noise gate: {percent}%"
-msgstr "노이즈 게이트: {percent}%"
 # 
 # File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/ui/main_view.py, line: 1145
 msgid "Voice Tonality (Pitch)"
@@ -437,51 +486,29 @@ msgstr ""
 # 
 # File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/utils/tooltip_helper.py, line: 82
 msgid ""
-"Restores voice quality that may be lost during filtering.\n"
+"Restores high-frequency detail lost during filtering.\n"
 "\n"
-"When noise removal is aggressive, the voice can sound\n"
-"muffled or thin. This control brings back naturalness.\n"
+"Noise removal can make voices sound muffled or thin.\n"
+"This control reconstructs the treble frequencies\n"
+"to bring back clarity and presence.\n"
 "\n"
-"• Off: No recovery\n"
+"• Off: No HF reconstruction\n"
 "• 3: Good balance for most voices\n"
-"• 5: Maximum voice restoration\n"
+"• 5: Maximum clarity restoration\n"
 "\n"
 "Recommended: keep between 3 and 5."
 msgstr ""
-"필터링 중 손실될 수 있는 음성 품질을 복원합니다.\n"
+"필터링 중 손실된 고주파 세부 정보를 복원합니다.\n"
 "\n"
-"소음 제거가 과도할 경우, 음성이\n"
-"흐릿하거나 얇게 들릴 수 있습니다. 이 컨트롤은 자연스러움을 되찾아 줍니다.\n"
+"노이즈 제거는 목소리를 둔탁하거나 얇게 들리게 할 수 있습니다.\n"
+"이 컨트롤은 고음 주파수를 재구성하여\n"
+"선명함과 존재감을 되찾습니다.\n"
 "\n"
-"• 끔: 복원 없음\n"
-"• 3: 대부분의 음성에 적합한 균형\n"
-"• 5: 최대 음성 복원\n"
+"• 끔: HF 재구성 없음\n"
+"• 3: 대부분의 목소리에 적합한 균형\n"
+"• 5: 최대 선명도 복원\n"
 "\n"
 "권장: 3과 5 사이로 유지하십시오."
-# 
-# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/utils/tooltip_helper.py, line: 91
-msgid ""
-"Suppresses non-vocal sounds between speech.\n"
-"\n"
-"Detects and reduces noises like paper rustling,\n"
-"candy wrappers, and mouse clicks that happen\n"
-"when you're not talking.\n"
-"\n"
-"• Off: No extra suppression\n"
-"• 3: Moderate suppression\n"
-"• 5: Aggressive suppression\n"
-"\n"
-"If speech sounds cut or clipped, lower this value."
-msgstr ""
-"음성 간 비음 소음을 억제합니다.\n"
-"\n"
-"대화하지 않을 때 발생하는 종이 바스락거림, 사탕 포장지, 마우스 클릭과 같은 소음을 감지하고 줄입니다.\n"
-"\n"
-"• 끔: 추가 억제 없음\n"
-"• 3: 중간 억제\n"
-"• 5: 강력한 억제\n"
-"\n"
-"음성이 잘리거나 끊기는 경우 이 값을 낮추십시오."
 # 
 # File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/utils/tooltip_helper.py, line: 91
 msgid ""
@@ -741,6 +768,36 @@ msgstr ""
 "\n"
 "AEC가 음성을 소음과 구별하는 데 도움을 줍니다.\n"
 "에코 제거 정확도를 향상시킬 수 있지만 주요 소음 감소에 간섭할 수 있습니다. 기본적으로 비활성화되어 있습니다."
+# 
+# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/utils/tooltip_helper.py, line: 213
+msgid ""
+"Automatic Volume Control.\n"
+"\n"
+"Uses a compressor in the PipeWire filter chain to\n"
+"automatically normalize your microphone level.\n"
+"Keeps your voice at a consistent volume regardless\n"
+"of how close or far you are from the microphone."
+msgstr ""
+"자동 볼륨 조절.\n"
+"\n"
+"PipeWire 필터 체인에서 압축기를 사용하여\n"
+"마이크 레벨을 자동으로 정규화합니다.\n"
+"마이크와의 거리와 관계없이 목소리를 일정한 볼륨으로 유지합니다."
+# 
+# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/utils/tooltip_helper.py, line: 220
+msgid ""
+"Target signal level for the microphone.\n"
+"\n"
+"Controls the output level of the automatic\n"
+"volume normalizer.\n"
+"100% = close to 0 dBFS (loudest).\n"
+"70% ≈ −7 dBFS (comfortable). Default: 70%."
+msgstr ""
+"마이크의 목표 신호 수준.\n"
+"\n"
+"자동 볼륨 정상화기의 출력 수준을 제어합니다.\n"
+"100% = 0 dBFS에 가까움 (가장 큰 소리).\n"
+"70% ≈ −7 dBFS (편안한 수준). 기본값: 70%."
 # 
 # File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/config.py, line: 711
 msgid "Default Voice"

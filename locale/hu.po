@@ -74,10 +74,6 @@ msgstr "Szótagvédelem"
 msgid "Voice Recovery"
 msgstr "Hangvisszaállítás"
 # 
-# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/ui/main_view.py, line: 428
-msgid "Noise Gate"
-msgstr "Zajszűrő"
-# 
 # File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/ui/main_view.py, line: 420
 msgid "Volume Normalizer"
 msgstr "Hangerőszabályzó"
@@ -210,6 +206,46 @@ msgstr "Hangfelismerés"
 msgid "Applies processing only when speech is detected"
 msgstr "Feldolgozást csak akkor alkalmaz, ha beszédet észlel."
 # 
+# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/ui/main_view.py, line: 726
+msgid "Automatic Volume Control"
+msgstr "Automatikus hangerőszabályozás"
+# 
+# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/ui/main_view.py, line: 728
+msgid "Keeps your microphone volume at a consistent level"
+msgstr "Fenntartja a mikrofon hangerejét egy állandó szinten."
+# 
+# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/ui/main_view.py, line: 738
+msgid "Signal Level"
+msgstr "Jelszint"
+# 
+# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/ui/main_view.py, line: 747
+msgid "Target signal peak the microphone should reach"
+msgstr "Céljel jelcsúcs, amelyet a mikrofon elérjen."
+# 
+# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/ui/main_view.py, line: 753
+msgid "Minimum Volume"
+msgstr "Minimális térfogat"
+# 
+# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/ui/main_view.py, line: 762
+msgid "AGC will not reduce volume below this level"
+msgstr "Az AGC nem csökkenti a hangerőt ezen szint alá."
+# 
+# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/ui/main_view.py, line: 768
+msgid "Maximum Volume"
+msgstr "Maximális hangerő"
+# 
+# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/ui/main_view.py, line: 777
+msgid "AGC will not raise volume above this level"
+msgstr "Az AGC nem emeli a hangerőt ezen szint fölé."
+# 
+# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/ui/main_view.py, line: 783
+msgid "Reactivity"
+msgstr "Reaktivitás"
+# 
+# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/ui/main_view.py, line: 792
+msgid "How fast the volume adjusts — higher is faster"
+msgstr "A hangerősség beállításának sebessége — minél magasabb, annál gyorsabb"
+# 
 # File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/ui/main_view.py, line: 533
 msgid "Bluetooth Headset Mode"
 msgstr "Bluetooth fejhallgató mód"
@@ -253,6 +289,24 @@ msgstr "3s"
 # File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/ui/main_view.py, line: 569
 msgid "5s"
 msgstr "5s"
+# 
+# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/ui/main_view.py, line: 903
+# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/ui/main_view.py, line: 1794
+#, python-brace-format
+msgid "Target signal peak: {db:.0f} dBFS"
+msgstr "Céljel csúcs: {db:.0f} dBFS"
+# 
+# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/ui/main_view.py, line: 907
+# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/ui/main_view.py, line: 1810
+#, python-brace-format
+msgid "AGC will not reduce volume below {v}%"
+msgstr "Az AGC nem csökkenti a hangerőt {v}% alá."
+# 
+# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/ui/main_view.py, line: 913
+# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/ui/main_view.py, line: 1825
+#, python-brace-format
+msgid "AGC will not raise volume above {v}%"
+msgstr "Az AGC nem emeli a hangerőt {v}%-nál magasabbra."
 # 
 # File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/ui/main_view.py, line: 785
 # File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/ui/main_view.py, line: 1321
@@ -302,11 +356,6 @@ msgstr "Előbuffer: {ms} ms"
 #, python-brace-format
 msgid "Voice recovery: {percent}%"
 msgstr "Hangvisszaállítás: {percent}%"
-# 
-# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/ui/main_view.py, line: 1218
-#, python-brace-format
-msgid "Noise gate: {percent}%"
-msgstr "Zajszűrő: {percent}%"
 # 
 # File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/ui/main_view.py, line: 1145
 msgid "Voice Tonality (Pitch)"
@@ -438,53 +487,29 @@ msgstr ""
 # 
 # File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/utils/tooltip_helper.py, line: 82
 msgid ""
-"Restores voice quality that may be lost during filtering.\n"
+"Restores high-frequency detail lost during filtering.\n"
 "\n"
-"When noise removal is aggressive, the voice can sound\n"
-"muffled or thin. This control brings back naturalness.\n"
+"Noise removal can make voices sound muffled or thin.\n"
+"This control reconstructs the treble frequencies\n"
+"to bring back clarity and presence.\n"
 "\n"
-"• Off: No recovery\n"
+"• Off: No HF reconstruction\n"
 "• 3: Good balance for most voices\n"
-"• 5: Maximum voice restoration\n"
+"• 5: Maximum clarity restoration\n"
 "\n"
 "Recommended: keep between 3 and 5."
 msgstr ""
-"Visszaállítja a szűrés során esetlegesen elveszett hangminőséget.\n"
+"Visszaállítja a szűrés során elveszett magas frekvenciájú részleteket.\n"
 "\n"
-"Ha a zajeltávolítás agresszív, a hang tompának vagy vékonynak tűnhet. Ez a vezérlő visszaadja a "
-"természetességet.\n"
+"A zajeltávolítás tompává vagy vékonnyá teheti a hangokat.\n"
+"Ez a vezérlő rekonstruálja a magas frekvenciákat,\n"
+"hogy visszaadja a tisztaságot és a jelenlétet.\n"
 "\n"
-"• Ki: Nincs helyreállítás\n"
+"• Ki: Nincs HF rekonstrukció\n"
 "• 3: Jó egyensúly a legtöbb hanghoz\n"
-"• 5: Maximális hanghelyreállítás\n"
+"• 5: Maximális tisztaság helyreállítása\n"
 "\n"
 "Ajánlott: 3 és 5 között tartani."
-# 
-# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/utils/tooltip_helper.py, line: 91
-msgid ""
-"Suppresses non-vocal sounds between speech.\n"
-"\n"
-"Detects and reduces noises like paper rustling,\n"
-"candy wrappers, and mouse clicks that happen\n"
-"when you're not talking.\n"
-"\n"
-"• Off: No extra suppression\n"
-"• 3: Moderate suppression\n"
-"• 5: Aggressive suppression\n"
-"\n"
-"If speech sounds cut or clipped, lower this value."
-msgstr ""
-"Elnyomja a beszéd közötti nem vokális hangokat.\n"
-"\n"
-"Észleli és csökkenti az olyan zajokat, mint a papír zörgése,\n"
-"cukorka csomagolása és az egérkattintások, amelyek akkor\n"
-"történnek, amikor nem beszél.\n"
-"\n"
-"• Ki: Nincs extra elnyomás\n"
-"• 3: Mérsékelt elnyomás\n"
-"• 5: Aggresszív elnyomás\n"
-"\n"
-"Ha a beszédhangok megszakadnak vagy vágottak, csökkentse ezt az értéket."
 # 
 # File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/utils/tooltip_helper.py, line: 91
 msgid ""
@@ -756,6 +781,37 @@ msgstr ""
 "Segít az AEC-nek megkülönböztetni a beszédet a zajtól.\n"
 "Javíthatja a visszhang eltávolításának pontosságát, de zavarhatja\n"
 "a fő zajcsökkentést. Alapértelmezés szerint letiltva."
+# 
+# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/utils/tooltip_helper.py, line: 213
+msgid ""
+"Automatic Volume Control.\n"
+"\n"
+"Uses a compressor in the PipeWire filter chain to\n"
+"automatically normalize your microphone level.\n"
+"Keeps your voice at a consistent volume regardless\n"
+"of how close or far you are from the microphone."
+msgstr ""
+"Automatikus hangerőszabályozás.\n"
+"\n"
+"Kompresszort használ a PipeWire szűrőláncban, hogy\n"
+"automatikusan normalizálja a mikrofon szintjét.\n"
+"Fenntartja a hangodat egy állandó hangerőn, függetlenül\n"
+"attól, hogy mennyire közel vagy távol vagy a mikrofontól."
+# 
+# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/utils/tooltip_helper.py, line: 220
+msgid ""
+"Target signal level for the microphone.\n"
+"\n"
+"Controls the output level of the automatic\n"
+"volume normalizer.\n"
+"100% = close to 0 dBFS (loudest).\n"
+"70% ≈ −7 dBFS (comfortable). Default: 70%."
+msgstr ""
+"Céljel szint a mikrofonhoz.\n"
+"\n"
+"Szabályozza az automatikus hangerő normalizáló kimeneti szintjét.\n"
+"100% = közel 0 dBFS (legmagasabb).\n"
+"70% ≈ −7 dBFS (kényelmes). Alapértelmezett: 70%."
 # 
 # File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/config.py, line: 711
 msgid "Default Voice"

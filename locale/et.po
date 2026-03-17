@@ -74,10 +74,6 @@ msgstr "Südamete kaitse"
 msgid "Voice Recovery"
 msgstr "Hääletuse taastamine"
 # 
-# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/ui/main_view.py, line: 428
-msgid "Noise Gate"
-msgstr "Müraugate"
-# 
 # File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/ui/main_view.py, line: 420
 msgid "Volume Normalizer"
 msgstr "Heli normaliseerija"
@@ -210,6 +206,46 @@ msgstr "Hääletuvastus"
 msgid "Applies processing only when speech is detected"
 msgstr "Kasutab töötlemist ainult siis, kui kõnet tuvastatakse."
 # 
+# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/ui/main_view.py, line: 726
+msgid "Automatic Volume Control"
+msgstr "Automaatne helitugevuse juhtimine"
+# 
+# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/ui/main_view.py, line: 728
+msgid "Keeps your microphone volume at a consistent level"
+msgstr "Hoidke oma mikrofoni helitugevus ühtlasel tasemel."
+# 
+# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/ui/main_view.py, line: 738
+msgid "Signal Level"
+msgstr "Signaali tase"
+# 
+# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/ui/main_view.py, line: 747
+msgid "Target signal peak the microphone should reach"
+msgstr "Sihtmärgi signaali tipp, mille mikrofon peaks saavutama."
+# 
+# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/ui/main_view.py, line: 753
+msgid "Minimum Volume"
+msgstr "Minimaalne maht"
+# 
+# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/ui/main_view.py, line: 762
+msgid "AGC will not reduce volume below this level"
+msgstr "AGC ei vähenda helitugevust allapoole seda taset"
+# 
+# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/ui/main_view.py, line: 768
+msgid "Maximum Volume"
+msgstr "Maksimaalne helitugevus"
+# 
+# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/ui/main_view.py, line: 777
+msgid "AGC will not raise volume above this level"
+msgstr "AGC ei tõsta helitugevust üle selle taseme."
+# 
+# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/ui/main_view.py, line: 783
+msgid "Reactivity"
+msgstr "Reaktsioonivõime"
+# 
+# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/ui/main_view.py, line: 792
+msgid "How fast the volume adjusts — higher is faster"
+msgstr "Kuidas kiiresti helitugevus reguleerub — kõrgem on kiirem"
+# 
 # File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/ui/main_view.py, line: 533
 msgid "Bluetooth Headset Mode"
 msgstr "Bluetoothi kõrvaklappide režiim"
@@ -253,6 +289,24 @@ msgstr "3s"
 # File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/ui/main_view.py, line: 569
 msgid "5s"
 msgstr "5s"
+# 
+# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/ui/main_view.py, line: 903
+# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/ui/main_view.py, line: 1794
+#, python-brace-format
+msgid "Target signal peak: {db:.0f} dBFS"
+msgstr "Sihtsignaali tipp: {db:.0f} dBFS"
+# 
+# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/ui/main_view.py, line: 907
+# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/ui/main_view.py, line: 1810
+#, python-brace-format
+msgid "AGC will not reduce volume below {v}%"
+msgstr "AGC ei vähenda helitugevust alla {v}%."
+# 
+# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/ui/main_view.py, line: 913
+# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/ui/main_view.py, line: 1825
+#, python-brace-format
+msgid "AGC will not raise volume above {v}%"
+msgstr "AGC ei tõsta helitugevust üle {v}%."
 # 
 # File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/ui/main_view.py, line: 785
 # File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/ui/main_view.py, line: 1321
@@ -302,11 +356,6 @@ msgstr "Eelneva puhver: {ms} ms"
 #, python-brace-format
 msgid "Voice recovery: {percent}%"
 msgstr "Hääletuse taastamine: {percent}%"
-# 
-# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/ui/main_view.py, line: 1218
-#, python-brace-format
-msgid "Noise gate: {percent}%"
-msgstr "Müra gate: {percent}%"
 # 
 # File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/ui/main_view.py, line: 1145
 msgid "Voice Tonality (Pitch)"
@@ -439,53 +488,28 @@ msgstr ""
 # 
 # File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/utils/tooltip_helper.py, line: 82
 msgid ""
-"Restores voice quality that may be lost during filtering.\n"
+"Restores high-frequency detail lost during filtering.\n"
 "\n"
-"When noise removal is aggressive, the voice can sound\n"
-"muffled or thin. This control brings back naturalness.\n"
+"Noise removal can make voices sound muffled or thin.\n"
+"This control reconstructs the treble frequencies\n"
+"to bring back clarity and presence.\n"
 "\n"
-"• Off: No recovery\n"
+"• Off: No HF reconstruction\n"
 "• 3: Good balance for most voices\n"
-"• 5: Maximum voice restoration\n"
+"• 5: Maximum clarity restoration\n"
 "\n"
 "Recommended: keep between 3 and 5."
 msgstr ""
-"Taastab hääle kvaliteedi, mis võib filtreerimise käigus kaduda.\n"
+"Taastab filtreerimise käigus kadunud kõrgsageduslikud detailid.\n"
 "\n"
-"Kui müra eemaldamine on agressiivne, võib hääl kõlada\n"
-"summutatult või õhukeselt. See kontroll toob tagasi loomulikkuse.\n"
+"Müra eemaldamine võib muuta hääled summutatuks või õhukeseks. See kontroll rekonstrueerib kõrgeid "
+"sagedusi, et taastada selgust ja kohalolekut.\n"
 "\n"
-"• Väljas: Pole taastamist\n"
+"• Väljas: Ei ole HF rekonstrueerimist\n"
 "• 3: Hea tasakaal enamikule häältele\n"
-"• 5: Maksimaalne hääle taastamine\n"
+"• 5: Maksimaalne selguse taastamine\n"
 "\n"
 "Soovitatav: hoida vahemikus 3 kuni 5."
-# 
-# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/utils/tooltip_helper.py, line: 91
-msgid ""
-"Suppresses non-vocal sounds between speech.\n"
-"\n"
-"Detects and reduces noises like paper rustling,\n"
-"candy wrappers, and mouse clicks that happen\n"
-"when you're not talking.\n"
-"\n"
-"• Off: No extra suppression\n"
-"• 3: Moderate suppression\n"
-"• 5: Aggressive suppression\n"
-"\n"
-"If speech sounds cut or clipped, lower this value."
-msgstr ""
-"Käivitab mitte-häälseid helisid kõne vahel.\n"
-"\n"
-"Tuletab ja vähendab müra nagu paberi krabistamine,\n"
-"kommipaberid ja hiireklõpsud, mis toimuvad\n"
-"kui te ei räägi.\n"
-"\n"
-"• Väljas: Ei mingit täiendavat summutamist\n"
-"• 3: Mõõdukas summutamine\n"
-"• 5: Aggressiivne summutamine\n"
-"\n"
-"Kui kõnehelid on katkised või katkised, alandage seda väärtust."
 # 
 # File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/utils/tooltip_helper.py, line: 91
 msgid ""
@@ -758,6 +782,37 @@ msgstr ""
 "Aitab AEC-l eristada kõnet müra hulgast.\n"
 "Võib parandada kaja eemaldamise täpsust, kuid võib segada\n"
 "peamist müra vähendamist. Vaikimisi keelatud."
+# 
+# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/utils/tooltip_helper.py, line: 213
+msgid ""
+"Automatic Volume Control.\n"
+"\n"
+"Uses a compressor in the PipeWire filter chain to\n"
+"automatically normalize your microphone level.\n"
+"Keeps your voice at a consistent volume regardless\n"
+"of how close or far you are from the microphone."
+msgstr ""
+"Automaatne helitugevuse juhtimine.\n"
+"\n"
+"Kasutab kompressorit PipeWire filtrite ahelas, et\n"
+"automaatset normaliseerida teie mikrofoni taset.\n"
+"Hoia oma hääl ühtlase helitugevusega, sõltumata\n"
+"sellest, kui lähedal või kaugel te mikrofoni olete."
+# 
+# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/utils/tooltip_helper.py, line: 220
+msgid ""
+"Target signal level for the microphone.\n"
+"\n"
+"Controls the output level of the automatic\n"
+"volume normalizer.\n"
+"100% = close to 0 dBFS (loudest).\n"
+"70% ≈ −7 dBFS (comfortable). Default: 70%."
+msgstr ""
+"Mikrofoni sihtsignaali tase.\n"
+"\n"
+"Kontrollib automaatse helitugevuse normaliseerija väljundtaset.\n"
+"100% = lähedal 0 dBFS (kõrgeim).\n"
+"70% ≈ −7 dBFS (mugav). Vaikimisi: 70%."
 # 
 # File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/config.py, line: 711
 msgid "Default Voice"

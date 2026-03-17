@@ -74,10 +74,6 @@ msgstr "Syllabe Bescherming"
 msgid "Voice Recovery"
 msgstr "Stemherstel"
 # 
-# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/ui/main_view.py, line: 428
-msgid "Noise Gate"
-msgstr "Ruisonderdrukking"
-# 
 # File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/ui/main_view.py, line: 420
 msgid "Volume Normalizer"
 msgstr "Volume Normalisator"
@@ -210,6 +206,46 @@ msgstr "Stemdetectie"
 msgid "Applies processing only when speech is detected"
 msgstr "Toepassen van verwerking alleen wanneer spraak wordt gedetecteerd"
 # 
+# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/ui/main_view.py, line: 726
+msgid "Automatic Volume Control"
+msgstr "Automatische Volumecontrole"
+# 
+# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/ui/main_view.py, line: 728
+msgid "Keeps your microphone volume at a consistent level"
+msgstr "Houdt het volume van je microfoon op een consistent niveau."
+# 
+# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/ui/main_view.py, line: 738
+msgid "Signal Level"
+msgstr "Signaalniveau"
+# 
+# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/ui/main_view.py, line: 747
+msgid "Target signal peak the microphone should reach"
+msgstr "Doel signaalpiek die de microfoon moet bereiken"
+# 
+# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/ui/main_view.py, line: 753
+msgid "Minimum Volume"
+msgstr "Minimale Volume"
+# 
+# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/ui/main_view.py, line: 762
+msgid "AGC will not reduce volume below this level"
+msgstr "AGC zal het volume niet onder dit niveau verlagen."
+# 
+# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/ui/main_view.py, line: 768
+msgid "Maximum Volume"
+msgstr "Maximaal Volume"
+# 
+# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/ui/main_view.py, line: 777
+msgid "AGC will not raise volume above this level"
+msgstr "AGC zal het volume niet boven dit niveau verhogen."
+# 
+# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/ui/main_view.py, line: 783
+msgid "Reactivity"
+msgstr "Reactiviteit"
+# 
+# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/ui/main_view.py, line: 792
+msgid "How fast the volume adjusts — higher is faster"
+msgstr "Hoe snel het volume wordt aangepast — hoger is sneller"
+# 
 # File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/ui/main_view.py, line: 533
 msgid "Bluetooth Headset Mode"
 msgstr "Bluetooth-headsetmodus"
@@ -253,6 +289,24 @@ msgstr "3s"
 # File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/ui/main_view.py, line: 569
 msgid "5s"
 msgstr "5s"
+# 
+# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/ui/main_view.py, line: 903
+# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/ui/main_view.py, line: 1794
+#, python-brace-format
+msgid "Target signal peak: {db:.0f} dBFS"
+msgstr "Doel signaalpiek: {db:.0f} dBFS"
+# 
+# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/ui/main_view.py, line: 907
+# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/ui/main_view.py, line: 1810
+#, python-brace-format
+msgid "AGC will not reduce volume below {v}%"
+msgstr "AGC zal het volume niet onder {v}% verlagen."
+# 
+# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/ui/main_view.py, line: 913
+# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/ui/main_view.py, line: 1825
+#, python-brace-format
+msgid "AGC will not raise volume above {v}%"
+msgstr "AGC zal het volume niet boven {v}% verhogen."
 # 
 # File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/ui/main_view.py, line: 785
 # File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/ui/main_view.py, line: 1321
@@ -302,11 +356,6 @@ msgstr "Pre-buffer: {ms} ms"
 #, python-brace-format
 msgid "Voice recovery: {percent}%"
 msgstr "Stemherstel: {percent}%"
-# 
-# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/ui/main_view.py, line: 1218
-#, python-brace-format
-msgid "Noise gate: {percent}%"
-msgstr "Ruisonderdrukking: {percent}%"
 # 
 # File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/ui/main_view.py, line: 1145
 msgid "Voice Tonality (Pitch)"
@@ -440,53 +489,29 @@ msgstr ""
 # 
 # File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/utils/tooltip_helper.py, line: 82
 msgid ""
-"Restores voice quality that may be lost during filtering.\n"
+"Restores high-frequency detail lost during filtering.\n"
 "\n"
-"When noise removal is aggressive, the voice can sound\n"
-"muffled or thin. This control brings back naturalness.\n"
+"Noise removal can make voices sound muffled or thin.\n"
+"This control reconstructs the treble frequencies\n"
+"to bring back clarity and presence.\n"
 "\n"
-"• Off: No recovery\n"
+"• Off: No HF reconstruction\n"
 "• 3: Good balance for most voices\n"
-"• 5: Maximum voice restoration\n"
+"• 5: Maximum clarity restoration\n"
 "\n"
 "Recommended: keep between 3 and 5."
 msgstr ""
-"Herstelt de spraakkwaliteit die mogelijk verloren gaat tijdens filtering.\n"
+"Herstelt hoge-frequentie details die verloren zijn gegaan tijdens filtering.\n"
 "\n"
-"Wanneer ruisverwijdering agressief is, kan de stem gedempt of dun klinken. Deze regeling brengt de "
-"natuurlijkheid terug.\n"
+"Ruisverwijdering kan stemmen gedempt of dun laten klinken.\n"
+"Deze regeling reconstrueert de hoge frequenties\n"
+"om helderheid en aanwezigheid terug te brengen.\n"
 "\n"
-"• Uit: Geen herstel\n"
+"• Uit: Geen HF-reconstructie\n"
 "• 3: Goede balans voor de meeste stemmen\n"
-"• 5: Maximale spraakherstel\n"
+"• 5: Maximale helderheidsherstel\n"
 "\n"
 "Aanbevolen: houd tussen 3 en 5."
-# 
-# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/utils/tooltip_helper.py, line: 91
-msgid ""
-"Suppresses non-vocal sounds between speech.\n"
-"\n"
-"Detects and reduces noises like paper rustling,\n"
-"candy wrappers, and mouse clicks that happen\n"
-"when you're not talking.\n"
-"\n"
-"• Off: No extra suppression\n"
-"• 3: Moderate suppression\n"
-"• 5: Aggressive suppression\n"
-"\n"
-"If speech sounds cut or clipped, lower this value."
-msgstr ""
-"Onderdrukt niet-vocale geluiden tussen spraak.\n"
-"\n"
-"Detecteert en vermindert geluiden zoals het ritselen van papier,\n"
-"snoepverpakkingen en muisklikken die plaatsvinden\n"
-"wanneer je niet praat.\n"
-"\n"
-"• Uit: Geen extra onderdrukking\n"
-"• 3: Gematigde onderdrukking\n"
-"• 5: Aggressieve onderdrukking\n"
-"\n"
-"Als spraakgeluiden afgebroken of geknipt klinken, verlaag deze waarde."
 # 
 # File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/utils/tooltip_helper.py, line: 91
 msgid ""
@@ -761,6 +786,38 @@ msgstr ""
 "Helpt de AEC spraak van ruis te onderscheiden.\n"
 "Kan de nauwkeurigheid van echoverwijdering verbeteren, maar kan interfereren\n"
 "met de hoofdgeluidsonderdrukking. Standaard uitgeschakeld."
+# 
+# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/utils/tooltip_helper.py, line: 213
+msgid ""
+"Automatic Volume Control.\n"
+"\n"
+"Uses a compressor in the PipeWire filter chain to\n"
+"automatically normalize your microphone level.\n"
+"Keeps your voice at a consistent volume regardless\n"
+"of how close or far you are from the microphone."
+msgstr ""
+"Automatische Volumecontrole.\n"
+"\n"
+"Maakt gebruik van een compressor in de PipeWire-filterketen om\n"
+"automatisch je microfoonniveau te normaliseren.\n"
+"Houdt je stem op een consistent volume, ongeacht\n"
+"hoe dichtbij of ver je van de microfoon bent."
+# 
+# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/utils/tooltip_helper.py, line: 220
+msgid ""
+"Target signal level for the microphone.\n"
+"\n"
+"Controls the output level of the automatic\n"
+"volume normalizer.\n"
+"100% = close to 0 dBFS (loudest).\n"
+"70% ≈ −7 dBFS (comfortable). Default: 70%."
+msgstr ""
+"Doel signaalniveau voor de microfoon.\n"
+"\n"
+"Beheert het uitgangsniveau van de automatische\n"
+"volume normalisator.\n"
+"100% = dicht bij 0 dBFS (het luidst).\n"
+"70% ≈ −7 dBFS (comfortabel). Standaard: 70%."
 # 
 # File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/config.py, line: 711
 msgid "Default Voice"
