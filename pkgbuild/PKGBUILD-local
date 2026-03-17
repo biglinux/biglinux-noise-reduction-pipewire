@@ -1,13 +1,14 @@
 # Maintainer: Bruno Goncalves <bigbruno@gmail.com>
+# PKGBUILD para instalação local (sem git) — use: makepkg -si
 
 pkgname=biglinux-noise-reduction-pipewire
 pkgver=$(date +%y.%m.%d)
 pkgrel=$(date +%H%M)
 arch=('x86_64')
 license=('GPL-3.0-or-later')
-install=biglinux-noise-reduction-pipewire.install
 url="https://github.com/biglinux/biglinux-noise-reduction-pipewire"
 pkgdesc="AI-powered microphone noise reduction with GTK4/Libadwaita interface for PipeWire"
+install=biglinux-noise-reduction-pipewire.install
 makedepends=(
 	'rust'
 	'clang'
@@ -28,57 +29,38 @@ depends=(
 	'gst-plugins-good'
 	'webrtc-audio-processing'
 )
-
 optdepends=(
 	'wireplumber: For Bluetooth autoswitch feature'
 )
-
-# This package provides a LADSPA host via PipeWire filter-chain
 provides=('ladspa-host')
 
-source=("git+https://github.com/biglinux/biglinux-noise-reduction-pipewire.git")
-md5sums=('SKIP')
+# No source — build from local tree
+source=()
+md5sums=()
+
+# Point to the repo root (parent of pkgbuild/)
+_repodir="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 
 build() {
-	# Determine source directory
-	if [ -d "${srcdir}/${pkgname}/${pkgname}" ]; then
-		InternalDir="${srcdir}/${pkgname}/${pkgname}"
-	else
-		InternalDir="${srcdir}/${pkgname}"
-	fi
-
-	# Build Rust AGC service
-	cd "${InternalDir}/mic-agc"
-	cargo build --release --locked
+	cd "${_repodir}/mic-agc"
+	cargo build --release
 }
 
 package() {
-	# Determine source directory
-	if [ -d "${srcdir}/${pkgname}/${pkgname}" ]; then
-		InternalDir="${srcdir}/${pkgname}/${pkgname}"
-	else
-		InternalDir="${srcdir}/${pkgname}"
-	fi
-
-	# Install usr directory contents (binaries, icons, desktop file, etc.)
-	if [ -d "${InternalDir}/usr" ]; then
-		cp -r "${InternalDir}/usr" "${pkgdir}/"
-	fi
+	# Install usr directory contents (binaries, icons, desktop file, systemd services)
+	cp -r "${_repodir}/usr" "${pkgdir}/"
 
 	# Install Rust AGC service binary
-	install -Dm755 "${InternalDir}/mic-agc/target/release/biglinux-mic-agc" \
+	install -Dm755 "${_repodir}/mic-agc/target/release/biglinux-mic-agc" \
 		"${pkgdir}/usr/bin/biglinux-mic-agc"
 
 	# Get Python version for site-packages path
 	_pyver=$(python -c 'import sys; print(f"{sys.version_info.major}.{sys.version_info.minor}")')
 	_sitepkg="${pkgdir}/usr/lib/python${_pyver}/site-packages"
 
-	# Install Python package manually
-	cd "${InternalDir}"
+	# Install Python package
 	install -d "${_sitepkg}/biglinux_microphone"
-
-	# Copy all Python source files
-	cp -r src/biglinux_microphone/* "${_sitepkg}/biglinux_microphone/"
+	cp -r "${_repodir}/src/biglinux_microphone/"* "${_sitepkg}/biglinux_microphone/"
 
 	# Clean up Python cache files
 	find "${pkgdir}" -type d -name "__pycache__" -exec rm -rf {} + 2>/dev/null || true
@@ -87,4 +69,5 @@ package() {
 	# Ensure binaries are executable
 	chmod +x "${pkgdir}/usr/bin/big-microphone-noise-reduction" 2>/dev/null || true
 	chmod +x "${pkgdir}/usr/bin/pipewire-noise-remove" 2>/dev/null || true
+	chmod +x "${pkgdir}/usr/bin/biglinux-mic-agc" 2>/dev/null || true
 }

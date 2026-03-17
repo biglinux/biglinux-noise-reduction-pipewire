@@ -42,5 +42,5 @@ class TestFilterChainEffects:
         assert "0.50" in out3
         # Check for gain compensation (Deep voice -> gain boost)
         assert "amp" in out3
-        # 0.5 pitch -> 15dB gain (5.0 base + 10.0 boost)
-        assert "15.00" in out3
+        # 0.5 pitch -> 10dB gain compensation
+        assert "10.00" in out3

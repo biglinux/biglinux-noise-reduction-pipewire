@@ -36,6 +36,11 @@ GTCRN_LABEL = "gtcrn_mono"
 # Gate Filter (Steve Harris gate_1410)
 GATE_LIBRARY = "/usr/lib/ladspa/gate_1410.so"
 GATE_LABEL = "gate"
+# Key filter: sidechain listens to 200-4000 Hz (speech range) to decide
+# open/close, but passes all frequencies when open.
+# Values are fractions of sample rate (SAMPLE_RATE hint): Hz / 48000
+GATE_LF_KEY_FILTER = 200 / 48000   # ~0.00417
+GATE_HF_KEY_FILTER = 4000 / 48000  # ~0.08333
 
 # Mono to Stereo Split (split_1406)
 SPLIT_LIBRARY = "/usr/lib/ladspa/split_1406.so"
@@ -151,17 +156,16 @@ class FilterChainConfig:
     noise_reduction_strength: float = 1.0
     noise_reduction_speech_strength: float = 1.0
     noise_reduction_lookahead_ms: int = 100
-    noise_reduction_voice_enhance: float = 0.50
     noise_reduction_model_blending: float = 0.0
-    noise_reduction_noise_gate: float = 0.5
+    noise_reduction_voice_recovery: float = 0.75
     # Compressor (after AI, before gate)
     compressor_enabled: bool = False
-    compressor_threshold_db: float = -20.0
+    compressor_threshold_db: float = -15.0
     compressor_ratio: float = 3.0
     compressor_attack_ms: float = 10.0
     compressor_release_ms: float = 100.0
-    compressor_makeup_gain_db: float = 6.0
-    compressor_knee_db: float = 3.0
+    compressor_makeup_gain_db: float = 2.0
+    compressor_knee_db: float = 6.0
     compressor_rms_peak: float = 0.2
 
     # Gate filter
@@ -326,8 +330,8 @@ class FilterChainGenerator:
                             "Hold (ms)" = {c.gate_hold_ms}
                             "Decay (ms)" = {c.gate_release_ms}
                             "Range (dB)" = {c.gate_range_db}
-                            "LF key filter (Hz)" = 20.0
-                            "HF key filter (Hz)" = 20000.0
+                            "LF key filter (Hz)" = {GATE_LF_KEY_FILTER}
+                            "HF key filter (Hz)" = {GATE_HF_KEY_FILTER}
                             "Output select (-1 = key listen, 0 = gate, 1 = bypass)" = 0
                         }}
                     }}'''
@@ -353,9 +357,8 @@ class FilterChainGenerator:
                             "Model" = {model_control}
                             "SpeechStrength" = {c.noise_reduction_speech_strength}
                             "LookaheadMs" = {c.noise_reduction_lookahead_ms}
-                            "VoiceEnhance" = {c.noise_reduction_voice_enhance}
                             "ModelBlend" = {c.noise_reduction_model_blending}
-                            "NoiseGate" = {c.noise_reduction_noise_gate}
+                            "VoiceRecovery" = {c.noise_reduction_voice_recovery}
                         }}
                     }}'''
 
@@ -414,9 +417,17 @@ class FilterChainGenerator:
 
     def _generate_passthrough_config(self) -> str:
         """Generate passthrough config when no filters are enabled."""
-        aec_module = self._generate_echo_cancel_module() if self._config.echo_cancel_enabled else ""
-        capture_props = self._get_capture_props()
-        playback_props = self._get_playback_props()
+        c = self._config
+        aec_module = self._generate_echo_cancel_module() if c.echo_cancel_enabled else ""
+        if c.echo_cancel_enabled:
+            capture_target = '\n                target.object = "big-aec-source"'
+            capture_passive = ""
+        else:
+            capture_target = ""
+            capture_passive = "\n                node.passive = true"
+        playback_props = self._get_playback_props(
+            extra_props='\n                audio.position = [ FL FR ]'
+        )
         return f'''# BigLinux Microphone Enhanced Filter Chain
 # Auto-generated configuration - Passthrough (no filters)
 
@@ -434,13 +445,21 @@ context.modules = [
                         name = "passthrough"
                         label = copy
                     }}
+                    {{
+                        type = builtin
+                        name = "copy_right"
+                        label = copy
+                    }}
                 ]
-                links = []
+                links = [
+                    {{ output = "passthrough:Out" input = "copy_right:In" }}
+                ]
                 inputs = [ "passthrough:In" ]
-                outputs = [ "passthrough:Out" ]
+                outputs = [ "passthrough:Out" "copy_right:Out" ]
             }}
-            audio.channels = 1
-{capture_props}
+            capture.props = {{
+                audio.position = [ MONO ]{capture_passive}{capture_target}
+            }}
 {playback_props}
         }}
     }}
@@ -452,9 +471,9 @@ context.modules = [
         c = self._config
 
         # Build list of active filters in order:
-        # hpf -> compressor -> ai -> eq -> limiter -> gate
+        # hpf -> compressor -> ai -> agc -> eq -> limiter -> gate
         # HPF removes rumble first, compressor evens volume before AI, AI cleans noise,
-        # EQ shapes tone, gate mutes residual noise in silence last.
+        # AGC normalizes level after AI, EQ shapes tone, gate mutes residual noise last.
         # NOTE: EQ must come before gate to work around a PipeWire 1.6.1 crash
         # when gate_1410.so is loaded before mbeq_1197.so in the filter graph.
         # Each entry: (name, input_port, output_port)
@@ -474,7 +493,7 @@ context.modules = [
             active_filters.append(("ai", "Input", "Output"))
             nodes.append(self._generate_ai_node())
 
-        # Always include EQ node (before gate) to avoid PipeWire 1.6.1 crash.
+        # Always include EQ node to avoid PipeWire 1.6.1 crash.
         # When disabled, all bands are 0 dB (transparent passthrough).
         active_filters.append(("eq", "Input", "Output"))
         nodes.append(self._generate_eq_node(bypass=not c.eq_enabled))
@@ -506,18 +525,42 @@ context.modules = [
         first_name, first_in, _ = active_filters[0]
         last_name, _, last_out = active_filters[-1]
 
+        # Always output 2 channels (FL + FR) with the same mono signal
+        # duplicated to both. Most apps (OBS, Discord, etc.) expect stereo
+        # input; a true mono (1-channel) source is often mishandled,
+        # resulting in audio on only one ear/channel.
+        nodes.append("""                    # Copy for left channel
+                    {
+                        type = builtin
+                        name = "copy_left"
+                        label = copy
+                    }""")
+        nodes.append("""                    # Copy for right channel
+                    {
+                        type = builtin
+                        name = "copy_right"
+                        label = copy
+                    }""")
+        links.append(f'{{ output = "{last_name}:{last_out}" input = "copy_left:In" }}')
+        links.append(f'{{ output = "{last_name}:{last_out}" input = "copy_right:In" }}')
+
         # Format nodes and links for config
         nodes_str = "\n".join(nodes)
         links_str = "\n                    ".join(links) if links else ""
 
         aec_module = self._generate_echo_cancel_module() if c.echo_cancel_enabled else ""
-        capture_props = self._get_capture_props()
+        if c.echo_cancel_enabled:
+            capture_target = '\n                target.object = "big-aec-source"'
+            capture_passive = ""
+        else:
+            capture_target = ""
+            capture_passive = "\n                node.passive = true"
         playback_props = self._get_playback_props(
-            extra_props='\n                audio.position = [ MONO ]'
+            extra_props='\n                audio.position = [ FL FR ]'
         )
 
         return f'''# BigLinux Microphone Enhanced Filter Chain
-# Auto-generated configuration - Mono output
+# Auto-generated configuration - Mono processing, dual-mono stereo output
 
 context.modules = [
 {aec_module}
@@ -534,10 +577,11 @@ context.modules = [
                     {links_str}
                 ]
                 inputs = [ "{first_name}:{first_in}" ]
-                outputs = [ "{last_name}:{last_out}" ]
+                outputs = [ "copy_left:Out" "copy_right:Out" ]
             }}
-            audio.channels = 1
-{capture_props}
+            capture.props = {{
+                audio.position = [ MONO ]{capture_passive}{capture_target}
+            }}
 {playback_props}
 
         }}
@@ -600,7 +644,6 @@ context.modules = [
 
         # Build list of active filters in order:
         # hpf -> compressor -> ai -> eq -> limiter -> gate
-        # NOTE: EQ must come before gate — see mono config comment.
         # Each entry: (name, input_port, output_port)
         active_filters: list[tuple[str, str, str]] = []
         nodes: list[str] = []
@@ -618,14 +661,13 @@ context.modules = [
             active_filters.append(("ai", "Input", "Output"))
             nodes.append(self._generate_ai_node())
 
-        # Always include EQ node (before gate) to avoid PipeWire 1.6.1 crash.
+        # Always include EQ node to avoid PipeWire 1.6.1 crash.
         # When disabled, all bands are 0 dB (transparent passthrough).
         active_filters.append(("eq", "Input", "Output"))
         nodes.append(self._generate_eq_node(bypass=not c.eq_enabled))
 
         # Hard limiter prevents output clipping.
-        has_gain_stage = c.compressor_enabled
-        if has_gain_stage:
+        if c.compressor_enabled:
             active_filters.append(("limiter", "Input", "Output"))
             nodes.append(self._generate_limiter_node())
 
@@ -790,16 +832,18 @@ context.modules = [
                         }}
                     }}""")
 
-        # Automatic Gain Compensation for Deep Voice
-        # Deep voice (0.5x) often loses energy. Boost gain when pitch < 1.0.
-        # Base gain: +5.0dB (always applied for punchiness)
-        # Deep boost: Up to +10.0dB extra at 0.5x pitch
-        gain_db = 5.0
+        # Automatic Gain Compensation for pitch shifting
+        # Deep voice (0.5x) loses energy — compensate with positive gain.
+        # High voice (2.0x) can clip — compensate with negative gain.
+        # At 1.0x pitch, gain = 0 dB (no change).
+        gain_db = 0.0
 
         if pitch_coeff < 1.0:
-            # Linear interp: 0.5 -> 10.0, 1.0 -> 0.0
-            # formula: (1.0 - pitch) * 20.0
-            gain_db += (1.0 - pitch_coeff) * 20.0
+            # Linear interp: 0.5 -> +10.0 dB, 1.0 -> 0.0 dB
+            gain_db = (1.0 - pitch_coeff) * 20.0
+        elif pitch_coeff > 1.0:
+            # Slight attenuation for high pitch: 1.0 -> 0 dB, 2.0 -> -3 dB
+            gain_db = -(pitch_coeff - 1.0) * 3.0
 
         # Add Gain Node (LADSPA Amplifier)
         nodes.append(f"""                    # Gain Compensation

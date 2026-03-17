@@ -171,20 +171,15 @@ LOOKAHEAD_MS_MAX = 200
 LOOKAHEAD_MS_DEFAULT = 50
 LOOKAHEAD_MS_STEP = 5
 
-# Voice Enhancement (unified control: 0.0 = off, 1.0 = max)
-VOICE_ENHANCE_MIN = 0.0
-VOICE_ENHANCE_MAX = 1.0
-VOICE_ENHANCE_DEFAULT = 0.0
-VOICE_ENHANCE_STEP = 0.05
-
 # Model Blending (0.0 = off, 1.0 = dual-model VAD-switched)
 MODEL_BLENDING_DEFAULT = 0.0
 
-# Noise Gate (spectral flatness + HF click detection in LADSPA plugin)
-NOISE_GATE_MIN = 0.0
-NOISE_GATE_MAX = 1.0
-NOISE_GATE_DEFAULT = 0.0
-NOISE_GATE_STEP = 0.05
+# Voice Recovery (>8kHz band reconstruction for speech clarity)
+# Values: Low (0.25), Medium (0.5), High (0.75), Full (1.0)
+VOICE_RECOVERY_MIN = 0.0
+VOICE_RECOVERY_MAX = 1.0
+VOICE_RECOVERY_DEFAULT = 0.75
+VOICE_RECOVERY_STEP = 0.25
 
 # Gate Filter
 # Gate (Silence Filter)
@@ -266,6 +261,23 @@ EQ_BAND_COUNT = 10
 EQ_BANDS = [31, 63, 125, 250, 500, 1000, 2000, 4000, 8000, 16000]
 EQ_FREQUENCIES = EQ_BANDS  # Alias for compatibility
 
+# Automatic Gain Control (pw-cat level monitor + wpctl)
+# Target maps 10–100% → −20..−1 dBFS signal level
+AGC_TARGET_LEVEL_MIN = 10
+AGC_TARGET_LEVEL_MAX = 100
+AGC_TARGET_LEVEL_DEFAULT = 55
+
+# Volume limits for AGC (percentage 0-100)
+AGC_MIN_VOLUME_DEFAULT = 20
+AGC_MAX_VOLUME_DEFAULT = 100
+AGC_VOLUME_LIMIT_MIN = 0
+AGC_VOLUME_LIMIT_MAX = 100
+
+# Reactivity: 0 (slow, safe) to 100 (fast, aggressive)
+AGC_REACTIVITY_MIN = 0
+AGC_REACTIVITY_MAX = 100
+AGC_REACTIVITY_DEFAULT = 50
+
 
 # =============================================================================
 
@@ -283,15 +295,14 @@ class NoiseReductionConfig:
     strength: float = STRENGTH_DEFAULT
     speech_strength: float = SPEECH_STRENGTH_DEFAULT
     lookahead_ms: int = LOOKAHEAD_MS_DEFAULT
-    voice_enhance: float = VOICE_ENHANCE_DEFAULT
     model_blending: float = MODEL_BLENDING_DEFAULT
-    noise_gate: float = NOISE_GATE_DEFAULT
+    voice_recovery: float = VOICE_RECOVERY_DEFAULT
 
 
 # Compressor
 COMPRESSOR_INTENSITY_MIN = 0.0
 COMPRESSOR_INTENSITY_MAX = 1.0
-COMPRESSOR_INTENSITY_DEFAULT = 0.5
+COMPRESSOR_INTENSITY_DEFAULT = 0.25
 COMPRESSOR_INTENSITY_STEP = 0.05
 
 
@@ -397,10 +408,13 @@ class EchoCancelConfig:
     Uses PipeWire's libpipewire-module-echo-cancel with monitor.mode
     to capture the speaker output as reference signal.
     Latency is fixed at 960/48000 (20ms = 2x WebRTC 10ms frame).
+
+    gain_control is disabled by default because the dedicated Rust AGC
+    service (biglinux-mic-agc) manages volume independently.
     """
 
     enabled: bool = True
-    gain_control: bool = True
+    gain_control: bool = False
     noise_suppression: bool = False
     voice_detection: bool = False
 
@@ -412,6 +426,27 @@ class MonitorConfig:
     enabled: bool = False
     delay_ms: int = 2000  # 0-5000ms (2s default for AEC compatibility)
     volume: float = 1.0  # 0.0-2.0 (200%)
+
+
+@dataclass
+class AgcConfig:
+    """Configuration for automatic gain control.
+
+    AGC runs as a native Rust service (biglinux-mic-agc) that monitors
+    the ALSA source node in PipeWire and dynamically adjusts the capture
+    volume to maintain a consistent signal level.
+
+    Works whenever the microphone is active, independent of the GUI.
+
+    target_level_dbfs: desired output level as percentage (10-100%).
+        Maps to -20..-1 dBFS internally.
+    """
+
+    enabled: bool = True
+    target_level_dbfs: int = AGC_TARGET_LEVEL_DEFAULT
+    min_volume: int = AGC_MIN_VOLUME_DEFAULT
+    max_volume: int = AGC_MAX_VOLUME_DEFAULT
+    reactivity: int = AGC_REACTIVITY_DEFAULT
 
 
 @dataclass
@@ -429,6 +464,7 @@ class AppSettings:
     bluetooth: BluetoothConfig = field(default_factory=BluetoothConfig)
     monitor: MonitorConfig = field(default_factory=MonitorConfig)
     echo_cancel: EchoCancelConfig = field(default_factory=EchoCancelConfig)
+    agc: AgcConfig = field(default_factory=AgcConfig)
 
     def to_dict(self) -> dict[str, Any]:
         """Convert settings to dictionary for JSON serialization."""
@@ -462,9 +498,8 @@ class AppSettings:
                 strength=nr.get("strength", STRENGTH_DEFAULT),
                 speech_strength=nr.get("speech_strength", SPEECH_STRENGTH_DEFAULT),
                 lookahead_ms=nr.get("lookahead_ms", LOOKAHEAD_MS_DEFAULT),
-                voice_enhance=nr.get("voice_enhance", VOICE_ENHANCE_DEFAULT),
                 model_blending=float(nr.get("model_blending", MODEL_BLENDING_DEFAULT)),
-                noise_gate=nr.get("noise_gate", NOISE_GATE_DEFAULT),
+                voice_recovery=nr.get("voice_recovery", nr.get("hf_level", VOICE_RECOVERY_DEFAULT)),
             )
 
         if "gate" in data:
@@ -545,9 +580,19 @@ class AppSettings:
             ec = data["echo_cancel"]
             settings.echo_cancel = EchoCancelConfig(
                 enabled=ec.get("enabled", False),
-                gain_control=ec.get("gain_control", True),
+                gain_control=ec.get("gain_control", False),
                 noise_suppression=ec.get("noise_suppression", False),
                 voice_detection=ec.get("voice_detection", True),
+            )
+
+        if "agc" in data:
+            a = data["agc"]
+            settings.agc = AgcConfig(
+                enabled=a.get("enabled", True),
+                target_level_dbfs=a.get("target_level_dbfs", AGC_TARGET_LEVEL_DEFAULT),
+                min_volume=a.get("min_volume", AGC_MIN_VOLUME_DEFAULT),
+                max_volume=a.get("max_volume", AGC_MAX_VOLUME_DEFAULT),
+                reactivity=a.get("reactivity", AGC_REACTIVITY_DEFAULT),
             )
 
         return settings

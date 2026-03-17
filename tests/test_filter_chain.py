@@ -14,7 +14,9 @@ from biglinux_microphone.audio.filter_chain import (
     CONFIG_DIR,
     CONFIG_FILE,
     EQ_BAND_TO_MBEQ_INDEX,
+    GATE_HF_KEY_FILTER,
     GATE_LABEL,
+    GATE_LF_KEY_FILTER,
     GATE_LIBRARY,
     GTCRN_LABEL,
     GTCRN_LIBRARY,
@@ -84,11 +86,13 @@ class TestFilterChainGenerator:
         assert GTCRN_LIBRARY in content
         assert GTCRN_LABEL in content
 
-        # Mono config uses MONO position for playback
+        # Mono config captures from MONO position
         assert "audio.position = [ MONO ]" in content
-        # Should NOT have stereo (FL FR) output
-        assert "audio.position = [ FL FR ]" not in content
-        assert "audio.channels = 1" in content
+        # Mono config now outputs dual-mono stereo (FL FR) for app compatibility
+        assert "audio.position = [ FL FR ]" in content
+        # Should have copy nodes for dual-mono output
+        assert "copy_left" in content
+        assert "copy_right" in content
 
     def test_generate_stereo_config(self) -> None:
         """Test generating stereo configuration with dual mono mode."""
@@ -178,6 +182,9 @@ class TestFilterChainGenerator:
         assert '"Attack (ms)" = 5.0' in content
         assert '"Hold (ms)" = 100.0' in content
         assert '"Decay (ms)" = 30.0' in content
+        # Key filter focuses sidechain on speech range (200-4000 Hz)
+        assert f'"LF key filter (Hz)" = {GATE_LF_KEY_FILTER}' in content
+        assert f'"HF key filter (Hz)" = {GATE_HF_KEY_FILTER}' in content
 
     def test_noise_reduction_parameters(self) -> None:
         """Test noise reduction parameters are correctly applied."""

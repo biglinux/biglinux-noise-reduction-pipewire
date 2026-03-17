@@ -29,7 +29,7 @@ class TestFilterChainState:
         assert state.noise_reduction_model == NoiseModel.GTCRN_DNS3
         assert state.noise_reduction_strength == 1.0
         assert state.gate_enabled is True
-        assert state.gate_intensity == 0.5
+        assert state.gate_intensity == 0.25
         assert state.stereo_mode == StereoMode.MONO
         assert state.stereo_width == 0.7
 
@@ -137,7 +137,7 @@ class TestConfigPersistence:
             noise_reduction_model=NoiseModel.GTCRN_DNS3,
             noise_reduction_strength=0.9,
             gate_enabled=True,
-            gate_intensity=0.5,
+            gate_intensity=0.25,
             stereo_mode=StereoMode.MONO,
             stereo_width=0.5,
             crossfeed_enabled=False,

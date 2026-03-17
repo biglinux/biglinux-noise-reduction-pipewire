@@ -80,7 +80,8 @@ class TestGateConfig:
         low = GateConfig(intensity=0.0)
         high = GateConfig(intensity=1.0)
         assert low.threshold_db < high.threshold_db
-        assert low.range_db > high.range_db
+        assert low.range_db > high.range_db  # Higher intensity = deeper silencing
+        assert high.range_db == -90.0  # Max intensity = -90 dB
 
 
 class TestStereoConfig:

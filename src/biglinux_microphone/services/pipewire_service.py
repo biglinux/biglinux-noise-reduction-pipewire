@@ -12,6 +12,7 @@ Handles all interactions with PipeWire, including:
 from __future__ import annotations
 
 import asyncio
+import contextlib
 import logging
 import os
 import subprocess
@@ -77,9 +78,8 @@ class PipeWireService:
         self._noise_reduction_strength = 1.0
         self._noise_reduction_speech_strength = 1.0
         self._noise_reduction_lookahead_ms = 50
-        self._noise_reduction_voice_enhance = 0.50
         self._noise_reduction_model_blending = 0.0
-        self._noise_reduction_noise_gate = 0.5
+        self._noise_reduction_voice_recovery = 0.75
         self._gate_enabled = True
         self._gate_threshold_db = -30
         self._gate_range_db = -60
@@ -99,6 +99,12 @@ class PipeWireService:
         self._echo_cancel_enabled = False
         self._current_hw_source: str = ""
         self._source_monitor_id: int = 0
+        self._gain_monitor_id: int = 0
+
+        # AGC (filter chain LADSPA compressor node)
+        self._agc_enabled = True
+        self._agc_target_level_dbfs = 70
+        self._agc_process: subprocess.Popen | None = None
 
         # Paths
         self._config_file = CONFIG_PATH / CONFIG_FILE
@@ -150,9 +156,8 @@ class PipeWireService:
         self._noise_reduction_strength = settings.noise_reduction.strength
         self._noise_reduction_speech_strength = settings.noise_reduction.speech_strength
         self._noise_reduction_lookahead_ms = settings.noise_reduction.lookahead_ms
-        self._noise_reduction_voice_enhance = settings.noise_reduction.voice_enhance
         self._noise_reduction_model_blending = settings.noise_reduction.model_blending
-        self._noise_reduction_noise_gate = settings.noise_reduction.noise_gate
+        self._noise_reduction_voice_recovery = settings.noise_reduction.voice_recovery
         self._gate_enabled = settings.gate.enabled
         self._gate_threshold_db = settings.gate.threshold_db
         self._gate_range_db = settings.gate.range_db
@@ -170,6 +175,10 @@ class PipeWireService:
 
         # Echo cancellation
         self._echo_cancel_enabled = settings.echo_cancel.enabled
+
+        # AGC settings (filter chain node)
+        self._agc_enabled = settings.agc.enabled
+        self._agc_target_level_dbfs = settings.agc.target_level_dbfs
 
         logger.debug("Synchronized state from settings")
 
@@ -335,14 +344,29 @@ class PipeWireService:
         When echo cancellation is active, filter.smart is disabled so the
         node must be explicitly set as the default audio source.
         Also sets force-quantum=960 to align with WebRTC AEC frame size.
+        Limits ALSA mic boost and capture volume to prevent ADC clipping.
         Starts monitoring for default source changes.
         """
+        self._optimize_mic_gain()
+        self._start_gain_monitor()
         if self._echo_cancel_enabled:
             await self._set_default_source("big-noise-canceling-output")
             self._set_pipewire_quantum(960)
             self._current_hw_source = self._detect_hardware_source()
             self._start_source_monitor()
+        if self._agc_enabled:
+            self._start_agc_process()
         logger.debug("Filter source configuration complete")
+
+    def ensure_gain_monitoring(self) -> None:
+        """Ensure gain monitoring is active when filter is already running.
+
+        Called by the UI when it detects the filter is already enabled
+        at startup (e.g., started by CLI/systemd before GUI opened).
+        """
+        if self.is_enabled() and not self._gain_monitor_id:
+            self._optimize_mic_gain()
+            self._start_gain_monitor()
 
     def _start_source_monitor(self) -> None:
         """Start periodic check for default source changes.
@@ -369,6 +393,45 @@ class PipeWireService:
             except ImportError:
                 pass
             self._source_monitor_id = 0
+
+    def _start_gain_monitor(self) -> None:
+        """Start periodic mic boost check (every 30s)."""
+        self._stop_gain_monitor()
+        try:
+            from gi.repository import GLib
+            self._gain_monitor_id = GLib.timeout_add_seconds(
+                30, self._gain_monitor_tick
+            )
+        except ImportError:
+            pass
+
+    def _stop_gain_monitor(self) -> None:
+        """Stop the gain monitor timer."""
+        if self._gain_monitor_id:
+            try:
+                from gi.repository import GLib
+                GLib.source_remove(self._gain_monitor_id)
+            except ImportError:
+                pass
+            self._gain_monitor_id = 0
+
+    def _gain_monitor_tick(self) -> bool:
+        """Periodic mic boost check.
+
+        Verifies mic boost hasn't been changed externally.
+        Capture volume is managed by the WebRTC AGC pipeline.
+        Returns True to keep the timer running.
+        """
+        if not self.is_enabled():
+            self._gain_monitor_id = 0
+            return False
+
+        def _work() -> None:
+            self._optimize_mic_gain()
+
+        thread = threading.Thread(target=_work, daemon=True)
+        thread.start()
+        return True
 
     def _check_source_changed(self) -> bool:
         """Check if the default hardware source changed.
@@ -463,6 +526,166 @@ class PipeWireService:
         except Exception:
             logger.exception("Error setting default source")
 
+    @staticmethod
+    def _find_alsa_input_card() -> str | None:
+        """Find the ALSA card number for the hardware input source.
+
+        Searches PipeWire nodes for an ALSA input source and returns
+        its card number. Works even when the default source is our
+        filter chain output rather than the hardware mic.
+        """
+        try:
+            result = subprocess.run(
+                ["pw-dump"],
+                capture_output=True, text=True, timeout=5,
+            )
+            if result.returncode != 0:
+                return None
+
+            import json
+            for obj in json.loads(result.stdout):
+                if obj.get("type") != "PipeWire:Interface:Node":
+                    continue
+                props = obj.get("info", {}).get("props", {})
+                name = props.get("node.name", "")
+                if "alsa_input" in name:
+                    card = props.get("api.alsa.pcm.card")
+                    if card is not None:
+                        return str(card)
+        except Exception:
+            pass
+        return None
+
+    @staticmethod
+    def _find_alsa_input_name() -> str | None:
+        """Find the ALSA input node name from PipeWire (e.g. alsa_input.pci-...)."""
+        try:
+            import json as _json
+            result = subprocess.run(
+                ["pw-dump"], capture_output=True, text=True, timeout=8,
+            )
+            if result.returncode != 0:
+                return None
+            for obj in _json.loads(result.stdout):
+                if obj.get("type") != "PipeWire:Interface:Node":
+                    continue
+                props = obj.get("info", {}).get("props", {})
+                name = props.get("node.name", "")
+                if name.startswith("alsa_input"):
+                    return name
+        except Exception:
+            pass
+        return None
+
+    @staticmethod
+    def _optimize_mic_gain(
+        max_boost: int = 1,
+        capture_min: int = 30,
+        capture_max: int = 100,
+    ) -> None:
+        """Optimize ALSA mic gain staging to prevent ADC clipping.
+
+        Internal laptop mics with high boost (+20/+30dB) combined with
+        max capture gain (+30dB) can clip the 16-bit ADC, producing
+        robotic/distorted audio through the filter chain.
+
+        Detects the ALSA card from PipeWire and:
+        1. Caps any 'Mic Boost' controls to max_boost (default=1 = +10dB)
+        2. Clamps capture volume to [capture_min, capture_max] range.
+           Only adjusts if capture is outside this range — leaves the
+           user's preferred level untouched otherwise.
+        """
+        try:
+            card_num = PipeWireService._find_alsa_input_card()
+            if card_num is None:
+                return
+
+            # Use scontrols for simple mixer names (usable with sget/sset)
+            result = subprocess.run(
+                ["amixer", "-c", card_num, "scontrols"],
+                capture_output=True, text=True, timeout=5,
+            )
+            if result.returncode != 0:
+                return
+
+            for ctrl_line in result.stdout.splitlines():
+                # Format: Simple mixer control 'Name',index
+                start = ctrl_line.find("'")
+                end = ctrl_line.rfind("'")
+                if start < 0 or end <= start:
+                    continue
+                ctrl_name = ctrl_line[start + 1:end]
+
+                # Limit mic boost controls
+                if "Mic Boost" in ctrl_name:
+                    result2 = subprocess.run(
+                        ["amixer", "-c", card_num, "sget", ctrl_name],
+                        capture_output=True, text=True, timeout=5,
+                    )
+                    if result2.returncode != 0:
+                        continue
+                    for val_line in result2.stdout.splitlines():
+                        if "Front Left:" in val_line:
+                            parts = val_line.split()
+                            try:
+                                idx = parts.index("Left:")
+                                current = int(parts[idx + 1])
+                                if current > max_boost:
+                                    subprocess.run(
+                                        ["amixer", "-c", card_num, "sset",
+                                         ctrl_name, str(max_boost)],
+                                        capture_output=True, timeout=5,
+                                    )
+                                    logger.info(
+                                        "Limited %s from %d to %d on card %s",
+                                        ctrl_name, current, max_boost, card_num,
+                                    )
+                            except (ValueError, IndexError):
+                                pass
+                            break
+
+                # Clamp capture volume to [capture_min, capture_max]
+                elif ctrl_name == "Capture":
+                    result2 = subprocess.run(
+                        ["amixer", "-c", card_num, "sget", "Capture"],
+                        capture_output=True, text=True, timeout=5,
+                    )
+                    if result2.returncode != 0:
+                        continue
+                    # Parse current percentage
+                    current_pct = -1
+                    for val_line in result2.stdout.splitlines():
+                        if "Front Left:" in val_line:
+                            pct_start = val_line.find("[")
+                            pct_end = val_line.find("%]")
+                            if pct_start >= 0 and pct_end > pct_start:
+                                with contextlib.suppress(ValueError):
+                                    current_pct = int(val_line[pct_start + 1:pct_end])
+                            break
+                    if current_pct < capture_min:
+                        subprocess.run(
+                            ["amixer", "-c", card_num, "sset", "Capture",
+                             f"{capture_min}%"],
+                            capture_output=True, timeout=5,
+                        )
+                        logger.info(
+                            "Raised Capture volume from %d%% to %d%% on card %s",
+                            current_pct, capture_min, card_num,
+                        )
+                    elif current_pct > capture_max:
+                        subprocess.run(
+                            ["amixer", "-c", card_num, "sset", "Capture",
+                             f"{capture_max}%"],
+                            capture_output=True, timeout=5,
+                        )
+                        logger.info(
+                            "Lowered Capture volume from %d%% to %d%% on card %s",
+                            current_pct, capture_max, card_num,
+                        )
+
+        except Exception:
+            logger.debug("Could not optimize mic gain", exc_info=True)
+
     def _set_pipewire_quantum(self, quantum: int) -> None:
         """Set PipeWire force-quantum via pw-metadata.
 
@@ -497,6 +720,7 @@ class PipeWireService:
                 return False
             self._is_updating = True
         try:
+            self._stop_agc_process()
             await self._stop_filter_chain()
             return not self.is_enabled()
 
@@ -593,6 +817,7 @@ class PipeWireService:
 
         # Stop monitoring for source changes
         self._stop_source_monitor()
+        self._stop_gain_monitor()
 
         # Restore default quantum (AEC may have forced it to 960)
         self._set_pipewire_quantum(0)
@@ -670,18 +895,6 @@ class PipeWireService:
             return self._update_param_live("ai:LookaheadMs", float(value))
         return True
 
-    def get_voice_enhance(self) -> float:
-        """Get voice enhancement level."""
-        return self._noise_reduction_voice_enhance
-
-    def set_voice_enhance(self, value: float) -> bool:
-        """Set voice enhancement level with live update."""
-        value = max(0.0, min(1.0, value))
-        self._noise_reduction_voice_enhance = value
-        if self.is_enabled():
-            return self._update_param_live("ai:VoiceEnhance", value)
-        return True
-
     def get_model_blending(self) -> float:
         return self._noise_reduction_model_blending
 
@@ -691,12 +904,16 @@ class PipeWireService:
             return self._update_param_live("ai:ModelBlend", value)
         return True
 
-    def set_noise_gate(self, value: float) -> bool:
-        """Set noise gate intensity with live update."""
+    def get_voice_recovery(self) -> float:
+        """Get voice recovery level (HF band reconstruction)."""
+        return self._noise_reduction_voice_recovery
+
+    def set_voice_recovery(self, value: float) -> bool:
+        """Set voice recovery level with live update."""
         value = max(0.0, min(1.0, value))
-        self._noise_reduction_noise_gate = value
+        self._noise_reduction_voice_recovery = value
         if self.is_enabled():
-            return self._update_param_live("ai:NoiseGate", value)
+            return self._update_param_live("ai:VoiceRecovery", value)
         return True
 
     # =========================================================================
@@ -1132,6 +1349,111 @@ class PipeWireService:
             return False
 
     # =========================================================================
+    # Automatic Gain Control Parameters
+    # =========================================================================
+
+    _AGC_BINARY = "biglinux-mic-agc"
+
+    def _start_agc_process(self) -> None:
+        """Start the AGC process if not already running.
+
+        Tries systemd service first; if unavailable, runs the binary directly.
+        """
+        if getattr(self, "_agc_process", None) is not None:
+            if self._agc_process.poll() is None:
+                return  # already running
+
+        # Try systemd service first
+        try:
+            result = subprocess.run(
+                ["systemctl", "--user", "is-active", "--quiet",
+                 "biglinux-mic-agc.service"],
+                timeout=3,
+            )
+            if result.returncode == 0:
+                return  # systemd service already running
+            subprocess.run(
+                ["systemctl", "--user", "start", "biglinux-mic-agc.service"],
+                timeout=5, capture_output=True,
+            )
+            # Check if it actually started
+            result = subprocess.run(
+                ["systemctl", "--user", "is-active", "--quiet",
+                 "biglinux-mic-agc.service"],
+                timeout=3,
+            )
+            if result.returncode == 0:
+                self._agc_process = None
+                logger.info("Started AGC via systemd service")
+                return
+        except Exception:
+            pass
+
+        # Fallback: run binary directly
+        import shutil
+        binary = shutil.which(self._AGC_BINARY)
+        if binary is None:
+            logger.warning("AGC binary '%s' not found in PATH", self._AGC_BINARY)
+            return
+        try:
+            self._agc_process = subprocess.Popen(
+                [binary],
+                stdout=subprocess.DEVNULL,
+                stderr=subprocess.DEVNULL,
+            )
+            logger.info("Started AGC process (pid %d)", self._agc_process.pid)
+        except Exception:
+            logger.warning("Failed to start AGC process", exc_info=True)
+
+    def _stop_agc_process(self) -> None:
+        """Stop the AGC process if running."""
+        # Try systemd first
+        try:
+            result = subprocess.run(
+                ["systemctl", "--user", "is-active", "--quiet",
+                 "biglinux-mic-agc.service"],
+                timeout=3,
+            )
+            if result.returncode == 0:
+                subprocess.run(
+                    ["systemctl", "--user", "stop", "biglinux-mic-agc.service"],
+                    timeout=5, capture_output=True,
+                )
+                logger.info("Stopped AGC via systemd service")
+                return
+        except Exception:
+            pass
+
+        # Stop direct process
+        proc = getattr(self, "_agc_process", None)
+        if proc is not None and proc.poll() is None:
+            proc.terminate()
+            try:
+                proc.wait(timeout=3)
+            except subprocess.TimeoutExpired:
+                proc.kill()
+            logger.info("Stopped AGC process")
+        self._agc_process = None
+
+    def restart_agc(self) -> None:
+        """Restart the AGC service/process."""
+        if self._agc_enabled:
+            self._stop_agc_process()
+            self._start_agc_process()
+
+    def set_agc_enabled(self, enabled: bool) -> None:
+        """Enable or disable AGC. Starts/stops the Rust service accordingly."""
+        self._agc_enabled = enabled
+        if enabled:
+            self._start_agc_process()
+        else:
+            self._stop_agc_process()
+
+    def set_agc_target_level(self, value: int) -> None:
+        """Set AGC target level (saved to config for the Rust service)."""
+        self._agc_target_level_dbfs = value
+
+    # =========================================================================
     # Echo Cancellation Parameters
     # =========================================================================
 
@@ -1328,9 +1650,8 @@ class PipeWireService:
             noise_reduction_strength=settings.noise_reduction.strength,
             noise_reduction_speech_strength=settings.noise_reduction.speech_strength,
             noise_reduction_lookahead_ms=settings.noise_reduction.lookahead_ms,
-            noise_reduction_voice_enhance=settings.noise_reduction.voice_enhance,
             noise_reduction_model_blending=settings.noise_reduction.model_blending,
-            noise_reduction_noise_gate=settings.noise_reduction.noise_gate,
+            noise_reduction_voice_recovery=settings.noise_reduction.voice_recovery,
             compressor_enabled=settings.compressor.enabled,
             compressor_threshold_db=settings.compressor.threshold_db,
             compressor_ratio=settings.compressor.ratio,

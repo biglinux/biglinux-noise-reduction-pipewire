@@ -29,7 +29,7 @@ Gst.init(None)
 NUM_SPECTRUM_BANDS = 32  # Match spectrum_widget.py for premium visualization
 SPECTRUM_INTERVAL_MS = 50
 SPECTRUM_INTERVAL_NS = SPECTRUM_INTERVAL_MS * 1_000_000
-SPECTRUM_THRESHOLD_DB = -80
+SPECTRUM_THRESHOLD_DB = -60
 
 # FFT parameters for NumPy-based spectrum analysis
 SAMPLE_RATE = 32000

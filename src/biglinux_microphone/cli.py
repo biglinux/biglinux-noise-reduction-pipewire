@@ -108,8 +108,116 @@ def get_filter_source() -> str | None:
         return None
 
 
+def _find_alsa_input_card() -> str | None:
+    """Find the ALSA card number for the hardware input source."""
+    try:
+        result = subprocess.run(
+            ["pw-dump"],
+            capture_output=True, text=True, timeout=5,
+        )
+        if result.returncode != 0:
+            return None
+
+        import json
+        for obj in json.loads(result.stdout):
+            if obj.get("type") != "PipeWire:Interface:Node":
+                continue
+            props = obj.get("info", {}).get("props", {})
+            name = props.get("node.name", "")
+            if "alsa_input" in name:
+                card = props.get("api.alsa.pcm.card")
+                if card is not None:
+                    return str(card)
+    except Exception:
+        pass
+    return None
+
+
+def optimize_mic_gain(max_boost: int = 1, capture_percent: int = 70) -> None:
+    """Optimize ALSA mic gain staging to prevent ADC clipping."""
+    try:
+        card_num = _find_alsa_input_card()
+        if card_num is None:
+            return
+
+        # Use scontrols for simple mixer names (usable with sget/sset)
+        result = subprocess.run(
+            ["amixer", "-c", card_num, "scontrols"],
+            capture_output=True, text=True, timeout=5,
+        )
+        if result.returncode != 0:
+            return
+
+        for ctrl_line in result.stdout.splitlines():
+            # Format: Simple mixer control 'Name',index
+            start = ctrl_line.find("'")
+            end = ctrl_line.rfind("'")
+            if start < 0 or end <= start:
+                continue
+            ctrl_name = ctrl_line[start + 1:end]
+
+            # Limit mic boost controls
+            if "Mic Boost" in ctrl_name:
+                result2 = subprocess.run(
+                    ["amixer", "-c", card_num, "sget", ctrl_name],
+                    capture_output=True, text=True, timeout=5,
+                )
+                if result2.returncode != 0:
+                    continue
+                for val_line in result2.stdout.splitlines():
+                    if "Front Left:" in val_line:
+                        parts = val_line.split()
+                        try:
+                            idx = parts.index("Left:")
+                            current = int(parts[idx + 1])
+                            if current > max_boost:
+                                subprocess.run(
+                                    ["amixer", "-c", card_num, "sset",
+                                     ctrl_name, str(max_boost)],
+                                    capture_output=True, timeout=5,
+                                )
+                                print(
+                                    f"Limited {ctrl_name} from {current} to {max_boost}",
+                                    file=sys.stderr,
+                                )
+                        except (ValueError, IndexError):
+                            pass
+                        break
+
+            # Set capture volume to optimal level
+            elif ctrl_name == "Capture":
+                result2 = subprocess.run(
+                    ["amixer", "-c", card_num, "sget", "Capture"],
+                    capture_output=True, text=True, timeout=5,
+                )
+                if result2.returncode != 0:
+                    continue
+                current_pct = -1
+                for val_line in result2.stdout.splitlines():
+                    if "Front Left:" in val_line:
+                        pct_start = val_line.find("[")
+                        pct_end = val_line.find("%]")
+                        if pct_start >= 0 and pct_end > pct_start:
+                            with contextlib.suppress(ValueError):
+                                current_pct = int(val_line[pct_start + 1:pct_end])
+                        break
+                if current_pct != capture_percent:
+                    subprocess.run(
+                        ["amixer", "-c", card_num, "sset", "Capture",
+                         f"{capture_percent}%"],
+                        capture_output=True, timeout=5,
+                    )
+                    print(
+                        f"Set Capture volume from {current_pct}% to {capture_percent}%",
+                        file=sys.stderr,
+                    )
+    except Exception:
+        pass
+
+
 def configure_filter_source() -> bool:
     """Configure the filter source (unmute and set volume)."""
+    optimize_mic_gain()
     source_name = get_filter_source()
     if not source_name:
         print("Warning: Could not find filter-chain source", file=sys.stderr)
@@ -199,6 +307,7 @@ def generate_config() -> bool:
             noise_reduction_voice_enhance=settings.noise_reduction.voice_enhance,
             noise_reduction_model_blending=settings.noise_reduction.model_blending,
             noise_reduction_noise_gate=settings.noise_reduction.noise_gate,
+            noise_reduction_hf_level=settings.noise_reduction.hf_level,
             compressor_enabled=settings.compressor.enabled,
             compressor_threshold_db=settings.compressor.threshold_db,
             compressor_ratio=settings.compressor.ratio,

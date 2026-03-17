@@ -78,24 +78,15 @@ TOOLTIPS = {
         "• 200ms: Safest for fast speakers\n\n"
         "Higher values add a small delay to the audio."
     ),
-    "voice_enhance": _(
-        "Restores voice quality that may be lost during filtering.\n\n"
-        "When noise removal is aggressive, the voice can sound\n"
-        "muffled or thin. This control brings back naturalness.\n\n"
-        "• Off: No recovery\n"
+    "voice_recovery": _(
+        "Restores high-frequency detail lost during filtering.\n\n"
+        "Noise removal can make voices sound muffled or thin.\n"
+        "This control reconstructs the treble frequencies\n"
+        "to bring back clarity and presence.\n\n"
+        "• Off: No HF reconstruction\n"
         "• 3: Good balance for most voices\n"
-        "• 5: Maximum voice restoration\n\n"
+        "• 5: Maximum clarity restoration\n\n"
         "Recommended: keep between 3 and 5."
-    ),
-    "noise_gate": _(
-        "Suppresses non-vocal sounds between speech.\n\n"
-        "Detects and reduces noises like paper rustling,\n"
-        "candy wrappers, and mouse clicks that happen\n"
-        "when you're not talking.\n\n"
-        "• Off: No extra suppression\n"
-        "• 3: Moderate suppression\n"
-        "• 5: Aggressive suppression\n\n"
-        "If speech sounds cut or clipped, lower this value."
     ),
     # Compressor (Volume Normalizer) section
     "compressor_toggle": _(
@@ -216,6 +207,21 @@ TOOLTIPS = {
         "Helps the AEC distinguish speech from noise.\n"
         "Can improve echo removal accuracy but may interfere\n"
         "with the main noise reduction. Disabled by default."
+    ),
+    # AGC section
+    "agc_toggle": _(
+        "Automatic Volume Control.\n\n"
+        "Uses a compressor in the PipeWire filter chain to\n"
+        "automatically normalize your microphone level.\n"
+        "Keeps your voice at a consistent volume regardless\n"
+        "of how close or far you are from the microphone."
+    ),
+    "agc_target_level": _(
+        "Target signal level for the microphone.\n\n"
+        "Controls the output level of the automatic\n"
+        "volume normalizer.\n"
+        "100% = close to 0 dBFS (loudest).\n"
+        "70% ≈ −7 dBFS (comfortable). Default: 70%."
     ),
 }
 
@@ -365,6 +371,7 @@ class TooltipHelper:
 
     def _show_tooltip(self):
         """Display the tooltip popover."""
+        self.show_timer_id = None  # Timer has fired, clear reference
         if not self.active_widget or not self.popover:
             return GLib.SOURCE_REMOVE
 

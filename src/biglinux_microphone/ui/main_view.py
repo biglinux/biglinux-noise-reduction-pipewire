@@ -36,9 +36,10 @@ from biglinux_microphone.config import (
     LOOKAHEAD_MS_MAX,
     LOOKAHEAD_MS_MIN,
     LOOKAHEAD_MS_STEP,
-    NOISE_GATE_DEFAULT,
-    NOISE_GATE_MAX,
-    NOISE_GATE_MIN,
+    VOICE_RECOVERY_DEFAULT,
+    VOICE_RECOVERY_MAX,
+    VOICE_RECOVERY_MIN,
+    VOICE_RECOVERY_STEP,
     SPEECH_STRENGTH_DEFAULT,
     SPEECH_STRENGTH_MAX,
     SPEECH_STRENGTH_MIN,
@@ -48,9 +49,16 @@ from biglinux_microphone.config import (
     STRENGTH_DEFAULT,
     STRENGTH_MAX,
     STRENGTH_MIN,
-    VOICE_ENHANCE_DEFAULT,
-    VOICE_ENHANCE_MAX,
-    VOICE_ENHANCE_MIN,
+    AGC_TARGET_LEVEL_DEFAULT,
+    AGC_TARGET_LEVEL_MAX,
+    AGC_TARGET_LEVEL_MIN,
+    AGC_MIN_VOLUME_DEFAULT,
+    AGC_MAX_VOLUME_DEFAULT,
+    AGC_VOLUME_LIMIT_MIN,
+    AGC_VOLUME_LIMIT_MAX,
+    AGC_REACTIVITY_MIN,
+    AGC_REACTIVITY_MAX,
+    AGC_REACTIVITY_DEFAULT,
     AppSettings,
     NoiseModel,
     StereoMode,
@@ -185,6 +193,10 @@ class MainView(Adw.NavigationPage):
         echo_group = self._create_echo_cancel_section()
         main_box.append(echo_group)
 
+        # === Automatic Gain Control ===
+        agc_group = self._create_agc_section()
+        main_box.append(agc_group)
+
         # === Headphone Monitor ===
         monitor_group = self._create_monitor_section()
         main_box.append(monitor_group)
@@ -277,8 +289,7 @@ class MainView(Adw.NavigationPage):
         self._add_tooltip(self._strength_row, "noise_reduction_strength")
         self._add_tooltip(self._speech_strength_row, "voice_preservation")
         self._add_tooltip(self._lookahead_row, "lookahead")
-        self._add_tooltip(self._voice_enhance_row, "voice_enhance")
-        self._add_tooltip(self._noise_gate_row, "noise_gate")
+        self._add_tooltip(self._voice_recovery_row, "voice_recovery")
         self._add_tooltip(self._model_select_row, "model_select")
 
         # Voice Effects section
@@ -305,6 +316,10 @@ class MainView(Adw.NavigationPage):
         self._add_tooltip(self._aec_gain_row, "echo_cancel_gain")
         self._add_tooltip(self._aec_ns_row, "echo_cancel_ns")
         self._add_tooltip(self._aec_vad_row, "echo_cancel_vad")
+
+        # AGC section
+        self._add_tooltip(self._agc_expander, "agc_toggle")
+        self._add_tooltip(self._agc_target_row, "agc_target_level")
 
     # =========================================================================
     # Section Builders
@@ -412,36 +427,15 @@ class MainView(Adw.NavigationPage):
         )
         self._nr_expander.add_row(self._lookahead_row)
 
-        # Voice Enhancement slider
-        self._voice_enhance_row, self._voice_enhance_scale = (
-            create_action_row_with_scale(
-                _("Voice Recovery"),
-                min_value=VOICE_ENHANCE_MIN,
-                max_value=VOICE_ENHANCE_MAX,
-                value=VOICE_ENHANCE_DEFAULT,
-                step=0.05,
-                digits=0,
-                on_changed=self._on_voice_enhance_changed,
-                marks=[
-                    (0.0, _("Off")),
-                    (0.25, "2"),
-                    (0.5, "3"),
-                    (0.75, "4"),
-                    (1.0, "5"),
-                ],
-            )
-        )
-        self._nr_expander.add_row(self._voice_enhance_row)
-
-        # Noise Gate slider (spectral flatness + HF click detection)
-        self._noise_gate_row, self._noise_gate_scale = create_action_row_with_scale(
-            _("Noise Gate"),
-            min_value=NOISE_GATE_MIN,
-            max_value=NOISE_GATE_MAX,
-            value=NOISE_GATE_DEFAULT,
-            step=0.05,
+        # Voice Recovery slider (high-frequency band reconstruction)
+        self._voice_recovery_row, self._voice_recovery_scale = create_action_row_with_scale(
+            _("Voice Recovery"),
+            min_value=VOICE_RECOVERY_MIN,
+            max_value=VOICE_RECOVERY_MAX,
+            value=VOICE_RECOVERY_DEFAULT,
+            step=VOICE_RECOVERY_STEP,
             digits=0,
-            on_changed=self._on_noise_gate_changed,
+            on_changed=self._on_voice_recovery_changed,
             marks=[
                 (0.0, _("Off")),
                 (0.25, "2"),
@@ -450,7 +444,7 @@ class MainView(Adw.NavigationPage):
                 (1.0, "5"),
             ],
         )
-        self._nr_expander.add_row(self._noise_gate_row)
+        self._nr_expander.add_row(self._voice_recovery_row)
 
         return group
 
@@ -724,6 +718,85 @@ class MainView(Adw.NavigationPage):
 
         return group
 
+    def _create_agc_section(self) -> Adw.PreferencesGroup:
+        """Create automatic gain control section."""
+        group = create_preferences_group("", "")
+
+        self._agc_expander, self._agc_switch = create_expander_row_with_switch(
+            _("Automatic Volume Control"),
+            subtitle=_(
+                "Keeps your microphone volume at a consistent level"
+            ),
+            icon_name="audio-input-microphone-symbolic",
+            active=True,
+            expanded=False,
+            on_toggled=self._on_agc_toggled,
+        )
+
+        # Target Signal Level
+        self._agc_target_row, self._agc_target_scale = create_action_row_with_scale(
+            _("Signal Level"),
+            min_value=AGC_TARGET_LEVEL_MIN,
+            max_value=AGC_TARGET_LEVEL_MAX,
+            value=AGC_TARGET_LEVEL_DEFAULT,
+            step=1,
+            digits=0,
+            on_changed=self._on_agc_target_changed,
+        )
+        self._agc_target_row.set_subtitle(
+            _("Target signal peak the microphone should reach")
+        )
+        self._agc_expander.add_row(self._agc_target_row)
+
+        # Minimum Volume
+        self._agc_min_vol_row, self._agc_min_vol_scale = create_action_row_with_scale(
+            _("Minimum Volume"),
+            min_value=AGC_VOLUME_LIMIT_MIN,
+            max_value=AGC_VOLUME_LIMIT_MAX,
+            value=AGC_MIN_VOLUME_DEFAULT,
+            step=1,
+            digits=0,
+            on_changed=self._on_agc_min_volume_changed,
+        )
+        self._agc_min_vol_row.set_subtitle(
+            _("AGC will not reduce volume below this level")
+        )
+        self._agc_expander.add_row(self._agc_min_vol_row)
+
+        # Maximum Volume
+        self._agc_max_vol_row, self._agc_max_vol_scale = create_action_row_with_scale(
+            _("Maximum Volume"),
+            min_value=AGC_VOLUME_LIMIT_MIN,
+            max_value=AGC_VOLUME_LIMIT_MAX,
+            value=AGC_MAX_VOLUME_DEFAULT,
+            step=1,
+            digits=0,
+            on_changed=self._on_agc_max_volume_changed,
+        )
+        self._agc_max_vol_row.set_subtitle(
+            _("AGC will not raise volume above this level")
+        )
+        self._agc_expander.add_row(self._agc_max_vol_row)
+
+        # Reactivity (speed of adjustment)
+        self._agc_reactivity_row, self._agc_reactivity_scale = create_action_row_with_scale(
+            _("Reactivity"),
+            min_value=AGC_REACTIVITY_MIN,
+            max_value=AGC_REACTIVITY_MAX,
+            value=AGC_REACTIVITY_DEFAULT,
+            step=1,
+            digits=0,
+            on_changed=self._on_agc_reactivity_changed,
+        )
+        self._agc_reactivity_row.set_subtitle(
+            _("How fast the volume adjusts — higher is faster")
+        )
+        self._agc_expander.add_row(self._agc_reactivity_row)
+
+        group.add(self._agc_expander)
+
+        return group
+
     def _create_bluetooth_section(self) -> Adw.PreferencesGroup:
         """Create bluetooth section (directly visible)."""
         group = create_preferences_group("", "")
@@ -785,6 +858,8 @@ class MainView(Adw.NavigationPage):
             # Noise reduction
             is_enabled = self._pipewire.is_enabled()
             self._main_switch.set_active(is_enabled)
+            if is_enabled:
+                self._pipewire.ensure_gain_monitoring()
 
             # Strength
             self._strength_scale.set_value(self._settings.noise_reduction.strength)
@@ -795,11 +870,10 @@ class MainView(Adw.NavigationPage):
             )
             self._lookahead_scale.set_value(self._settings.noise_reduction.lookahead_ms)
 
-            # Unified controls
-            self._voice_enhance_scale.set_value(
-                self._settings.noise_reduction.voice_enhance
+            # Voice Recovery control
+            self._voice_recovery_scale.set_value(
+                self._settings.noise_reduction.voice_recovery
             )
-            self._noise_gate_scale.set_value(self._settings.noise_reduction.noise_gate)
 
             # AI Model selector: derive combo index from model + blending
             nr = self._settings.noise_reduction
@@ -819,6 +893,28 @@ class MainView(Adw.NavigationPage):
             self._aec_gain_switch.set_active(self._settings.echo_cancel.gain_control)
             self._aec_ns_switch.set_active(self._settings.echo_cancel.noise_suppression)
             self._aec_vad_switch.set_active(self._settings.echo_cancel.voice_detection)
+
+            # AGC
+            self._agc_switch.set_active(self._settings.agc.enabled)
+            self._agc_target_scale.set_value(self._settings.agc.target_level_dbfs)
+            _agc_tgt = self._settings.agc.target_level_dbfs
+            _agc_db = -20.0 + (_agc_tgt - 10) * (19.0 / 90.0)
+            self._agc_target_row.set_subtitle(
+                _("Target signal peak: {db:.0f} dBFS").format(db=_agc_db)
+            )
+            self._agc_min_vol_scale.set_value(self._settings.agc.min_volume)
+            self._agc_min_vol_row.set_subtitle(
+                _("AGC will not reduce volume below {v}%").format(
+                    v=self._settings.agc.min_volume
+                )
+            )
+            self._agc_max_vol_scale.set_value(self._settings.agc.max_volume)
+            self._agc_max_vol_row.set_subtitle(
+                _("AGC will not raise volume above {v}%").format(
+                    v=self._settings.agc.max_volume
+                )
+            )
+            self._agc_reactivity_scale.set_value(self._settings.agc.reactivity)
 
             # Headphone Monitor
             self._monitor_switch.set_active(self._settings.monitor.enabled)
@@ -950,8 +1046,7 @@ class MainView(Adw.NavigationPage):
         self._strength_row.set_sensitive(nr_enabled)
         self._speech_strength_row.set_sensitive(nr_enabled)
         self._lookahead_row.set_sensitive(nr_enabled)
-        self._voice_enhance_row.set_sensitive(nr_enabled)
-        self._noise_gate_row.set_sensitive(nr_enabled)
+        self._voice_recovery_row.set_sensitive(nr_enabled)
         self._model_select_row.set_sensitive(nr_enabled)
 
         # All sections depend on noise reduction except Bluetooth
@@ -1258,27 +1353,16 @@ class MainView(Adw.NavigationPage):
         self._schedule_settings_save()
         self._pipewire.set_lookahead_ms(ms)
 
-    def _on_voice_enhance_changed(self, value: float) -> None:
+    def _on_voice_recovery_changed(self, value: float) -> None:
         if self._loading:
             return
         pct = int(value * 100)
-        self._voice_enhance_row.set_subtitle(
+        self._voice_recovery_row.set_subtitle(
             _("Voice recovery: {percent}%").format(percent=pct)
         )
-        self._settings.noise_reduction.voice_enhance = value
+        self._settings.noise_reduction.voice_recovery = value
         self._schedule_settings_save()
-        self._pipewire.set_voice_enhance(value)
-
-    def _on_noise_gate_changed(self, value: float) -> None:
-        if self._loading:
-            return
-        pct = int(value * 100)
-        self._noise_gate_row.set_subtitle(
-            _("Noise gate: {percent}%").format(percent=pct)
-        )
-        self._settings.noise_reduction.noise_gate = value
-        self._schedule_settings_save()
-        self._pipewire.set_noise_gate(value)
+        self._pipewire.set_voice_recovery(value)
 
     def _on_model_select_changed(self, index: int) -> None:
         """Handle AI model selector change.
@@ -1685,6 +1769,71 @@ class MainView(Adw.NavigationPage):
             return
         self._settings.echo_cancel.voice_detection = active
         self._on_aec_option_changed()
+
+    # =========================================================================
+    # AGC Handlers
+    # =========================================================================
+
+    def _on_agc_toggled(self, active: bool) -> None:
+        """Handle AGC toggle (config saved for the Rust AGC service)."""
+        if self._loading:
+            return
+        self._settings.agc.enabled = active
+        self._pipewire.set_agc_enabled(active)
+        self._settings_service.save(self._settings)
+
+    def _on_agc_target_changed(self, value: float) -> None:
+        """Handle AGC target signal level change (config saved for the Rust AGC service)."""
+        if self._loading:
+            return
+        level = int(value)
+        self._settings.agc.target_level_dbfs = level
+        # Map 10–100 → −20..−1 dBFS for display
+        target_db = -20.0 + (level - 10) * (19.0 / 90.0)
+        self._agc_target_row.set_subtitle(
+            _("Target signal peak: {db:.0f} dBFS").format(db=target_db)
+        )
+        self._pipewire.set_agc_target_level(level)
+        self._schedule_settings_save()
+
+    def _on_agc_min_volume_changed(self, value: float) -> None:
+        """Handle AGC minimum volume change."""
+        if self._loading:
+            return
+        vol = int(value)
+        # Ensure min <= max
+        if vol > self._settings.agc.max_volume:
+            vol = self._settings.agc.max_volume
+            self._agc_min_vol_scale.set_value(vol)
+        self._settings.agc.min_volume = vol
+        self._agc_min_vol_row.set_subtitle(
+            _("AGC will not reduce volume below {v}%").format(v=vol)
+        )
+        self._schedule_settings_save()
+
+    def _on_agc_max_volume_changed(self, value: float) -> None:
+        """Handle AGC maximum volume change."""
+        if self._loading:
+            return
+        vol = int(value)
+        # Ensure max >= min
+        if vol < self._settings.agc.min_volume:
+            vol = self._settings.agc.min_volume
+            self._agc_max_vol_scale.set_value(vol)
+        self._settings.agc.max_volume = vol
+        self._agc_max_vol_row.set_subtitle(
+            _("AGC will not raise volume above {v}%").format(v=vol)
+        )
+        self._schedule_settings_save()
+
+    def _on_agc_reactivity_changed(self, value: float) -> None:
+        """Handle AGC reactivity change."""
+        if self._loading:
+            return
+        self._settings.agc.reactivity = int(value)
+        self._schedule_settings_save()
+
+    # =========================================================================
 
     def _on_monitor_toggled(self, active: bool) -> None:
         """Handle headphone monitor toggle."""

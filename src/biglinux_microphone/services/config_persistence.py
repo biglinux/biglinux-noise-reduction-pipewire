@@ -43,9 +43,8 @@ class FilterChainState:
     noise_reduction_strength: float = 1.0
     noise_reduction_speech_strength: float = 1.0
     noise_reduction_lookahead_ms: int = 50
-    noise_reduction_voice_enhance: float = 0.25
     noise_reduction_model_blending: float = 0.0
-    noise_reduction_noise_gate: float = 0.5
+    noise_reduction_voice_recovery: float = 0.75
 
     # HPF settings
     hpf_enabled: bool = True
@@ -53,11 +52,11 @@ class FilterChainState:
 
     # Compressor settings
     compressor_enabled: bool = True
-    compressor_intensity: float = 0.5
+    compressor_intensity: float = 0.25
 
     # Gate settings
     gate_enabled: bool = True
-    gate_intensity: float = 0.5
+    gate_intensity: float = 0.25
 
     # Stereo settings
     stereo_mode: StereoMode = StereoMode.MONO
@@ -104,9 +103,8 @@ class FilterChainState:
             noise_reduction_strength=self.noise_reduction_strength,
             noise_reduction_speech_strength=self.noise_reduction_speech_strength,
             noise_reduction_lookahead_ms=self.noise_reduction_lookahead_ms,
-            noise_reduction_voice_enhance=self.noise_reduction_voice_enhance,
             noise_reduction_model_blending=self.noise_reduction_model_blending,
-            noise_reduction_noise_gate=self.noise_reduction_noise_gate,
+            noise_reduction_voice_recovery=self.noise_reduction_voice_recovery,
             compressor_enabled=self.compressor_enabled,
             compressor_threshold_db=self._compressor.threshold_db,
             compressor_ratio=self._compressor.ratio,
