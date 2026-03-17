@@ -52,6 +52,7 @@ build() {
 
 	# Build Rust AGC service
 	cd "${InternalDir}/mic-agc"
+	export CC=clang
 	cargo build --release --locked
 }
 
