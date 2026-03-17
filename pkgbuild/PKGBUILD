@@ -1,5 +1,6 @@
 # Maintainer: Bruno Goncalves <bigbruno@gmail.com>
 
+
 pkgname=biglinux-noise-reduction-pipewire
 pkgver=$(date +%y.%m.%d)
 pkgrel=$(date +%H%M)
@@ -12,6 +13,8 @@ makedepends=(
 	'rust'
 	'clang'
 	'pkg-config'
+	'libpipewire'
+	'pkgconf'
 )
 depends=(
 	'gtcrn-ladspa'
