@@ -24,6 +24,10 @@ msgstr "Määritä..."
 msgid "Microphone Settings"
 msgstr "Mikrofonin asetukset"
 # 
+# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/ui/main_view.py, line: 258
+msgid "Loading, please wait"
+msgstr "Ladataan, ole hyvä ja odota"
+# 
 # File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/ui/main_view.py, line: 227
 msgid "Applying settings…"
 msgstr "Asetusten soveltaminen…"
@@ -173,12 +177,6 @@ msgstr "Bändit"
 # File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/ui/main_view.py, line: 500
 msgid "Adjust each frequency"
 msgstr "Säädä jokainen taajuus"
-# 
-#
-# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/audio/filter_chain.py
-msgid "Enhanced Microphone"
-msgstr "Paranneltu mikrofoni"
-
 # File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/ui/main_view.py, line: 687
 msgid "Echo Cancellation"
 msgstr "Kaikujen poisto"
@@ -347,6 +345,10 @@ msgstr "Valvo palautteen viivettä. Hyödyllinen synkronoinnin tarkistamiseen. (
 msgid "Noise reduction disabled"
 msgstr "Melun vähennys pois päältä"
 # 
+# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/ui/main_view.py, line: 1249
+msgid "Failed to apply settings. Please try again."
+msgstr "Asetusten soveltaminen epäonnistui. Yritä uudelleen."
+# 
 # File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/ui/main_view.py, line: 1051
 #, python-brace-format
 msgid "Filter intensity during speech ({percent}%)"
@@ -396,6 +398,11 @@ msgstr "Asetukset palautettu onnistuneesti"
 # File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/ui/main_view.py, line: 1361
 msgid "All settings have been restored!"
 msgstr "Kaikki asetukset on palautettu!"
+# 
+# 
+# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/audio/filter_chain.py
+msgid "Enhanced Microphone"
+msgstr "Paranneltu mikrofoni"
 # 
 # File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/utils/tooltip_helper.py, line: 41
 msgid ""

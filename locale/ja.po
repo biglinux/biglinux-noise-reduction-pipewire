@@ -24,6 +24,10 @@ msgstr "設定..."
 msgid "Microphone Settings"
 msgstr "マイク設定"
 # 
+# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/ui/main_view.py, line: 258
+msgid "Loading, please wait"
+msgstr "読み込み中、しばらくお待ちください"
+# 
 # File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/ui/main_view.py, line: 227
 msgid "Applying settings…"
 msgstr "設定を適用中…"
@@ -173,12 +177,6 @@ msgstr "バンド"
 # File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/ui/main_view.py, line: 500
 msgid "Adjust each frequency"
 msgstr "各周波数を調整する"
-# 
-#
-# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/audio/filter_chain.py
-msgid "Enhanced Microphone"
-msgstr "高機能マイク"
-
 # File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/ui/main_view.py, line: 687
 msgid "Echo Cancellation"
 msgstr "エコーキャンセリング"
@@ -347,6 +345,10 @@ msgstr "フィードバック遅延を監視します。同期を確認するの
 msgid "Noise reduction disabled"
 msgstr "ノイズリダクション無効"
 # 
+# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/ui/main_view.py, line: 1249
+msgid "Failed to apply settings. Please try again."
+msgstr "設定の適用に失敗しました。もう一度お試しください。"
+# 
 # File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/ui/main_view.py, line: 1051
 #, python-brace-format
 msgid "Filter intensity during speech ({percent}%)"
@@ -396,6 +398,11 @@ msgstr "設定が正常に復元されました"
 # File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/ui/main_view.py, line: 1361
 msgid "All settings have been restored!"
 msgstr "すべての設定が復元されました！"
+# 
+# 
+# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/audio/filter_chain.py
+msgid "Enhanced Microphone"
+msgstr "高機能マイク"
 # 
 # File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/utils/tooltip_helper.py, line: 41
 msgid ""

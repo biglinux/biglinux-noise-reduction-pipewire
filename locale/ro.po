@@ -24,6 +24,10 @@ msgstr "Configurează..."
 msgid "Microphone Settings"
 msgstr "Setări microfon"
 # 
+# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/ui/main_view.py, line: 258
+msgid "Loading, please wait"
+msgstr "Se încarcă, vă rugăm să așteptați"
+# 
 # File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/ui/main_view.py, line: 227
 msgid "Applying settings…"
 msgstr "Aplicarea setărilor…"
@@ -173,12 +177,6 @@ msgstr "Benzile"
 # File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/ui/main_view.py, line: 500
 msgid "Adjust each frequency"
 msgstr "Ajusta fiecare frecvență"
-# 
-#
-# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/audio/filter_chain.py
-msgid "Enhanced Microphone"
-msgstr "Microfon îmbunătățit"
-
 # File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/ui/main_view.py, line: 687
 msgid "Echo Cancellation"
 msgstr "Anularea ecoului"
@@ -347,6 +345,10 @@ msgstr "Monitorizați întârzierea feedback-ului. Util pentru verificarea sincr
 msgid "Noise reduction disabled"
 msgstr "Reducerea zgomotului dezactivată"
 # 
+# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/ui/main_view.py, line: 1249
+msgid "Failed to apply settings. Please try again."
+msgstr "Aplicarea setărilor a eșuat. Vă rugăm să încercați din nou."
+# 
 # File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/ui/main_view.py, line: 1051
 #, python-brace-format
 msgid "Filter intensity during speech ({percent}%)"
@@ -396,6 +398,11 @@ msgstr "Setările au fost restaurate cu succes."
 # File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/ui/main_view.py, line: 1361
 msgid "All settings have been restored!"
 msgstr "Toate setările au fost restaurate!"
+# 
+# 
+# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/audio/filter_chain.py
+msgid "Enhanced Microphone"
+msgstr "Microfon îmbunătățit"
 # 
 # File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/utils/tooltip_helper.py, line: 41
 msgid ""

@@ -24,6 +24,10 @@ msgstr "配置..."
 msgid "Microphone Settings"
 msgstr "麦克风设置"
 # 
+# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/ui/main_view.py, line: 258
+msgid "Loading, please wait"
+msgstr "加载中，请稍候"
+# 
 # File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/ui/main_view.py, line: 227
 msgid "Applying settings…"
 msgstr "应用设置…"
@@ -173,12 +177,6 @@ msgstr "乐队"
 # File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/ui/main_view.py, line: 500
 msgid "Adjust each frequency"
 msgstr "调整每个频率"
-# 
-#
-# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/audio/filter_chain.py
-msgid "Enhanced Microphone"
-msgstr "增强麦克风"
-
 # File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/ui/main_view.py, line: 687
 msgid "Echo Cancellation"
 msgstr "回声消除"
@@ -278,6 +276,10 @@ msgstr "监控反馈延迟。用于检查同步。"
 # File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/ui/main_view.py, line: 569
 msgid "0s"
 msgstr "0秒"
+# 
+# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/ui/main_view.py, line: 854
+# 
+# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/ui/main_view.py, line: 854
 # 
 # File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/ui/main_view.py, line: 844
 # 
@@ -441,6 +443,10 @@ msgstr "监控反馈延迟。用于检查同步。({delay} 毫秒)"
 msgid "Noise reduction disabled"
 msgstr "噪声消除已禁用"
 # 
+# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/ui/main_view.py, line: 1249
+msgid "Failed to apply settings. Please try again."
+msgstr "应用设置失败。请再试一次。"
+# 
 # File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/ui/main_view.py, line: 1051
 #, python-brace-format
 msgid "Filter intensity during speech ({percent}%)"
@@ -490,6 +496,11 @@ msgstr "设置成功恢复"
 # File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/ui/main_view.py, line: 1361
 msgid "All settings have been restored!"
 msgstr "所有设置已恢复！"
+# 
+# 
+# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/audio/filter_chain.py
+msgid "Enhanced Microphone"
+msgstr "增强麦克风"
 # 
 # File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/utils/tooltip_helper.py, line: 41
 msgid ""

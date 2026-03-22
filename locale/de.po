@@ -24,6 +24,10 @@ msgstr "Konfigurieren..."
 msgid "Microphone Settings"
 msgstr "Mikrofoneinstellungen"
 # 
+# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/ui/main_view.py, line: 258
+msgid "Loading, please wait"
+msgstr "Laden, bitte warten"
+# 
 # File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/ui/main_view.py, line: 227
 msgid "Applying settings…"
 msgstr "Einstellungen werden angewendet…"
@@ -173,12 +177,6 @@ msgstr "Bänder"
 # File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/ui/main_view.py, line: 500
 msgid "Adjust each frequency"
 msgstr "Jede Frequenz anpassen"
-# 
-#
-# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/audio/filter_chain.py
-msgid "Enhanced Microphone"
-msgstr "Verbessertes Mikrofon"
-
 # File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/ui/main_view.py, line: 687
 msgid "Echo Cancellation"
 msgstr "Echounterdrückung"
@@ -347,6 +345,10 @@ msgstr "Überwachungsverzögerung des Feedbacks. Nützlich zur Überprüfung der
 msgid "Noise reduction disabled"
 msgstr "Rauschunterdrückung deaktiviert"
 # 
+# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/ui/main_view.py, line: 1249
+msgid "Failed to apply settings. Please try again."
+msgstr "Fehler beim Anwenden der Einstellungen. Bitte versuchen Sie es erneut."
+# 
 # File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/ui/main_view.py, line: 1051
 #, python-brace-format
 msgid "Filter intensity during speech ({percent}%)"
@@ -396,6 +398,11 @@ msgstr "Einstellungen erfolgreich wiederhergestellt"
 # File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/ui/main_view.py, line: 1361
 msgid "All settings have been restored!"
 msgstr "Alle Einstellungen wurden wiederhergestellt!"
+# 
+# 
+# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/audio/filter_chain.py
+msgid "Enhanced Microphone"
+msgstr "Verbessertes Mikrofon"
 # 
 # File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/utils/tooltip_helper.py, line: 41
 msgid ""

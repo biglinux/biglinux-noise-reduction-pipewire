@@ -24,6 +24,10 @@ msgstr "Ρύθμιση..."
 msgid "Microphone Settings"
 msgstr "Ρυθμίσεις Μικροφώνου"
 # 
+# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/ui/main_view.py, line: 258
+msgid "Loading, please wait"
+msgstr "Φόρτωση, παρακαλώ περιμένετε"
+# 
 # File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/ui/main_view.py, line: 227
 msgid "Applying settings…"
 msgstr "Εφαρμογή ρυθμίσεων…"
@@ -173,12 +177,6 @@ msgstr "Μπάντες"
 # File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/ui/main_view.py, line: 500
 msgid "Adjust each frequency"
 msgstr "Ρυθμίστε κάθε συχνότητα"
-# 
-#
-# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/audio/filter_chain.py
-msgid "Enhanced Microphone"
-msgstr "Βελτιωμένο Μικρόφωνο"
-
 # File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/ui/main_view.py, line: 687
 msgid "Echo Cancellation"
 msgstr "Ακύρωση Ηχούς"
@@ -347,6 +345,10 @@ msgstr "Παρακολούθηση καθυστέρησης ανατροφοδό
 msgid "Noise reduction disabled"
 msgstr "Η μείωση θορύβου είναι απενεργοποιημένη."
 # 
+# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/ui/main_view.py, line: 1249
+msgid "Failed to apply settings. Please try again."
+msgstr "Αποτυχία εφαρμογής ρυθμίσεων. Παρακαλώ δοκιμάστε ξανά."
+# 
 # File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/ui/main_view.py, line: 1051
 #, python-brace-format
 msgid "Filter intensity during speech ({percent}%)"
@@ -396,6 +398,11 @@ msgstr "Οι ρυθμίσεις αποκαταστάθηκαν με επιτυχ
 # File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/ui/main_view.py, line: 1361
 msgid "All settings have been restored!"
 msgstr "Όλες οι ρυθμίσεις έχουν αποκατασταθεί!"
+# 
+# 
+# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/audio/filter_chain.py
+msgid "Enhanced Microphone"
+msgstr "Βελτιωμένο Μικρόφωνο"
 # 
 # File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/utils/tooltip_helper.py, line: 41
 msgid ""
