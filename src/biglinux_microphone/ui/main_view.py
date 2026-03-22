@@ -22,6 +22,16 @@ gi.require_version("Adw", "1")
 from gi.repository import Adw, GLib, Gtk
 
 from biglinux_microphone.config import (
+    AGC_MAX_VOLUME_DEFAULT,
+    AGC_MIN_VOLUME_DEFAULT,
+    AGC_REACTIVITY_DEFAULT,
+    AGC_REACTIVITY_MAX,
+    AGC_REACTIVITY_MIN,
+    AGC_TARGET_LEVEL_DEFAULT,
+    AGC_TARGET_LEVEL_MAX,
+    AGC_TARGET_LEVEL_MIN,
+    AGC_VOLUME_LIMIT_MAX,
+    AGC_VOLUME_LIMIT_MIN,
     COMPRESSOR_INTENSITY_DEFAULT,
     COMPRESSOR_INTENSITY_MAX,
     COMPRESSOR_INTENSITY_MIN,
@@ -36,10 +46,6 @@ from biglinux_microphone.config import (
     LOOKAHEAD_MS_MAX,
     LOOKAHEAD_MS_MIN,
     LOOKAHEAD_MS_STEP,
-    VOICE_RECOVERY_DEFAULT,
-    VOICE_RECOVERY_MAX,
-    VOICE_RECOVERY_MIN,
-    VOICE_RECOVERY_STEP,
     SPEECH_STRENGTH_DEFAULT,
     SPEECH_STRENGTH_MAX,
     SPEECH_STRENGTH_MIN,
@@ -49,16 +55,10 @@ from biglinux_microphone.config import (
     STRENGTH_DEFAULT,
     STRENGTH_MAX,
     STRENGTH_MIN,
-    AGC_TARGET_LEVEL_DEFAULT,
-    AGC_TARGET_LEVEL_MAX,
-    AGC_TARGET_LEVEL_MIN,
-    AGC_MIN_VOLUME_DEFAULT,
-    AGC_MAX_VOLUME_DEFAULT,
-    AGC_VOLUME_LIMIT_MIN,
-    AGC_VOLUME_LIMIT_MAX,
-    AGC_REACTIVITY_MIN,
-    AGC_REACTIVITY_MAX,
-    AGC_REACTIVITY_DEFAULT,
+    VOICE_RECOVERY_DEFAULT,
+    VOICE_RECOVERY_MAX,
+    VOICE_RECOVERY_MIN,
+    VOICE_RECOVERY_STEP,
     AppSettings,
     NoiseModel,
     StereoMode,
@@ -149,6 +149,14 @@ class MainView(Adw.NavigationPage):
         self._setup_ui()
         self._load_state()
         self._start_state_polling()
+
+    def do_unroot(self) -> None:
+        """Clean up timers and resources when widget is removed from tree."""
+        self._stop_state_polling()
+        self._eq_debouncer.cancel()
+        self._save_debouncer.cancel()
+        self._monitor_delay_debouncer.cancel()
+        super().do_unroot()
 
     def _setup_ui(self) -> None:
         """Set up the UI layout."""
@@ -245,6 +253,10 @@ class MainView(Adw.NavigationPage):
 
         self._loading_spinner = Adw.Spinner()
         self._loading_spinner.set_size_request(48, 48)
+        self._loading_spinner.update_property(
+            [Gtk.AccessibleProperty.LABEL],
+            [_("Loading, please wait")],
+        )
         loading_inner.append(self._loading_spinner)
 
         self._loading_label = Gtk.Label(label=_("Applying settings…"))
@@ -428,21 +440,23 @@ class MainView(Adw.NavigationPage):
         self._nr_expander.add_row(self._lookahead_row)
 
         # Voice Recovery slider (high-frequency band reconstruction)
-        self._voice_recovery_row, self._voice_recovery_scale = create_action_row_with_scale(
-            _("Voice Recovery"),
-            min_value=VOICE_RECOVERY_MIN,
-            max_value=VOICE_RECOVERY_MAX,
-            value=VOICE_RECOVERY_DEFAULT,
-            step=VOICE_RECOVERY_STEP,
-            digits=0,
-            on_changed=self._on_voice_recovery_changed,
-            marks=[
-                (0.0, _("Off")),
-                (0.25, "2"),
-                (0.5, "3"),
-                (0.75, "4"),
-                (1.0, "5"),
-            ],
+        self._voice_recovery_row, self._voice_recovery_scale = (
+            create_action_row_with_scale(
+                _("Voice Recovery"),
+                min_value=VOICE_RECOVERY_MIN,
+                max_value=VOICE_RECOVERY_MAX,
+                value=VOICE_RECOVERY_DEFAULT,
+                step=VOICE_RECOVERY_STEP,
+                digits=0,
+                on_changed=self._on_voice_recovery_changed,
+                marks=[
+                    (0.0, _("Off")),
+                    (0.25, "2"),
+                    (0.5, "3"),
+                    (0.75, "4"),
+                    (1.0, "5"),
+                ],
+            )
         )
         self._nr_expander.add_row(self._voice_recovery_row)
 
@@ -654,18 +668,14 @@ class MainView(Adw.NavigationPage):
 
         self._eq_sliders = []
         for i, freq in enumerate(EQ_BANDS):
-            slider = create_compact_eq_slider(
+            slider, scale = create_compact_eq_slider(
                 index=i,
                 freq=freq,
                 value=0.0,
                 on_changed=self._on_eq_band_changed,
             )
             eq_box.append(slider)
-            # Store reference to the scale widget
-            # The scale is the second child (after value label)
-            scale = slider.get_first_child().get_next_sibling()
-            if isinstance(scale, Gtk.Scale):
-                self._eq_sliders.append(scale)
+            self._eq_sliders.append(scale)
 
         self._eq_bands_row.add_suffix(eq_box)
         self._eq_expander.add_row(self._eq_bands_row)
@@ -679,9 +689,7 @@ class MainView(Adw.NavigationPage):
         self._echo_cancel_expander, self._echo_cancel_switch = (
             create_expander_row_with_switch(
                 _("Echo Cancellation"),
-                subtitle=_(
-                    "Reduces echo and feedback when using speakers"
-                ),
+                subtitle=_("Reduces echo and feedback when using speakers"),
                 icon_name="audio-speakers-symbolic",
                 active=False,
                 expanded=False,
@@ -724,9 +732,7 @@ class MainView(Adw.NavigationPage):
 
         self._agc_expander, self._agc_switch = create_expander_row_with_switch(
             _("Automatic Volume Control"),
-            subtitle=_(
-                "Keeps your microphone volume at a consistent level"
-            ),
+            subtitle=_("Keeps your microphone volume at a consistent level"),
             icon_name="audio-input-microphone-symbolic",
             active=True,
             expanded=False,
@@ -779,14 +785,16 @@ class MainView(Adw.NavigationPage):
         self._agc_expander.add_row(self._agc_max_vol_row)
 
         # Reactivity (speed of adjustment)
-        self._agc_reactivity_row, self._agc_reactivity_scale = create_action_row_with_scale(
-            _("Reactivity"),
-            min_value=AGC_REACTIVITY_MIN,
-            max_value=AGC_REACTIVITY_MAX,
-            value=AGC_REACTIVITY_DEFAULT,
-            step=1,
-            digits=0,
-            on_changed=self._on_agc_reactivity_changed,
+        self._agc_reactivity_row, self._agc_reactivity_scale = (
+            create_action_row_with_scale(
+                _("Reactivity"),
+                min_value=AGC_REACTIVITY_MIN,
+                max_value=AGC_REACTIVITY_MAX,
+                value=AGC_REACTIVITY_DEFAULT,
+                step=1,
+                digits=0,
+                on_changed=self._on_agc_reactivity_changed,
+            )
         )
         self._agc_reactivity_row.set_subtitle(
             _("How fast the volume adjusts — higher is faster")
@@ -841,7 +849,13 @@ class MainView(Adw.NavigationPage):
                 step=100,
                 digits=0,
                 on_changed=self._on_monitor_delay_changed,
-                marks=[(0, _("0s")), (1000, _("1s")), (2000, _("2s")), (3000, _("3s")), (5000, _("5s"))],
+                marks=[
+                    (0, _("0s")),
+                    (1000, _("1s")),
+                    (2000, _("2s")),
+                    (3000, _("3s")),
+                    (5000, _("5s")),
+                ],
             )
         )
         self._monitor_expander.add_row(self._monitor_delay_row)
@@ -1231,6 +1245,8 @@ class MainView(Adw.NavigationPage):
             self._settings.noise_reduction.enabled = False
             self._settings_service.save(self._settings)
             self._loading = False
+            if self._on_toast:
+                self._on_toast(_("Failed to apply settings. Please try again."), 5)
         elif not desired_state and actual_state:
             logger.warning("Pipeline still running after stop was requested")
 
@@ -1663,6 +1679,15 @@ class MainView(Adw.NavigationPage):
         # Save to disk
         self._settings_service.save(self._settings)
 
+        # Stop audio monitor before pipeline restart to avoid race conditions
+        # (source_check and watchdog timers firing during the transition)
+        if self._audio_monitor and hasattr(self._audio_monitor, "stop"):
+            self._audio_monitor.stop()
+
+        # Clear spectrum to avoid stale display
+        if self._spectrum:
+            self._spectrum.set_level(0.0)
+
         # Reload UI to reflect defaults
         self._load_state()
 
@@ -1685,6 +1710,9 @@ class MainView(Adw.NavigationPage):
                             self._on_toast, _("Settings successfully restored"), 3
                         )
                         GLib.idle_add(self._update_monitor_state)
+
+                # Restart audio monitor after pipeline is stable
+                GLib.idle_add(self._schedule_monitor_restart)
 
             loop = asyncio.new_event_loop()
             asyncio.set_event_loop(loop)
@@ -1725,9 +1753,9 @@ class MainView(Adw.NavigationPage):
             self._monitor_delay_scale.set_value(2000)
             self._loading = False
             self._monitor_delay_row.set_subtitle(
-                _("Monitor feedback delay. Useful for checking sync. ({delay} ms)").format(
-                    delay=2000
-                )
+                _(
+                    "Monitor feedback delay. Useful for checking sync. ({delay} ms)"
+                ).format(delay=2000)
             )
             if self._settings.monitor.enabled:
                 self._monitor_service.set_delay(2000)
@@ -1743,7 +1771,10 @@ class MainView(Adw.NavigationPage):
     def _on_aec_option_changed(self) -> None:
         """Restart pipeline when an AEC sub-option changes."""
         self._settings_service.save(self._settings)
-        if self._settings.echo_cancel.enabled and self._settings.noise_reduction.enabled:
+        if (
+            self._settings.echo_cancel.enabled
+            and self._settings.noise_reduction.enabled
+        ):
             self._show_loading()
             self._pipewire.apply_config(
                 self._settings, on_complete=self._on_restart_complete
@@ -1843,15 +1874,19 @@ class MainView(Adw.NavigationPage):
         logger.info("Headphone monitor toggled: %s", active)
 
         # Enforce minimum delay when AEC is active
-        if active and self._settings.echo_cancel.enabled and self._settings.monitor.delay_ms < 2000:
+        if (
+            active
+            and self._settings.echo_cancel.enabled
+            and self._settings.monitor.delay_ms < 2000
+        ):
             self._settings.monitor.delay_ms = 2000
             self._loading = True
             self._monitor_delay_scale.set_value(2000)
             self._loading = False
             self._monitor_delay_row.set_subtitle(
-                _("Monitor feedback delay. Useful for checking sync. ({delay} ms)").format(
-                    delay=2000
-                )
+                _(
+                    "Monitor feedback delay. Useful for checking sync. ({delay} ms)"
+                ).format(delay=2000)
             )
 
         self._settings.monitor.enabled = active
@@ -1934,30 +1969,21 @@ class MainView(Adw.NavigationPage):
 
     def _get_monitor_source(self) -> str:
         """Get the appropriate audio source for monitoring."""
-        import json
         import subprocess
 
-        # Prefer filtered source if noise reduction is active
+        # Use known filtered source name if noise reduction is active
         if self._settings.noise_reduction.enabled:
-
             try:
                 result = subprocess.run(
-                    ["pw-dump"],
+                    ["pactl", "list", "sources", "short"],
                     capture_output=True,
                     text=True,
                     timeout=2,
                 )
-
                 if result.returncode == 0:
-                    data = json.loads(result.stdout)
-                    for obj in data:
-                        if obj.get("type") != "PipeWire:Interface:Node":
-                            continue
-                        props = obj.get("info", {}).get("props", {})
-                        if props.get("filter.smart.name") == "big.filter-microphone":
-                            name = props.get("node.name")
-                            if name:
-                                return name
+                    for line in result.stdout.splitlines():
+                        if "big-noise-canceling-output" in line:
+                            return "big-noise-canceling-output"
             except Exception:
                 pass
 

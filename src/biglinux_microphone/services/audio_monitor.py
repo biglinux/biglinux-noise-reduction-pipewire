@@ -34,6 +34,7 @@ SPECTRUM_THRESHOLD_DB = -60
 # FFT parameters for NumPy-based spectrum analysis
 SAMPLE_RATE = 32000
 FFT_SIZE = 2048  # ~46ms window at 44100Hz
+MAX_BUFFER_SAMPLES = SAMPLE_RATE * 2  # Cap at 2 seconds to prevent OOM
 FREQ_MIN = 20.0
 FREQ_MAX = 16000.0
 
@@ -164,6 +165,7 @@ class AudioMonitor:
             return True
 
         self._callback = callback
+        self._last_callback = callback
         self._audio_buffer = []  # Reset buffer
 
         # Initial source detection
@@ -248,21 +250,30 @@ class AudioMonitor:
         logger.info("AudioMonitor stopped")
 
     def restart(self) -> None:
-        """Restart monitoring with current callback."""
-        if self._callback:
-            callback = self._callback
+        """Restart monitoring with current callback.
+
+        Saves the callback persistently so restart works even if
+        the monitor was already stopped (e.g., source disappeared).
+        """
+        callback = self._callback or getattr(self, "_last_callback", None)
+        if not callback:
+            return
+        self._last_callback = callback
+        if self._is_running:
             self.stop()
 
-            # Brief delay to allow cleanup and for filter chain to stabilize
-            def _restart_delayed():
-                self.start(callback)
-                return False
+        def _restart_delayed():
+            self.start(callback)
+            return False
 
-            GLib.timeout_add(500, _restart_delayed)
+        GLib.timeout_add(300, _restart_delayed)
 
     def _cleanup(self) -> None:
         """Clean up GStreamer resources."""
         if self._pipeline:
+            bus = self._pipeline.get_bus()
+            if bus:
+                bus.remove_signal_watch()
             self._pipeline.set_state(Gst.State.NULL)
             self._pipeline = None
 
@@ -277,8 +288,8 @@ class AudioMonitor:
     def _start_watchdog(self) -> None:
         """Start the watchdog timer to detect freezes."""
         self._last_sample_time = GLib.get_monotonic_time()
-        # Check every 2 seconds
-        self._watchdog_timer = GLib.timeout_add(2000, self._check_watchdog)
+        # Check every 1.5 seconds
+        self._watchdog_timer = GLib.timeout_add(1500, self._check_watchdog)
 
     def _stop_watchdog(self) -> None:
         """Stop the watchdog timer."""
@@ -300,12 +311,12 @@ class AudioMonitor:
         current_time = GLib.get_monotonic_time()
         elapsed = (current_time - self._last_sample_time) / 1_000_000
 
-        # If no samples for > 3 seconds, restart
-        if elapsed > 3.0:
+        # If no samples for > 2 seconds, restart
+        if elapsed > 2.0:
             logger.warning(
                 "AudioMonitor watchdog: No samples for %.1fs, restarting...", elapsed
             )
-            callback = self._callback
+            callback = self._callback or getattr(self, "_last_callback", None)
             self.stop()
             if callback:
                 self.start(callback)
@@ -330,54 +341,25 @@ class AudioMonitor:
 
     def _detect_filtered_source(self) -> str | None:
         """
-        Detect the noise-filtered microphone source using pw-dump.
+        Detect the noise-filtered microphone source.
 
-        More robust than parsing pactl output. Matches the specific
-        filter.smart.name property set in the filter-chain config.
+        Checks if 'big-noise-canceling-output' exists as a PulseAudio source.
+        This node.name is set in both smart and AEC filter-chain modes.
 
         Returns:
-            str: Node serial number as string, or None if not found.
+            str: Source name if found, or None.
         """
-        import json
-
         try:
-            # pw-dump is more efficient and reliable than parsing pactl text
-            # We look for the source node created by our filter chain
             result = subprocess.run(
-                ["pw-dump"],
+                ["pactl", "list", "sources", "short"],
                 capture_output=True,
                 text=True,
                 timeout=2,
             )
-
-            if result.returncode != 0:
-                return None
-
-            data = json.loads(result.stdout)
-
-            for obj in data:
-                # We are looking for a Node
-                if obj.get("type") != "PipeWire:Interface:Node":
-                    continue
-
-                props = obj.get("info", {}).get("props", {})
-
-                # Check for our specific smart filter name
-                # This is defined in filter_chain.py and set in the config
-                if props.get("filter.smart.name") == "big.filter-microphone":
-                    # We found our filter chain!
-                    # Return object.serial (most reliable persistent ID)
-                    # serial is an int, convert to str for GStreamer
-                    serial = props.get("object.serial")
-                    if serial:
-                        logger.debug(
-                            "Found filtered source via pw-dump: serial=%s", serial
-                        )
-                        return str(serial)
-
+            if result.returncode == 0 and "big-noise-canceling-output" in result.stdout:
+                return "big-noise-canceling-output"
         except Exception:
-            logger.exception("Error detecting filtered source")
-
+            pass
         return None
 
     def _on_new_sample(self, sink: Gst.Element) -> Gst.FlowReturn:
@@ -406,6 +388,10 @@ class AudioMonitor:
             # Get audio samples as float32
             data = np.frombuffer(map_info.data, dtype=np.float32)
             self._audio_buffer.extend(data.tolist())
+
+            # Prevent unbounded growth if processing can't keep up
+            if len(self._audio_buffer) > MAX_BUFFER_SAMPLES:
+                self._audio_buffer = self._audio_buffer[-FFT_SIZE:]
 
             # Process when we have enough samples for FFT
             while len(self._audio_buffer) >= FFT_SIZE:

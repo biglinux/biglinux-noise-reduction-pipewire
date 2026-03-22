@@ -213,6 +213,11 @@ msgid "Adjust each frequency"
 msgstr "Adjust each frequency"
 
 #
+#
+# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/audio/filter_chain.py
+msgid "Enhanced Microphone"
+msgstr "Enhanced Microphone"
+
 # File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/ui/main_view.py, line: 681
 msgid "Echo Cancellation"
 msgstr "Echo Cancellation"

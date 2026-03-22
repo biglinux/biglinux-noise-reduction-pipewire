@@ -21,6 +21,7 @@ from biglinux_microphone.config import (
     StereoMode,
     get_model_control_value,
 )
+from biglinux_microphone.utils.i18n import _
 
 logger = logging.getLogger(__name__)
 
@@ -33,14 +34,14 @@ GTCRN_LIBRARY = "/usr/lib/ladspa/libgtcrn_ladspa.so"
 GTCRN_LABEL = "gtcrn_mono"
 
 
-# Gate Filter (Steve Harris gate_1410)
-GATE_LIBRARY = "/usr/lib/ladspa/gate_1410.so"
-GATE_LABEL = "gate"
+# Gate Filter (BigLinux gate with working bandpass key filter)
+GATE_LIBRARY = "/usr/lib/ladspa/libgtcrn_ladspa.so"
+GATE_LABEL = "biglinux_gate"
 # Key filter: sidechain listens to 200-4000 Hz (speech range) to decide
 # open/close, but passes all frequencies when open.
-# Values are fractions of sample rate (SAMPLE_RATE hint): Hz / 48000
-GATE_LF_KEY_FILTER = 200 / 48000   # ~0.00417
-GATE_HF_KEY_FILTER = 4000 / 48000  # ~0.08333
+# Values in Hz (handled directly by the plugin, no sample rate normalization).
+GATE_LF_KEY_FILTER = 200  # Hz highpass on sidechain
+GATE_HF_KEY_FILTER = 4000  # Hz lowpass on sidechain
 
 # Mono to Stereo Split (split_1406)
 SPLIT_LIBRARY = "/usr/lib/ladspa/split_1406.so"
@@ -58,7 +59,7 @@ GVERB_LABEL = "gverb"
 SPATIALISER_LIBRARY = "/usr/lib/ladspa/matrix_spatialiser_1422.so"
 SPATIALISER_LABEL = "matrixSpatialiser"
 
-# Amplifier (amp_1181) - for gain compensation
+# Amplifier (amp_1181) - for pitch gain compensation
 AMP_LIBRARY = "/usr/lib/ladspa/amp_1181.so"
 AMP_LABEL = "amp"
 
@@ -128,9 +129,11 @@ MBEQ_PARAM_NAMES = [
 CONFIG_DIR = Path.home() / ".config" / "pipewire" / "filter-chain.conf.d"
 CONFIG_FILE = "source-gtcrn-smart.conf"
 
-# Device name shown to user in audio settings
-DEVICE_NAME = "Noise Canceling Microphone"
+# Device name shown to user in audio settings (translated)
+DEVICE_NAME = _("Enhanced Microphone")
 FILTER_SMART_NAME = "big.filter-microphone"
+# Stable node name for detection (never translated)
+NODE_NAME_AEC = "big-noise-canceling-output"
 
 
 # ============================================================================
@@ -230,11 +233,12 @@ class FilterChainGenerator:
         """
         capture_target = ""
         if self._config.source_node_name:
-            safe_name = self._config.source_node_name.replace('"', '')
+            safe_name = self._config.source_node_name.replace('"', "")
             capture_target = f'\n                target.object = "{safe_name}"'
         gc = "true" if self._config.echo_cancel_gain_control else "false"
         ns = "true" if self._config.echo_cancel_noise_suppression else "false"
         vd = "true" if self._config.echo_cancel_voice_detection else "false"
+        aec_description = _("Echo Cancellation")
         return f"""    {{
         name = libpipewire-module-echo-cancel
         args = {{
@@ -254,8 +258,9 @@ class FilterChainGenerator:
             }}
             source.props = {{
                 node.name = "big-aec-source"
-                node.description = "BigLinux AEC"
+                node.description = "{aec_description}"
                 media.class = "Audio/Source"
+                volume = 1.0
             }}
         }}
     }},"""
@@ -291,6 +296,7 @@ class FilterChainGenerator:
                 media.class = "Audio/Source"
                 node.name = "big-noise-canceling-output"
                 node.description = "{DEVICE_NAME}"
+                volume = 1.0
             }}"""
         return f"""            playback.props = {{
                 node.pause-on-idle = false
@@ -299,6 +305,9 @@ class FilterChainGenerator:
                 filter.smart = true
                 media.class = "Audio/Source"
                 filter.smart.name = "{FILTER_SMART_NAME}"
+                node.name = "{NODE_NAME_AEC}"
+                node.description = "{DEVICE_NAME}"
+                volume = 1.0
             }}"""
 
     def generate(self) -> str:
@@ -328,11 +337,10 @@ class FilterChainGenerator:
                             "Threshold (dB)" = {c.gate_threshold_db}
                             "Attack (ms)" = {c.gate_attack_ms}
                             "Hold (ms)" = {c.gate_hold_ms}
-                            "Decay (ms)" = {c.gate_release_ms}
+                            "Release (ms)" = {c.gate_release_ms}
                             "Range (dB)" = {c.gate_range_db}
-                            "LF key filter (Hz)" = {GATE_LF_KEY_FILTER}
-                            "HF key filter (Hz)" = {GATE_HF_KEY_FILTER}
-                            "Output select (-1 = key listen, 0 = gate, 1 = bypass)" = 0
+                            "LF Key Filter (Hz)" = {GATE_LF_KEY_FILTER}
+                            "HF Key Filter (Hz)" = {GATE_HF_KEY_FILTER}
                         }}
                     }}'''
 
@@ -418,7 +426,9 @@ class FilterChainGenerator:
     def _generate_passthrough_config(self) -> str:
         """Generate passthrough config when no filters are enabled."""
         c = self._config
-        aec_module = self._generate_echo_cancel_module() if c.echo_cancel_enabled else ""
+        aec_module = (
+            self._generate_echo_cancel_module() if c.echo_cancel_enabled else ""
+        )
         if c.echo_cancel_enabled:
             capture_target = '\n                target.object = "big-aec-source"'
             capture_passive = ""
@@ -426,7 +436,7 @@ class FilterChainGenerator:
             capture_target = ""
             capture_passive = "\n                node.passive = true"
         playback_props = self._get_playback_props(
-            extra_props='\n                audio.position = [ FL FR ]'
+            extra_props="\n                audio.position = [ FL FR ]"
         )
         return f'''# BigLinux Microphone Enhanced Filter Chain
 # Auto-generated configuration - Passthrough (no filters)
@@ -475,7 +485,7 @@ context.modules = [
         # HPF removes rumble first, compressor evens volume before AI, AI cleans noise,
         # AGC normalizes level after AI, EQ shapes tone, gate mutes residual noise last.
         # NOTE: EQ must come before gate to work around a PipeWire 1.6.1 crash
-        # when gate_1410.so is loaded before mbeq_1197.so in the filter graph.
+        # when the gate plugin is loaded before mbeq_1197.so in the filter graph.
         # Each entry: (name, input_port, output_port)
         active_filters: list[tuple[str, str, str]] = []
         nodes: list[str] = []
@@ -548,7 +558,9 @@ context.modules = [
         nodes_str = "\n".join(nodes)
         links_str = "\n                    ".join(links) if links else ""
 
-        aec_module = self._generate_echo_cancel_module() if c.echo_cancel_enabled else ""
+        aec_module = (
+            self._generate_echo_cancel_module() if c.echo_cancel_enabled else ""
+        )
         if c.echo_cancel_enabled:
             capture_target = '\n                target.object = "big-aec-source"'
             capture_passive = ""
@@ -556,7 +568,7 @@ context.modules = [
             capture_target = ""
             capture_passive = "\n                node.passive = true"
         playback_props = self._get_playback_props(
-            extra_props='\n                audio.position = [ FL FR ]'
+            extra_props="\n                audio.position = [ FL FR ]"
         )
 
         return f'''# BigLinux Microphone Enhanced Filter Chain
@@ -748,7 +760,11 @@ context.modules = [
         nodes_str = "\n".join(nodes)
         links_str = "\n                    ".join(links)
 
-        aec_module = self._generate_echo_cancel_module() if self._config.echo_cancel_enabled else ""
+        aec_module = (
+            self._generate_echo_cancel_module()
+            if self._config.echo_cancel_enabled
+            else ""
+        )
         if self._config.echo_cancel_enabled:
             capture_target = '\n                target.object = "big-aec-source"'
             capture_passive = ""
@@ -756,7 +772,7 @@ context.modules = [
             capture_target = ""
             capture_passive = "\n                node.passive = true"
         playback_props = self._get_playback_props(
-            extra_props='\n                audio.position = [ FL FR ]'
+            extra_props="\n                audio.position = [ FL FR ]"
         )
 
         return f'''# BigLinux Microphone Enhanced Filter Chain
@@ -890,7 +906,11 @@ context.modules = [
         nodes_str = "\n".join(nodes)
         links_str = "\n                    ".join(links)
 
-        aec_module = self._generate_echo_cancel_module() if self._config.echo_cancel_enabled else ""
+        aec_module = (
+            self._generate_echo_cancel_module()
+            if self._config.echo_cancel_enabled
+            else ""
+        )
         if self._config.echo_cancel_enabled:
             capture_target = '\n                target.object = "big-aec-source"'
             capture_passive = ""
@@ -898,7 +918,7 @@ context.modules = [
             capture_target = ""
             capture_passive = "\n                node.passive = true"
         playback_props = self._get_playback_props(
-            extra_props='\n                audio.position = [ FL FR ]'
+            extra_props="\n                audio.position = [ FL FR ]"
         )
 
         return f'''# BigLinux Microphone Enhanced Filter Chain

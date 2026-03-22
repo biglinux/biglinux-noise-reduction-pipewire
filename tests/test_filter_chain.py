@@ -181,10 +181,10 @@ class TestFilterChainGenerator:
         assert '"Range (dB)" = -12' in content
         assert '"Attack (ms)" = 5.0' in content
         assert '"Hold (ms)" = 100.0' in content
-        assert '"Decay (ms)" = 30.0' in content
+        assert '"Release (ms)" = 30.0' in content
         # Key filter focuses sidechain on speech range (200-4000 Hz)
-        assert f'"LF key filter (Hz)" = {GATE_LF_KEY_FILTER}' in content
-        assert f'"HF key filter (Hz)" = {GATE_HF_KEY_FILTER}' in content
+        assert f'"LF Key Filter (Hz)" = {GATE_LF_KEY_FILTER}' in content
+        assert f'"HF Key Filter (Hz)" = {GATE_HF_KEY_FILTER}' in content
 
     def test_noise_reduction_parameters(self) -> None:
         """Test noise reduction parameters are correctly applied."""
@@ -298,13 +298,13 @@ class TestLADSPAConstants:
     def test_library_paths_defined(self) -> None:
         """Test all required LADSPA library paths are defined."""
         assert GTCRN_LIBRARY == "/usr/lib/ladspa/libgtcrn_ladspa.so"
-        assert GATE_LIBRARY == "/usr/lib/ladspa/gate_1410.so"
+        assert GATE_LIBRARY == "/usr/lib/ladspa/libgtcrn_ladspa.so"
         assert MBEQ_LIBRARY == "/usr/lib/ladspa/mbeq_1197.so"
 
     def test_labels_defined(self) -> None:
         """Test all required LADSPA labels are defined."""
         assert GTCRN_LABEL == "gtcrn_mono"
-        assert GATE_LABEL == "gate"
+        assert GATE_LABEL == "biglinux_gate"
         assert MBEQ_LABEL == "mbeq"
 
     def test_mbeq_bands(self) -> None:

@@ -499,7 +499,9 @@ class AppSettings:
                 speech_strength=nr.get("speech_strength", SPEECH_STRENGTH_DEFAULT),
                 lookahead_ms=nr.get("lookahead_ms", LOOKAHEAD_MS_DEFAULT),
                 model_blending=float(nr.get("model_blending", MODEL_BLENDING_DEFAULT)),
-                voice_recovery=nr.get("voice_recovery", nr.get("hf_level", VOICE_RECOVERY_DEFAULT)),
+                voice_recovery=nr.get(
+                    "voice_recovery", nr.get("hf_level", VOICE_RECOVERY_DEFAULT)
+                ),
             )
 
         if "gate" in data:
@@ -541,9 +543,12 @@ class AppSettings:
 
         if "equalizer" in data:
             eq = data["equalizer"]
+            bands = eq.get("bands", [EQ_BAND_DEFAULT] * EQ_BAND_COUNT)
+            if not isinstance(bands, list) or len(bands) != EQ_BAND_COUNT:
+                bands = [EQ_BAND_DEFAULT] * EQ_BAND_COUNT
             settings.equalizer = EqualizerConfig(
                 enabled=eq.get("enabled", False),
-                bands=eq.get("bands", [EQ_BAND_DEFAULT] * EQ_BAND_COUNT),
+                bands=bands,
                 preset=eq.get("preset", "flat"),
             )
 
@@ -644,8 +649,10 @@ def save_settings(settings: AppSettings) -> bool:
             data.get("equalizer", {}).get("enabled"),
             SETTINGS_FILE,
         )
-        with open(SETTINGS_FILE, "w", encoding="utf-8") as f:
+        tmp_file = SETTINGS_FILE.with_suffix(".tmp")
+        with open(tmp_file, "w", encoding="utf-8") as f:
             json.dump(data, f, indent=4)
+        tmp_file.replace(SETTINGS_FILE)
         logger.debug("Settings saved successfully")
         return True
     except OSError as e:

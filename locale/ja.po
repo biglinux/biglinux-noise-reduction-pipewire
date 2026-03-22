@@ -174,6 +174,11 @@ msgstr "バンド"
 msgid "Adjust each frequency"
 msgstr "各周波数を調整する"
 # 
+#
+# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/audio/filter_chain.py
+msgid "Enhanced Microphone"
+msgstr "高機能マイク"
+
 # File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/ui/main_view.py, line: 687
 msgid "Echo Cancellation"
 msgstr "エコーキャンセリング"

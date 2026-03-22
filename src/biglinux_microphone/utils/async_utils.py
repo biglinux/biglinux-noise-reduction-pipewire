@@ -147,7 +147,10 @@ class Debouncer:
         if self._pending_call:
             func, args, kwargs = self._pending_call
             self._pending_call = None
-            func(*args, **kwargs)
+            try:
+                func(*args, **kwargs)
+            except Exception:
+                logger.exception("Debounced callback failed")
         return False
 
     def cancel(self) -> None:

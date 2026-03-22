@@ -66,6 +66,7 @@ def kill_filter_processes() -> None:
 def get_filter_source() -> str | None:
     """Find the filter-chain source name in PulseAudio/PipeWire."""
     patterns = [
+        r"big-noise-canceling-output",
         r"output\.filter-chain[\w.-]*",
         r"big\.filter-microphone[\w.-]*",
     ]
@@ -90,13 +91,13 @@ def get_filter_source() -> str | None:
                 if len(parts) > 1:
                     return parts[1]
 
-        # Try finding by description
+        # Try finding by description (stable internal name)
         result = subprocess.run(
             ["pactl", "list", "sources"], capture_output=True, text=True, check=False
         )
         lines = result.stdout.splitlines()
         for i, line in enumerate(lines):
-            if "Noise Canceling Microphone" in line:
+            if "big-noise-canceling-output" in line or "big.filter-microphone" in line:
                 # Look backwards for "Name:"
                 for j in range(max(0, i - 5), i):
                     if "Name:" in lines[j]:
@@ -113,12 +114,15 @@ def _find_alsa_input_card() -> str | None:
     try:
         result = subprocess.run(
             ["pw-dump"],
-            capture_output=True, text=True, timeout=5,
+            capture_output=True,
+            text=True,
+            timeout=5,
         )
         if result.returncode != 0:
             return None
 
         import json
+
         for obj in json.loads(result.stdout):
             if obj.get("type") != "PipeWire:Interface:Node":
                 continue
@@ -143,7 +147,9 @@ def optimize_mic_gain(max_boost: int = 1, capture_percent: int = 70) -> None:
         # Use scontrols for simple mixer names (usable with sget/sset)
         result = subprocess.run(
             ["amixer", "-c", card_num, "scontrols"],
-            capture_output=True, text=True, timeout=5,
+            capture_output=True,
+            text=True,
+            timeout=5,
         )
         if result.returncode != 0:
             return
@@ -154,13 +160,15 @@ def optimize_mic_gain(max_boost: int = 1, capture_percent: int = 70) -> None:
             end = ctrl_line.rfind("'")
             if start < 0 or end <= start:
                 continue
-            ctrl_name = ctrl_line[start + 1:end]
+            ctrl_name = ctrl_line[start + 1 : end]
 
             # Limit mic boost controls
             if "Mic Boost" in ctrl_name:
                 result2 = subprocess.run(
                     ["amixer", "-c", card_num, "sget", ctrl_name],
-                    capture_output=True, text=True, timeout=5,
+                    capture_output=True,
+                    text=True,
+                    timeout=5,
                 )
                 if result2.returncode != 0:
                     continue
@@ -172,9 +180,16 @@ def optimize_mic_gain(max_boost: int = 1, capture_percent: int = 70) -> None:
                             current = int(parts[idx + 1])
                             if current > max_boost:
                                 subprocess.run(
-                                    ["amixer", "-c", card_num, "sset",
-                                     ctrl_name, str(max_boost)],
-                                    capture_output=True, timeout=5,
+                                    [
+                                        "amixer",
+                                        "-c",
+                                        card_num,
+                                        "sset",
+                                        ctrl_name,
+                                        str(max_boost),
+                                    ],
+                                    capture_output=True,
+                                    timeout=5,
                                 )
                                 print(
                                     f"Limited {ctrl_name} from {current} to {max_boost}",
@@ -188,7 +203,9 @@ def optimize_mic_gain(max_boost: int = 1, capture_percent: int = 70) -> None:
             elif ctrl_name == "Capture":
                 result2 = subprocess.run(
                     ["amixer", "-c", card_num, "sget", "Capture"],
-                    capture_output=True, text=True, timeout=5,
+                    capture_output=True,
+                    text=True,
+                    timeout=5,
                 )
                 if result2.returncode != 0:
                     continue
@@ -199,13 +216,20 @@ def optimize_mic_gain(max_boost: int = 1, capture_percent: int = 70) -> None:
                         pct_end = val_line.find("%]")
                         if pct_start >= 0 and pct_end > pct_start:
                             with contextlib.suppress(ValueError):
-                                current_pct = int(val_line[pct_start + 1:pct_end])
+                                current_pct = int(val_line[pct_start + 1 : pct_end])
                         break
                 if current_pct != capture_percent:
                     subprocess.run(
-                        ["amixer", "-c", card_num, "sset", "Capture",
-                         f"{capture_percent}%"],
-                        capture_output=True, timeout=5,
+                        [
+                            "amixer",
+                            "-c",
+                            card_num,
+                            "sset",
+                            "Capture",
+                            f"{capture_percent}%",
+                        ],
+                        capture_output=True,
+                        timeout=5,
                     )
                     print(
                         f"Set Capture volume from {current_pct}% to {capture_percent}%",
@@ -269,8 +293,7 @@ def set_pipewire_quantum(quantum: int) -> None:
     """Set PipeWire force-quantum via pw-metadata."""
     with contextlib.suppress(Exception):
         subprocess.run(
-            ["pw-metadata", "-n", "settings", "0",
-             "clock.force-quantum", str(quantum)],
+            ["pw-metadata", "-n", "settings", "0", "clock.force-quantum", str(quantum)],
             capture_output=True,
             timeout=3,
             check=False,
@@ -414,11 +437,11 @@ def cmd_start() -> int:
     # Wait for filter to register in PipeWire graph.
     # Process-aware polling: if the process dies, fail immediately.
     pid = proc.pid
-    max_wait = 10.0
-    poll_interval = 0.5
+    max_wait = 5.0
+    poll_interval = 0.15
     elapsed = 0.0
-    time.sleep(poll_interval)
-    elapsed += poll_interval
+    time.sleep(0.1)
+    elapsed += 0.1
     started = False
 
     while elapsed < max_wait:
@@ -437,9 +460,12 @@ def cmd_start() -> int:
                 ["pw-cli", "list-objects"],
                 capture_output=True,
                 text=True,
-                timeout=5,
+                timeout=2,
             )
-            if result.returncode == 0 and "Noise Canceling Microphone" in result.stdout:
+            if result.returncode == 0 and (
+                "big.filter-microphone" in result.stdout
+                or "big-noise-canceling-output" in result.stdout
+            ):
                 started = True
                 break
         except Exception:
@@ -451,10 +477,6 @@ def cmd_start() -> int:
     if not started:
         print(f"Warning: filter not detected after {elapsed:.1f}s", file=sys.stderr)
 
-    configure_filter_source()
-
-    # Brief retry for stability
-    time.sleep(1)
     configure_filter_source()
 
     return 0

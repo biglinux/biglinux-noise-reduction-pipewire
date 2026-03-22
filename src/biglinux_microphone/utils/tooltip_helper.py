@@ -130,8 +130,7 @@ TOOLTIPS = {
         "• Voice Changer: Changes voice pitch (deeper or higher)"
     ),
     "stereo_width": _(
-        "Intensity of the selected effect.\n\n"
-        "• Voice Changer: Pitch (low to high)"
+        "Intensity of the selected effect.\n\n• Voice Changer: Pitch (low to high)"
     ),
     # High-Pass Filter section
     "hpf_toggle": _(

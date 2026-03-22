@@ -395,37 +395,64 @@ struct StreamData {
 }
 
 // ---------------------------------------------------------------------------
-// Find ALSA source node via pw-dump (one-time at startup)
+// Parse pw-cli ls Node output into (id, props) pairs.
+// Much lighter than pw-dump and immune to the JSON corruption bug.
 // ---------------------------------------------------------------------------
 
-fn find_alsa_source_node() -> Option<u32> {
-    let output = Command::new("pw-dump")
+struct PwNode {
+    id: u32,
+    media_class: String,
+    node_name: String,
+}
+
+fn list_pw_nodes() -> Vec<PwNode> {
+    let output = match Command::new("pw-cli")
+        .args(["ls", "Node"])
         .stdout(Stdio::piped())
         .stderr(Stdio::null())
         .output()
-        .ok()?;
+    {
+        Ok(o) if o.status.success() => o,
+        _ => return Vec::new(),
+    };
 
-    if !output.status.success() {
-        return None;
-    }
+    let text = String::from_utf8_lossy(&output.stdout);
+    let mut nodes = Vec::new();
+    let mut current_id: Option<u32> = None;
+    let mut media_class = String::new();
+    let mut node_name = String::new();
 
-    let nodes: serde_json::Value = serde_json::from_slice(&output.stdout).ok()?;
-
-    for node in nodes.as_array()? {
-        let Some(ntype) = node.get("type").and_then(|v| v.as_str()) else { continue };
-        if ntype != "PipeWire:Interface:Node" {
-            continue;
+    for line in text.lines() {
+        let trimmed = line.trim();
+        if let Some(rest) = trimmed.strip_prefix("id ") {
+            // Flush previous node
+            if let Some(id) = current_id.take() {
+                nodes.push(PwNode { id, media_class: std::mem::take(&mut media_class), node_name: std::mem::take(&mut node_name) });
+            }
+            current_id = rest.split(',').next().and_then(|s| s.trim().parse().ok());
+            media_class.clear();
+            node_name.clear();
+        } else if let Some(val) = trimmed.strip_prefix("media.class = ") {
+            media_class = val.trim_matches('"').to_string();
+        } else if let Some(val) = trimmed.strip_prefix("node.name = ") {
+            node_name = val.trim_matches('"').to_string();
         }
-        let Some(info) = node.get("info") else { continue };
-        let Some(props) = info.get("props") else { continue };
-        let Some(media_class) = props.get("media.class").and_then(|v| v.as_str()) else { continue };
-        let node_name = props.get("node.name").and_then(|v| v.as_str()).unwrap_or("");
-
-        if media_class == "Audio/Source" && node_name.contains("alsa") {
-            return node.get("id").and_then(|v| v.as_u64()).map(|id| id as u32);
-        }
     }
-    None
+    // Flush last node
+    if let Some(id) = current_id {
+        nodes.push(PwNode { id, media_class, node_name });
+    }
+    nodes
+}
+
+// ---------------------------------------------------------------------------
+// Find ALSA source node via pw-cli
+// ---------------------------------------------------------------------------
+
+fn find_alsa_source_node() -> Option<u32> {
+    list_pw_nodes().iter().find(|n| {
+        n.media_class == "Audio/Source" && n.node_name.contains("alsa")
+    }).map(|n| n.id)
 }
 
 // ---------------------------------------------------------------------------
@@ -433,34 +460,9 @@ fn find_alsa_source_node() -> Option<u32> {
 // ---------------------------------------------------------------------------
 
 fn find_filter_output_node() -> Option<u32> {
-    let output = Command::new("pw-dump")
-        .stdout(Stdio::piped())
-        .stderr(Stdio::null())
-        .output()
-        .ok()?;
-
-    if !output.status.success() {
-        return None;
-    }
-
-    let nodes: serde_json::Value = serde_json::from_slice(&output.stdout).ok()?;
-
-    for node in nodes.as_array()? {
-        let Some(ntype) = node.get("type").and_then(|v| v.as_str()) else { continue };
-        if ntype != "PipeWire:Interface:Node" {
-            continue;
-        }
-        let Some(info) = node.get("info") else { continue };
-        let Some(props) = info.get("props") else { continue };
-        let Some(media_class) = props.get("media.class").and_then(|v| v.as_str()) else { continue };
-        let node_name = props.get("node.name").and_then(|v| v.as_str()).unwrap_or("");
-
-        // Match the filter chain output node
-        if media_class == "Audio/Source" && node_name == "big-noise-canceling-output" {
-            return node.get("id").and_then(|v| v.as_u64()).map(|id| id as u32);
-        }
-    }
-    None
+    list_pw_nodes().iter().find(|n| {
+        n.media_class == "Audio/Source" && n.node_name == "big-noise-canceling-output"
+    }).map(|n| n.id)
 }
 
 // ---------------------------------------------------------------------------

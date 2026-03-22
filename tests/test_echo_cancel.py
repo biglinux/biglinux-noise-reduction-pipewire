@@ -41,7 +41,9 @@ class TestEchoCancelFilterChain:
         assert "big-aec-source" not in output
 
     def test_enabled_mono_has_aec_module(self):
-        config = FilterChainConfig(echo_cancel_enabled=True, source_node_name="test-mic")
+        config = FilterChainConfig(
+            echo_cancel_enabled=True, source_node_name="test-mic"
+        )
         gen = FilterChainGenerator(config)
         output = gen.generate()
         assert "libpipewire-module-echo-cancel" in output
@@ -90,7 +92,9 @@ class TestEchoCancelFilterChain:
         assert 'target.object = "big-aec-source"' in output
 
     def test_fixed_latency_in_config(self):
-        config = FilterChainConfig(echo_cancel_enabled=True, source_node_name="test-mic")
+        config = FilterChainConfig(
+            echo_cancel_enabled=True, source_node_name="test-mic"
+        )
         gen = FilterChainGenerator(config)
         output = gen.generate()
         assert "node.latency = 1024/48000" not in output
@@ -98,7 +102,9 @@ class TestEchoCancelFilterChain:
 
     def test_aec_mono_channels(self):
         """AEC must force mono to avoid stereo/mono routing mismatch."""
-        config = FilterChainConfig(echo_cancel_enabled=True, source_node_name="test-mic")
+        config = FilterChainConfig(
+            echo_cancel_enabled=True, source_node_name="test-mic"
+        )
         gen = FilterChainGenerator(config)
         output = gen.generate()
         assert "audio.channels = 1" in output

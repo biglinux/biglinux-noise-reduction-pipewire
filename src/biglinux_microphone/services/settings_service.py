@@ -42,6 +42,7 @@ class SettingsService:
         import re
 
         safe = re.sub(r"[^\w\-. ]", "", name).strip(". ")
+        safe = safe.replace(" ", "_")
         if not safe:
             raise ValueError(f"Invalid profile name: {name!r}")
         return safe
@@ -122,8 +123,10 @@ class SettingsService:
         profile_file = PROFILES_DIR / f"{safe_name}.json"
 
         try:
-            with open(profile_file, "w", encoding="utf-8") as f:
+            tmp_file = profile_file.with_suffix(".tmp")
+            with open(tmp_file, "w", encoding="utf-8") as f:
                 json.dump(settings.to_dict(), f, indent=4)
+            tmp_file.replace(profile_file)
             logger.info("Profile saved: %s", safe_name)
             return True
         except OSError:
@@ -151,6 +154,10 @@ class SettingsService:
 
         if not profile_file.exists():
             logger.warning("Profile not found: %s", safe_name)
+            return None
+
+        if profile_file.stat().st_size > 1_000_000:
+            logger.warning("Profile file too large: %s", safe_name)
             return None
 
         try:

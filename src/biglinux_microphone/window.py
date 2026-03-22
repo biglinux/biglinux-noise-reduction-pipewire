@@ -123,6 +123,13 @@ class MicrophoneWindow(Adw.ApplicationWindow):
             message: Message to display
             timeout: Duration in seconds
         """
+        # Dedup: skip if same message shown recently
+        now = GLib.get_monotonic_time()
+        last = getattr(self, "_last_toast", (None, 0))
+        if last[0] == message and (now - last[1]) < 2_000_000:
+            return
+        self._last_toast = (message, now)
+
         toast = Adw.Toast.new(message)
         toast.set_timeout(timeout)
         self._toast_overlay.add_toast(toast)

@@ -15,6 +15,7 @@ import asyncio
 import contextlib
 import logging
 import os
+import signal
 import subprocess
 import threading
 from collections.abc import Callable
@@ -41,8 +42,31 @@ logger = logging.getLogger(__name__)
 CONFIG_PATH = CONFIG_DIR
 SETTINGS_FILE = Path.home() / ".config" / "biglinux-microphone" / "settings.json"
 SERVICE_NAME = "noise-reduction-pipewire"
+def _safe_parse_pw_dump(raw: str) -> list | None:
+    """Parse pw-dump JSON output, handling truncated/malformed data.
 
+    PipeWire's pw-dump can produce invalid JSON when the graph changes
+    during the dump. This function attempts a full parse first, then
+    falls back to truncation at the last complete array element.
 
+    Returns:
+        Parsed list of objects, or None on failure.
+    """
+    import json
+
+    try:
+        return json.loads(raw)
+    except json.JSONDecodeError as e:
+        # Try to recover partial data by truncating at the last complete entry
+        truncated = raw[: e.pos]
+        last_brace = truncated.rfind("}")
+        if last_brace > 0:
+            try:
+                return json.loads(truncated[: last_brace + 1] + "\n]")
+            except json.JSONDecodeError:
+                pass
+        logger.debug("pw-dump produced unparseable JSON (pos=%d)", e.pos)
+        return None
 class PipeWireService:
     """
     Service for managing PipeWire noise reduction and audio processing.
@@ -105,6 +129,9 @@ class PipeWireService:
         self._agc_enabled = True
         self._agc_target_level_dbfs = 70
         self._agc_process: subprocess.Popen | None = None
+
+        # Filter-chain process tracking
+        self._filter_chain_process: subprocess.Popen | None = None
 
         # Paths
         self._config_file = CONFIG_PATH / CONFIG_FILE
@@ -191,7 +218,7 @@ class PipeWireService:
         Check if noise reduction filter-chain is currently active.
 
         Uses pw-cli to query PipeWire graph for our specific filter node
-        identified by its description 'Noise Canceling Microphone'.
+        identified by stable internal names (filter.smart.name or node.name).
         Falls back to pw-dump with filter.smart.name check.
         """
         # Primary: lightweight check via pw-cli list-objects
@@ -200,10 +227,14 @@ class PipeWireService:
                 ["pw-cli", "list-objects"],
                 capture_output=True,
                 text=True,
-                timeout=5,
+                timeout=2,
             )
             if result.returncode == 0:
-                return "Noise Canceling Microphone" in result.stdout
+                out = result.stdout
+                return (
+                    "big.filter-microphone" in out
+                    or "big-noise-canceling-output" in out
+                )
         except Exception:
             pass
 
@@ -213,17 +244,19 @@ class PipeWireService:
                 ["pw-dump"],
                 capture_output=True,
                 text=True,
-                timeout=8,
+                timeout=5,
             )
             if result.returncode == 0:
-                import json
-
-                data = json.loads(result.stdout)
-                for obj in data:
-                    if obj.get("type") == "PipeWire:Interface:Node":
-                        props = obj.get("info", {}).get("props", {})
-                        if props.get("filter.smart.name") == "big.filter-microphone":
-                            return True
+                data = _safe_parse_pw_dump(result.stdout)
+                if data is not None:
+                    for obj in data:
+                        if obj.get("type") == "PipeWire:Interface:Node":
+                            props = obj.get("info", {}).get("props", {})
+                            if (
+                                props.get("filter.smart.name")
+                                == "big.filter-microphone"
+                            ):
+                                return True
                 return False
         except Exception:
             pass
@@ -270,14 +303,21 @@ class PipeWireService:
 
         Does NOT check _is_updating — the caller is responsible for that.
         """
+        import time as _time
+
         try:
+            t0 = _time.monotonic()
             # First, stop any existing filter-chain process
             await self._stop_filter_chain()
+            t1 = _time.monotonic()
+            logger.info("[TIMING] stop_filter_chain: %.3fs", t1 - t0)
 
             # Ensure config directory exists and generate config file
             self._config_file.parent.mkdir(parents=True, exist_ok=True)
             ensure_daemon_config()
             self._generate_config(settings)
+            t2 = _time.monotonic()
+            logger.info("[TIMING] generate_config: %.3fs", t2 - t1)
 
             # Start filter-chain as a separate background process, capture PID
             try:
@@ -290,16 +330,19 @@ class PipeWireService:
             except FileNotFoundError:
                 logger.error("pipewire binary not found at /usr/bin/pipewire")
                 return False
+            self._filter_chain_process = proc
             pid = proc.pid
+            t3 = _time.monotonic()
+            logger.info("[TIMING] popen: %.3fs", t3 - t2)
 
             # Wait for filter to register in PipeWire graph.
             # Uses process-aware polling: if the process dies, fail immediately
-            # instead of waiting the full timeout. Polls every 0.5s, up to 10s.
-            max_wait = 10.0
-            poll_interval = 0.5
+            # instead of waiting the full timeout.
+            max_wait = 5.0
+            poll_interval = 0.15
             elapsed = 0.0
-            await asyncio.sleep(poll_interval)
-            elapsed += poll_interval
+            await asyncio.sleep(0.1)
+            elapsed += 0.1
 
             while elapsed < max_wait:
                 # Check if process is still alive
@@ -311,15 +354,26 @@ class PipeWireService:
                     )
                     break
 
-                if self.is_enabled():
+                tp = _time.monotonic()
+                enabled = self.is_enabled()
+                tp2 = _time.monotonic()
+                logger.debug("[TIMING] is_enabled() = %s (%.3fs)", enabled, tp2 - tp)
+
+                if enabled:
+                    t4 = _time.monotonic()
                     logger.info(
-                        "Noise reduction started via filter-chain process "
-                        "(PID %d, %.1fs)",
-                        pid,
+                        "[TIMING] filter detected after %.3fs total (poll: %.3fs)",
+                        t4 - t0,
                         elapsed,
                     )
                     self._cached_node_id = None
                     await self._configure_filter_source()
+                    t5 = _time.monotonic()
+                    logger.info(
+                        "[TIMING] configure_filter_source: %.3fs, TOTAL: %.3fs",
+                        t5 - t4,
+                        t5 - t0,
+                    )
                     return True
 
                 await asyncio.sleep(poll_interval)
@@ -378,6 +432,7 @@ class PipeWireService:
         self._stop_source_monitor()
         try:
             from gi.repository import GLib
+
             self._source_monitor_id = GLib.timeout_add_seconds(
                 3, self._check_source_changed
             )
@@ -389,6 +444,7 @@ class PipeWireService:
         if self._source_monitor_id:
             try:
                 from gi.repository import GLib
+
                 GLib.source_remove(self._source_monitor_id)
             except ImportError:
                 pass
@@ -399,6 +455,7 @@ class PipeWireService:
         self._stop_gain_monitor()
         try:
             from gi.repository import GLib
+
             self._gain_monitor_id = GLib.timeout_add_seconds(
                 30, self._gain_monitor_tick
             )
@@ -410,6 +467,7 @@ class PipeWireService:
         if self._gain_monitor_id:
             try:
                 from gi.repository import GLib
+
                 GLib.source_remove(self._gain_monitor_id)
             except ImportError:
                 pass
@@ -459,6 +517,7 @@ class PipeWireService:
             self._current_hw_source = current
 
             from biglinux_microphone.config import load_settings
+
             settings = load_settings()
             self.apply_config(settings)
 
@@ -490,38 +549,42 @@ class PipeWireService:
         return ""
 
     async def _set_default_source(self, node_name: str) -> None:
-        """Set a node as the default audio source by name."""
-        try:
-            import json as _json
+        """Set a node as the default audio source by name.
 
+        Uses pw-cli ls Node (fast text parsing) instead of pw-dump (slow JSON).
+        """
+        try:
             result = subprocess.run(
-                ["pw-dump"],
+                ["pw-cli", "ls", "Node"],
                 capture_output=True,
                 text=True,
-                timeout=5,
+                timeout=3,
             )
             if result.returncode != 0:
-                logger.warning("pw-dump failed when setting default source")
+                logger.warning("pw-cli ls Node failed when setting default source")
                 return
 
-            data = _json.loads(result.stdout)
-            for obj in data:
-                if obj.get("type") == "PipeWire:Interface:Node":
-                    props = obj.get("info", {}).get("props", {})
-                    if props.get("node.name") == node_name:
-                        node_id = str(props.get("object.id", ""))
-                        if node_id:
-                            subprocess.run(
-                                ["wpctl", "set-default", node_id],
-                                capture_output=True,
-                                timeout=3,
-                            )
-                            logger.info(
-                                "Set default source to %s (id=%s)",
-                                node_name,
-                                node_id,
-                            )
-                            return
+            # Parse pw-cli output: lines like "	id 42, type ..." and properties
+            current_id = ""
+            for line in result.stdout.splitlines():
+                stripped = line.strip()
+                if stripped.startswith("id "):
+                    # Extract node ID: "id 42, type PipeWire:Interface:Node/3"
+                    parts = stripped.split(",", 1)
+                    current_id = parts[0].replace("id ", "").strip()
+                elif "node.name" in stripped and f'"{node_name}"' in stripped:
+                    if current_id:
+                        subprocess.run(
+                            ["wpctl", "set-default", current_id],
+                            capture_output=True,
+                            timeout=3,
+                        )
+                        logger.info(
+                            "Set default source to %s (id=%s)",
+                            node_name,
+                            current_id,
+                        )
+                        return
             logger.warning("Could not find node %s to set as default", node_name)
         except Exception:
             logger.exception("Error setting default source")
@@ -530,49 +593,71 @@ class PipeWireService:
     def _find_alsa_input_card() -> str | None:
         """Find the ALSA card number for the hardware input source.
 
-        Searches PipeWire nodes for an ALSA input source and returns
-        its card number. Works even when the default source is our
-        filter chain output rather than the hardware mic.
+        Uses pw-cli ls Node (fast) to search for ALSA input source
+        and extract its card number from the properties.
         """
         try:
             result = subprocess.run(
-                ["pw-dump"],
-                capture_output=True, text=True, timeout=5,
+                ["pw-cli", "ls", "Node"],
+                capture_output=True,
+                text=True,
+                timeout=2,
             )
             if result.returncode != 0:
                 return None
 
-            import json
-            for obj in json.loads(result.stdout):
-                if obj.get("type") != "PipeWire:Interface:Node":
-                    continue
-                props = obj.get("info", {}).get("props", {})
-                name = props.get("node.name", "")
-                if "alsa_input" in name:
-                    card = props.get("api.alsa.pcm.card")
-                    if card is not None:
-                        return str(card)
+            current_id = ""
+            for line in result.stdout.splitlines():
+                stripped = line.strip()
+                if stripped.startswith("id "):
+                    parts = stripped.split(",", 1)
+                    current_id = parts[0].replace("id ", "").strip()
+                elif "alsa_input" in stripped and "node.name" in stripped:
+                    # Found an ALSA input node, query its properties
+                    if current_id:
+                        info = subprocess.run(
+                            ["pw-cli", "info", current_id],
+                            capture_output=True,
+                            text=True,
+                            timeout=2,
+                        )
+                        if info.returncode == 0:
+                            for prop_line in info.stdout.splitlines():
+                                if "api.alsa.pcm.card" in prop_line:
+                                    # Format: '  *    api.alsa.pcm.card = "0"'
+                                    parts = prop_line.split("=", 1)
+                                    if len(parts) == 2:
+                                        val = parts[1].strip().strip('"')
+                                        if val.isdigit():
+                                            return val
         except Exception:
             pass
         return None
 
     @staticmethod
     def _find_alsa_input_name() -> str | None:
-        """Find the ALSA input node name from PipeWire (e.g. alsa_input.pci-...)."""
+        """Find the ALSA input node name from PipeWire (e.g. alsa_input.pci-...).
+
+        Uses pw-cli ls Node (fast) instead of pw-dump.
+        """
         try:
-            import json as _json
             result = subprocess.run(
-                ["pw-dump"], capture_output=True, text=True, timeout=8,
+                ["pw-cli", "ls", "Node"],
+                capture_output=True,
+                text=True,
+                timeout=2,
             )
             if result.returncode != 0:
                 return None
-            for obj in _json.loads(result.stdout):
-                if obj.get("type") != "PipeWire:Interface:Node":
-                    continue
-                props = obj.get("info", {}).get("props", {})
-                name = props.get("node.name", "")
-                if name.startswith("alsa_input"):
-                    return name
+            for line in result.stdout.splitlines():
+                stripped = line.strip()
+                if "node.name" in stripped and "alsa_input" in stripped:
+                    # Format: 'node.name = "alsa_input.pci-0000_00_1f.3..."'
+                    parts = stripped.split("=", 1)
+                    if len(parts) == 2:
+                        val = parts[1].strip().strip('"')
+                        if val.startswith("alsa_input"):
+                            return val
         except Exception:
             pass
         return None
@@ -603,7 +688,9 @@ class PipeWireService:
             # Use scontrols for simple mixer names (usable with sget/sset)
             result = subprocess.run(
                 ["amixer", "-c", card_num, "scontrols"],
-                capture_output=True, text=True, timeout=5,
+                capture_output=True,
+                text=True,
+                timeout=5,
             )
             if result.returncode != 0:
                 return
@@ -614,13 +701,15 @@ class PipeWireService:
                 end = ctrl_line.rfind("'")
                 if start < 0 or end <= start:
                     continue
-                ctrl_name = ctrl_line[start + 1:end]
+                ctrl_name = ctrl_line[start + 1 : end]
 
                 # Limit mic boost controls
                 if "Mic Boost" in ctrl_name:
                     result2 = subprocess.run(
                         ["amixer", "-c", card_num, "sget", ctrl_name],
-                        capture_output=True, text=True, timeout=5,
+                        capture_output=True,
+                        text=True,
+                        timeout=5,
                     )
                     if result2.returncode != 0:
                         continue
@@ -632,13 +721,23 @@ class PipeWireService:
                                 current = int(parts[idx + 1])
                                 if current > max_boost:
                                     subprocess.run(
-                                        ["amixer", "-c", card_num, "sset",
-                                         ctrl_name, str(max_boost)],
-                                        capture_output=True, timeout=5,
+                                        [
+                                            "amixer",
+                                            "-c",
+                                            card_num,
+                                            "sset",
+                                            ctrl_name,
+                                            str(max_boost),
+                                        ],
+                                        capture_output=True,
+                                        timeout=5,
                                     )
                                     logger.info(
                                         "Limited %s from %d to %d on card %s",
-                                        ctrl_name, current, max_boost, card_num,
+                                        ctrl_name,
+                                        current,
+                                        max_boost,
+                                        card_num,
                                     )
                             except (ValueError, IndexError):
                                 pass
@@ -648,7 +747,9 @@ class PipeWireService:
                 elif ctrl_name == "Capture":
                     result2 = subprocess.run(
                         ["amixer", "-c", card_num, "sget", "Capture"],
-                        capture_output=True, text=True, timeout=5,
+                        capture_output=True,
+                        text=True,
+                        timeout=5,
                     )
                     if result2.returncode != 0:
                         continue
@@ -660,27 +761,45 @@ class PipeWireService:
                             pct_end = val_line.find("%]")
                             if pct_start >= 0 and pct_end > pct_start:
                                 with contextlib.suppress(ValueError):
-                                    current_pct = int(val_line[pct_start + 1:pct_end])
+                                    current_pct = int(val_line[pct_start + 1 : pct_end])
                             break
                     if current_pct < capture_min:
                         subprocess.run(
-                            ["amixer", "-c", card_num, "sset", "Capture",
-                             f"{capture_min}%"],
-                            capture_output=True, timeout=5,
+                            [
+                                "amixer",
+                                "-c",
+                                card_num,
+                                "sset",
+                                "Capture",
+                                f"{capture_min}%",
+                            ],
+                            capture_output=True,
+                            timeout=5,
                         )
                         logger.info(
                             "Raised Capture volume from %d%% to %d%% on card %s",
-                            current_pct, capture_min, card_num,
+                            current_pct,
+                            capture_min,
+                            card_num,
                         )
                     elif current_pct > capture_max:
                         subprocess.run(
-                            ["amixer", "-c", card_num, "sset", "Capture",
-                             f"{capture_max}%"],
-                            capture_output=True, timeout=5,
+                            [
+                                "amixer",
+                                "-c",
+                                card_num,
+                                "sset",
+                                "Capture",
+                                f"{capture_max}%",
+                            ],
+                            capture_output=True,
+                            timeout=5,
                         )
                         logger.info(
                             "Lowered Capture volume from %d%% to %d%% on card %s",
-                            current_pct, capture_max, card_num,
+                            current_pct,
+                            capture_max,
+                            card_num,
                         )
 
         except Exception:
@@ -696,8 +815,14 @@ class PipeWireService:
         """
         try:
             subprocess.run(
-                ["pw-metadata", "-n", "settings", "0",
-                 "clock.force-quantum", str(quantum)],
+                [
+                    "pw-metadata",
+                    "-n",
+                    "settings",
+                    "0",
+                    "clock.force-quantum",
+                    str(quantum),
+                ],
                 capture_output=True,
                 timeout=3,
             )
@@ -735,77 +860,48 @@ class PipeWireService:
         """
         Internal method to stop filter chain by killing the process and removing config.
 
-        Identifies our specific process via pw-dump node.name pattern
-        (input.filter-chain-PID-N) to avoid killing unrelated filter chains.
-        Falls back to config-dir matching if pw-dump fails.
+        Uses three methods in order:
+        1. Kill the tracked process reference (most reliable)
+        2. Kill any orphaned 'pipewire -c filter-chain.conf' processes via pgrep
+        3. Remove the config file
         """
-        pids_to_kill: set[str] = set()
+        # Method 1: Kill tracked process
+        proc = self._filter_chain_process
+        if proc is not None:
+            try:
+                proc.terminate()
+                try:
+                    proc.wait(timeout=1)
+                except subprocess.TimeoutExpired:
+                    proc.kill()
+                    proc.wait(timeout=1)
+                logger.debug("Killed tracked filter-chain process (PID %d)", proc.pid)
+            except OSError:
+                pass
+            self._filter_chain_process = None
 
-        # Method 1: Extract PID from our node's name in PipeWire graph
+        # Method 2: Clean up any orphaned filter-chain processes
+        # (from previous runs, crashes, or races)
         try:
             result = subprocess.run(
-                ["pw-dump"],
+                ["pgrep", "-f", "pipewire.*filter-chain.conf"],
                 capture_output=True,
                 text=True,
-                timeout=5,
+                timeout=1,
             )
-            if result.returncode == 0:
-                import json
-                import re
-
-                data = json.loads(result.stdout)
-                for obj in data:
-                    if obj.get("type") == "PipeWire:Interface:Node":
-                        props = obj.get("info", {}).get("props", {})
-                        desc = props.get("node.description", "")
-                        name = props.get("node.name", "")
-
-                        if (
-                            desc == "Noise Canceling Microphone"
-                            and "filter-chain" in name
-                        ):
-                            # Extract PID from node.name like "input.filter-chain-80250-8"
-                            match = re.search(r"filter-chain-(\d+)", name)
-                            if match:
-                                pids_to_kill.add(match.group(1))
-        except Exception:
-            logger.warning("pw-dump failed during stop, trying fallback")
-
-        # Method 2: Fallback - find pipewire processes in our config dir
-        if not pids_to_kill:
-            try:
-                result = subprocess.run(
-                    ["pgrep", "-f", "pipewire.*filter-chain"],
-                    capture_output=True,
-                    text=True,
-                    timeout=3,
-                )
-                if result.returncode == 0 and result.stdout.strip():
-                    config_dir = str(self._config_file.parent)
-                    for pid in result.stdout.strip().split("\n"):
-                        pid = pid.strip()
-                        if not pid:
-                            continue
-                        # Verify the process cwd points to our config dir
+            if result.returncode == 0 and result.stdout.strip():
+                for pid in result.stdout.strip().split("\n"):
+                    pid = pid.strip()
+                    if pid:
                         try:
-                            cwd = Path(f"/proc/{pid}/cwd").resolve()
-                            if config_dir in str(cwd):
-                                pids_to_kill.add(pid)
-                        except (OSError, PermissionError):
+                            os.kill(int(pid), signal.SIGTERM)
+                            logger.debug(
+                                "Killed orphaned filter-chain process: %s", pid
+                            )
+                        except (OSError, ValueError):
                             pass
-            except Exception:
-                logger.warning("Error finding filter-chain processes")
-
-        for pid in pids_to_kill:
-            try:
-                subprocess.run(
-                    ["kill", pid],
-                    capture_output=True,
-                    timeout=5,
-                )
-                logger.debug("Killed filter-chain process: %s", pid)
-            except Exception:
-                logger.warning("Failed to kill process %s", pid)
+        except Exception:
+            logger.warning("Error cleaning up orphaned filter-chain processes")
 
         # Remove the configuration file
         if self._config_file.exists():
@@ -822,8 +918,6 @@ class PipeWireService:
         # Restore default quantum (AEC may have forced it to 960)
         self._set_pipewire_quantum(0)
 
-        # Brief wait for process termination
-        await asyncio.sleep(0.2)
         logger.info("Noise reduction stopped")
 
     # =========================================================================
@@ -944,7 +1038,7 @@ class PipeWireService:
     # Compressor Parameters
     # =========================================================================
 
-    def set_compressor_enabled(self, enabled: bool) -> bool:
+    def set_compressor_enabled(self, enabled: bool) -> bool:  # noqa: ARG002
         """Enable or disable compressor (requires pipeline restart)."""
         return self._requires_restart()
 
@@ -1359,27 +1453,37 @@ class PipeWireService:
 
         Tries systemd service first; if unavailable, runs the binary directly.
         """
-        if getattr(self, "_agc_process", None) is not None:
-            if self._agc_process.poll() is None:
+        if getattr(self, "_agc_process", None) is not None and self._agc_process.poll() is None:
                 return  # already running
 
         # Try systemd service first
         try:
             result = subprocess.run(
-                ["systemctl", "--user", "is-active", "--quiet",
-                 "biglinux-mic-agc.service"],
+                [
+                    "systemctl",
+                    "--user",
+                    "is-active",
+                    "--quiet",
+                    "biglinux-mic-agc.service",
+                ],
                 timeout=3,
             )
             if result.returncode == 0:
                 return  # systemd service already running
             subprocess.run(
                 ["systemctl", "--user", "start", "biglinux-mic-agc.service"],
-                timeout=5, capture_output=True,
+                timeout=5,
+                capture_output=True,
             )
             # Check if it actually started
             result = subprocess.run(
-                ["systemctl", "--user", "is-active", "--quiet",
-                 "biglinux-mic-agc.service"],
+                [
+                    "systemctl",
+                    "--user",
+                    "is-active",
+                    "--quiet",
+                    "biglinux-mic-agc.service",
+                ],
                 timeout=3,
             )
             if result.returncode == 0:
@@ -1391,6 +1495,7 @@ class PipeWireService:
 
         # Fallback: run binary directly
         import shutil
+
         binary = shutil.which(self._AGC_BINARY)
         if binary is None:
             logger.warning("AGC binary '%s' not found in PATH", self._AGC_BINARY)
@@ -1410,14 +1515,20 @@ class PipeWireService:
         # Try systemd first
         try:
             result = subprocess.run(
-                ["systemctl", "--user", "is-active", "--quiet",
-                 "biglinux-mic-agc.service"],
+                [
+                    "systemctl",
+                    "--user",
+                    "is-active",
+                    "--quiet",
+                    "biglinux-mic-agc.service",
+                ],
                 timeout=3,
             )
             if result.returncode == 0:
                 subprocess.run(
                     ["systemctl", "--user", "stop", "biglinux-mic-agc.service"],
-                    timeout=5, capture_output=True,
+                    timeout=5,
+                    capture_output=True,
                 )
                 logger.info("Stopped AGC via systemd service")
                 return
@@ -1469,8 +1580,9 @@ class PipeWireService:
     def _get_filter_chain_node_id(self) -> str | None:
         """Get the filter-chain input node ID for live parameter updates.
 
-        Searches for a node with our description and 'input.' prefix,
-        since LADSPA control params are on the input side.
+        Searches for a node with 'input.' prefix that belongs to our
+        filter chain, since LADSPA control params are on the input side.
+        Uses pw-cli ls Node (fast) for discovery.
         """
         if self._cached_node_id:
             # Validate cache: ensure the node still exists
@@ -1479,12 +1591,10 @@ class PipeWireService:
                     ["pw-cli", "info", self._cached_node_id],
                     capture_output=True,
                     text=True,
-                    timeout=3,
+                    timeout=2,
                 )
-                if (
-                    result.returncode != 0
-                    or "Noise Canceling Microphone" not in result.stdout
-                ):
+                out = result.stdout if result.returncode == 0 else ""
+                if "input.filter-chain" not in out and "input.big" not in out:
                     self._cached_node_id = None
             except Exception:
                 self._cached_node_id = None
@@ -1494,30 +1604,29 @@ class PipeWireService:
 
         try:
             result = subprocess.run(
-                ["pw-dump"],
+                ["pw-cli", "ls", "Node"],
                 capture_output=True,
                 text=True,
-                timeout=5,
+                timeout=2,
             )
-
             if result.returncode != 0:
                 return None
 
-            import json
-
-            data = json.loads(result.stdout)
-
-            for obj in data:
-                if obj.get("type") == "PipeWire:Interface:Node":
-                    props = obj.get("info", {}).get("props", {})
-                    desc = props.get("node.description", "")
-                    name = props.get("node.name", "")
-
-                    # Input node has LADSPA controls; match by our description
-                    if desc == "Noise Canceling Microphone" and name.startswith(
-                        "input."
+            current_id = ""
+            for line in result.stdout.splitlines():
+                stripped = line.strip()
+                if stripped.startswith("id "):
+                    parts = stripped.split(",", 1)
+                    current_id = parts[0].replace("id ", "").strip()
+                elif "node.name" in stripped:
+                    # Match input node of our filter chain:
+                    # AEC mode: "input.filter-chain-XXXXX-Y"
+                    # Smart mode: "input.big.filter-microphone" or similar
+                    val = stripped.split("=", 1)[-1].strip().strip('"')
+                    if val.startswith("input.") and (
+                        "filter-chain" in val or "big" in val
                     ):
-                        self._cached_node_id = str(props.get("object.id", ""))
+                        self._cached_node_id = current_id
                         return self._cached_node_id
 
             return None
@@ -1579,7 +1688,7 @@ class PipeWireService:
         node_id = self._get_filter_chain_node_id()
 
         if not node_id:
-            logger.warning("Could not find filter-chain node for live update")
+            logger.debug("Could not find filter-chain node for live update")
             return False
 
         try:
@@ -1672,7 +1781,9 @@ class PipeWireService:
             eq_enabled=settings.equalizer.enabled,
             eq_bands=list(settings.equalizer.bands),
             echo_cancel_enabled=settings.echo_cancel.enabled,
-            source_node_name=self._detect_hardware_source() if settings.echo_cancel.enabled else "",
+            source_node_name=self._detect_hardware_source()
+            if settings.echo_cancel.enabled
+            else "",
             echo_cancel_gain_control=settings.echo_cancel.gain_control,
             echo_cancel_noise_suppression=settings.echo_cancel.noise_suppression,
             echo_cancel_voice_detection=settings.echo_cancel.voice_detection,
@@ -1741,31 +1852,38 @@ class PipeWireService:
         """
 
         def _do_restart() -> None:
-            loop = asyncio.new_event_loop()
-            asyncio.set_event_loop(loop)
             try:
-                loop.run_until_complete(self._restart(settings))
-            finally:
-                loop.close()
+                loop = asyncio.new_event_loop()
+                asyncio.set_event_loop(loop)
+                try:
+                    loop.run_until_complete(self._restart(settings))
+                finally:
+                    loop.close()
 
-            # Check if another restart was requested while we were restarting
-            with self._restart_lock:
-                if self._restart_pending:
-                    pending_settings = self._pending_settings
-                    pending_callback = self._pending_on_complete
-                    self._restart_pending = False
-                    self._pending_settings = None
-                    self._pending_on_complete = None
-                else:
+                # Check if another restart was requested while we were restarting
+                with self._restart_lock:
+                    if self._restart_pending:
+                        pending_settings = self._pending_settings
+                        pending_callback = self._pending_on_complete
+                        self._restart_pending = False
+                        self._pending_settings = None
+                        self._pending_on_complete = None
+                    else:
+                        self._is_updating = False
+                        pending_settings = None
+                        pending_callback = None
+
+                if pending_settings is not None or pending_callback is not None:
+                    logger.debug("Executing pending restart after previous completed")
+                    self._generate_config(pending_settings)
+                    self._run_restart_in_thread(pending_callback, pending_settings)
+                    return
+
+            except Exception:
+                logger.exception("Error in restart thread")
+                with self._restart_lock:
                     self._is_updating = False
-                    pending_settings = None
-                    pending_callback = None
-
-            if pending_settings is not None or pending_callback is not None:
-                logger.debug("Executing pending restart after previous completed")
-                self._generate_config(pending_settings)
-                self._run_restart_in_thread(pending_callback, pending_settings)
-                return
+                    self._restart_pending = False
 
             if on_complete:
                 try:
@@ -1788,6 +1906,4 @@ class PipeWireService:
         Uses internal methods directly to avoid _is_updating guard,
         since the caller (_run_restart_in_thread) manages that flag.
         """
-        await self._stop_filter_chain()
-        await asyncio.sleep(0.5)
         await self._start_filter_chain_process(settings)

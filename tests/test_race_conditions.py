@@ -22,7 +22,6 @@ from biglinux_microphone.config import (
 )
 from biglinux_microphone.services.pipewire_service import PipeWireService
 
-
 # ============================================================================
 # Helpers
 # ============================================================================
@@ -48,10 +47,14 @@ def _make_settings(**overrides) -> AppSettings:
 class TestSettingsPropagation:
     """Verify settings flow through apply_config -> restart -> start without disk reads."""
 
-    def test_generate_config_uses_passed_settings_not_disk(self, tmp_path: Path) -> None:
+    def test_generate_config_uses_passed_settings_not_disk(
+        self, tmp_path: Path
+    ) -> None:
         """When settings are passed, _generate_config must NOT load from disk."""
         service = PipeWireService.__new__(PipeWireService)
-        service._config_file = tmp_path / "filter-chain.conf.d" / "source-gtcrn-smart.conf"
+        service._config_file = (
+            tmp_path / "filter-chain.conf.d" / "source-gtcrn-smart.conf"
+        )
         service._config_file.parent.mkdir(parents=True, exist_ok=True)
 
         # In-memory settings: NR enabled, EQ enabled, gate enabled
@@ -71,10 +74,14 @@ class TestSettingsPropagation:
         assert '"eq"' in content, "EQ node missing — stale settings were used"
         assert '"gate"' in content, "Gate node missing — stale settings were used"
 
-    def test_generate_config_without_settings_loads_from_disk(self, tmp_path: Path) -> None:
+    def test_generate_config_without_settings_loads_from_disk(
+        self, tmp_path: Path
+    ) -> None:
         """When settings=None, _generate_config loads from disk (fallback behavior)."""
         service = PipeWireService.__new__(PipeWireService)
-        service._config_file = tmp_path / "filter-chain.conf.d" / "source-gtcrn-smart.conf"
+        service._config_file = (
+            tmp_path / "filter-chain.conf.d" / "source-gtcrn-smart.conf"
+        )
         service._config_file.parent.mkdir(parents=True, exist_ok=True)
 
         # Patch load_settings at its origin module (it's imported locally inside _generate_config)
@@ -83,7 +90,9 @@ class TestSettingsPropagation:
         mock_settings.gate.enabled = True
         mock_settings.equalizer.enabled = False
 
-        with patch("biglinux_microphone.config.load_settings", return_value=mock_settings):
+        with patch(
+            "biglinux_microphone.config.load_settings", return_value=mock_settings
+        ):
             service._generate_config(None)
 
         content = service._config_file.read_text()
@@ -93,10 +102,14 @@ class TestSettingsPropagation:
         assert '"eq"' in content
         assert '"50Hz gain (low shelving)" = 0.0' in content
 
-    def test_start_filter_chain_process_propagates_settings(self, tmp_path: Path) -> None:
+    def test_start_filter_chain_process_propagates_settings(
+        self, tmp_path: Path
+    ) -> None:
         """_start_filter_chain_process must pass settings to _generate_config."""
         service = PipeWireService.__new__(PipeWireService)
-        service._config_file = tmp_path / "filter-chain.conf.d" / "source-gtcrn-smart.conf"
+        service._config_file = (
+            tmp_path / "filter-chain.conf.d" / "source-gtcrn-smart.conf"
+        )
         service._config_file.parent.mkdir(parents=True, exist_ok=True)
         service._cached_node_id = None
 
@@ -113,22 +126,28 @@ class TestSettingsPropagation:
             self_inner._config_file.parent.mkdir(parents=True, exist_ok=True)
             self_inner._config_file.write_text("# mock config")
 
-        with patch.object(PipeWireService, '_generate_config', mock_generate), \
-             patch.object(PipeWireService, '_stop_filter_chain', new=AsyncMock()), \
-             patch("biglinux_microphone.services.pipewire_service.ensure_daemon_config"), \
-             patch("subprocess.Popen"), \
-             patch.object(PipeWireService, 'is_enabled', return_value=True), \
-             patch.object(PipeWireService, '_configure_filter_source', new=AsyncMock()):
-
+        with (
+            patch.object(PipeWireService, "_generate_config", mock_generate),
+            patch.object(PipeWireService, "_stop_filter_chain", new=AsyncMock()),
+            patch("biglinux_microphone.services.pipewire_service.ensure_daemon_config"),
+            patch("subprocess.Popen"),
+            patch.object(PipeWireService, "is_enabled", return_value=True),
+            patch.object(PipeWireService, "_configure_filter_source", new=AsyncMock()),
+        ):
             loop = asyncio.new_event_loop()
             try:
-                loop.run_until_complete(service._start_filter_chain_process(live_settings))
+                loop.run_until_complete(
+                    service._start_filter_chain_process(live_settings)
+                )
             finally:
                 loop.close()
 
-        assert len(received_settings) == 1, f"Expected 1 call, got {len(received_settings)}"
-        assert received_settings[0] is live_settings, \
+        assert len(received_settings) == 1, (
+            f"Expected 1 call, got {len(received_settings)}"
+        )
+        assert received_settings[0] is live_settings, (
             "_generate_config received None instead of live settings — race condition!"
+        )
 
     def test_restart_propagates_settings(self) -> None:
         """_restart must pass settings to _start_filter_chain_process."""
@@ -145,9 +164,12 @@ class TestSettingsPropagation:
             received_settings.append(settings)
             return True
 
-        with patch.object(PipeWireService, '_stop_filter_chain', new=AsyncMock()), \
-             patch.object(PipeWireService, '_start_filter_chain_process', side_effect=mock_start):
-
+        with (
+            patch.object(PipeWireService, "_stop_filter_chain", new=AsyncMock()),
+            patch.object(
+                PipeWireService, "_start_filter_chain_process", side_effect=mock_start
+            ),
+        ):
             loop = asyncio.new_event_loop()
             try:
                 loop.run_until_complete(service._restart(live_settings))
@@ -155,8 +177,9 @@ class TestSettingsPropagation:
                 loop.close()
 
         assert len(received_settings) == 1
-        assert received_settings[0] is live_settings, \
+        assert received_settings[0] is live_settings, (
             "_restart did not propagate settings to _start_filter_chain_process"
+        )
 
     def test_run_restart_in_thread_propagates_settings(self) -> None:
         """_run_restart_in_thread must pass settings to _restart."""
@@ -180,6 +203,7 @@ class TestSettingsPropagation:
         # We need to also mock the on_complete callback so it doesn't use GLib
         def patched_run_restart(self_inner, on_complete=None, settings=None):
             """Wrapper that replaces GLib.idle_add callback with direct call."""
+
             def simple_complete():
                 if on_complete:
                     on_complete()
@@ -198,14 +222,17 @@ class TestSettingsPropagation:
             t = threading.Thread(target=_do_restart, daemon=True)
             t.start()
 
-        with patch.object(PipeWireService, '_restart', side_effect=mock_restart):
-            patched_run_restart(service, on_complete=lambda: done_event.set(), settings=live_settings)
+        with patch.object(PipeWireService, "_restart", side_effect=mock_restart):
+            patched_run_restart(
+                service, on_complete=lambda: done_event.set(), settings=live_settings
+            )
             # Wait inside the context manager so the mock stays active for the thread
             done_event.wait(timeout=5)
 
         assert len(received_settings) == 1
-        assert received_settings[0] is live_settings, \
+        assert received_settings[0] is live_settings, (
             "_run_restart_in_thread did not propagate settings to _restart"
+        )
 
     def test_restart_without_settings_passes_none(self) -> None:
         """When no settings provided, _restart passes None (backward compat)."""
@@ -218,9 +245,12 @@ class TestSettingsPropagation:
             received_settings.append(settings)
             return True
 
-        with patch.object(PipeWireService, '_stop_filter_chain', new=AsyncMock()), \
-             patch.object(PipeWireService, '_start_filter_chain_process', side_effect=mock_start):
-
+        with (
+            patch.object(PipeWireService, "_stop_filter_chain", new=AsyncMock()),
+            patch.object(
+                PipeWireService, "_start_filter_chain_process", side_effect=mock_start
+            ),
+        ):
             loop = asyncio.new_event_loop()
             try:
                 loop.run_until_complete(service._restart())
@@ -265,7 +295,9 @@ class TestConfigContentRace:
 
         content = config_file.read_text()
 
-        assert '"ai"' in content, "AI node missing — generated from stale disk settings!"
+        assert '"ai"' in content, (
+            "AI node missing — generated from stale disk settings!"
+        )
         assert "Strength" in content
         assert "0.8" in content
         assert '"gate"' in content, "Gate node missing!"
@@ -287,7 +319,9 @@ class TestConfigContentRace:
         service._generate_config(in_memory)
 
         content = config_file.read_text()
-        assert "FL FR" in content, "Stereo mode not reflected — used stale MONO from disk!"
+        assert "FL FR" in content, (
+            "Stereo mode not reflected — used stale MONO from disk!"
+        )
         assert "copy_left" in content
 
     def test_nr_disabled_has_no_ai_node(self, tmp_path: Path) -> None:
@@ -368,13 +402,16 @@ class TestPendingRestart:
         def mock_run_restart(self_inner, on_complete=None, settings=None):
             received_args.append({"on_complete": on_complete, "settings": settings})
 
-        with patch.object(PipeWireService, 'sync_from_settings', lambda self, x: None), \
-             patch.object(PipeWireService, '_run_restart_in_thread', mock_run_restart):
+        with (
+            patch.object(PipeWireService, "sync_from_settings", lambda self, x: None),
+            patch.object(PipeWireService, "_run_restart_in_thread", mock_run_restart),
+        ):
             service.apply_config(settings, on_complete=lambda: None)
 
         assert len(received_args) == 1
-        assert received_args[0]["settings"] is settings, \
+        assert received_args[0]["settings"] is settings, (
             "apply_config did not pass settings to _run_restart_in_thread!"
+        )
 
         if config_file.exists():
             config_file.unlink()
@@ -416,8 +453,9 @@ class TestFilterChainConfigFromSettings:
         ai_pos = content.index('"ai"')
         gate_pos = content.index('"gate"')
         eq_pos = content.index('"eq"')
-        assert compressor_pos < ai_pos < eq_pos < gate_pos, \
+        assert compressor_pos < ai_pos < eq_pos < gate_pos, (
             "Filter chain order is wrong"
+        )
 
     def test_only_nr_enabled(self, tmp_path: Path) -> None:
         """Only noise reduction enabled produces minimal pipeline."""

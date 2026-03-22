@@ -176,6 +176,10 @@ def create_combo_row(
     """
     row = Adw.ComboRow()
     row.set_title(title)
+    row.update_property(
+        [Gtk.AccessibleProperty.LABEL],
+        [title],
+    )
 
     if subtitle:
         row.set_subtitle(subtitle)
@@ -249,7 +253,7 @@ def create_compact_eq_slider(
     freq: int,
     value: float = 0.0,
     on_changed: Callable[[int, float], None] | None = None,
-) -> Gtk.Box:
+) -> tuple[Gtk.Box, Gtk.Scale]:
     """
     Create a compact vertical EQ slider with frequency label.
 
@@ -260,7 +264,7 @@ def create_compact_eq_slider(
         on_changed: Callback with (index, value) when changed
 
     Returns:
-        Gtk.Box: Vertical box with slider and label
+        tuple: (Gtk.Box container, Gtk.Scale widget)
     """
     box = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=2)
     box.set_size_request(40, -1)
@@ -316,4 +320,4 @@ def create_compact_eq_slider(
     freq_label.add_css_class("dim-label")
     box.append(freq_label)
 
-    return box
+    return box, scale

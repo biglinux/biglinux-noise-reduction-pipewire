@@ -174,6 +174,11 @@ msgstr "Benzile"
 msgid "Adjust each frequency"
 msgstr "Ajusta fiecare frecvență"
 # 
+#
+# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/audio/filter_chain.py
+msgid "Enhanced Microphone"
+msgstr "Microfon îmbunătățit"
+
 # File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/ui/main_view.py, line: 687
 msgid "Echo Cancellation"
 msgstr "Anularea ecoului"
