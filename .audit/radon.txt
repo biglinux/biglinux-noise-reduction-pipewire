@@ -1,0 +1,18 @@
+src/biglinux_microphone/cli.py
+    F 137:0 optimize_mic_gain - C (20)
+    F 373:0 cmd_start - C (14)
+    F 66:0 get_filter_source - C (12)
+src/biglinux_microphone/config.py
+    M 489:4 AppSettings.from_dict - C (15)
+    C 453:0 AppSettings - C (11)
+src/biglinux_microphone/services/pipewire_service.py
+    M 664:4 PipeWireService._optimize_mic_gain - D (21)
+    M 1521:4 PipeWireService._get_filter_chain_node_id - C (15)
+    M 591:4 PipeWireService._find_alsa_input_card - C (13)
+    M 817:4 PipeWireService._stop_filter_chain - C (11)
+src/biglinux_microphone/ui/main_view.py
+    M 854:4 MainView._load_state - C (12)
+src/biglinux_microphone/ui/spectrum_widget.py
+    M 147:4 SpectrumAnalyzerWidget._animate - C (14)
+src/biglinux_microphone/utils/tooltip_helper.py
+    M 372:4 TooltipHelper._show_tooltip - C (12)

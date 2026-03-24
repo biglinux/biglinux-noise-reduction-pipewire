@@ -123,6 +123,13 @@ class MicrophoneWindow(Adw.ApplicationWindow):
             message: Message to display
             timeout: Duration in seconds
         """
+        # Dedup: skip if same message shown recently
+        now = GLib.get_monotonic_time()
+        last = getattr(self, "_last_toast", (None, 0))
+        if last[0] == message and (now - last[1]) < 2_000_000:
+            return
+        self._last_toast = (message, now)
+
         toast = Adw.Toast.new(message)
         toast.set_timeout(timeout)
         self._toast_overlay.add_toast(toast)
@@ -141,7 +148,6 @@ class MicrophoneWindow(Adw.ApplicationWindow):
                 icon_image = Gtk.Image.new_from_paintable(texture)
                 icon_image.set_pixel_size(24)
                 icon_image.set_margin_start(8)
-                icon_image.set_margin_end(4)
                 icon_image.set_margin_end(4)
                 header.pack_start(icon_image)
             except Exception:
@@ -167,8 +173,7 @@ class MicrophoneWindow(Adw.ApplicationWindow):
     def _on_restore_defaults(self, action=None, param=None) -> None:
         """Handle reset defaults action."""
         # Confirm dialog
-        dialog = Adw.MessageDialog(
-            transient_for=self,
+        dialog = Adw.AlertDialog(
             heading=_("Restore settings?"),
             body=_("This will return all adjustments to their original defaults."),
         )
@@ -179,9 +184,9 @@ class MicrophoneWindow(Adw.ApplicationWindow):
         dialog.set_close_response("cancel")
 
         dialog.connect("response", self._on_restore_confirmed)
-        dialog.present()
+        dialog.choose(self, None, None)
 
-    def _on_restore_confirmed(self, dialog: Adw.MessageDialog, response: str) -> None:
+    def _on_restore_confirmed(self, dialog: Adw.AlertDialog, response: str) -> None:
         """Handle restore confirmation."""
         if response == "restore" and hasattr(self, "_main_view"):
             self._main_view.restore_defaults()
@@ -200,6 +205,10 @@ class MicrophoneWindow(Adw.ApplicationWindow):
         menu_button.set_icon_name("open-menu-symbolic")
         menu_button.set_menu_model(menu)
         menu_button.set_tooltip_text(_("Main menu"))
+        menu_button.update_property(
+            [Gtk.AccessibleProperty.LABEL],
+            [_("Main menu")],
+        )
 
         return menu_button
 

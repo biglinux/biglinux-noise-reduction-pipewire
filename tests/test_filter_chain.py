@@ -14,7 +14,9 @@ from biglinux_microphone.audio.filter_chain import (
     CONFIG_DIR,
     CONFIG_FILE,
     EQ_BAND_TO_MBEQ_INDEX,
+    GATE_HF_KEY_FILTER,
     GATE_LABEL,
+    GATE_LF_KEY_FILTER,
     GATE_LIBRARY,
     GTCRN_LABEL,
     GTCRN_LIBRARY,
@@ -36,10 +38,10 @@ class TestFilterChainConfig:
         """Test default configuration values."""
         config = FilterChainConfig()
         assert config.noise_reduction_enabled is True
-        assert config.noise_reduction_model == NoiseModel.GTCRN_FULL_QUALITY
+        assert config.noise_reduction_model == NoiseModel.GTCRN_DNS3
         assert config.noise_reduction_strength == 1.0
         assert config.gate_enabled is True
-        assert config.gate_threshold_db == -40
+        assert config.gate_threshold_db == -30
         assert config.gate_range_db == -60
         assert config.stereo_mode == StereoMode.MONO
         assert config.eq_enabled is False
@@ -48,12 +50,12 @@ class TestFilterChainConfig:
         """Test custom configuration values."""
         config = FilterChainConfig(
             noise_reduction_enabled=False,
-            noise_reduction_model=NoiseModel.GTCRN_FULL_QUALITY,
+            noise_reduction_model=NoiseModel.GTCRN_DNS3,
             gate_threshold_db=-45,
             stereo_mode=StereoMode.DUAL_MONO,
         )
         assert config.noise_reduction_enabled is False
-        assert config.noise_reduction_model == NoiseModel.GTCRN_FULL_QUALITY
+        assert config.noise_reduction_model == NoiseModel.GTCRN_DNS3
         assert config.gate_threshold_db == -45
         assert config.stereo_mode == StereoMode.DUAL_MONO
 
@@ -84,11 +86,13 @@ class TestFilterChainGenerator:
         assert GTCRN_LIBRARY in content
         assert GTCRN_LABEL in content
 
-        # Mono config uses MONO position for playback
+        # Mono config captures from MONO position
         assert "audio.position = [ MONO ]" in content
-        # Should NOT have stereo (FL FR) output
-        assert "audio.position = [ FL FR ]" not in content
-        assert "audio.channels = 1" in content
+        # Mono config now outputs dual-mono stereo (FL FR) for app compatibility
+        assert "audio.position = [ FL FR ]" in content
+        # Should have copy nodes for dual-mono output
+        assert "copy_left" in content
+        assert "copy_right" in content
 
     def test_generate_stereo_config(self) -> None:
         """Test generating stereo configuration with dual mono mode."""
@@ -177,19 +181,22 @@ class TestFilterChainGenerator:
         assert '"Range (dB)" = -12' in content
         assert '"Attack (ms)" = 5.0' in content
         assert '"Hold (ms)" = 100.0' in content
-        assert '"Decay (ms)" = 30.0' in content
+        assert '"Release (ms)" = 30.0' in content
+        # Key filter focuses sidechain on speech range (200-4000 Hz)
+        assert f'"LF Key Filter (Hz)" = {GATE_LF_KEY_FILTER}' in content
+        assert f'"HF Key Filter (Hz)" = {GATE_HF_KEY_FILTER}' in content
 
     def test_noise_reduction_parameters(self) -> None:
         """Test noise reduction parameters are correctly applied."""
         config = FilterChainConfig(
             noise_reduction_strength=0.75,
-            noise_reduction_model=NoiseModel.GTCRN_FULL_QUALITY,
+            noise_reduction_model=NoiseModel.GTCRN_DNS3,
         )
         generator = FilterChainGenerator(config)
         content = generator.generate()
 
         assert '"Strength" = 0.75' in content
-        assert '"Model" = 1' in content  # FULL_QUALITY = 1
+        assert '"Model" = 0' in content  # DNS3 = 0
 
     def test_save_config(self) -> None:
         """Test saving configuration to file."""
@@ -276,12 +283,12 @@ class TestGenerateConfigForSettings:
         """Test custom parameter application."""
         content = generate_config_for_settings(
             noise_reduction_strength=0.5,
-            noise_reduction_model=NoiseModel.GTCRN_FULL_QUALITY,
+            noise_reduction_model=NoiseModel.GTCRN_DNS3,
             gate_threshold_db=-50,
         )
 
         assert '"Strength" = 0.5' in content
-        assert '"Model" = 1' in content
+        assert '"Model" = 0' in content  # DNS3 = 0
         assert '"Threshold (dB)" = -50' in content
 
 
@@ -291,13 +298,13 @@ class TestLADSPAConstants:
     def test_library_paths_defined(self) -> None:
         """Test all required LADSPA library paths are defined."""
         assert GTCRN_LIBRARY == "/usr/lib/ladspa/libgtcrn_ladspa.so"
-        assert GATE_LIBRARY == "/usr/lib/ladspa/gate_1410.so"
+        assert GATE_LIBRARY == "/usr/lib/ladspa/libgtcrn_ladspa.so"
         assert MBEQ_LIBRARY == "/usr/lib/ladspa/mbeq_1197.so"
 
     def test_labels_defined(self) -> None:
         """Test all required LADSPA labels are defined."""
         assert GTCRN_LABEL == "gtcrn_mono"
-        assert GATE_LABEL == "gate"
+        assert GATE_LABEL == "biglinux_gate"
         assert MBEQ_LABEL == "mbeq"
 
     def test_mbeq_bands(self) -> None:

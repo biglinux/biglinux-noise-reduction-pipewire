@@ -7,13 +7,13 @@ filter chain, including starting/stopping the filter process.
 """
 
 import argparse
+import contextlib
+import os
 import re
-import signal
 import subprocess
 import sys
 import time
 from pathlib import Path
-
 
 # =============================================================================
 # Configuration Paths
@@ -44,37 +44,18 @@ def find_filter_pids() -> list[int]:
             if "/usr/bin/pipewire -c filter-chain.conf" in line:
                 parts = line.split()
                 if len(parts) > 1:
-                    try:
+                    with contextlib.suppress(ValueError):
                         pids.append(int(parts[1]))
-                    except ValueError:
-                        pass
         return pids
-    except Exception:
+    except OSError:
         return []
 
 
 def kill_filter_processes() -> None:
     """Kill all running pipewire filter-chain processes."""
     for pid in find_filter_pids():
-        try:
+        with contextlib.suppress(OSError):
             subprocess.run(["kill", str(pid)], capture_output=True, check=False)
-        except Exception:
-            pass
-
-
-def start_filter_process() -> bool:
-    """Start the pipewire filter-chain process."""
-    try:
-        subprocess.Popen(
-            ["/usr/bin/pipewire", "-c", "filter-chain.conf"],
-            start_new_session=True,
-            stdout=subprocess.DEVNULL,
-            stderr=subprocess.DEVNULL,
-        )
-        return True
-    except Exception as e:
-        print(f"Error starting pipewire: {e}", file=sys.stderr)
-        return False
 
 
 # =============================================================================
@@ -85,6 +66,7 @@ def start_filter_process() -> bool:
 def get_filter_source() -> str | None:
     """Find the filter-chain source name in PulseAudio/PipeWire."""
     patterns = [
+        r"big-noise-canceling-output",
         r"output\.filter-chain[\w.-]*",
         r"big\.filter-microphone[\w.-]*",
     ]
@@ -109,13 +91,13 @@ def get_filter_source() -> str | None:
                 if len(parts) > 1:
                     return parts[1]
 
-        # Try finding by description
+        # Try finding by description (stable internal name)
         result = subprocess.run(
             ["pactl", "list", "sources"], capture_output=True, text=True, check=False
         )
         lines = result.stdout.splitlines()
         for i, line in enumerate(lines):
-            if "Noise Canceling Microphone" in line:
+            if "big-noise-canceling-output" in line or "big.filter-microphone" in line:
                 # Look backwards for "Name:"
                 for j in range(max(0, i - 5), i):
                     if "Name:" in lines[j]:
@@ -127,8 +109,139 @@ def get_filter_source() -> str | None:
         return None
 
 
+def _find_alsa_input_card() -> str | None:
+    """Find the ALSA card number for the hardware input source."""
+    try:
+        result = subprocess.run(
+            ["pw-dump"],
+            capture_output=True,
+            text=True,
+            timeout=5,
+        )
+        if result.returncode != 0:
+            return None
+
+        import json
+
+        for obj in json.loads(result.stdout):
+            if obj.get("type") != "PipeWire:Interface:Node":
+                continue
+            props = obj.get("info", {}).get("props", {})
+            name = props.get("node.name", "")
+            if "alsa_input" in name:
+                card = props.get("api.alsa.pcm.card")
+                if card is not None:
+                    return str(card)
+    except Exception:
+        pass
+    return None
+
+
+def optimize_mic_gain(max_boost: int = 1, capture_percent: int = 70) -> None:
+    """Optimize ALSA mic gain staging to prevent ADC clipping."""
+    try:
+        card_num = _find_alsa_input_card()
+        if card_num is None:
+            return
+
+        # Use scontrols for simple mixer names (usable with sget/sset)
+        result = subprocess.run(
+            ["amixer", "-c", card_num, "scontrols"],
+            capture_output=True,
+            text=True,
+            timeout=5,
+        )
+        if result.returncode != 0:
+            return
+
+        for ctrl_line in result.stdout.splitlines():
+            # Format: Simple mixer control 'Name',index
+            start = ctrl_line.find("'")
+            end = ctrl_line.rfind("'")
+            if start < 0 or end <= start:
+                continue
+            ctrl_name = ctrl_line[start + 1 : end]
+
+            # Limit mic boost controls
+            if "Mic Boost" in ctrl_name:
+                result2 = subprocess.run(
+                    ["amixer", "-c", card_num, "sget", ctrl_name],
+                    capture_output=True,
+                    text=True,
+                    timeout=5,
+                )
+                if result2.returncode != 0:
+                    continue
+                for val_line in result2.stdout.splitlines():
+                    if "Front Left:" in val_line:
+                        parts = val_line.split()
+                        try:
+                            idx = parts.index("Left:")
+                            current = int(parts[idx + 1])
+                            if current > max_boost:
+                                subprocess.run(
+                                    [
+                                        "amixer",
+                                        "-c",
+                                        card_num,
+                                        "sset",
+                                        ctrl_name,
+                                        str(max_boost),
+                                    ],
+                                    capture_output=True,
+                                    timeout=5,
+                                )
+                                print(
+                                    f"Limited {ctrl_name} from {current} to {max_boost}",
+                                    file=sys.stderr,
+                                )
+                        except (ValueError, IndexError):
+                            pass
+                        break
+
+            # Set capture volume to optimal level
+            elif ctrl_name == "Capture":
+                result2 = subprocess.run(
+                    ["amixer", "-c", card_num, "sget", "Capture"],
+                    capture_output=True,
+                    text=True,
+                    timeout=5,
+                )
+                if result2.returncode != 0:
+                    continue
+                current_pct = -1
+                for val_line in result2.stdout.splitlines():
+                    if "Front Left:" in val_line:
+                        pct_start = val_line.find("[")
+                        pct_end = val_line.find("%]")
+                        if pct_start >= 0 and pct_end > pct_start:
+                            with contextlib.suppress(ValueError):
+                                current_pct = int(val_line[pct_start + 1 : pct_end])
+                        break
+                if current_pct != capture_percent:
+                    subprocess.run(
+                        [
+                            "amixer",
+                            "-c",
+                            card_num,
+                            "sset",
+                            "Capture",
+                            f"{capture_percent}%",
+                        ],
+                        capture_output=True,
+                        timeout=5,
+                    )
+                    print(
+                        f"Set Capture volume from {current_pct}% to {capture_percent}%",
+                        file=sys.stderr,
+                    )
+    except Exception:
+        pass
+
+
 def configure_filter_source() -> bool:
     """Configure the filter source (unmute and set volume)."""
+    optimize_mic_gain()
     source_name = get_filter_source()
     if not source_name:
         print("Warning: Could not find filter-chain source", file=sys.stderr)
@@ -154,33 +267,94 @@ def configure_filter_source() -> bool:
 # =============================================================================
 
 
+def detect_hardware_source() -> str:
+    """Detect the hardware microphone source name.
+
+    Returns the default source excluding our own filter nodes.
+    """
+    try:
+        result = subprocess.run(
+            ["pactl", "get-default-source"],
+            capture_output=True,
+            text=True,
+            timeout=5,
+            check=False,
+        )
+        if result.returncode == 0:
+            name = result.stdout.strip()
+            if name and not name.startswith("big-"):
+                return name
+    except Exception:
+        pass
+    return ""
+
+
+def set_pipewire_quantum(quantum: int) -> None:
+    """Set PipeWire force-quantum via pw-metadata."""
+    with contextlib.suppress(Exception):
+        subprocess.run(
+            ["pw-metadata", "-n", "settings", "0", "clock.force-quantum", str(quantum)],
+            capture_output=True,
+            timeout=3,
+            check=False,
+        )
+
+
 def generate_config() -> bool:
     """Generate the filter chain configuration from user settings."""
     from biglinux_microphone.audio.filter_chain import (
         FilterChainConfig,
         FilterChainGenerator,
     )
-    from biglinux_microphone.config import load_settings
+    from biglinux_microphone.config import StereoMode, load_settings
 
     try:
         settings = load_settings()
 
+        stereo_mode = (
+            settings.stereo.mode if settings.stereo.enabled else StereoMode.MONO
+        )
+
+        source_node_name = ""
+        if settings.echo_cancel.enabled:
+            source_node_name = detect_hardware_source()
+
         config = FilterChainConfig(
+            hpf_enabled=settings.hpf.enabled,
+            hpf_frequency=settings.hpf.frequency,
             noise_reduction_enabled=True,
             noise_reduction_model=settings.noise_reduction.model,
             noise_reduction_strength=settings.noise_reduction.strength,
+            noise_reduction_speech_strength=settings.noise_reduction.speech_strength,
+            noise_reduction_lookahead_ms=settings.noise_reduction.lookahead_ms,
+            noise_reduction_voice_enhance=settings.noise_reduction.voice_enhance,
+            noise_reduction_model_blending=settings.noise_reduction.model_blending,
+            noise_reduction_noise_gate=settings.noise_reduction.noise_gate,
+            noise_reduction_hf_level=settings.noise_reduction.hf_level,
+            compressor_enabled=settings.compressor.enabled,
+            compressor_threshold_db=settings.compressor.threshold_db,
+            compressor_ratio=settings.compressor.ratio,
+            compressor_attack_ms=settings.compressor.attack_ms,
+            compressor_release_ms=settings.compressor.release_ms,
+            compressor_makeup_gain_db=settings.compressor.makeup_gain_db,
+            compressor_knee_db=settings.compressor.knee_db,
+            compressor_rms_peak=settings.compressor.rms_peak,
             gate_enabled=settings.gate.enabled,
             gate_threshold_db=settings.gate.threshold_db,
             gate_range_db=settings.gate.range_db,
             gate_attack_ms=settings.gate.attack_ms,
             gate_hold_ms=settings.gate.hold_ms,
             gate_release_ms=settings.gate.release_ms,
-            stereo_mode=settings.stereo.mode if settings.stereo.enabled else "mono",
+            stereo_mode=stereo_mode,
             stereo_width=settings.stereo.width,
+            crossfeed_enabled=settings.stereo.crossfeed_enabled,
             eq_enabled=settings.equalizer.enabled,
-            eq_bands=settings.equalizer.bands,
-            transient_enabled=settings.transient.enabled,
-            transient_attack=settings.transient.attack,
+            eq_bands=list(settings.equalizer.bands),
+            echo_cancel_enabled=settings.echo_cancel.enabled,
+            source_node_name=source_node_name,
+            echo_cancel_gain_control=settings.echo_cancel.gain_control,
+            echo_cancel_noise_suppression=settings.echo_cancel.noise_suppression,
+            echo_cancel_voice_detection=settings.echo_cancel.voice_detection,
         )
 
         generator = FilterChainGenerator(config)
@@ -207,7 +381,10 @@ def remove_config() -> None:
 
 def check_status() -> bool:
     """Check if the noise reduction is enabled."""
-    return CONFIG_PATH.exists()
+    if CONFIG_PATH.exists():
+        return True
+    # Also detect legacy GTCRN config (pre-migration state)
+    return any(path.exists() for path in LEGACY_PATHS)
 
 
 # =============================================================================
@@ -217,13 +394,27 @@ def check_status() -> bool:
 
 def cmd_start() -> int:
     """Start noise reduction filter."""
+    from biglinux_microphone.config import load_settings
+
     # Kill any existing filter processes
     kill_filter_processes()
 
-    # Generate config if it doesn't exist
-    if not CONFIG_PATH.exists():
-        if not generate_config():
-            return 1
+    # Remove legacy configs so PipeWire doesn't load old filters
+    for path in LEGACY_PATHS:
+        if path.exists():
+            path.unlink()
+
+    # Always regenerate config from current settings to stay in sync
+    if not generate_config():
+        return 1
+
+    # Set force-quantum for AEC if enabled (must be before starting filter)
+    try:
+        settings = load_settings()
+        if settings.echo_cancel.enabled:
+            set_pipewire_quantum(960)
+    except Exception:
+        pass
 
     # Ensure main filter-chain config exists (with RT priority)
     # This must be imported inside the function to avoid circular imports if placed at top level
@@ -231,16 +422,61 @@ def cmd_start() -> int:
 
     ensure_daemon_config()
 
-    # Start the filter process
-    if not start_filter_process():
+    # Start the filter process and monitor its PID
+    try:
+        proc = subprocess.Popen(
+            ["/usr/bin/pipewire", "-c", "filter-chain.conf"],
+            start_new_session=True,
+            stdout=subprocess.DEVNULL,
+            stderr=subprocess.DEVNULL,
+        )
+    except OSError as e:
+        print(f"Error starting pipewire: {e}", file=sys.stderr)
         return 1
 
-    # Wait for filter to initialize and configure source
-    time.sleep(2)
-    configure_filter_source()
+    # Wait for filter to register in PipeWire graph.
+    # Process-aware polling: if the process dies, fail immediately.
+    pid = proc.pid
+    max_wait = 5.0
+    poll_interval = 0.15
+    elapsed = 0.0
+    time.sleep(0.1)
+    elapsed += 0.1
+    started = False
 
-    # Retry configuration for stability
-    time.sleep(2)
+    while elapsed < max_wait:
+        # Check if process is still alive
+        try:
+            os.kill(pid, 0)
+        except OSError:
+            print(
+                f"Filter-chain process (PID {pid}) died during startup",
+                file=sys.stderr,
+            )
+            break
+
+        try:
+            result = subprocess.run(
+                ["pw-cli", "list-objects"],
+                capture_output=True,
+                text=True,
+                timeout=2,
+            )
+            if result.returncode == 0 and (
+                "big.filter-microphone" in result.stdout
+                or "big-noise-canceling-output" in result.stdout
+            ):
+                started = True
+                break
+        except Exception:
+            pass
+
+        time.sleep(poll_interval)
+        elapsed += poll_interval
+
+    if not started:
+        print(f"Warning: filter not detected after {elapsed:.1f}s", file=sys.stderr)
+
     configure_filter_source()
 
     return 0
@@ -248,6 +484,9 @@ def cmd_start() -> int:
 
 def cmd_stop() -> int:
     """Stop noise reduction filter."""
+    # Restore default quantum
+    set_pipewire_quantum(0)
+
     # Remove config files
     remove_config()
 

@@ -38,78 +38,120 @@ def _is_x11_backend() -> bool:
 TOOLTIPS = {
     # Main toggle
     "noise_reduction_toggle": _(
-        "Enable AI-powered noise reduction using neural network processing.\n"
-        "Model: GTCRN (Speech Enhancement Model Requiring Ultralow Computational Resources)\n"
-        "Stats: 48.2K parameters, 33.0 MMACs/sec\n\n"
-        "This removes background noise like fans, air conditioning, keyboard typing, "
-        "and other environmental sounds while preserving voice clarity."
+        "Reduces unwanted background noise from your microphone\n"
+        "using the GTCRN neural network.\n\n"
+        "Removes sounds like fans, air conditioning, keyboard typing,\n"
+        "and other ambient noise, keeping only your voice clear."
     ),
     # AI Model selection
-    "ai_model": _(
-        "Select the AI model for noise processing:\n\n"
-        "• Low Latency: Faster processing, best for real-time calls\n"
-        "• Full Quality: Better noise reduction, slightly more CPU usage"
+    "model_select": _(
+        "Choose how noise is cleaned:\n\n"
+        "• Maximum Cleaning (DNS3): Removes the most noise possible.\n"
+        "  Best for noisy environments. May slightly change the voice.\n"
+        "• Natural Voice (VCTK): Gentler cleaning that keeps the voice\n"
+        "  more natural. Ideal for quiet environments.\n"
+        "• Smart (both combined): Uses DNS3 during\n"
+        "  silence and VCTK while you speak.\n"
+        "  Best result, but uses more processing power."
     ),
     "noise_reduction_strength": _(
-        "Controls the intensity of noise reduction.\n\n"
-        "TIP: Temporarily disable the Gate to adjust this value. "
-        "Re-enable the Gate after finding the ideal intensity level."
+        "How much noise to remove.\n\n"
+        "• 1: Removes only the most obvious noises\n"
+        "• 3: Good for most situations\n"
+        "• 5: Removes as much noise as possible\n\n"
+        "If the voice sounds distorted, reduce this slider."
+    ),
+    "voice_preservation": _(
+        "Whether to keep filtering active while you are speaking.\n\n"
+        "• Off: Filter pauses during speech — voice sounds\n"
+        "  completely natural, but noise may leak through\n"
+        "• 3: Applies partial filtering during speech\n"
+        "• 5: Full filtering at all times, cleanest result\n\n"
+        "Default: 5. Reduce if your voice sounds thin or robotic."
+    ),
+    "lookahead": _(
+        "Prevents the beginning of words from being cut off.\n\n"
+        "Keeps a small audio buffer so the filter can react\n"
+        "before you start speaking.\n"
+        "• Off: No delay, but may clip the first syllable\n"
+        "• 50ms: Recommended for most people\n"
+        "• 200ms: Safest for fast speakers\n\n"
+        "Higher values add a small delay to the audio."
+    ),
+    "voice_recovery": _(
+        "Restores high-frequency detail lost during filtering.\n\n"
+        "Noise removal can make voices sound muffled or thin.\n"
+        "This control reconstructs the treble frequencies\n"
+        "to bring back clarity and presence.\n\n"
+        "• Off: No HF reconstruction\n"
+        "• 3: Good balance for most voices\n"
+        "• 5: Maximum clarity restoration\n\n"
+        "Recommended: keep between 3 and 5."
+    ),
+    # Compressor (Volume Normalizer) section
+    "compressor_toggle": _(
+        "Evens out the volume of your voice.\n\n"
+        "If you speak too loud, it lowers the volume.\n"
+        "If you speak too softly, it raises the volume.\n\n"
+        "Ideal for meetings, streams, and recordings\n"
+        "where consistent volume matters."
+    ),
+    "compressor_intensity": _(
+        "How much volume correction to apply.\n\n"
+        "• 1: Gentle correction, very natural sound\n"
+        "• 3: Good for most people\n"
+        "• 5: Strong leveling — whisper and shout\n"
+        "  come out at similar volume\n\n"
+        "Start with 3 and adjust to taste."
     ),
     # Gate Filter section
     "gate_toggle": _(
-        "Enable the Silence Filter (Gate).\n\n"
-        "The Gate is applied AFTER noise reduction. It eliminates residual sounds "
-        "that the filter reduced but did not completely cancel.\n\n"
-        "When you stop talking, it completely cuts the audio, ensuring absolute silence."
+        "Silence filter that mutes the mic when you're not speaking.\n\n"
+        "Works after noise reduction. Eliminates any residual\n"
+        "sound that the filter didn't fully remove.\n\n"
+        "When you stop talking, there is complete silence."
     ),
-    "gate_threshold": _(
-        "Sets the minimum volume to activate the microphone.\n\n"
-        "• HIGHER values (-20 dB): Only loud speech passes\n"
-        "• LOWER values (-50 dB): Soft speech also passes\n\n"
-        "Tip: Start at -40 dB and adjust according to your voice."
-    ),
-    "gate_range": _(
-        "How much to silence when you are not talking.\n\n"
-        "• LOWER values (-60 dB): Almost total silence\n"
-        "• HIGHER values (-20 dB): Gentle reduction\n\n"
-        "Use -60 dB for total silence or -40 dB for a more natural transition."
-    ),
-    "gate_attack": _(
-        "The speed at which the microphone opens when you start talking.\n\n"
-        "• Fast (10ms): Best for not cutting off the first syllable.\n"
-        "• Slow (200ms): Smoother transition (fade-in), but may miss the beginning."
-    ),
-    "gate_hold": _(
-        "Time the microphone remains open after you stop talking.\n\n"
-        "Prevents the sound from cutting out between words or brief pauses in speech.\n"
-        "Values between 200ms and 500ms are ideal."
-    ),
-    "gate_release": _(
-        "Speed to silence after the hold time.\n\n"
-        "Defines a smooth 'fade-out' so the silence cut doesn't sound abrupt."
+    "gate_intensity": _(
+        "Controls how aggressively the gate removes residual noise.\n\n"
+        "• 1: Only mutes during long silences\n"
+        "• 3: Good for most voices\n"
+        "• 5: Complete silence between words\n\n"
+        "Start at 3 and adjust to taste."
     ),
     # Voice Effects section
     "stereo_toggle": _(
-        "Enable voice effects and stereo processing.\n\n"
-        "Transforms your mono microphone into stereo output or applies "
-        "professional voice effects for streaming and podcasting."
+        "Voice effects and stereo processing.\n\n"
+        "Converts your mono microphone to stereo or applies\n"
+        "professional effects for streaming and podcasting."
     ),
     "stereo_mode": _(
-        "Choose the voice processing effect:\n\n"
-        "• Dual Mono: Copy signal to both channels (stereo output)\n"
-        "• Studio: Professional radio voice with compression and presence\n"
-        "• Voice Changer: Adjust your voice pitch from deep to sharp"
+        "Choose the voice effect:\n\n"
+        "• Dual Mono: Duplicates signal to both channels (stereo)\n"
+        "• Voice Changer: Changes voice pitch (deeper or higher)"
     ),
     "stereo_width": _(
-        "Adjust the intensity of the selected effect.\n\n"
-        "• Studio: Controls the amount of compression/presence\n"
-        "• Voice Changer: Controls the pitch (Low to High)"
+        "Intensity of the selected effect.\n\n• Voice Changer: Pitch (low to high)"
+    ),
+    # High-Pass Filter section
+    "hpf_toggle": _(
+        "High-pass filter that removes low frequencies.\n\n"
+        "Cuts rumble, hum, and other low-frequency noise\n"
+        "below the chosen frequency. Keeps your voice clear\n"
+        "without affecting speech quality."
+    ),
+    "hpf_frequency": _(
+        "Cut-off frequency for the high-pass filter.\n\n"
+        "Frequencies below this value are removed.\n"
+        "• 80 Hz: Removes deep rumble only\n"
+        "• 120 Hz: Good for most voices\n"
+        "• 200 Hz: Aggressive cut, may thin the voice\n\n"
+        "Default: 80 Hz."
     ),
     # Equalizer section
     "equalizer_toggle": _(
-        "Enable the 10-band parametric equalizer.\n\n"
-        "Adjust the tonal balance of your voice by boosting or cutting "
-        "specific frequency ranges."
+        "Equalizer to adjust the tone of your voice.\n\n"
+        "Increase or decrease specific frequencies\n"
+        "to make speech clearer or warmer."
     ),
     "equalizer_preset": _(
         "Quick presets for common use cases:\n\n"
@@ -125,11 +167,6 @@ TOOLTIPS = {
         "• Middle bands (500-2000 Hz): Voice fundamentals\n"
         "• Right bands (4000-16000 Hz): Brightness and clarity\n\n"
         "Drag sliders up to boost, down to cut."
-    ),
-    # Advanced toggle
-    "advanced_toggle": _(
-        "Show additional controls for fine-tuning your audio.\n\n"
-        "Includes equalizer, AI model selection, and visualizer options."
     ),
     # Monitor section
     "monitor_toggle": _(
@@ -147,12 +184,43 @@ TOOLTIPS = {
         "Automatically switches your headset between listening mode and call mode when you use the microphone. "
         "Note: Using the headset microphone generally reduces both headphone and microphone quality."
     ),
-    # Visualizer
-    "visualizer_style": _(
-        "Choose how the audio visualizer displays:\n\n"
-        "• Modern Waves: Smooth wave animation\n"
-        "• Retro Bars: Classic equalizer bars\n"
-        "• Circular: Radial visualization"
+    # Echo Cancellation section
+    "echo_cancel_toggle": _(
+        "Enables acoustic echo cancellation using WebRTC AEC.\n\n"
+        "Reduces echo and feedback when using speakers instead of headphones. "
+        "Captures the speaker output and removes it from the microphone signal."
+    ),
+    "echo_cancel_gain": _(
+        "Automatic gain control for the echo canceller.\n\n"
+        "Adjusts the microphone volume automatically to keep\n"
+        "the signal level consistent. Disable if your voice\n"
+        "sounds unnaturally amplified or compressed."
+    ),
+    "echo_cancel_ns": _(
+        "Additional noise suppression inside the echo canceller.\n\n"
+        "Provides extra noise removal on top of the main GTCRN filter.\n"
+        "May reduce audio quality — only enable in very noisy environments."
+    ),
+    "echo_cancel_vad": _(
+        "Voice activity detection for the echo canceller.\n\n"
+        "Helps the AEC distinguish speech from noise.\n"
+        "Can improve echo removal accuracy but may interfere\n"
+        "with the main noise reduction. Disabled by default."
+    ),
+    # AGC section
+    "agc_toggle": _(
+        "Automatic Volume Control.\n\n"
+        "Uses a compressor in the PipeWire filter chain to\n"
+        "automatically normalize your microphone level.\n"
+        "Keeps your voice at a consistent volume regardless\n"
+        "of how close or far you are from the microphone."
+    ),
+    "agc_target_level": _(
+        "Target signal level for the microphone.\n\n"
+        "Controls the output level of the automatic\n"
+        "volume normalizer.\n"
+        "100% = close to 0 dBFS (loudest).\n"
+        "70% ≈ −7 dBFS (comfortable). Default: 70%."
     ),
 }
 
@@ -302,6 +370,7 @@ class TooltipHelper:
 
     def _show_tooltip(self):
         """Display the tooltip popover."""
+        self.show_timer_id = None  # Timer has fired, clear reference
         if not self.active_widget or not self.popover:
             return GLib.SOURCE_REMOVE
 

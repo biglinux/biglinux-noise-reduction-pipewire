@@ -17,7 +17,7 @@ PlasmoidItem {
     // Constants
     readonly property int defaultInterval: 7000
     readonly property int toggleInterval: 1500
-    readonly property string checkCommand: 'sh -c "test -f ~/.config/pipewire/filter-chain.conf.d/source-gtcrn-smart.conf"'
+    readonly property string checkCommand: 'sh -c "test -f ~/.config/pipewire/filter-chain.conf.d/source-ulunas-smart.conf || test -f ~/.config/pipewire/filter-chain.conf.d/source-gtcrn-smart.conf"'
 
     // Function to run the command
     function runCommand() {

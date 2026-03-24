@@ -4,6 +4,16 @@
 
 # Find Python site-packages with our module
 find_pythonpath() {
+	# Development environment: check if script is inside a repo tree
+	local script_dir repo_root
+	script_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+	repo_root="${script_dir}/../.."
+	if [[ -f "${repo_root}/pyproject.toml" && -d "${repo_root}/src/biglinux_microphone" ]]; then
+		echo "$(cd "${repo_root}/src" && pwd)"
+		return 0
+	fi
+
+	# Production: search system site-packages
 	for sitepkg in /usr/lib/python*/site-packages; do
 		if [[ -d "$sitepkg/biglinux_microphone" ]]; then
 			echo "$sitepkg"

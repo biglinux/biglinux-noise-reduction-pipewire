@@ -1,29 +1,39 @@
 # Maintainer: Bruno Goncalves <bigbruno@gmail.com>
 
+
 pkgname=biglinux-noise-reduction-pipewire
 pkgver=$(date +%y.%m.%d)
 pkgrel=$(date +%H%M)
-arch=('any')
+arch=('x86_64')
 license=('GPL-3.0-or-later')
+install=biglinux-noise-reduction-pipewire.install
 url="https://github.com/biglinux/biglinux-noise-reduction-pipewire"
 pkgdesc="AI-powered microphone noise reduction with GTK4/Libadwaita interface for PipeWire"
+makedepends=(
+	'rust'
+	'clang'
+	'pkg-config'
+	'libpipewire'
+	'pkgconf'
+)
 depends=(
-    'gtcrn-ladspa'
-    'pipewire'
-    'swh-plugins'
-    'python>=3.10'
-    'python-numpy'
-    'python-gobject'
-    'python-cairo'
-    'gtk4'
-    'libadwaita'
-    'gstreamer'
-    'gst-plugins-base'
-    'gst-plugins-good'
+	'gtcrn-ladspa'
+	'pipewire'
+	'swh-plugins'
+	'python>=3.10'
+	'python-numpy'
+	'python-gobject'
+	'python-cairo'
+	'gtk4'
+	'libadwaita'
+	'gstreamer'
+	'gst-plugins-base'
+	'gst-plugins-good'
+	'webrtc-audio-processing'
 )
 
 optdepends=(
-    'wireplumber: For Bluetooth autoswitch feature'
+	'wireplumber: For Bluetooth autoswitch feature'
 )
 
 # This package provides a LADSPA host via PipeWire filter-chain
@@ -32,35 +42,53 @@ provides=('ladspa-host')
 source=("git+https://github.com/biglinux/biglinux-noise-reduction-pipewire.git")
 md5sums=('SKIP')
 
+build() {
+	# Determine source directory
+	if [ -d "${srcdir}/${pkgname}/${pkgname}" ]; then
+		InternalDir="${srcdir}/${pkgname}/${pkgname}"
+	else
+		InternalDir="${srcdir}/${pkgname}"
+	fi
+
+	# Build Rust AGC service
+	cd "${InternalDir}/mic-agc"
+	export CC=clang
+	cargo build --release --locked
+}
+
 package() {
-    # Determine source directory
-    if [ -d "${srcdir}/${pkgname}/${pkgname}" ]; then
-        InternalDir="${srcdir}/${pkgname}/${pkgname}"
-    else
-        InternalDir="${srcdir}/${pkgname}"
-    fi
+	# Determine source directory
+	if [ -d "${srcdir}/${pkgname}/${pkgname}" ]; then
+		InternalDir="${srcdir}/${pkgname}/${pkgname}"
+	else
+		InternalDir="${srcdir}/${pkgname}"
+	fi
 
-    # Install usr directory contents (binaries, icons, desktop file, etc.)
-    if [ -d "${InternalDir}/usr" ]; then
-        cp -r "${InternalDir}/usr" "${pkgdir}/"
-    fi
+	# Install usr directory contents (binaries, icons, desktop file, etc.)
+	if [ -d "${InternalDir}/usr" ]; then
+		cp -r "${InternalDir}/usr" "${pkgdir}/"
+	fi
 
-    # Get Python version for site-packages path
-    _pyver=$(python -c 'import sys; print(f"{sys.version_info.major}.{sys.version_info.minor}")')
-    _sitepkg="${pkgdir}/usr/lib/python${_pyver}/site-packages"
+	# Install Rust AGC service binary
+	install -Dm755 "${InternalDir}/mic-agc/target/release/biglinux-mic-agc" \
+		"${pkgdir}/usr/bin/biglinux-mic-agc"
 
-    # Install Python package manually
-    cd "${InternalDir}"
-    install -d "${_sitepkg}/biglinux_microphone"
+	# Get Python version for site-packages path
+	_pyver=$(python -c 'import sys; print(f"{sys.version_info.major}.{sys.version_info.minor}")')
+	_sitepkg="${pkgdir}/usr/lib/python${_pyver}/site-packages"
 
-    # Copy all Python source files
-    cp -r src/biglinux_microphone/* "${_sitepkg}/biglinux_microphone/"
+	# Install Python package manually
+	cd "${InternalDir}"
+	install -d "${_sitepkg}/biglinux_microphone"
 
-    # Clean up Python cache files
-    find "${pkgdir}" -type d -name "__pycache__" -exec rm -rf {} + 2>/dev/null || true
-    find "${pkgdir}" -name "*.pyc" -delete 2>/dev/null || true
+	# Copy all Python source files
+	cp -r src/biglinux_microphone/* "${_sitepkg}/biglinux_microphone/"
 
-    # Ensure binaries are executable
-    chmod +x "${pkgdir}/usr/bin/big-microphone-noise-reduction" 2>/dev/null || true
-    chmod +x "${pkgdir}/usr/bin/pipewire-noise-remove" 2>/dev/null || true
+	# Clean up Python cache files
+	find "${pkgdir}" -type d -name "__pycache__" -exec rm -rf {} + 2>/dev/null || true
+	find "${pkgdir}" -name "*.pyc" -delete 2>/dev/null || true
+
+	# Ensure binaries are executable
+	chmod +x "${pkgdir}/usr/bin/big-microphone-noise-reduction" 2>/dev/null || true
+	chmod +x "${pkgdir}/usr/bin/pipewire-noise-remove" 2>/dev/null || true
 }

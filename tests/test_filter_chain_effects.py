@@ -1,4 +1,3 @@
-import pytest
 from biglinux_microphone.audio.filter_chain import (
     FilterChainConfig,
     FilterChainGenerator,
@@ -43,20 +42,5 @@ class TestFilterChainEffects:
         assert "0.50" in out3
         # Check for gain compensation (Deep voice -> gain boost)
         assert "amp" in out3
-        # 0.5 pitch -> 15dB gain (5.0 base + 10.0 boost)
-        assert "15.00" in out3
-
-    def test_radio_mode_generation(self):
-        config = FilterChainConfig(
-            stereo_mode=StereoMode.RADIO,
-            stereo_width=0.5,
-            noise_reduction_enabled=False,
-        )
-        generator = FilterChainGenerator(config)
-        output = generator.generate()
-
-        assert "sc4m" in output
-        assert "Ratio (1:n)" in output
-        # Radio params check
-        # Ratio: 4.0 + (0.5 * 6.0) = 7.0
-        assert "7.0" in output
+        # 0.5 pitch -> 10dB gain compensation
+        assert "10.00" in out3

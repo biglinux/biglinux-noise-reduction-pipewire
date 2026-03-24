@@ -17,269 +17,6 @@ msgstr ""
 msgid "Configure..."
 msgstr "Konfigurer..."
 # 
-# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/utils/tooltip_helper.py, line: 41
-msgid ""
-"Enable AI-powered noise reduction using neural network processing.\n"
-"Model: GTCRN (Speech Enhancement Model Requiring Ultralow Computational Resources)\n"
-"Stats: 48.2K parameters, 33.0 MMACs/sec\n"
-"\n"
-"This removes background noise like fans, air conditioning, keyboard typing, and other environmental "
-"sounds while preserving voice clarity."
-msgstr ""
-"Aktivér AI-drevet støjreduktion ved hjælp af neurale netværksbehandling.  \n"
-"Model: GTCRN (Tale-forbedringsmodel, der kræver ultralave beregningsressourcer)  \n"
-"Statistik: 48,2K parametre, 33,0 MMACs/sek  \n"
-"\n"
-"Dette fjerner baggrundsstøj som blæsere, aircondition, tastaturlyde og andre miljølyde, samtidig "
-"med at stemmeklarhed bevares."
-# 
-# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/utils/tooltip_helper.py, line: 49
-msgid ""
-"Select the AI model for noise processing:\n"
-"\n"
-"• Low Latency: Faster processing, best for real-time calls\n"
-"• Full Quality: Better noise reduction, slightly more CPU usage"
-msgstr ""
-"Vælg AI-modellen til støjbehandling:\n"
-"\n"
-"• Lav Latens: Hurtigere behandling, bedst til realtidsopkald\n"
-"• Fuldt Kvalitet: Bedre støjreduktion, lidt højere CPU-forbrug"
-# 
-# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/utils/tooltip_helper.py, line: 54
-msgid ""
-"Controls the intensity of noise reduction.\n"
-"\n"
-"TIP: Temporarily disable the Gate to adjust this value. Re-enable the Gate after finding the ideal "
-"intensity level."
-msgstr ""
-"Kontrollerer intensiteten af støjreduktion.\n"
-"\n"
-"TIP: Deaktiver midlertidigt Gate for at justere denne værdi. Genaktiver Gate efter at have fundet "
-"det ideelle intensitetsniveau."
-# 
-# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/utils/tooltip_helper.py, line: 60
-msgid ""
-"Enable the Silence Filter (Gate).\n"
-"\n"
-"The Gate is applied AFTER noise reduction. It eliminates residual sounds that the filter reduced "
-"but did not completely cancel.\n"
-"\n"
-"When you stop talking, it completely cuts the audio, ensuring absolute silence."
-msgstr ""
-"Aktivér Støjsvagfilteret (Gate).\n"
-"\n"
-"Gaten anvendes EFTER støjreduktion. Den fjerner resterende lyde, som filteret har reduceret, men "
-"ikke helt annulleret.\n"
-"\n"
-"Når du stopper med at tale, skærer den helt lyden, hvilket sikrer absolut stilhed."
-# 
-# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/utils/tooltip_helper.py, line: 66
-msgid ""
-"Sets the minimum volume to activate the microphone.\n"
-"\n"
-"• HIGHER values (-20 dB): Only loud speech passes\n"
-"• LOWER values (-50 dB): Soft speech also passes\n"
-"\n"
-"Tip: Start at -40 dB and adjust according to your voice."
-msgstr ""
-"Indstiller den minimale volumen for at aktivere mikrofonen.\n"
-"\n"
-"• HØJERE værdier (-20 dB): Kun højlydt tale passerer\n"
-"• LAVERE værdier (-50 dB): Blød tale passerer også\n"
-"\n"
-"Tip: Start ved -40 dB og juster i henhold til din stemme."
-# 
-# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/utils/tooltip_helper.py, line: 72
-msgid ""
-"How much to silence when you are not talking.\n"
-"\n"
-"• LOWER values (-60 dB): Almost total silence\n"
-"• HIGHER values (-20 dB): Gentle reduction\n"
-"\n"
-"Use -60 dB for total silence or -40 dB for a more natural transition."
-msgstr ""
-"Hvor meget skal der dæmpes, når du ikke taler.\n"
-"\n"
-"• LAVERE værdier (-60 dB): Næsten total stilhed\n"
-"• HØJERE værdier (-20 dB): Blid reduktion\n"
-"\n"
-"Brug -60 dB for total stilhed eller -40 dB for en mere naturlig overgang."
-# 
-# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/utils/tooltip_helper.py, line: 78
-msgid ""
-"The speed at which the microphone opens when you start talking.\n"
-"\n"
-"• Fast (10ms): Best for not cutting off the first syllable.\n"
-"• Slow (200ms): Smoother transition (fade-in), but may miss the beginning."
-msgstr ""
-"Den hastighed, hvormed mikrofonen åbner, når du begynder at tale.\n"
-"\n"
-"• Hurtig (10ms): Bedst til ikke at klippe den første stavelse.\n"
-"• Langsom (200ms): Glattere overgang (fade-in), men kan misse begyndelsen."
-# 
-# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/utils/tooltip_helper.py, line: 83
-msgid ""
-"Time the microphone remains open after you stop talking.\n"
-"\n"
-"Prevents the sound from cutting out between words or brief pauses in speech.\n"
-"Values between 200ms and 500ms are ideal."
-msgstr ""
-"Tid mikrofonen forbliver åben, efter du stopper med at tale.\n"
-"\n"
-"Forhindrer lyden i at klippe mellem ord eller korte pauser i tale.\n"
-"Værdier mellem 200 ms og 500 ms er ideelle."
-# 
-# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/utils/tooltip_helper.py, line: 88
-msgid ""
-"Speed to silence after the hold time.\n"
-"\n"
-"Defines a smooth 'fade-out' so the silence cut doesn't sound abrupt."
-msgstr ""
-"Hastighed til stilhed efter holdetid.\n"
-"\n"
-"Definerer en glat 'fade-out', så stilhedsklippet ikke lyder abrupt."
-# 
-# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/utils/tooltip_helper.py, line: 93
-msgid ""
-"Enable voice effects and stereo processing.\n"
-"\n"
-"Transforms your mono microphone into stereo output or applies professional voice effects for "
-"streaming and podcasting."
-msgstr ""
-"Aktivér stemmeeffekter og stereo behandling.\n"
-"\n"
-"Transformerer din mono mikrofon til stereo output eller anvender professionelle stemmeeffekter til "
-"streaming og podcasting."
-# 
-# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/utils/tooltip_helper.py, line: 98
-msgid ""
-"Choose the voice processing effect:\n"
-"\n"
-"• Dual Mono: Copy signal to both channels (stereo output)\n"
-"• Studio: Professional radio voice with compression and presence\n"
-"• Voice Changer: Adjust your voice pitch from deep to sharp"
-msgstr ""
-"Vælg stemmebehandlings-effekten:\n"
-"\n"
-"• Dual Mono: Kopier signalet til begge kanaler (stereo output)\n"
-"• Studio: Professionel radio stemme med kompression og tilstedeværelse\n"
-"• Voice Changer: Juster din stemmes tonehøjde fra dyb til skarp"
-# 
-# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/utils/tooltip_helper.py, line: 104
-msgid ""
-"Adjust the intensity of the selected effect.\n"
-"\n"
-"• Studio: Controls the amount of compression/presence\n"
-"• Voice Changer: Controls the pitch (Low to High)"
-msgstr ""
-"Juster intensiteten af den valgte effekt.\n"
-"\n"
-"• Studio: Kontrollerer mængden af kompression/tilstedeværelse\n"
-"• Stemmeskifter: Kontrollerer tonehøjden (Lav til Høj)"
-# 
-# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/utils/tooltip_helper.py, line: 110
-msgid ""
-"Enable the 10-band parametric equalizer.\n"
-"\n"
-"Adjust the tonal balance of your voice by boosting or cutting specific frequency ranges."
-msgstr ""
-"Aktivér den 10-bånds parametriske equalizer.\n"
-"\n"
-"Justér den tonale balance i din stemme ved at forstærke eller skære specifikke frekvensområder."
-# 
-# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/utils/tooltip_helper.py, line: 115
-msgid ""
-"Quick presets for common use cases:\n"
-"\n"
-"• Flat: No changes\n"
-"• Voice Boost: Enhance vocal clarity\n"
-"• Podcast: Professional broadcast sound\n"
-"• Warm: Rich, full tone\n"
-"• Bright: Clear, crisp sound"
-msgstr ""
-"Hurtige forudindstillinger til almindelige anvendelsessager:\n"
-"\n"
-"• Flad: Ingen ændringer\n"
-"• Stemmeforstærkning: Forbedre vokal klarhed\n"
-"• Podcast: Professionel udsendelseslyd\n"
-"• Varm: Rig, fyldig tone\n"
-"• Lys: Klar, skarp lyd"
-# 
-# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/utils/tooltip_helper.py, line: 123
-msgid ""
-"Adjust individual frequency bands:\n"
-"\n"
-"• Left bands (31-250 Hz): Bass and low frequencies\n"
-"• Middle bands (500-2000 Hz): Voice fundamentals\n"
-"• Right bands (4000-16000 Hz): Brightness and clarity\n"
-"\n"
-"Drag sliders up to boost, down to cut."
-msgstr ""
-"Juster individuelle frekvensbånd:\n"
-"\n"
-"• Venstre bånd (31-250 Hz): Bas og lave frekvenser\n"
-"• Mellembånd (500-2000 Hz): Stemmes fundamenter\n"
-"• Højre bånd (4000-16000 Hz): Lysstyrke og klarhed\n"
-"\n"
-"Træk skyderne op for at forstærke, ned for at skære."
-# 
-# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/utils/tooltip_helper.py, line: 131
-msgid ""
-"Show additional controls for fine-tuning your audio.\n"
-"\n"
-"Includes equalizer, AI model selection, and visualizer options."
-msgstr ""
-"Vis visse yderligere kontroller for finjustering af din lyd.\n"
-"\n"
-"Inkluderer equalizer, AI-modelvalg og visualiseringsmuligheder."
-# 
-# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/utils/tooltip_helper.py, line: 136
-msgid ""
-"Activate audio loopback (Monitor).\n"
-"\n"
-"Allows hearing your own processed voice to test adjustments.\n"
-"Note: There will always be a small delay (latency) in the return."
-msgstr ""
-"Aktivér lydsløjfe (Monitor).\n"
-"\n"
-"Giver mulighed for at høre din egen behandlede stemme for at teste justeringer.\n"
-"Bemærk: Der vil altid være en lille forsinkelse (latens) i tilbageleveringen."
-# 
-# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/utils/tooltip_helper.py, line: 141
-msgid ""
-"Add an extra delay to the monitor return.\n"
-"\n"
-"Useful for checking audio/video sync in recordings or to avoid mental confusion when speaking and "
-"hearing yourself immediately."
-msgstr ""
-"Tilføj en ekstra forsinkelse til monitorretur. \n"
-"\n"
-"Nyttig til at tjekke lyd/video synkronisering i optagelser eller for at undgå mental forvirring, "
-"når du taler og hører dig selv med det samme."
-# 
-# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/utils/tooltip_helper.py, line: 147
-msgid ""
-"Automatically switches your headset between listening mode and call mode when you use the "
-"microphone. Note: Using the headset microphone generally reduces both headphone and microphone "
-"quality."
-msgstr ""
-"Automatisk skifter dit headset mellem lytte- og opkaldstilstand, når du bruger mikrofonen. Bemærk: "
-"Brug af headsetmikrofonen reducerer generelt både hovedtelefon- og mikrofonkvalitet."
-# 
-# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/utils/tooltip_helper.py, line: 155
-msgid ""
-"Choose how the audio visualizer displays:\n"
-"\n"
-"• Modern Waves: Smooth wave animation\n"
-"• Retro Bars: Classic equalizer bars\n"
-"• Circular: Radial visualization"
-msgstr ""
-"Vælg hvordan lydvisualiseringen vises:\n"
-"\n"
-"• Moderne Bølger: Glat bølgeanimation\n"
-"• Retro Barer: Klassiske equalizer-barer\n"
-"• Cirkulær: Radial visualisering"
-# 
 # #-#-#-#-#  biglinux-noise-reduction-pipewire.pot (biglinux-noise-reduction-pipewire)  #-#-#-#-#
 # 
 # File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/ui/main_view.py, line: 88
@@ -287,35 +24,84 @@ msgstr ""
 msgid "Microphone Settings"
 msgstr "Mikrofonindstillinger"
 # 
-# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/ui/main_view.py, line: 234
-msgid "Activate Noise Reduction"
-msgstr "Aktivér støjreduktion"
-# 
-# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/ui/main_view.py, line: 235
-msgid "Removes background noise (keyboard, fan) using AI."
-msgstr "Fjerner baggrundsstøj (tastatur, blæser) ved hjælp af AI."
-# 
-# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/ui/main_view.py, line: 245
-msgid "Cleanup Intensity"
-msgstr "Rydningsintensitet"
-# 
-# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/ui/main_view.py, line: 252
-msgid "If you want sounds other than the voice to be captured, reduce the filter intensity."
-msgstr "Hvis du ønsker, at lyde udover stemmen skal fanges, skal du reducere filterintensiteten."
-# 
-# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/ui/main_view.py, line: 256
-# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/ui/main_view.py, line: 1137
-msgid "Smooth"
-msgstr "Glat"
-# 
-# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/ui/main_view.py, line: 257
-# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/ui/main_view.py, line: 332
-msgid "Medium"
-msgstr "Medium"
-# 
 # File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/ui/main_view.py, line: 258
-msgid "Strong"
-msgstr "Stærk"
+msgid "Loading, please wait"
+msgstr "Indlæser, vent venligst"
+# 
+# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/ui/main_view.py, line: 227
+msgid "Applying settings…"
+msgstr "Anvender indstillinger…"
+# 
+# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/ui/main_view.py, line: 310
+msgid "Noise Reduction"
+msgstr "Støjreduktion"
+# 
+# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/ui/main_view.py, line: 312
+msgid "Removes background noise like fan, keyboard, and air conditioning."
+msgstr "Fjerner baggrundsstøj som blæser, tastatur og aircondition."
+# 
+# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/ui/main_view.py, line: 323
+msgid "AI Model"
+msgstr "AI-model"
+# 
+# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/ui/main_view.py, line: 325
+msgid "Maximum Cleaning"
+msgstr "Maksimal Rengøring"
+# 
+# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/ui/main_view.py, line: 326
+msgid "Natural Voice"
+msgstr "Naturlig Stemme"
+# 
+# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/ui/main_view.py, line: 327
+msgid "Smart (both combined)"
+msgstr "Smart (begge kombineret)"
+# 
+# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/ui/main_view.py, line: 336
+msgid "Noise Removal Intensity"
+msgstr "Støjsanering Intensitet"
+# 
+# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/ui/main_view.py, line: 355
+msgid "Filter During Speech"
+msgstr "Filtrer under tale"
+# 
+# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/ui/main_view.py, line: 363
+# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/ui/main_view.py, line: 381
+# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/ui/main_view.py, line: 400
+msgid "Off"
+msgstr "Fraud."
+# 
+# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/ui/main_view.py, line: 373
+msgid "Syllable Protection"
+msgstr "Sætningsbeskyttelse"
+# 
+# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/ui/main_view.py, line: 392
+msgid "Voice Recovery"
+msgstr "Stemmerhverv"
+# 
+# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/ui/main_view.py, line: 420
+msgid "Volume Normalizer"
+msgstr "Lydnormalisator"
+# 
+# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/ui/main_view.py, line: 422
+msgid "Evens out volume — loud sounds get softer, quiet sounds get louder."
+msgstr "Jævner lydniveauet ud - høje lyde bliver blødere, stille lyde bliver højere."
+# 
+# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/ui/main_view.py, line: 434
+# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/ui/main_view.py, line: 472
+msgid "Intensity"
+msgstr "Intensitet"
+# 
+# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/ui/main_view.py, line: 477
+msgid "High-Pass Filter"
+msgstr "Højpasfilter"
+# 
+# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/ui/main_view.py, line: 478
+msgid "Removes low-frequency rumble"
+msgstr "Fjerner lavfrekvent rumlen"
+# 
+# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/ui/main_view.py, line: 487
+msgid "Frequency (Hz)"
+msgstr "Frekvens (Hz)"
 # 
 # File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/ui/main_view.py, line: 308
 msgid "Silence Filter (Gate)"
@@ -325,49 +111,17 @@ msgstr "Støjsvag Filter (Gate)"
 msgid "Automatically silences the microphone when you are not talking."
 msgstr "Automatisk dæmpning af mikrofonen, når du ikke taler."
 # 
-# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/ui/main_view.py, line: 322
-msgid "Sensitivity (Threshold)"
-msgstr "Følsomhed (Tærskel)"
-# 
-# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/ui/main_view.py, line: 331
-msgid "Low"
-msgstr "Lav"
-# 
-# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/ui/main_view.py, line: 333
-msgid "High"
-msgstr "Høj"
-# 
-# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/ui/main_view.py, line: 341
-msgid "Silence Reduction"
-msgstr "Støjsænkning"
-# 
-# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/ui/main_view.py, line: 361
-msgid "Attack (Opening)"
-msgstr "Angreb (Åbning)"
-# 
-# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/ui/main_view.py, line: 381
-msgid "Hold"
-msgstr "Hold"
-# 
-# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/ui/main_view.py, line: 401
-msgid "Release"
-msgstr "Udgivelse"
-# 
 # File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/ui/main_view.py, line: 425
 msgid "Voice Effects"
 msgstr "Stemmer Effekter"
 # 
-# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/ui/main_view.py, line: 426
-msgid "Voice enhancement, studio sound and pitch shifter."
-msgstr "Stemforbedring, studioklang og tonehøjdeændrer."
+# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/ui/main_view.py, line: 581
+msgid "Voice enhancement and pitch shifter."
+msgstr "Stemningsforbedring og tonehøjdeændrer."
 # 
 # File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/ui/main_view.py, line: 436
 msgid "Dual Mono"
 msgstr "Dual Mono"
-# 
-# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/ui/main_view.py, line: 437
-msgid "Studio"
-msgstr "Studie"
 # 
 # File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/ui/main_view.py, line: 438
 msgid "Voice Changer (Pitch)"
@@ -423,6 +177,77 @@ msgstr "Bånd"
 # File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/ui/main_view.py, line: 500
 msgid "Adjust each frequency"
 msgstr "Juster hver frekvens"
+# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/ui/main_view.py, line: 687
+msgid "Echo Cancellation"
+msgstr "Ekkokansellering"
+# 
+# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/ui/main_view.py, line: 689
+msgid "Reduces echo and feedback when using speakers"
+msgstr "Reducer ekko og feedback, når du bruger højttalere."
+# 
+# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/ui/main_view.py, line: 700
+msgid "Automatic Gain Control"
+msgstr "Automatisk Gain Kontrol"
+# 
+# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/ui/main_view.py, line: 701
+msgid "Normalizes volume automatically"
+msgstr "Normaliserer lydstyrken automatisk"
+# 
+# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/ui/main_view.py, line: 708
+msgid "Noise Suppression"
+msgstr "Støjreduktion"
+# 
+# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/ui/main_view.py, line: 709
+msgid "WebRTC built-in noise filter"
+msgstr "WebRTC indbygget støjfilter"
+# 
+# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/ui/main_view.py, line: 716
+msgid "Voice Detection"
+msgstr "Stemmegenkendelse"
+# 
+# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/ui/main_view.py, line: 717
+msgid "Applies processing only when speech is detected"
+msgstr "Anvender behandling kun når tale registreres"
+# 
+# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/ui/main_view.py, line: 726
+msgid "Automatic Volume Control"
+msgstr "Automatisk lydstyringskontrol"
+# 
+# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/ui/main_view.py, line: 728
+msgid "Keeps your microphone volume at a consistent level"
+msgstr "Holder mikrofonens lydstyrke på et konstant niveau"
+# 
+# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/ui/main_view.py, line: 738
+msgid "Signal Level"
+msgstr "Signalniveau"
+# 
+# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/ui/main_view.py, line: 747
+msgid "Target signal peak the microphone should reach"
+msgstr "Mål signalspid, som mikrofonen skal nå."
+# 
+# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/ui/main_view.py, line: 753
+msgid "Minimum Volume"
+msgstr "Minimum volumen"
+# 
+# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/ui/main_view.py, line: 762
+msgid "AGC will not reduce volume below this level"
+msgstr "AGC vil ikke reducere volumen under dette niveau."
+# 
+# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/ui/main_view.py, line: 768
+msgid "Maximum Volume"
+msgstr "Maksimal volumen"
+# 
+# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/ui/main_view.py, line: 777
+msgid "AGC will not raise volume above this level"
+msgstr "AGC vil ikke hæve lydstyrken over dette niveau."
+# 
+# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/ui/main_view.py, line: 783
+msgid "Reactivity"
+msgstr "Reaktivitet"
+# 
+# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/ui/main_view.py, line: 792
+msgid "How fast the volume adjusts — higher is faster"
+msgstr "Hvor hurtigt lydstyrken justeres - jo højere, jo hurtigere."
 # 
 # File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/ui/main_view.py, line: 533
 msgid "Bluetooth Headset Mode"
@@ -456,6 +281,10 @@ msgstr "0s"
 msgid "1s"
 msgstr "1s"
 # 
+# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/ui/main_view.py, line: 771
+msgid "2s"
+msgstr "2s"
+# 
 # File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/ui/main_view.py, line: 569
 msgid "3s"
 msgstr "3s"
@@ -464,38 +293,47 @@ msgstr "3s"
 msgid "5s"
 msgstr "5s"
 # 
-# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/ui/main_view.py, line: 630
-# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/ui/main_view.py, line: 670
+# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/ui/main_view.py, line: 903
+# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/ui/main_view.py, line: 1794
 #, python-brace-format
-msgid "Reduction amount ({reduction} dB)"
-msgstr "Reduktionsbeløb ({reduction} dB)"
+msgid "Target signal peak: {db:.0f} dBFS"
+msgstr "Mål signal top: {db:.0f} dBFS"
 # 
-# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/ui/main_view.py, line: 665
+# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/ui/main_view.py, line: 907
+# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/ui/main_view.py, line: 1810
 #, python-brace-format
-msgid "Activates at {threshold} dB"
-msgstr "Aktiveres ved {threshold} dB"
+msgid "AGC will not reduce volume below {v}%"
+msgstr "AGC vil ikke reducere volumen under {v}%"
 # 
-# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/ui/main_view.py, line: 675
+# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/ui/main_view.py, line: 913
+# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/ui/main_view.py, line: 1825
 #, python-brace-format
-msgid "How fast gate opens ({attack:.1f} ms)"
-msgstr "Hvor hurtigt porten åbner ({attack:.1f} ms)"
+msgid "AGC will not raise volume above {v}%"
+msgstr "AGC vil ikke hæve volumen over {v}%"
 # 
-# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/ui/main_view.py, line: 680
+# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/ui/main_view.py, line: 785
+# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/ui/main_view.py, line: 1321
 #, python-brace-format
-msgid "Min open time ({hold:.1f} ms)"
-msgstr "Min åbningstid ({hold:.1f} ms)"
+msgid "Silence threshold: {percent}%"
+msgstr "Støjsvag grænse: {percent}%"
 # 
-# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/ui/main_view.py, line: 685
+# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/ui/main_view.py, line: 804
+# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/ui/main_view.py, line: 1269
 #, python-brace-format
-msgid "Decay time ({release:.1f} ms)"
-msgstr "Forfaldstid ({release:.1f} ms)"
+msgid "Volume correction: {percent}%"
+msgstr "Lydkorrektion: {percent}%"
 # 
-# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/ui/main_view.py, line: 701
+# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/ui/main_view.py, line: 813
+# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/ui/main_view.py, line: 1290
 #, python-brace-format
-msgid "If you want sounds other than the voice to be captured, reduce the filter intensity. ({percent}%)"
-msgstr ""
-"Hvis du ønsker, at lyde udover stemmen skal fanges, skal du reducere filterintensiteten. "
-"({percent}%)"
+msgid "Cutoff: {hz} Hz"
+msgstr "Cutoff: {hz} Hz"
+# 
+# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/ui/main_view.py, line: 722
+# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/ui/main_view.py, line: 1038
+#, python-brace-format
+msgid "Removal aggressiveness. ({percent}%)"
+msgstr "Fjernelsesaggressivitet. ({percent}%)"
 # 
 # File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/ui/main_view.py, line: 701
 # File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/ui/main_view.py, line: 1408
@@ -503,25 +341,28 @@ msgstr ""
 msgid "Monitor feedback delay. Useful for checking sync. ({delay} ms)"
 msgstr "Overvåg feedbackforsinkelse. Nyttig til at tjekke synkronisering. ({delay} ms)"
 # 
-# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/ui/main_view.py, line: 694
-# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/ui/main_view.py, line: 1003
+# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/ui/main_view.py, line: 930
+msgid "Noise reduction disabled"
+msgstr "Støjreduktion deaktiveret"
+# 
+# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/ui/main_view.py, line: 1249
+msgid "Failed to apply settings. Please try again."
+msgstr "Mislykkedes at anvende indstillinger. Prøv venligst igen."
+# 
+# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/ui/main_view.py, line: 1051
 #, python-brace-format
-msgid "Removal aggressiveness. High values clean more but may alter voice. ({percent}%)"
-msgstr "Fjernelsesaggressivitet. Høje værdier renser mere, men kan ændre stemmen. ({percent}%)"
+msgid "Filter intensity during speech ({percent}%)"
+msgstr "Filtrér intensitet under tale ({percent}%)"
 # 
-# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/ui/main_view.py, line: 1135
-msgid "Radio Effect Intensity"
-msgstr "Radioeffekt Intensitet"
+# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/ui/main_view.py, line: 1062
+#, python-brace-format
+msgid "Pre-buffer: {ms} ms"
+msgstr "Forudbuffer: {ms} ms"
 # 
-# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/ui/main_view.py, line: 1138
-msgid "Intense"
-msgstr "Intensiv"
-# 
-# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/ui/main_view.py, line: 1140
 # File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/ui/main_view.py, line: 1207
 #, python-brace-format
-msgid "Adjust compression and presence level. ({percent}%)"
-msgstr "Juster kompression og tilstedeværelsesniveau. ({percent}%)"
+msgid "Voice recovery: {percent}%"
+msgstr "Stemmesøgning: {percent}%"
 # 
 # File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/ui/main_view.py, line: 1145
 msgid "Voice Tonality (Pitch)"
@@ -558,53 +399,442 @@ msgstr "Indstillinger gendannet med succes"
 msgid "All settings have been restored!"
 msgstr "Alle indstillinger er blevet gendannet!"
 # 
-# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/application.py, line: 217
-msgid "Legal"
-msgstr "Juridisk"
 # 
-# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/application.py, line: 220
+# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/audio/filter_chain.py
+msgid "Enhanced Microphone"
+msgstr "Forbedret mikrofon"
+# 
+# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/utils/tooltip_helper.py, line: 41
 msgid ""
-"The GPL-3.0 license applies to this configuration interface. The projects used to apply the filters "
-"have their own licenses."
+"Reduces unwanted background noise from your microphone\n"
+"using the GTCRN neural network.\n"
+"\n"
+"Removes sounds like fans, air conditioning, keyboard typing,\n"
+"and other ambient noise, keeping only your voice clear."
 msgstr ""
-"GPL-3.0-licensen gælder for denne konfigurationsgrænseflade. De projekter, der bruges til at "
-"anvende filtrene, har deres egne licenser."
+"Reducer uønsket baggrundsstøj fra din mikrofon.\n"
+"\n"
+"Fjerner lyde som blæsere, aircondition, tastaturtastning,\n"
+"og anden omgivelsesstøj, så kun din stemme forbliver klar."
 # 
-# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/application.py, line: 227
-msgid "Technologies used"
-msgstr "Brugte teknologier"
+# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/utils/tooltip_helper.py, line: 47
+msgid ""
+"Choose how noise is cleaned:\n"
+"\n"
+"• Maximum Cleaning (DNS3): Removes the most noise possible.\n"
+"  Best for noisy environments. May slightly change the voice.\n"
+"• Natural Voice (VCTK): Gentler cleaning that keeps the voice\n"
+"  more natural. Ideal for quiet environments.\n"
+"• Smart (both combined): Uses DNS3 during\n"
+"  silence and VCTK while you speak.\n"
+"  Best result, but uses more processing power."
+msgstr ""
+"Vælg hvordan støj renses:\n"
+"\n"
+"• Maksimal Rensning (DNS3): Fjerner mest muligt støj.\n"
+"  Bedst til støjende miljøer. Kan ændre stemmen en smule.\n"
+"• Naturlig Stemme (VCTK): Mildere rensning, der holder stemmen\n"
+"  mere naturlig. Ideel til stille miljøer.\n"
+"• Smart (begge kombineret): Bruger DNS3 under\n"
+"  stilhed og VCTK, mens du taler.\n"
+"  Bedste resultat, men bruger mere processorkraft."
 # 
-# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/window.py, line: 172
-msgid "Restore settings?"
-msgstr "Gendan indstillinger?"
+# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/utils/tooltip_helper.py, line: 58
+msgid ""
+"How much noise to remove.\n"
+"\n"
+"• 1: Removes only the most obvious noises\n"
+"• 3: Good for most situations\n"
+"• 5: Removes as much noise as possible\n"
+"\n"
+"If the voice sounds distorted, reduce this slider."
+msgstr ""
+"Hvor meget støj skal fjernes.\n"
+"\n"
+"• 1: Fjerner kun de mest åbenlyse støj\n"
+"• 3: God til de fleste situationer\n"
+"• 5: Fjerner så meget støj som muligt\n"
+"\n"
+"Hvis stemmen lyder forvrænget, skal du reducere denne skyder."
 # 
-# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/window.py, line: 173
-msgid "This will return all adjustments to their original defaults."
-msgstr "Dette vil returnere alle justeringer til deres oprindelige standardindstillinger."
+# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/utils/tooltip_helper.py, line: 65
+msgid ""
+"Whether to keep filtering active while you are speaking.\n"
+"\n"
+"• Off: Filter pauses during speech — voice sounds\n"
+"  completely natural, but noise may leak through\n"
+"• 3: Applies partial filtering during speech\n"
+"• 5: Full filtering at all times, cleanest result\n"
+"\n"
+"Default: 5. Reduce if your voice sounds thin or robotic."
+msgstr ""
+"Om du vil holde filtreringen aktiv, mens du taler.\n"
+"\n"
+"• Fra: Filteret pauser under tale — stemmen lyder\n"
+"  helt naturlig, men støj kan slippe igennem\n"
+"• 3: Anvender delvis filtrering under tale\n"
+"• 5: Fuld filtrering hele tiden, reneste resultat\n"
+"\n"
+"Standard: 5. Reducer, hvis din stemme lyder tynd eller robotagtig."
 # 
-# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/window.py, line: 175
-msgid "Cancel"
-msgstr "Annuller"
+# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/utils/tooltip_helper.py, line: 73
+msgid ""
+"Prevents the beginning of words from being cut off.\n"
+"\n"
+"Keeps a small audio buffer so the filter can react\n"
+"before you start speaking.\n"
+"• Off: No delay, but may clip the first syllable\n"
+"• 50ms: Recommended for most people\n"
+"• 200ms: Safest for fast speakers\n"
+"\n"
+"Higher values add a small delay to the audio."
+msgstr ""
+"Forhindrer, at begyndelsen af ord bliver klippet af.\n"
+"\n"
+"Holder en lille lydbuffer, så filteret kan reagere\n"
+"før du begynder at tale.\n"
+"• Fra: Ingen forsinkelse, men kan klippe den første stavelse\n"
+"• 50ms: Anbefalet til de fleste mennesker\n"
+"• 200ms: Sikkert for hurtige talere\n"
+"\n"
+"Højere værdier tilføjer en lille forsinkelse til lyden."
 # 
-# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/window.py, line: 176
-msgid "Restore"
-msgstr "Gendan"
+# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/utils/tooltip_helper.py, line: 82
+msgid ""
+"Restores high-frequency detail lost during filtering.\n"
+"\n"
+"Noise removal can make voices sound muffled or thin.\n"
+"This control reconstructs the treble frequencies\n"
+"to bring back clarity and presence.\n"
+"\n"
+"• Off: No HF reconstruction\n"
+"• 3: Good balance for most voices\n"
+"• 5: Maximum clarity restoration\n"
+"\n"
+"Recommended: keep between 3 and 5."
+msgstr ""
+"Gendanner højfrekvente detaljer, der er gået tabt under filtrering.\n"
+"\n"
+"Støjreduktion kan få stemmer til at lyde dæmpede eller tynde.\n"
+"Denne kontrol rekonstruerer diskantfrekvenserne\n"
+"for at genoprette klarhed og tilstedeværelse.\n"
+"\n"
+"• Fra: Ingen HF rekonstruktion\n"
+"• 3: God balance for de fleste stemmer\n"
+"• 5: Maksimal klarhedsgenopretning\n"
+"\n"
+"Anbefalet: hold mellem 3 og 5."
 # 
-# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/window.py, line: 193
-msgid "Restore Defaults"
-msgstr "Gendan standardindstillinger"
+# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/utils/tooltip_helper.py, line: 91
+msgid ""
+"Evens out the volume of your voice.\n"
+"\n"
+"If you speak too loud, it lowers the volume.\n"
+"If you speak too softly, it raises the volume.\n"
+"\n"
+"Ideal for meetings, streams, and recordings\n"
+"where consistent volume matters."
+msgstr ""
+"Justerer lydstyrken på din stemme.\n"
+"\n"
+"Hvis du taler for højt, sænker det lydstyrken.\n"
+"Hvis du taler for blødt, hæver det lydstyrken.\n"
+"\n"
+"Ideel til møder, streams og optagelser\n"
+"hvor ensartet lydstyrke er vigtig."
 # 
-# File: biglinux-noise-reduction-pipewire/usr/share/bigbashview/apps/microphone/noise_reducer.py, line: 276
-msgid "About"
-msgstr "Om"
+# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/utils/tooltip_helper.py, line: 109
+msgid ""
+"How much volume correction to apply.\n"
+"\n"
+"• 1: Gentle correction, very natural sound\n"
+"• 3: Good for most people\n"
+"• 5: Strong leveling — whisper and shout\n"
+"  come out at similar volume\n"
+"\n"
+"Start with 3 and adjust to taste."
+msgstr ""
+"Hvor meget volumenkorrektion skal der anvendes.\n"
+"\n"
+"• 1: Blid korrektion, meget naturlig lyd\n"
+"• 3: Godt for de fleste\n"
+"• 5: Stærk nivellering — hviske og råbe\n"
+"  kommer ud med lignende volumen\n"
+"\n"
+"Start med 3 og juster efter smag."
 # 
-# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/window.py, line: 196
-msgid "Quit"
-msgstr "Afslut"
+# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/utils/tooltip_helper.py, line: 107
+msgid ""
+"Silence filter that mutes the mic when you're not speaking.\n"
+"\n"
+"Works after noise reduction. Eliminates any residual\n"
+"sound that the filter didn't fully remove.\n"
+"\n"
+"When you stop talking, there is complete silence."
+msgstr ""
+"Støjsvag filter, der dæmper mikrofonen, når du ikke taler.\n"
+"\n"
+"Fungerer efter støjreduktion. Fjerner enhver resterende lyd, som filteret ikke helt har fjernet.\n"
+"\n"
+"Når du stopper med at tale, er der fuldstændig stilhed."
 # 
-# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/window.py, line: 202
-msgid "Main menu"
-msgstr "Hovedmenu"
+# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/utils/tooltip_helper.py, line: 124
+msgid ""
+"Controls how aggressively the gate removes residual noise.\n"
+"\n"
+"• 1: Only mutes during long silences\n"
+"• 3: Good for most voices\n"
+"• 5: Complete silence between words\n"
+"\n"
+"Start at 3 and adjust to taste."
+msgstr ""
+"Kontrollerer, hvor aggressivt porten fjerner residual støj.\n"
+"\n"
+"• 1: Dæmper kun under lange stilhed\n"
+"• 3: Godt til de fleste stemmer\n"
+"• 5: Fuldstændig stilhed mellem ord\n"
+"\n"
+"Start ved 3 og juster efter smag."
+# 
+# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/utils/tooltip_helper.py, line: 121
+msgid ""
+"Voice effects and stereo processing.\n"
+"\n"
+"Converts your mono microphone to stereo or applies\n"
+"professional effects for streaming and podcasting."
+msgstr ""
+"Stemmer og stereo behandling.\n"
+"\n"
+"Konverterer din mono mikrofon til stereo eller anvender professionelle effekter til streaming og "
+"podcasting."
+# 
+# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/utils/tooltip_helper.py, line: 137
+msgid ""
+"Choose the voice effect:\n"
+"\n"
+"• Dual Mono: Duplicates signal to both channels (stereo)\n"
+"• Voice Changer: Changes voice pitch (deeper or higher)"
+msgstr ""
+"Vælg stemmeeffekt:\n"
+"\n"
+"• Dual Mono: Duplicerer signalet til begge kanaler (stereo)\n"
+"• Voice Changer: Ændrer stemmehøjden (dybere eller højere)"
+# 
+# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/utils/tooltip_helper.py, line: 142
+msgid ""
+"Intensity of the selected effect.\n"
+"\n"
+"• Voice Changer: Pitch (low to high)"
+msgstr ""
+"Intensitet af den valgte effekt.\n"
+"\n"
+"• Stemmeændrer: Tonehøjde (lav til høj)"
+# 
+# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/utils/tooltip_helper.py, line: 147
+msgid ""
+"High-pass filter that removes low frequencies.\n"
+"\n"
+"Cuts rumble, hum, and other low-frequency noise\n"
+"below the chosen frequency. Keeps your voice clear\n"
+"without affecting speech quality."
+msgstr ""
+"Højpasfilter, der fjerner lave frekvenser.\n"
+"\n"
+"Fjerner rumlen, summen og andet lavfrekvent støj\n"
+"under den valgte frekvens. Holder din stemme klar\n"
+"uden at påvirke tale kvalitet."
+# 
+# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/utils/tooltip_helper.py, line: 153
+msgid ""
+"Cut-off frequency for the high-pass filter.\n"
+"\n"
+"Frequencies below this value are removed.\n"
+"• 80 Hz: Removes deep rumble only\n"
+"• 120 Hz: Good for most voices\n"
+"• 200 Hz: Aggressive cut, may thin the voice\n"
+"\n"
+"Default: 80 Hz."
+msgstr ""
+"Skæringsfrekvens for højpasfilteret.\n"
+"\n"
+"Frekvenser under denne værdi fjernes.\n"
+"• 80 Hz: Fjerner dyb rumlen kun\n"
+"• 120 Hz: God til de fleste stemmer\n"
+"• 200 Hz: Aggressiv skæring, kan gøre stemmen tyndere\n"
+"\n"
+"Standard: 80 Hz."
+# 
+# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/utils/tooltip_helper.py, line: 138
+msgid ""
+"Equalizer to adjust the tone of your voice.\n"
+"\n"
+"Increase or decrease specific frequencies\n"
+"to make speech clearer or warmer."
+msgstr ""
+"Equalizer til at justere tonen i din stemme.\n"
+"\n"
+"Øg eller formindsk specifikke frekvenser for at gøre tale klarere eller varmere."
+# 
+# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/utils/tooltip_helper.py, line: 115
+msgid ""
+"Quick presets for common use cases:\n"
+"\n"
+"• Flat: No changes\n"
+"• Voice Boost: Enhance vocal clarity\n"
+"• Podcast: Professional broadcast sound\n"
+"• Warm: Rich, full tone\n"
+"• Bright: Clear, crisp sound"
+msgstr ""
+"Hurtige forudindstillinger til almindelige anvendelsessager:\n"
+"\n"
+"• Flad: Ingen ændringer\n"
+"• Stemmeforstærkning: Forbedre vokal klarhed\n"
+"• Podcast: Professionel udsendelseslyd\n"
+"• Varm: Rig, fyldig tone\n"
+"• Lys: Klar, skarp lyd"
+# 
+# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/utils/tooltip_helper.py, line: 123
+msgid ""
+"Adjust individual frequency bands:\n"
+"\n"
+"• Left bands (31-250 Hz): Bass and low frequencies\n"
+"• Middle bands (500-2000 Hz): Voice fundamentals\n"
+"• Right bands (4000-16000 Hz): Brightness and clarity\n"
+"\n"
+"Drag sliders up to boost, down to cut."
+msgstr ""
+"Juster individuelle frekvensbånd:\n"
+"\n"
+"• Venstre bånd (31-250 Hz): Bas og lave frekvenser\n"
+"• Mellembånd (500-2000 Hz): Stemmes fundamenter\n"
+"• Højre bånd (4000-16000 Hz): Lysstyrke og klarhed\n"
+"\n"
+"Træk skyderne op for at forstærke, ned for at skære."
+# 
+# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/utils/tooltip_helper.py, line: 136
+msgid ""
+"Activate audio loopback (Monitor).\n"
+"\n"
+"Allows hearing your own processed voice to test adjustments.\n"
+"Note: There will always be a small delay (latency) in the return."
+msgstr ""
+"Aktivér lydsløjfe (Monitor).\n"
+"\n"
+"Giver mulighed for at høre din egen behandlede stemme for at teste justeringer.\n"
+"Bemærk: Der vil altid være en lille forsinkelse (latens) i tilbageleveringen."
+# 
+# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/utils/tooltip_helper.py, line: 141
+msgid ""
+"Add an extra delay to the monitor return.\n"
+"\n"
+"Useful for checking audio/video sync in recordings or to avoid mental confusion when speaking and "
+"hearing yourself immediately."
+msgstr ""
+"Tilføj en ekstra forsinkelse til monitorretur. \n"
+"\n"
+"Nyttig til at tjekke lyd/video synkronisering i optagelser eller for at undgå mental forvirring, "
+"når du taler og hører dig selv med det samme."
+# 
+# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/utils/tooltip_helper.py, line: 147
+msgid ""
+"Automatically switches your headset between listening mode and call mode when you use the "
+"microphone. Note: Using the headset microphone generally reduces both headphone and microphone "
+"quality."
+msgstr ""
+"Automatisk skifter dit headset mellem lytte- og opkaldstilstand, når du bruger mikrofonen. Bemærk: "
+"Brug af headsetmikrofonen reducerer generelt både hovedtelefon- og mikrofonkvalitet."
+# 
+# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/utils/tooltip_helper.py, line: 199
+msgid ""
+"Enables acoustic echo cancellation using WebRTC AEC.\n"
+"\n"
+"Reduces echo and feedback when using speakers instead of headphones. Captures the speaker output "
+"and removes it from the microphone signal."
+msgstr ""
+"Aktiverer akustisk ekkoannullering ved hjælp af WebRTC AEC.\n"
+"\n"
+"Reducerer ekko og feedback, når der bruges højttalere i stedet for hovedtelefoner. Fanger "
+"højttalerens output og fjerner det fra mikrofonens signal."
+# 
+# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/utils/tooltip_helper.py, line: 204
+msgid ""
+"Automatic gain control for the echo canceller.\n"
+"\n"
+"Adjusts the microphone volume automatically to keep\n"
+"the signal level consistent. Disable if your voice\n"
+"sounds unnaturally amplified or compressed."
+msgstr ""
+"Automatisk gainkontrol for ekkoannulleren.\n"
+"\n"
+"Justerer mikrofonens lydstyrke automatisk for at holde\n"
+"signalniveauet konstant. Deaktiver, hvis din stemme\n"
+"lyder unormalt forstærket eller komprimeret."
+# 
+# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/utils/tooltip_helper.py, line: 210
+msgid ""
+"Additional noise suppression inside the echo canceller.\n"
+"\n"
+"Provides extra noise removal on top of the main GTCRN filter.\n"
+"May reduce audio quality — only enable in very noisy environments."
+msgstr ""
+"Yderligere støjundertrykkelse inde i ekkokansleren.\n"
+"\n"
+"Giver ekstra støjfjernelse oven på den primære GTCRN-filter.\n"
+"Kan reducere lydkvaliteten — aktiveres kun i meget støjende miljøer."
+# 
+# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/utils/tooltip_helper.py, line: 215
+msgid ""
+"Voice activity detection for the echo canceller.\n"
+"\n"
+"Helps the AEC distinguish speech from noise.\n"
+"Can improve echo removal accuracy but may interfere\n"
+"with the main noise reduction. Disabled by default."
+msgstr ""
+"Stemmeaktivitetdetektion til ekkoannulleren.\n"
+"\n"
+"Hjælper AEC med at skelne tale fra støj.\n"
+"Kan forbedre nøjagtigheden af ekkofjernelse, men kan forstyrre\n"
+"den primære støjreduktion. Deaktiveret som standard."
+# 
+# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/utils/tooltip_helper.py, line: 213
+msgid ""
+"Automatic Volume Control.\n"
+"\n"
+"Uses a compressor in the PipeWire filter chain to\n"
+"automatically normalize your microphone level.\n"
+"Keeps your voice at a consistent volume regardless\n"
+"of how close or far you are from the microphone."
+msgstr ""
+"Automatisk lydkontrol.\n"
+"\n"
+"Bruger en kompressor i PipeWire-filterkæden til\n"
+"automatisk at normalisere dit mikrofonniveau.\n"
+"Holder din stemme på et ensartet lydniveau uanset\n"
+"hvor tæt eller langt du er fra mikrofonen."
+# 
+# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/utils/tooltip_helper.py, line: 220
+msgid ""
+"Target signal level for the microphone.\n"
+"\n"
+"Controls the output level of the automatic\n"
+"volume normalizer.\n"
+"100% = close to 0 dBFS (loudest).\n"
+"70% ≈ −7 dBFS (comfortable). Default: 70%."
+msgstr ""
+"Mål signalniveauet for mikrofonen.\n"
+"\n"
+"Kontrollerer outputniveauet for den automatiske\n"
+"lydnormering.\n"
+"100% = tæt på 0 dBFS (højeste).\n"
+"70% ≈ −7 dBFS (behageligt). Standard: 70%."
+# 
+# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/config.py, line: 711
+msgid "Default Voice"
+msgstr "Standard stemme"
+# 
+# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/config.py, line: 712
+msgid "Subtle presence boost for clear speech."
+msgstr "Subtil tilstedeværelse boost til klar tale."
 # 
 # File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/config.py, line: 567
 msgid "Natural (No Effects)"
@@ -677,3 +907,55 @@ msgstr "Brugerdefineret"
 # File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/config.py, line: 608
 msgid "Manual adjustment."
 msgstr "Manuel justering."
+# 
+# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/window.py, line: 172
+msgid "Restore settings?"
+msgstr "Gendan indstillinger?"
+# 
+# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/window.py, line: 173
+msgid "This will return all adjustments to their original defaults."
+msgstr "Dette vil returnere alle justeringer til deres oprindelige standardindstillinger."
+# 
+# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/window.py, line: 175
+msgid "Cancel"
+msgstr "Annuller"
+# 
+# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/window.py, line: 176
+msgid "Restore"
+msgstr "Gendan"
+# 
+# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/window.py, line: 193
+msgid "Restore Defaults"
+msgstr "Gendan standardindstillinger"
+# 
+# File: biglinux-noise-reduction-pipewire/usr/share/bigbashview/apps/microphone/noise_reducer.py, line: 276
+msgid "About"
+msgstr "Om"
+# 
+# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/window.py, line: 196
+msgid "Quit"
+msgstr "Afslut"
+# 
+# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/window.py, line: 202
+msgid "Main menu"
+msgstr "Hovedmenu"
+# 
+# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/application.py, line: 217
+msgid "Legal"
+msgstr "Juridisk"
+# 
+# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/application.py, line: 220
+msgid ""
+"The GPL-3.0 license applies to this configuration interface. The projects used to apply the filters "
+"have their own licenses."
+msgstr ""
+"GPL-3.0-licensen gælder for denne konfigurationsgrænseflade. De projekter, der bruges til at "
+"anvende filtrene, har deres egne licenser."
+# 
+# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/application.py, line: 227
+msgid "Technologies used"
+msgstr "Brugte teknologier"
+# 
+# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/application.py, line: 251
+msgid "Use expanders to access settings"
+msgstr "Brug udvidere for at få adgang til indstillinger"

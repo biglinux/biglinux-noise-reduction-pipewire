@@ -9,7 +9,6 @@ from __future__ import annotations
 
 import functools
 import logging
-import threading
 import time
 from collections.abc import Callable
 from concurrent.futures import ThreadPoolExecutor
@@ -148,7 +147,10 @@ class Debouncer:
         if self._pending_call:
             func, args, kwargs = self._pending_call
             self._pending_call = None
-            func(*args, **kwargs)
+            try:
+                func(*args, **kwargs)
+            except Exception:
+                logger.exception("Debounced callback failed")
         return False
 
     def cancel(self) -> None:
@@ -280,65 +282,3 @@ def throttle(
         return wrapper
 
     return decorator
-
-
-class AsyncTaskQueue:
-    """
-    Queue for sequential async task execution.
-
-    Ensures tasks are executed one at a time in order.
-    """
-
-    def __init__(self) -> None:
-        """Initialize the task queue."""
-        self._queue: list[tuple[Callable, tuple, dict, Callable | None]] = []
-        self._is_running = False
-        self._lock = threading.Lock()
-
-    def add(
-        self,
-        func: Callable[..., Any],
-        *args: object,
-        callback: Callable[[Any], None] | None = None,
-        **kwargs: object,
-    ) -> None:
-        """
-        Add a task to the queue.
-
-        Args:
-            func: Function to execute
-            *args: Positional arguments
-            callback: Called with result
-            **kwargs: Keyword arguments
-        """
-        with self._lock:
-            self._queue.append((func, args, kwargs, callback))
-            if not self._is_running:
-                self._is_running = True
-                self._process_next()
-
-    def _process_next(self) -> None:
-        """Process the next task in queue."""
-        with self._lock:
-            if not self._queue:
-                self._is_running = False
-                return
-
-            func, args, kwargs, callback = self._queue.pop(0)
-
-        def task() -> None:
-            try:
-                result = func(*args, **kwargs)
-                if callback:
-                    GLib.idle_add(callback, result)
-            except Exception:
-                logger.exception("Task queue error")
-            finally:
-                GLib.idle_add(self._process_next)
-
-        _executor.submit(task)
-
-    def clear(self) -> None:
-        """Clear all pending tasks."""
-        with self._lock:
-            self._queue.clear()

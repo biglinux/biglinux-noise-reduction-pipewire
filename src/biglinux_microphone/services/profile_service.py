@@ -14,7 +14,7 @@ import uuid
 from dataclasses import asdict, dataclass, field
 from datetime import datetime
 from pathlib import Path
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Any
 
 from gi.repository import GLib
 
@@ -41,9 +41,11 @@ class Profile:
 
     # Gate settings
     gate_enabled: bool = True
-    gate_threshold: float = -50.0
-    gate_attack: float = 5.0
-    gate_release: float = 50.0
+    gate_intensity: float = 0.5
+
+    # Compressor settings
+    compressor_enabled: bool = True
+    compressor_intensity: float = 1.0
 
     # Stereo settings
     stereo_mode: str = "mono"
@@ -82,11 +84,11 @@ class ProfileService:
         "voice_call": Profile(
             id="voice_call",
             name="Voice Call",
-            description="Optimized for video calls and meetings",
+            description="Optimized for video calls and meetings (Meet, Zoom, Teams)",
             noise_model="gtcrn",
             noise_strength=0.8,
             gate_enabled=True,
-            gate_threshold=-45.0,
+            gate_intensity=0.7,
             stereo_mode="mono",
             eq_enabled=True,
             eq_preset="voice",
@@ -96,7 +98,7 @@ class ProfileService:
             id="music_recording",
             name="Music Recording",
             description="High quality for music and singing",
-            noise_model="low_latency",
+            noise_model="gtcrn",
             noise_strength=0.4,
             gate_enabled=False,
             stereo_mode="dual_mono",
@@ -108,28 +110,24 @@ class ProfileService:
         "podcast": Profile(
             id="podcast",
             name="Podcast",
-            description="Clean voice for podcasting",
+            description="Rich voice for podcasting and live streaming",
             noise_model="gtcrn",
-            noise_strength=0.7,
+            noise_strength=0.8,
             gate_enabled=True,
-            gate_threshold=-50.0,
-            gate_attack=3.0,
-            gate_release=100.0,
+            gate_intensity=0.3,
             stereo_mode="mono",
             eq_enabled=True,
             eq_preset="podcast",
-            eq_bands=[0.0, -1.0, 0.0, 1.0, 2.0, 3.0, 3.0, 2.0, 0.0, -1.0],
+            eq_bands=[0.0, 0.0, 1.0, 2.0, 1.0, 2.0, 2.0, 2.0, 0.0, -1.0],
         ),
         "gaming": Profile(
             id="gaming",
             name="Gaming",
             description="Low latency for gaming communication",
-            noise_model="low_latency",
-            noise_strength=0.6,
+            noise_model="gtcrn",
+            noise_strength=0.7,
             gate_enabled=True,
-            gate_threshold=-55.0,
-            gate_attack=2.0,
-            gate_release=30.0,
+            gate_intensity=0.3,
             stereo_mode="mono",
             eq_enabled=False,
         ),
@@ -295,9 +293,9 @@ class ProfileService:
                 noise_model=base.noise_model,
                 noise_strength=base.noise_strength,
                 gate_enabled=base.gate_enabled,
-                gate_threshold=base.gate_threshold,
-                gate_attack=base.gate_attack,
-                gate_release=base.gate_release,
+                gate_intensity=base.gate_intensity,
+                compressor_enabled=base.compressor_enabled,
+                compressor_intensity=base.compressor_intensity,
                 stereo_mode=base.stereo_mode,
                 stereo_width=base.stereo_width,
                 crossfeed=base.crossfeed,
@@ -446,6 +444,8 @@ class ProfileService:
         noise_config: NoiseReductionConfig | None = None,
         stereo_config: StereoConfig | None = None,
         eq_config: EqualizerConfig | None = None,
+        gate_config: Any | None = None,
+        compressor_config: Any | None = None,
     ) -> bool:
         """
         Apply a profile's settings to configuration objects.
@@ -455,6 +455,8 @@ class ProfileService:
             noise_config: NoiseReductionConfig to update
             stereo_config: StereoConfig to update
             eq_config: EqualizerConfig to update
+            gate_config: GateConfig to update
+            compressor_config: CompressorConfig to update
 
         Returns:
             bool: True if applied successfully
@@ -466,6 +468,14 @@ class ProfileService:
         if noise_config is not None:
             noise_config.enabled = profile.noise_reduction_enabled
             noise_config.strength = profile.noise_strength
+
+        if gate_config is not None:
+            gate_config.enabled = profile.gate_enabled
+            gate_config.intensity = profile.gate_intensity
+
+        if compressor_config is not None:
+            compressor_config.enabled = profile.compressor_enabled
+            compressor_config.intensity = profile.compressor_intensity
 
         if stereo_config is not None:
             from ..config import StereoMode

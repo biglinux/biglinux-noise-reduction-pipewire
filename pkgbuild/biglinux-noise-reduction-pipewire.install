@@ -1,0 +1,14 @@
+post_install() {
+    # Enable the systemd user service globally for all users
+    systemctl --global enable noise-reduction-pipewire.service
+}
+
+post_upgrade() {
+    # Re-enable if needed during upgrade
+    systemctl --global enable noise-reduction-pipewire.service
+}
+
+pre_remove() {
+    # Disable the systemd user service globally before removal
+    systemctl --global disable noise-reduction-pipewire.service
+}

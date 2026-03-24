@@ -56,9 +56,13 @@ class SpectrumAnalyzerWidget(Gtk.DrawingArea):
         """Initialize the premium spectrum analyzer."""
         super().__init__()
 
+        self.set_accessible_role(Gtk.AccessibleRole.METER)
+        self.update_property(
+            [Gtk.AccessibleProperty.LABEL],
+            ["Spectrum Analyzer"],
+        )
+
         self._num_bands = num_bands
-        self._bands = [0.0] * num_bands
-        self._target_bands = [0.0] * num_bands
         self._bands = [0.0] * num_bands
         self._target_bands = [0.0] * num_bands
         self._peaks = [0.0] * num_bands
@@ -231,14 +235,14 @@ class SpectrumAnalyzerWidget(Gtk.DrawingArea):
             # Green Zone (darker/professional green)
             # R=0, G=0.6, B=0
             g.add_color_stop_rgba(0.0, 0.0, 0.6 * alpha_mult, 0.0, 1.0)
-            g.add_color_stop_rgba(0.75, 0.0, 0.6 * alpha_mult, 0.0, 1.0)
+            g.add_color_stop_rgba(0.667, 0.0, 0.6 * alpha_mult, 0.0, 1.0)
 
             # Orange Zone
-            g.add_color_stop_rgba(0.7501, 1.0 * alpha_mult, 0.6 * alpha_mult, 0.0, 1.0)
-            g.add_color_stop_rgba(0.875, 1.0 * alpha_mult, 0.6 * alpha_mult, 0.0, 1.0)
+            g.add_color_stop_rgba(0.6671, 1.0 * alpha_mult, 0.6 * alpha_mult, 0.0, 1.0)
+            g.add_color_stop_rgba(0.833, 1.0 * alpha_mult, 0.6 * alpha_mult, 0.0, 1.0)
 
             # Red Zone
-            g.add_color_stop_rgba(0.8751, 1.0 * alpha_mult, 0.0, 0.0, 1.0)
+            g.add_color_stop_rgba(0.8331, 1.0 * alpha_mult, 0.0, 0.0, 1.0)
             g.add_color_stop_rgba(1.0, 1.0 * alpha_mult, 0.0, 0.0, 1.0)
             return g
 
@@ -276,9 +280,9 @@ class SpectrumAnalyzerWidget(Gtk.DrawingArea):
             )
             cr.set_line_width(1.0)
 
-            # Iterate -70dB to -10dB (0.125 to 0.875)
-            for step in range(1, 8):
-                ratio = step / 8.0  # 0.125, 0.25, ...
+            # Iterate -50dB to -10dB (every 10dB in 0-60 range)
+            for step in range(1, 6):
+                ratio = step / 6.0  # 0.167, 0.333, ...
                 cut_y = spectrum_y + spectrum_height * (1 - ratio)
 
                 # Draw cut line across this bar
@@ -305,15 +309,15 @@ class SpectrumAnalyzerWidget(Gtk.DrawingArea):
         self, cr: cairo.Context, x: float, y: float, width: float, height: float
     ) -> None:
         """Draw integrated peak meter with numerical display."""
-        # Convert peak level (0-1) to dB (-80 to 0)
+        # Convert peak level (0-1) to dB (-60 to 0)
         peak_ratio = self._peak_level if self._peak_level > 0.0001 else 0.0
-        db_value = -80 + (peak_ratio * 80)
-        db_value = max(-80, min(0, db_value))
+        db_value = -60 + (peak_ratio * 60)
+        db_value = max(-60, min(0, db_value))
 
         # Convert peak hold (0-1) to dB
         hold_ratio = self._peak_hold if self._peak_hold > 0.0001 else 0.0
-        db_hold = -80 + (hold_ratio * 80)
-        db_hold = max(-80, min(0, db_hold))
+        db_hold = -60 + (hold_ratio * 60)
+        db_hold = max(-60, min(0, db_hold))
 
         # Limits for colors
         val_color = (0.2, 0.7, 0.2, 1.0)  # Darker/Professional Green
@@ -380,23 +384,23 @@ class SpectrumAnalyzerWidget(Gtk.DrawingArea):
         # We need two gradients: one bright (foreground), one dark (background)
         # Both share the exact same stops for perfect alignment
 
-        # Stops for zones: -80..0 map to 0..1
-        # -20dB = (-20 - (-80)) / 80 = 60/80 = 0.75
-        # -10dB = (-10 - (-80)) / 80 = 70/80 = 0.875
+        # Stops for zones: -60..0 map to 0..1
+        # -20dB = (-20 - (-60)) / 60 = 40/60 = 0.667
+        # -10dB = (-10 - (-60)) / 60 = 50/60 = 0.833
 
         def create_meter_gradient(alpha_mult: float) -> cairo.LinearGradient:
             g = cairo.LinearGradient(meter_x, 0, meter_x + meter_width, 0)
             # Green Zone (darker/professional green instead of neon)
             # R=0, G=0.6, B=0
             g.add_color_stop_rgba(0.0, 0.0, 0.6 * alpha_mult, 0.0, 1.0)
-            g.add_color_stop_rgba(0.75, 0.0, 0.6 * alpha_mult, 0.0, 1.0)
+            g.add_color_stop_rgba(0.667, 0.0, 0.6 * alpha_mult, 0.0, 1.0)
 
             # Orange Zone
-            g.add_color_stop_rgba(0.7501, 1.0 * alpha_mult, 0.6 * alpha_mult, 0.0, 1.0)
-            g.add_color_stop_rgba(0.875, 1.0 * alpha_mult, 0.6 * alpha_mult, 0.0, 1.0)
+            g.add_color_stop_rgba(0.6671, 1.0 * alpha_mult, 0.6 * alpha_mult, 0.0, 1.0)
+            g.add_color_stop_rgba(0.833, 1.0 * alpha_mult, 0.6 * alpha_mult, 0.0, 1.0)
 
             # Red Zone
-            g.add_color_stop_rgba(0.8751, 1.0 * alpha_mult, 0.0, 0.0, 1.0)
+            g.add_color_stop_rgba(0.8331, 1.0 * alpha_mult, 0.0, 0.0, 1.0)
             g.add_color_stop_rgba(1.0, 1.0 * alpha_mult, 0.0, 0.0, 1.0)
             return g
 
@@ -408,7 +412,7 @@ class SpectrumAnalyzerWidget(Gtk.DrawingArea):
         cr.fill()
 
         # 2. Active Foreground (Bright)
-        active_width = ((db_value + 80) / 80) * meter_width
+        active_width = ((db_value + 60) / 60) * meter_width
 
         # Clamp active width to avoid drawing errors
         active_width = max(0, min(meter_width, active_width))
@@ -430,10 +434,10 @@ class SpectrumAnalyzerWidget(Gtk.DrawingArea):
         )
         cr.set_font_size(9)
 
-        for db in range(-70, 0, 10):  # -70, -60, ... -10
+        for db in range(-50, 0, 10):  # -50, -40, ... -10
             # Map dB to x position
-            # -80 is x=0, 0 is x=1
-            ratio = (db + 80) / 80
+            # -60 is x=0, 0 is x=1
+            ratio = (db + 60) / 60
             tick_x = meter_x + (ratio * meter_width)
 
             # Draw tick
@@ -472,7 +476,7 @@ class SpectrumAnalyzerWidget(Gtk.DrawingArea):
     ) -> None:
         """Draw subtle dB reference lines and labels."""
         # Standard dB levels (every 20dB)
-        db_marks = [-20, -40, -60]
+        db_marks = [-20, -40]
 
         cr.set_line_width(0.5)
 
@@ -483,8 +487,8 @@ class SpectrumAnalyzerWidget(Gtk.DrawingArea):
         cr.set_font_size(9)
 
         for db in db_marks:
-            # Map -80 to 0 dB as 0 to 1
-            position = (db + 80) / 80
+            # Map -60 to 0 dB as 0 to 1
+            position = (db + 60) / 60
             line_y = y + height * (1 - position)
 
             # Draw line
@@ -565,6 +569,7 @@ class SpectrumAnalyzerWidget(Gtk.DrawingArea):
         self._peak_hold = 0.0
         self.queue_draw()
 
-    def do_destroy(self) -> None:
-        """Clean up when widget is destroyed."""
+    def do_unroot(self) -> None:
+        """Clean up when widget is removed from the widget tree."""
         self._stop_animation()
+        super().do_unroot()
