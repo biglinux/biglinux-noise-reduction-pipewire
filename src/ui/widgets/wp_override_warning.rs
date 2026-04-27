@@ -86,7 +86,10 @@ fn handle_response(response: &str, path: &Path, dismiss: bool, state: Rc<AppStat
         RESPONSE_REMOVE => {
             match std::fs::remove_file(path) {
                 Ok(()) => {
-                    log::info!("ui: removed stale wireplumber override at {}", path.display());
+                    log::info!(
+                        "ui: removed stale wireplumber override at {}",
+                        path.display()
+                    );
                     notify_restart_needed();
                 }
                 Err(e) => {

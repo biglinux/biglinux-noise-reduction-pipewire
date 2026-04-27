@@ -186,8 +186,7 @@ impl AppState {
         // topology changed *or* the AEC drop-in was just written /
         // removed. Both modules live in the same `pipewire -c` process
         // (filter-chain.conf.d/), so a single restart picks up both.
-        let need_chain_reload =
-            needs_mic_reload(prev.as_ref(), &snapshot) || !outcome.mic_pushed;
+        let need_chain_reload = needs_mic_reload(prev.as_ref(), &snapshot) || !outcome.mic_pushed;
         if need_chain_reload {
             if filter_chain_wanted(&snapshot) {
                 info!("state: filter-chain drop-ins changed — restarting filter-chain.service");
