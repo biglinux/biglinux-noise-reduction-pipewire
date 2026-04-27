@@ -69,6 +69,7 @@ pub fn build(
     // ── Spectrum strip ────────────────────────────────────────────────
     let spectrum = Spectrum::new();
     bind_spectrum_to_monitor(&spectrum, &monitor);
+    bind_monitor_to_spectrum_visibility(&spectrum, &monitor);
     let spectrum_container = gtk::Box::builder()
         .orientation(Orientation::Vertical)
         .margin_top(12)
@@ -473,4 +474,25 @@ fn bind_spectrum_to_monitor(spectrum: &Rc<Spectrum>, monitor: &Rc<AudioMonitor>)
             }
         }
     });
+}
+
+/// Pause the audio-monitor worker (and back-pressure pw-cat into idle)
+/// whenever the spectrum widget is not visible on screen — different
+/// stack page in Advanced mode, window minimised, parent window closed.
+/// `map`/`unmap` cover both cases without us having to listen on the
+/// `GtkWindow` itself, since GTK4 unmaps every descendant of an
+/// invisible toplevel.
+fn bind_monitor_to_spectrum_visibility(spectrum: &Rc<Spectrum>, monitor: &Rc<AudioMonitor>) {
+    let widget = spectrum.widget().clone();
+    let monitor_for_map = Rc::clone(monitor);
+    widget.connect_map(move |_| monitor_for_map.set_active(true));
+    let monitor_for_unmap = Rc::clone(monitor);
+    widget.connect_unmap(move |_| monitor_for_unmap.set_active(false));
+    // Initial state: a freshly built widget is not yet mapped, so the
+    // worker stays active until GTK realises the strip — at which point
+    // the `map` signal fires. Pause now so the brief startup window
+    // does not pump the FFT for a hidden widget on Advanced/Output mode.
+    if !widget.is_mapped() {
+        monitor.set_active(false);
+    }
 }

@@ -324,6 +324,7 @@ fn needs_mic_reload(prev: Option<&AppSettings>, now: &AppSettings) -> bool {
         p.equalizer.bands != now.equalizer.bands
             || p.equalizer.preset != now.equalizer.preset
             || p.equalizer.enabled != now.equalizer.enabled
+            || p.compressor.enabled != now.compressor.enabled
             || voice_changer_topology_changed
             || ai_topology_changed
             || ec_target_changed
@@ -437,6 +438,18 @@ mod tests {
         let mut next = prev.clone();
         next.output_filter.noise_reduction.strength = 0.4;
         assert!(!output_topology_changed(Some(&prev), &next));
+    }
+
+    #[test]
+    fn reload_when_mic_compressor_node_added_or_removed() {
+        // Compressor is now a topology-conditional node — the SC4
+        // LADSPA gets dropped from the graph entirely when off, so
+        // toggling the flag must reload the chain instead of going
+        // through the live-controls path.
+        let prev = with_nr_enabled(true);
+        let mut next = prev.clone();
+        next.compressor.enabled = true;
+        assert!(needs_mic_reload(Some(&prev), &next));
     }
 
     #[test]

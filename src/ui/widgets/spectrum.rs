@@ -37,18 +37,23 @@ pub const BAND_COUNT: usize = 30;
 /// Drawing area height in logical pixels.
 const WIDGET_HEIGHT: i32 = 220;
 
-/// Animation hz. 60 Hz gives silk-smooth bars without burning the CPU.
-const ANIMATION_FPS: u32 = 60;
-const SMOOTH_FACTOR: f32 = 0.45;
+/// Animation hz. 30 Hz keeps the bars smooth to the eye while halving
+/// the redraw + interpolation cost compared to the previous 60 Hz timer.
+const ANIMATION_FPS: u32 = 30;
+/// Catch-up rate per tick. Doubled from the 60 Hz version (0.45) so the
+/// bars still reach a new target in roughly the same wall-clock time
+/// at half the tick rate.
+const SMOOTH_FACTOR: f32 = 0.7;
 
-/// Per-band peak behaviour.
-const PEAK_HOLD_TICKS: u16 = 40; // ≈ 0.7 s at 60 fps
-const PEAK_DECAY: f32 = 0.01;
+/// Per-band peak behaviour. Tick budgets are scaled to 30 Hz so the
+/// hold/decay timings stay close to the original feel.
+const PEAK_HOLD_TICKS: u16 = 20; // ≈ 0.7 s at 30 fps
+const PEAK_DECAY: f32 = 0.02;
 
 /// Overall peak meter behaviour.
-const METER_HOLD_TICKS: u16 = 60; // ≈ 1 s
-const METER_PEAK_DECAY: f32 = 0.01;
-const METER_HOLD_DECAY: f32 = 0.005;
+const METER_HOLD_TICKS: u16 = 30; // ≈ 1 s
+const METER_PEAK_DECAY: f32 = 0.02;
+const METER_HOLD_DECAY: f32 = 0.01;
 
 const BAR_SPACING: f64 = 3.0;
 const CORNER_RADIUS: f64 = 2.0;
@@ -140,6 +145,13 @@ impl Spectrum {
     }
 
     fn tick(&self) {
+        // Skip the entire animation pass while the widget is off-screen
+        // (different page in the view stack, window minimised, etc.).
+        // The pw-cat capture path is paused in tandem from window.rs so
+        // there is nothing meaningful to interpolate towards anyway.
+        if !self.area.is_mapped() {
+            return;
+        }
         let mut state = self.state.borrow_mut();
         let mut changed = false;
 

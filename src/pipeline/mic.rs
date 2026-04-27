@@ -10,25 +10,36 @@
 //! Pipeline order, mono:
 //!
 //! ```text
-//! hpf [→ gtcrn(+integrated gate)] → compressor → param_eq
+//! hpf [→ gtcrn(+integrated gate)] [→ compressor] [→ param_eq]
 //!     [→ pitch → pitch_gain]   ← only when voice changer is on
 //!     → copy_L, copy_R (fan-out for downstream stereo consumers)
 //! ```
 //!
-//! Two nodes are conditional rather than always-instantiated:
+//! Every bracketed node is conditional and skipped from the graph when
+//! its flag is off — the mic chain is read by recording apps via the
+//! WirePlumber smart-filter policy, so reloading the unit on topology
+//! changes does not cause the audible dropouts the output side has to
+//! avoid (different contract; see `output.rs`).
 //!
-//! - **`pitch_scale_1193`** — phase-vocoder; STFT/iSTFT smears
-//!   transients even at unity coefficient (1.0×).
+//! Conditional nodes:
+//!
 //! - **`gtcrn`** — neural denoiser; the LADSPA wrapper runs the full
 //!   STFT → ONNX inference → iSTFT pipeline every block regardless of
 //!   the `Enable` control, and `LookaheadMs` adds latency
-//!   unconditionally. Same transient-smearing class as the pitch node.
-//!   The integrated gate shares the GTCRN node, so the node is kept in
-//!   the chain whenever **either** noise reduction or the gate is on.
+//!   unconditionally. The integrated gate shares the GTCRN node, so
+//!   the node is kept in the chain whenever **either** noise reduction
+//!   or the gate is on.
+//! - **`compressor`** (`sc4m_1916`) — runs RMS detection + envelope per
+//!   block even at unity ratio. Skipped entirely when disabled.
+//! - **`param_eq`** — ten cascaded `bq_peaking` biquads run every
+//!   block regardless of gain. Skipped entirely when disabled.
+//! - **`pitch_scale_1193`** + **`pitch_gain`** — phase-vocoder; only
+//!   present when voice changer is on. STFT/iSTFT smears transients
+//!   even at unity coefficient.
 //!
-//! Toggling either condition reloads the filter-chain (same tier as
-//! EQ/voice-changer topology changes); slider drags inside an enabled
-//! sub-effect still go through the live-controls fast path.
+//! Toggling any of the topology flags reloads the filter-chain (same
+//! tier as voice-changer topology changes); slider drags inside an
+//! enabled sub-effect still go through the live-controls fast path.
 
 use std::fmt::Write as _;
 
@@ -130,41 +141,6 @@ fn mic_nodes(settings: &AppSettings) -> Vec<Node> {
         5.0
     };
 
-    let comp_d = CompressorDerived::from_config(&settings.compressor);
-    let comp_enabled = settings.compressor.enabled;
-    let compressor = Node::ladspa("compressor", LADSPA_SC4_MONO, LABEL_SC4_MONO).with_controls([
-        ("RMS/peak", f64::from(comp_d.rms_peak)),
-        ("Attack time (ms)", f64::from(comp_d.attack_ms)),
-        ("Release time (ms)", f64::from(comp_d.release_ms)),
-        (
-            "Threshold level (dB)",
-            // Neutral pass-through threshold keeps graph structurally stable
-            // when the user toggles the compressor off.
-            if comp_enabled {
-                f64::from(comp_d.threshold_db)
-            } else {
-                0.0
-            },
-        ),
-        (
-            "Ratio (1:n)",
-            if comp_enabled {
-                f64::from(comp_d.ratio)
-            } else {
-                1.0
-            },
-        ),
-        ("Knee radius (dB)", f64::from(comp_d.knee_db)),
-        (
-            "Makeup gain (dB)",
-            if comp_enabled {
-                f64::from(comp_d.makeup_gain_db)
-            } else {
-                0.0
-            },
-        ),
-    ]);
-
     let mut nodes =
         vec![Node::builtin("hpf", LABEL_BQ_HIGHPASS)
             .with_controls([("Freq", hpf_freq), ("Q", 0.707)])];
@@ -173,8 +149,13 @@ fn mic_nodes(settings: &AppSettings) -> Vec<Node> {
         nodes.push(gtcrn_node(settings));
     }
 
-    nodes.push(compressor);
-    nodes.push(param_eq_node(settings));
+    if settings.compressor.enabled {
+        nodes.push(compressor_node(settings));
+    }
+
+    if settings.equalizer.enabled {
+        nodes.push(param_eq_node(settings));
+    }
 
     if let Some((coeff, gain_db)) = pitch_controls(settings) {
         nodes.push(
@@ -190,6 +171,19 @@ fn mic_nodes(settings: &AppSettings) -> Vec<Node> {
     nodes.push(Node::builtin("copy_l", LABEL_COPY));
     nodes.push(Node::builtin("copy_r", LABEL_COPY));
     nodes
+}
+
+fn compressor_node(settings: &AppSettings) -> Node {
+    let comp_d = CompressorDerived::from_config(&settings.compressor);
+    Node::ladspa("compressor", LADSPA_SC4_MONO, LABEL_SC4_MONO).with_controls([
+        ("RMS/peak", f64::from(comp_d.rms_peak)),
+        ("Attack time (ms)", f64::from(comp_d.attack_ms)),
+        ("Release time (ms)", f64::from(comp_d.release_ms)),
+        ("Threshold level (dB)", f64::from(comp_d.threshold_db)),
+        ("Ratio (1:n)", f64::from(comp_d.ratio)),
+        ("Knee radius (dB)", f64::from(comp_d.knee_db)),
+        ("Makeup gain (dB)", f64::from(comp_d.makeup_gain_db)),
+    ])
 }
 
 fn gtcrn_node(settings: &AppSettings) -> Node {
@@ -248,11 +242,12 @@ fn pitch_controls(settings: &AppSettings) -> Option<(f64, f64)> {
 }
 
 /// Build the `param_eq` node with one `bq_peaking` filter per UI band.
-/// The band list stays stable regardless of whether the equalizer is
-/// enabled; disabling the EQ just zeroes every gain.
+/// Only invoked when the equalizer is enabled — when off, the node is
+/// dropped from the graph entirely so its 10 cascaded biquads stop
+/// running.
 fn param_eq_node(settings: &AppSettings) -> Node {
     let eq = &settings.equalizer;
-    let bands: Vec<f32> = if eq.enabled && eq.bands.len() == EQ_BAND_COUNT {
+    let bands: Vec<f32> = if eq.bands.len() == EQ_BAND_COUNT {
         eq.bands.clone()
     } else {
         resolve_preset_or_flat(&eq.preset)
@@ -278,29 +273,29 @@ fn resolve_preset_or_flat(preset: &str) -> Vec<f32> {
 }
 
 fn mic_links(nodes: &[Node]) -> Vec<Link> {
-    // Wiring is rebuilt from scratch so the structure mirrors the
-    // conditional nodes above. PipeWire fans one output out to several
-    // inputs, so the last mono node feeds both copies directly without
-    // an intermediate splitter.
-    let ai_in_chain = nodes.iter().any(|n| n.name == "ai");
-    let pitch_in_chain = nodes.iter().any(|n| n.name == "pitch");
+    // Walk the linear part of the chain (every node except the stereo
+    // fan-out copies) and emit a pairwise link using each node's
+    // declared `input_port` / `output_port`. PipeWire fans one output
+    // to many inputs, so the last linear node feeds both copies
+    // directly.
+    let linear: Vec<&Node> = nodes
+        .iter()
+        .filter(|n| n.name != "copy_l" && n.name != "copy_r")
+        .collect();
 
-    let mut links = Vec::with_capacity(8);
-    if ai_in_chain {
-        links.push(Link::new("hpf:Out", "ai:Input"));
-        links.push(Link::new("ai:Output", "compressor:Input"));
-    } else {
-        links.push(Link::new("hpf:Out", "compressor:Input"));
+    let mut links = Vec::with_capacity(linear.len() + 1);
+    for pair in linear.windows(2) {
+        let from = pair[0];
+        let to = pair[1];
+        links.push(Link::new(
+            format!("{}:{}", from.name, from.output_port),
+            format!("{}:{}", to.name, to.input_port),
+        ));
     }
-    links.push(Link::new("compressor:Output", "eq:In 1"));
-    if pitch_in_chain {
-        links.push(Link::new("eq:Out 1", "pitch:Input"));
-        links.push(Link::new("pitch:Output", "pitch_gain:Input"));
-        links.push(Link::new("pitch_gain:Output", "copy_l:In"));
-        links.push(Link::new("pitch_gain:Output", "copy_r:In"));
-    } else {
-        links.push(Link::new("eq:Out 1", "copy_l:In"));
-        links.push(Link::new("eq:Out 1", "copy_r:In"));
+    if let Some(last) = linear.last() {
+        let out = format!("{}:{}", last.name, last.output_port);
+        links.push(Link::new(out.clone(), "copy_l:In"));
+        links.push(Link::new(out, "copy_r:In"));
     }
     links
 }
@@ -536,12 +531,55 @@ mod tests {
         let mut s = default_settings();
         s.noise_reduction.enabled = false;
         s.gate.enabled = false;
+        // Force compressor on so we can verify the chain re-wires past
+        // the missing AI node into the next live link.
+        s.compressor.enabled = true;
         let conf = build_mic_conf(&s);
         assert!(!conf.contains("plugin = \"/usr/lib/ladspa/libgtcrn_ladspa.so\""));
         assert!(!conf.contains("name = \"ai\""));
         // Chain must skip the node and link hpf straight into the
         // compressor — otherwise the graph would have a dangling edge.
         assert!(conf.contains("{ output = \"hpf:Out\" input = \"compressor:Input\" }"));
+    }
+
+    #[test]
+    fn conf_omits_compressor_when_disabled() {
+        // SC4 mono runs RMS detection + envelope per block even at
+        // unity ratio. With the flag off we drop the node entirely so
+        // the linker rewires the previous stage into the next live
+        // node (or directly into the stereo fan-out copies).
+        let mut s = default_settings();
+        s.compressor.enabled = false;
+        let conf = build_mic_conf(&s);
+        assert!(!conf.contains("name = \"compressor\""));
+        assert!(!conf.contains("plugin = \"/usr/lib/ladspa/sc4m_1916.so\""));
+    }
+
+    #[test]
+    fn conf_omits_param_eq_when_disabled() {
+        // 10 cascaded `bq_peaking` biquads run every block regardless
+        // of gain. With the flag off we drop the param_eq node
+        // entirely.
+        let mut s = default_settings();
+        s.equalizer.enabled = false;
+        let conf = build_mic_conf(&s);
+        assert!(!conf.contains("name = \"eq\""));
+        assert!(!conf.contains("type = bq_peaking"));
+    }
+
+    #[test]
+    fn conf_minimal_chain_links_hpf_directly_to_copies() {
+        // Only NR on — the linear chain reduces to hpf → ai → copies.
+        let mut s = default_settings();
+        s.compressor.enabled = false;
+        s.equalizer.enabled = false;
+        s.gate.enabled = false;
+        s.hpf.enabled = false;
+        s.stereo.enabled = false;
+        let conf = build_mic_conf(&s);
+        assert!(conf.contains("{ output = \"hpf:Out\" input = \"ai:Input\" }"));
+        assert!(conf.contains("{ output = \"ai:Output\" input = \"copy_l:In\" }"));
+        assert!(conf.contains("{ output = \"ai:Output\" input = \"copy_r:In\" }"));
     }
 
     #[test]
@@ -558,12 +596,19 @@ mod tests {
     }
 
     #[test]
-    fn conf_disabled_compressor_has_unity_ratio_zero_makeup() {
+    fn conf_enabled_compressor_uses_derived_ratio_and_makeup() {
+        // When the compressor is on its node carries the user's
+        // intensity-derived ratio and makeup gain — proves we still
+        // route the live values into the LADSPA controls now that the
+        // node is no longer always-instantiated.
         let mut s = default_settings();
-        s.compressor.enabled = false;
+        s.compressor.enabled = true;
+        s.compressor.intensity = 1.0;
         let conf = build_mic_conf(&s);
-        assert!(conf.contains("\"Ratio (1:n)\" = 1.0"));
-        assert!(conf.contains("\"Makeup gain (dB)\" = 0.0"));
+        assert!(conf.contains("name = \"compressor\""));
+        // Intensity 1.0 derives non-trivial ratio and positive makeup.
+        assert!(!conf.contains("\"Ratio (1:n)\" = 1.0"));
+        assert!(!conf.contains("\"Makeup gain (dB)\" = 0.0"));
     }
 
     #[test]
@@ -580,7 +625,9 @@ mod tests {
 
     #[test]
     fn conf_param_eq_emits_ten_bq_peaking_filters() {
-        let conf = build_mic_conf(&default_settings());
+        let mut s = default_settings();
+        s.equalizer.enabled = true;
+        let conf = build_mic_conf(&s);
         let count = conf.matches("type = bq_peaking").count();
         assert_eq!(count, EQ_BAND_COUNT);
         // Frequencies must appear in ascending order
@@ -597,7 +644,12 @@ mod tests {
 
     #[test]
     fn conf_wires_full_chain_links_without_pitch() {
-        let conf = build_mic_conf(&default_settings());
+        // Force every linear sub-effect on so the full default-style
+        // pipeline is materialised (compressor + EQ default to off).
+        let mut s = default_settings();
+        s.compressor.enabled = true;
+        s.equalizer.enabled = true;
+        let conf = build_mic_conf(&s);
         for link in [
             "{ output = \"hpf:Out\" input = \"ai:Input\" }",
             "{ output = \"ai:Output\" input = \"compressor:Input\" }",
