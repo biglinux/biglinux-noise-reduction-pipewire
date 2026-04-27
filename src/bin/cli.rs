@@ -244,13 +244,18 @@ fn reload_services() -> ExitCode {
     // the AEC drop-in ensures `echo-cancel-source` is loaded before
     // the mic filter chain resolves `target.object`.
     reconcile_mic_chain(&settings);
-    // Output unit always restarts (regardless of master flag) — when
-    // the master is off the chain comes back up in bypass mode.
-    if let Err(e) = biglinux_microphone::services::pipewire::restart_output_service() {
-        eprintln!("warning: output service restart failed: {e}");
+    // Output unit only runs when its master is on — restart it from
+    // scratch when wanted (covers fresh start + topology pickup),
+    // otherwise stop it so no idle worker remains.
+    if settings.output_filter.enabled {
+        if let Err(e) = biglinux_microphone::services::pipewire::restart_output_service() {
+            eprintln!("warning: output service restart failed: {e}");
+        }
+    } else if let Err(e) = biglinux_microphone::services::pipewire::stop_output_service() {
+        eprintln!("warning: output service stop failed: {e}");
     }
     println!(
-        "reload: filter-chain (mic + AEC drop-ins) + output unit restarted \
+        "reload: filter-chain (mic + AEC drop-ins) + output unit reconciled \
          (wireplumber untouched)"
     );
     ExitCode::SUCCESS
@@ -273,21 +278,23 @@ fn reconcile_mic_chain(settings: &AppSettings) {
 }
 
 /// Bring the standalone output unit up when the user wants the chain
-/// running. The conf already carries `filter.smart = true` plus the
-/// pinned `filter.smart.target` (captured by the GUI on first enable),
-/// so WirePlumber transparently inserts us between every stream and
-/// the user's hardware sink — no metadata override needed. Disabling
-/// does not stop the unit; it stays up in bypass so apps with a fixed
-/// target sink keep playing (Chromium-based browsers pause playback
-/// when their target sink disappears mid-stream).
+/// running, and tear it down when they turn the master off so no idle
+/// `pipewire -c` worker remains. The conf carries `filter.smart = true`
+/// plus the pinned `filter.smart.target` (captured by the GUI on first
+/// enable), so when the unit is up WirePlumber transparently inserts us
+/// between every stream and the user's hardware sink. Stopping the unit
+/// removes the virtual sink — Chromium-based browsers pause playback
+/// when their target sink disappears, which is the accepted price for
+/// not keeping a dormant worker running.
 fn reconcile_output_service(settings: &AppSettings) {
-    use biglinux_microphone::services::pipewire::start_output_service;
+    use biglinux_microphone::services::pipewire::{start_output_service, stop_output_service};
 
-    if !settings.output_filter.enabled {
-        return;
-    }
-    if let Err(e) = start_output_service() {
-        eprintln!("warning: output service start failed: {e}");
+    if settings.output_filter.enabled {
+        if let Err(e) = start_output_service() {
+            eprintln!("warning: output service start failed: {e}");
+        }
+    } else if let Err(e) = stop_output_service() {
+        eprintln!("warning: output service stop failed: {e}");
     }
 }
 

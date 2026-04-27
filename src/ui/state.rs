@@ -36,7 +36,7 @@ use crate::pipeline::OUTPUT_NODE_NAME;
 use crate::services::loopback::{Loopback, LoopbackOptions};
 use crate::services::pipewire::{
     apply_live, default_sink_name, reload_mic_chain, restart_output_service, start_output_service,
-    stop_filter_chain_service,
+    stop_filter_chain_service, stop_output_service,
 };
 
 /// Delay between the last edit and the apply phase. 150 ms merges slider
@@ -246,13 +246,13 @@ impl AppState {
     }
 }
 
-/// Bring the standalone output unit up the first time the user enables
-/// the master switch in this session, then promote `output-biglinux`
-/// as the system default sink. Switching the master back off **does
-/// not** stop the unit: doing so would tear down the virtual sink and
-/// Chromium-based browsers pause playback the moment their target sink
-/// disappears. The bypass values pushed by `apply_live` make the
-/// still-running graph transparent instead.
+/// Drive the standalone output unit so its `pipewire -c` worker only
+/// exists while the user actually wants the output filter. Disabling
+/// the master tears the virtual sink down — Chromium-based browsers
+/// pause playback when their target sink disappears, but that is the
+/// explicit price the user pays for not having an idle pipewire worker
+/// hanging around. Re-enabling spawns the worker again and `apply_live`
+/// repopulates the controls.
 ///
 /// Topology changes (EQ band layout) can only take effect via a real
 /// restart, and we only attempt that when the master is on — i.e. the
@@ -270,10 +270,13 @@ fn reconcile_output_service(prev: Option<&AppSettings>, now: &AppSettings) {
         if let Err(e) = restart_output_service() {
             error!("state: output service restart failed: {e}");
         }
+    } else if !is_enabled && was_enabled {
+        if let Err(e) = stop_output_service() {
+            error!("state: output service stop failed: {e}");
+        }
     }
-    // is_enabled && !output_topology_changed → live update already
-    // pushed the new control values, no service action needed.
-    // !is_enabled → leave the unit running in bypass; do NOT stop it.
+    // is_enabled && !topology_changed → live update covered it.
+    // !is_enabled && !was_enabled → nothing to do.
 }
 
 /// Read the current default sink and return its `node.name` *only* when
