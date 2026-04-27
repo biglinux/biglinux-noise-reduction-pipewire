@@ -1,10 +1,14 @@
 name: CodeQL
 
 on:
+  # CodeQL is heavy. Only run on push to main and weekly cron — PRs
+  # are already covered by the dependency-review job in CI.
   push:
     branches: [main]
-  pull_request:
-    branches: [main]
+    paths:
+      - "src/**"
+      - "Cargo.toml"
+      - "Cargo.lock"
   schedule:
     # Weekly — CodeQL queries get refreshed by GitHub on roughly that
     # cadence; running daily would burn minutes for no signal.
@@ -23,8 +27,10 @@ jobs:
   analyze:
     name: Analyze (rust)
     runs-on: ubuntu-latest
+    container: archlinux:latest
     timeout-minutes: 45
     steps:
+      - run: pacman -Sy --noconfirm --needed git
       - uses: actions/checkout@v4
       - uses: ./.github/actions/install-system-deps
 

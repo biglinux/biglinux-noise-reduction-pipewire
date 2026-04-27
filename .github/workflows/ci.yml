@@ -3,23 +3,40 @@ name: CI
 on:
   push:
     branches: [main]
+    paths-ignore:
+      - "**.md"
+      - "docs/**"
+      - "po/**.po"
+      - "po/**.pot"
+      - ".github/dependabot.yml"
+      - ".github/workflows/codeql.yml"
+      - ".github/workflows/security.yml"
   pull_request:
     branches: [main]
+    paths-ignore:
+      - "**.md"
+      - "docs/**"
+      - "po/**.po"
+      - "po/**.pot"
 
 env:
   CARGO_TERM_COLOR: always
   RUSTFLAGS: -D warnings
+  CARGO_INCREMENTAL: "0"
 
 permissions:
   contents: read
 
-# Cancel in-progress runs for the same ref. Pushing a fixup wastes
-# nothing.
+# One run per ref. Pushing a fixup cancels the previous run.
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
 
 jobs:
+  # ── Compile jobs run inside Arch container because Cargo.toml gates
+  #    GTK 4.20 (`features = ["v4_20"]`) and ubuntu-latest only ships
+  #    GTK 4.14. Arch is also our deployment target (BigLinux/Manjaro)
+  #    so CI matches what users will run.
   fmt:
     name: rustfmt
     runs-on: ubuntu-latest
@@ -33,7 +50,9 @@ jobs:
   clippy:
     name: clippy (strict)
     runs-on: ubuntu-latest
+    container: archlinux:latest
     steps:
+      - run: pacman -Sy --noconfirm --needed git
       - uses: actions/checkout@v4
       - uses: ./.github/actions/install-system-deps
       - uses: dtolnay/rust-toolchain@stable
@@ -43,23 +62,30 @@ jobs:
       - run: cargo clippy --all-targets --all-features -- -D warnings
 
   test:
-    name: tests
+    name: tests (nextest)
     runs-on: ubuntu-latest
+    container: archlinux:latest
     steps:
+      - run: pacman -Sy --noconfirm --needed git
       - uses: actions/checkout@v4
       - uses: ./.github/actions/install-system-deps
       - uses: dtolnay/rust-toolchain@stable
       - uses: Swatinem/rust-cache@v2
-      - run: cargo test --all-features --locked
+      - uses: taiki-e/install-action@v2
+        with:
+          tool: cargo-nextest
+      - run: cargo nextest run --all-features --locked
 
   msrv:
     name: MSRV (1.82)
     runs-on: ubuntu-latest
+    container: archlinux:latest
     steps:
+      - run: pacman -Sy --noconfirm --needed git
       - uses: actions/checkout@v4
       - uses: ./.github/actions/install-system-deps
-      # Pinning the toolchain via `with:` instead of the action ref so
-      # Dependabot's github-actions updater can't silently bump our MSRV.
+      # Pinning toolchain via `with:` so Dependabot can't bump our MSRV
+      # by changing the action ref.
       - uses: dtolnay/rust-toolchain@master
         with:
           toolchain: "1.82.0"
@@ -69,7 +95,9 @@ jobs:
   release-build:
     name: release build
     runs-on: ubuntu-latest
+    container: archlinux:latest
     steps:
+      - run: pacman -Sy --noconfirm --needed git
       - uses: actions/checkout@v4
       - uses: ./.github/actions/install-system-deps
       - uses: dtolnay/rust-toolchain@stable
@@ -81,16 +109,20 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - uses: EmbarkStudios/cargo-deny-action@v2
+      - uses: taiki-e/install-action@v2
         with:
-          command: check
+          tool: cargo-deny
+      - run: cargo deny check
 
   machete:
     name: cargo-machete (unused deps)
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - uses: bnjbvr/cargo-machete@main
+      - uses: taiki-e/install-action@v2
+        with:
+          tool: cargo-machete
+      - run: cargo machete
 
   typos:
     name: typos (spellcheck)
@@ -151,3 +183,17 @@ jobs:
           scandir: ./scripts
           additional_files: |
             packaging/flatpak/generate-cargo-sources.sh
+
+  # PR-only — flags new dependencies introduced by the PR that have
+  # known advisories. Complements cargo-audit (which scans current
+  # state) by gating before merge.
+  dependency-review:
+    name: dependency-review (PR only)
+    runs-on: ubuntu-latest
+    if: github.event_name == 'pull_request'
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/dependency-review-action@v4
+        with:
+          fail-on-severity: high
+          comment-summary-in-pr: on-failure

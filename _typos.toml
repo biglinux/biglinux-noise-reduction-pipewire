@@ -9,7 +9,14 @@ extend-ignore-identifiers-re = [
     "VCTK",
     # PipeWire CLI tools
     "wpctl",
+    # KDE i18n function: typos splits "i18nd" into "i18" + "nd".
+    "i18nd?",
 ]
+
+# Words typos flags but are valid in our context.
+[default.extend-words]
+# Portuguese for "sound" — appears in pt_BR translations.
+som = "som"
 
 [files]
 extend-exclude = [
@@ -19,4 +26,9 @@ extend-exclude = [
     "build-locale/**",
     "*.mo",
     "*.svg",
+    # Plasma plasmoid QML/JSON — ships pt_BR translations and uses
+    # KLocalizedString helper names (i18nd) that confuse the tokenizer.
+    "usr/share/plasma/**",
+    # WirePlumber Lua policy hooks — shipped, not project-authored.
+    "usr/share/wireplumber/**",
 ]

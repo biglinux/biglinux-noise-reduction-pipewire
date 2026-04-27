@@ -1,26 +1,29 @@
 name: Install system dependencies
 description: |
-  Installs the development packages needed to compile this crate on
-  Ubuntu runners: GLib, GTK4, libadwaita, PipeWire, Cairo, gettext, and
-  libclang (for bindgen-based -sys crates).
+  Installs the GTK4 / libadwaita / PipeWire build stack for compiling
+  this crate. Designed for the `archlinux:latest` container that the
+  compile jobs run in — the project's GTK feature gate (`v4_20`) needs
+  GTK ≥ 4.20, which is not available on `ubuntu-latest` runners.
 
 runs:
   using: composite
   steps:
-    - name: Install apt packages
+    - name: Sync pacman + install build deps
       shell: bash
       run: |
-        sudo apt-get update
-        sudo apt-get install -y --no-install-recommends \
-          pkg-config \
-          libglib2.0-dev \
-          libgtk-4-dev \
-          libadwaita-1-dev \
-          libpipewire-0.3-dev \
-          libcairo2-dev \
-          libpango1.0-dev \
-          libgdk-pixbuf-2.0-dev \
-          libgraphene-1.0-dev \
-          gettext \
-          libclang-dev \
-          clang
+        set -euo pipefail
+        pacman -Sy --noconfirm
+        pacman -S --needed --noconfirm \
+          base-devel \
+          git \
+          pkgconf \
+          clang \
+          glib2 \
+          gtk4 \
+          libadwaita \
+          pipewire \
+          cairo \
+          pango \
+          gdk-pixbuf2 \
+          graphene \
+          gettext

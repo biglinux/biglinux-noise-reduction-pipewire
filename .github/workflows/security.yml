@@ -3,8 +3,18 @@ name: Security
 on:
   push:
     branches: [main]
+    paths:
+      - "Cargo.toml"
+      - "Cargo.lock"
+      - "src/**"
+      - ".github/workflows/security.yml"
+      - ".github/actions/install-system-deps/**"
   pull_request:
     branches: [main]
+    paths:
+      - "Cargo.toml"
+      - "Cargo.lock"
+      - "src/**"
   schedule:
     # Daily — picks up new RustSec advisories without waiting for a PR.
     - cron: '30 5 * * *'
@@ -27,22 +37,27 @@ jobs:
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
 
-  gitleaks:
-    name: gitleaks (secret scan)
+  # TruffleHog scans the diff (PR) or full history (push/cron) for
+  # leaked secrets. It's the free OSS replacement for gitleaks-action,
+  # which started requiring a paid license in v2.
+  secrets:
+    name: trufflehog (secret scan)
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
         with:
           fetch-depth: 0
-      - uses: gitleaks/gitleaks-action@v2
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      - uses: trufflesecurity/trufflehog@main
+        with:
+          extra_args: --results=verified,unknown
 
   miri:
     name: Miri (UB detection on safe code)
     runs-on: ubuntu-latest
+    container: archlinux:latest
     timeout-minutes: 30
     steps:
+      - run: pacman -Sy --noconfirm --needed git
       - uses: actions/checkout@v4
       - uses: ./.github/actions/install-system-deps
       - uses: dtolnay/rust-toolchain@nightly

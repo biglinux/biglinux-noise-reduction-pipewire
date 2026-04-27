@@ -5,6 +5,11 @@
 #   --fix   Apply autofixes where possible (fmt only)
 #   --full  Include slower local-only checks
 #   --ci    Use the exact gate enforced in CI
+#
+# shellcheck disable=SC2059
+# We embed ANSI color escape variables directly in printf format
+# strings. SC2059 flags this, but the variables are static color codes
+# (no user data), so the warning is noise here.
 set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
