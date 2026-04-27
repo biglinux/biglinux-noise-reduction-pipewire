@@ -1,40 +1,113 @@
 name: Build Package
 
-# BigLinux package-build webhook trigger. Only fires for branches whose
-# name contains `stable` or `testing` so day-to-day development pushes
-# (and Dependabot branches) don't kick off package builds.
+# BigLinux package-build webhook trigger.
+#
+# Trigger model:
+#   1. Push lands on a branch whose name contains `stable` or
+#      `testing`.
+#   2. The CI workflow finishes successfully for that push.
+#   3. This workflow then waits for any other in-progress workflows
+#      on the same commit (Security, CodeQL) and verifies they all
+#      succeeded (or were skipped by their own path filter).
+#   4. Only then does the package webhook fire.
+#
+# `workflow_dispatch` is also supported for emergency manual runs.
 on:
   workflow_dispatch:
-  push:
-    branches:
-      - "**stable**"
-      - "**testing**"
+  workflow_run:
+    workflows: [CI]
+    types: [completed]
 
 permissions:
   contents: read
+  actions: read
 
 concurrency:
-  group: ${{ github.workflow }}-${{ github.ref }}
-  cancel-in-progress: true
+  group: ${{ github.workflow }}-${{ github.event.workflow_run.head_branch || github.ref }}
+  cancel-in-progress: false
 
 jobs:
   build:
     runs-on: ubuntu-latest
+    # Run on manual dispatch unconditionally; otherwise require a
+    # successful CI run on a push to a stable/testing branch.
+    if: |
+      github.event_name == 'workflow_dispatch' ||
+      (
+        github.event.workflow_run.conclusion == 'success' &&
+        github.event.workflow_run.event == 'push' &&
+        (
+          contains(github.event.workflow_run.head_branch, 'stable') ||
+          contains(github.event.workflow_run.head_branch, 'testing')
+        )
+      )
     steps:
+      - name: Resolve target commit
+        id: resolve
+        run: |
+          if [[ "${{ github.event_name }}" == "workflow_dispatch" ]]; then
+            echo "sha=${{ github.sha }}" >> "$GITHUB_OUTPUT"
+            echo "branch=${{ github.ref_name }}" >> "$GITHUB_OUTPUT"
+          else
+            echo "sha=${{ github.event.workflow_run.head_sha }}" >> "$GITHUB_OUTPUT"
+            echo "branch=${{ github.event.workflow_run.head_branch }}" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Wait for sibling workflows + verify all green
+        if: github.event_name != 'workflow_dispatch'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          REPO: ${{ github.repository }}
+          SHA: ${{ steps.resolve.outputs.sha }}
+        # Wait up to 30 min for any other workflow that started for
+        # this commit. A workflow that didn't run at all (path filter
+        # excluded it) is fine — we only fail on `failure`,
+        # `cancelled`, `timed_out`, etc.
+        run: |
+          set -euo pipefail
+          deadline=$(( SECONDS + 1800 ))
+          while (( SECONDS < deadline )); do
+            pending=$(gh api "repos/$REPO/actions/runs?head_sha=$SHA" \
+              --jq '[.workflow_runs[] | select(.name != "Build Package") | select(.status != "completed")] | length')
+            if [[ "$pending" == "0" ]]; then break; fi
+            echo "Waiting for $pending in-progress workflow(s) on $SHA…"
+            sleep 30
+          done
+
+          echo "── Workflow conclusions for $SHA ──"
+          gh api "repos/$REPO/actions/runs?head_sha=$SHA" \
+            --jq '.workflow_runs[] | "\(.name): \(.conclusion // .status)"'
+
+          failed=$(gh api "repos/$REPO/actions/runs?head_sha=$SHA" \
+            --jq '[.workflow_runs[]
+                   | select(.name != "Build Package")
+                   | select(.conclusion != null
+                            and .conclusion != "success"
+                            and .conclusion != "skipped"
+                            and .conclusion != "neutral")
+                   ] | length')
+          if [[ "$failed" != "0" ]]; then
+            echo "::error::$failed sibling workflow(s) did not succeed for $SHA — package build skipped."
+            exit 1
+          fi
+
       - uses: actions/checkout@v4
+        with:
+          ref: ${{ steps.resolve.outputs.sha }}
+
       # - name: Send Hooks BigLinux Build Package
       #   shell: bash
       #   run: |
       #     if [ -z "$(grep biglinux-package-template pkgbuild/PKGBUILD)" ];then
-      #       curl -X POST -H "Accept: application/json" -H "Authorization: token ${{ secrets.WEBHOOK_TOKEN }}" --data '{"event_type": "${{ github.repository }}", "client_payload": { "branch": "${{ github.ref_name }}", "url": "https://github.com/${{ github.repository }}"}}' https://api.github.com/repos/BigLinux-Package-Build/build-package/dispatches
-      #       curl -X POST -H "Accept: application/json" -H "Authorization: token ${{ secrets.WEBHOOK_TOKEN }}" --data '{"event_type": "${{ github.repository }}", "client_payload": { "branch": "${{ github.ref_name }}", "url": "https://github.com/${{ github.repository }}"}}' https://api.github.com/repos/BigLinux-Package-Build/build-package-ARM/dispatches
+      #       curl -X POST -H "Accept: application/json" -H "Authorization: token ${{ secrets.WEBHOOK_TOKEN }}" --data '{"event_type": "${{ github.repository }}", "client_payload": { "branch": "${{ steps.resolve.outputs.branch }}", "url": "https://github.com/${{ github.repository }}"}}' https://api.github.com/repos/BigLinux-Package-Build/build-package/dispatches
+      #       curl -X POST -H "Accept: application/json" -H "Authorization: token ${{ secrets.WEBHOOK_TOKEN }}" --data '{"event_type": "${{ github.repository }}", "client_payload": { "branch": "${{ steps.resolve.outputs.branch }}", "url": "https://github.com/${{ github.repository }}"}}' https://api.github.com/repos/BigLinux-Package-Build/build-package-ARM/dispatches
       #     fi
       #     curl -X POST "https://nebulaapi.nimbusnetwork.dev/webhook" \
       #       -H "Authorization: token ${{ secrets.WEBHOOK_TOKEN }}" \
       #       -H "Content-Type: application/json" \
       #       -d '{
       #             "event_type": "${{ github.repository }}",
-      #             "branch": "${{ github.ref_name }}",
+      #             "branch": "${{ steps.resolve.outputs.branch }}",
       #             "url": "https://github.com/${{ github.repository }}"
       #           }'
 
@@ -43,4 +116,4 @@ jobs:
       #   env:
       #     webhook_url: https://nebulaapi.nimbusnetwork.dev/webhook
       #     webhook_secret: ${{ secrets.WEBHOOK_TOKEN }}
-      #     data: '{ "event_type": "${{ github.repository }}", "branch": "${{ github.ref_name }}", "url": "https://github.com/${{ github.repository }}"}'
+      #     data: '{ "event_type": "${{ github.repository }}", "branch": "${{ steps.resolve.outputs.branch }}", "url": "https://github.com/${{ github.repository }}"}'
