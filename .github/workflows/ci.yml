@@ -35,6 +35,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+      - uses: ./.github/actions/install-system-deps
       - uses: dtolnay/rust-toolchain@stable
         with:
           components: clippy
@@ -46,6 +47,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+      - uses: ./.github/actions/install-system-deps
       - uses: dtolnay/rust-toolchain@stable
       - uses: Swatinem/rust-cache@v2
       - run: cargo test --all-features --locked
@@ -55,7 +57,12 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - uses: dtolnay/rust-toolchain@1.82.0
+      - uses: ./.github/actions/install-system-deps
+      # Pinning the toolchain via `with:` instead of the action ref so
+      # Dependabot's github-actions updater can't silently bump our MSRV.
+      - uses: dtolnay/rust-toolchain@master
+        with:
+          toolchain: "1.82.0"
       - uses: Swatinem/rust-cache@v2
       - run: cargo build --all-features --locked
 
@@ -64,6 +71,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+      - uses: ./.github/actions/install-system-deps
       - uses: dtolnay/rust-toolchain@stable
       - uses: Swatinem/rust-cache@v2
       - run: cargo build --release --locked

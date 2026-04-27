@@ -26,6 +26,7 @@ jobs:
     timeout-minutes: 45
     steps:
       - uses: actions/checkout@v4
+      - uses: ./.github/actions/install-system-deps
 
       - name: Initialize CodeQL
         uses: github/codeql-action/init@v3

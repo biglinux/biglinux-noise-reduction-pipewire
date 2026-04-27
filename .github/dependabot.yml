@@ -39,3 +39,9 @@ updates:
       - github-actions
     commit-message:
       prefix: ci
+    # Ignore bumps to dtolnay/rust-toolchain — its tagged versions are
+    # Rust toolchain identifiers, not action versions. Workflows pass
+    # the toolchain via `with: toolchain:` so the action ref stays at
+    # `@master`/`@stable` and Dependabot has nothing to bump.
+    ignore:
+      - dependency-name: dtolnay/rust-toolchain

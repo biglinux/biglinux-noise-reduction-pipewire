@@ -1,0 +1,26 @@
+name: Install system dependencies
+description: |
+  Installs the development packages needed to compile this crate on
+  Ubuntu runners: GLib, GTK4, libadwaita, PipeWire, Cairo, gettext, and
+  libclang (for bindgen-based -sys crates).
+
+runs:
+  using: composite
+  steps:
+    - name: Install apt packages
+      shell: bash
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y --no-install-recommends \
+          pkg-config \
+          libglib2.0-dev \
+          libgtk-4-dev \
+          libadwaita-1-dev \
+          libpipewire-0.3-dev \
+          libcairo2-dev \
+          libpango1.0-dev \
+          libgdk-pixbuf-2.0-dev \
+          libgraphene-1.0-dev \
+          gettext \
+          libclang-dev \
+          clang
