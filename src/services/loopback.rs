@@ -79,8 +79,8 @@ impl Loopback {
             "--capture-props=node.target={}",
             opts.capture_target
         ))
-        .arg(format!("--playback-props=media.name={LOOPBACK_MEDIA_NAME}",))
-        .arg(format!("--playback-props=node.name={LOOPBACK_NODE_NAME}",))
+        .arg(format!("--playback-props=media.name={LOOPBACK_MEDIA_NAME}"))
+        .arg(format!("--playback-props=node.name={LOOPBACK_NODE_NAME}"))
         .stdin(Stdio::null())
         .stdout(Stdio::null())
         .stderr(Stdio::null());
