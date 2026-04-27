@@ -137,8 +137,6 @@ package() {
         "${pkgdir}/usr/lib/systemd/user/biglinux-microphone.service"
     install -Dm644 usr/lib/systemd/user/biglinux-microphone-output.service \
         "${pkgdir}/usr/lib/systemd/user/biglinux-microphone-output.service"
-    install -Dm644 usr/lib/systemd/user/biglinux-microphone-echocancel.service \
-        "${pkgdir}/usr/lib/systemd/user/biglinux-microphone-echocancel.service"
 
     # WirePlumber policy hook: keeps the echo-cancel capture stream on
     # the selected physical microphone while devices/defaults change.

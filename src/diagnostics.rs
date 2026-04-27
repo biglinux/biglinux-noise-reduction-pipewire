@@ -23,7 +23,6 @@ const OUTPUT_NODE_TAG: &str = "\"output-biglinux\"";
 const EC_NODE_TAG: &str = "\"echo-cancel-source\"";
 const FILTER_CHAIN_UNIT: &str = "filter-chain.service";
 const OUTPUT_UNIT: &str = "biglinux-microphone-output.service";
-const ECHO_CANCEL_UNIT: &str = "biglinux-microphone-echocancel.service";
 const WP_PACKAGED_LUA: &str = "/usr/share/wireplumber/scripts/biglinux/echo-cancel-routing.lua";
 const WP_USER_LUA_RELATIVE: &str = ".local/share/wireplumber/scripts/biglinux/echo-cancel-routing.lua";
 
@@ -125,11 +124,6 @@ fn check_systemd_units(report: &mut Report) {
         "biglinux-microphone-output.service unit",
         unit_known(OUTPUT_UNIT),
         "systemctl --user cat biglinux-microphone-output.service",
-    );
-    report.check(
-        "biglinux-microphone-echocancel.service unit",
-        unit_known(ECHO_CANCEL_UNIT),
-        "systemctl --user cat biglinux-microphone-echocancel.service",
     );
 }
 
@@ -270,24 +264,16 @@ fn check_graph_nodes(report: &mut Report) {
 
 fn print_unit_state() {
     println!();
-    let settings = crate::config::AppSettings::load();
     let mic_state = unit_active_state(FILTER_CHAIN_UNIT);
     let out_state = unit_active_state(OUTPUT_UNIT);
-    let ec_state = unit_active_state(ECHO_CANCEL_UNIT);
     println!("filter-chain.service ................. {mic_state}");
     println!("biglinux-microphone-output.service ... {out_state}");
-    println!("biglinux-microphone-echocancel.service {ec_state}");
 
     if mic_state != "active" {
         dump_journal(FILTER_CHAIN_UNIT);
     }
     if out_state != "active" {
         dump_journal(OUTPUT_UNIT);
-    }
-    // EC unit is allowed to be inactive when AEC is off — only flag it
-    // when the user has explicitly opted in.
-    if settings.echo_cancel.enabled && ec_state != "active" {
-        dump_journal(ECHO_CANCEL_UNIT);
     }
 }
 

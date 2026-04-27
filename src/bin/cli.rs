@@ -188,7 +188,6 @@ fn apply_configs() -> ExitCode {
         );
     }
 
-    reconcile_echo_cancel_service(&s);
     reconcile_mic_chain(&s);
     reconcile_output_service(&s);
     ExitCode::SUCCESS
@@ -225,7 +224,6 @@ fn autostart() -> ExitCode {
         return exit_with_error(&format!("autostart apply: {e}"));
     }
 
-    reconcile_echo_cancel_service(&settings);
     reconcile_mic_chain(&settings);
     reconcile_output_service(&settings);
 
@@ -241,11 +239,10 @@ fn reload_services() -> ExitCode {
     if let Err(e) = pipeline::apply(&settings) {
         return exit_with_error(&format!("reload apply: {e}"));
     }
-    // EC must come up before the mic chain so `echo-cancel-source`
-    // exists when the mic capture stream resolves
-    // `target.object = "echo-cancel-source"`. Otherwise the mic chain
-    // can initially link directly to the hardware source and skip AEC.
-    reconcile_echo_cancel_service(&settings);
+    // AEC and mic both live inside `filter-chain.service` as
+    // drop-ins, so a single restart covers both. The `05-` prefix on
+    // the AEC drop-in ensures `echo-cancel-source` is loaded before
+    // the mic filter chain resolves `target.object`.
     reconcile_mic_chain(&settings);
     // Output unit always restarts (regardless of master flag) — when
     // the master is off the chain comes back up in bypass mode.
@@ -253,21 +250,22 @@ fn reload_services() -> ExitCode {
         eprintln!("warning: output service restart failed: {e}");
     }
     println!(
-        "reload: mic filter-chain + output unit + echo-cancel unit restarted \
+        "reload: filter-chain (mic + AEC drop-ins) + output unit restarted \
          (wireplumber untouched)"
     );
     ExitCode::SUCCESS
 }
 
 /// Reconcile the system-level `filter-chain.service` with the
-/// user-visible master switch. Restart when the mic chain is wanted;
-/// stop when every mic filter is off so no `mic-biglinux` virtual
-/// source is left hanging in the graph.
+/// user-visible master switches. The unit hosts both the mic chain
+/// drop-in and the AEC drop-in, so it must be running whenever either
+/// is wanted; stop it only when both are off so no `mic-biglinux` /
+/// `echo-cancel-source` virtual nodes remain hanging in the graph.
 fn reconcile_mic_chain(settings: &AppSettings) {
     use biglinux_microphone::services::pipewire::{reload_mic_chain, stop_filter_chain_service};
-    if pipeline::mic_chain_wanted(settings) {
+    if pipeline::mic_chain_wanted(settings) || pipeline::echo_cancel_wanted(settings) {
         if let Err(e) = reload_mic_chain() {
-            eprintln!("warning: mic chain reload failed: {e}");
+            eprintln!("warning: filter-chain reload failed: {e}");
         }
     } else if let Err(e) = stop_filter_chain_service() {
         eprintln!("warning: filter-chain.service stop failed: {e}");
@@ -290,24 +288,6 @@ fn reconcile_output_service(settings: &AppSettings) {
     }
     if let Err(e) = start_output_service() {
         eprintln!("warning: output service start failed: {e}");
-    }
-}
-
-/// Bring the echo-cancel unit up when AEC is enabled, stop it
-/// otherwise. The unit's `ConditionPathExists=` keeps it from running
-/// when the conf is absent, but we still want an explicit `stop` to
-/// release the WebRTC AEC state and remove the virtual nodes from the
-/// graph immediately rather than waiting for the next graph rebuild.
-fn reconcile_echo_cancel_service(settings: &AppSettings) {
-    use biglinux_microphone::services::pipewire::{
-        restart_echo_cancel_service, stop_echo_cancel_service,
-    };
-    if settings.echo_cancel.enabled {
-        if let Err(e) = restart_echo_cancel_service() {
-            eprintln!("warning: echo-cancel service restart failed: {e}");
-        }
-    } else if let Err(e) = stop_echo_cancel_service() {
-        eprintln!("warning: echo-cancel service stop failed: {e}");
     }
 }
 
@@ -528,11 +508,9 @@ fn repair() -> ExitCode {
     };
     reset("filter-chain.service");
     reset("biglinux-microphone-output.service");
-    reset("biglinux-microphone-echocancel.service");
 
     reconcile_mic_chain(&settings);
     reconcile_output_service(&settings);
-    reconcile_echo_cancel_service(&settings);
 
     println!("repair: configs rewritten, units reset and restarted");
     println!("run `biglinux-microphone-cli doctor` to verify");

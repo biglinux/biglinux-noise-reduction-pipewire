@@ -104,47 +104,6 @@ pub fn stop_output_service() -> io::Result<()> {
     Ok(())
 }
 
-/// Start the standalone echo-cancel service. The unit has a
-/// `ConditionPathExists=` on the conf file — `start` is a no-op when
-/// the configurator hasn't written it (i.e. AEC is off).
-pub fn start_echo_cancel_service() -> io::Result<()> {
-    let _ = run_systemctl([
-        "--user",
-        "reset-failed",
-        "biglinux-microphone-echocancel.service",
-    ]);
-    run_systemctl(["--user", "start", "biglinux-microphone-echocancel.service"])?;
-    debug!("pipewire: biglinux-microphone-echocancel.service started");
-    Ok(())
-}
-
-/// Restart the echo-cancel service so a freshly-written conf takes
-/// effect. Only used when AEC is on.
-pub fn restart_echo_cancel_service() -> io::Result<()> {
-    let _ = run_systemctl([
-        "--user",
-        "reset-failed",
-        "biglinux-microphone-echocancel.service",
-    ]);
-    run_systemctl([
-        "--user",
-        "restart",
-        "biglinux-microphone-echocancel.service",
-    ])?;
-    debug!("pipewire: biglinux-microphone-echocancel.service restarted");
-    Ok(())
-}
-
-/// Stop the echo-cancel service when the user toggles AEC off. The
-/// virtual `echo-cancel-source` disappears; the mic chain is rewritten
-/// without `filter.smart.target` so it falls back to the default
-/// hardware mic.
-pub fn stop_echo_cancel_service() -> io::Result<()> {
-    run_systemctl(["--user", "stop", "biglinux-microphone-echocancel.service"])?;
-    debug!("pipewire: biglinux-microphone-echocancel.service stopped");
-    Ok(())
-}
-
 fn run_systemctl<const N: usize>(args: [&str; N]) -> io::Result<()> {
     let status = Command::new("systemctl")
         .args(args)

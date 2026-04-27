@@ -1,15 +1,24 @@
 //! Filter-chain configuration pipeline.
 //!
 //! [`apply`] is the single entry point used by the service layer to
-//! materialise two files on disk:
+//! materialise three files on disk:
 //!
 //! | File | Role |
 //! |------|------|
-//! | `~/.config/pipewire/filter-chain.conf.d/10-biglinux-microphone.conf` | Mic filter-chain |
+//! | `~/.config/pipewire/filter-chain.conf.d/05-biglinux-echocancel.conf` | AEC drop-in (loads inside `filter-chain.service`) |
+//! | `~/.config/pipewire/filter-chain.conf.d/10-biglinux-microphone.conf` | Mic filter-chain drop-in |
 //! | `~/.config/pipewire/biglinux-microphone-output.conf`                  | Output filter-chain (standalone) |
 //!
 //! Each file is written via the atomic write helper so a partial write
 //! cannot leave PipeWire reading a truncated config.
+//!
+//! Process layout: `filter-chain.service` hosts the AEC + mic chain
+//! drop-ins (no GTCRN coexistence issue between them); the output
+//! chain runs in its own `pipewire -c` process because GTCRN keeps a
+//! per-process singleton that forbids two instances in the same
+//! daemon. With every filter on, the user therefore sees three
+//! pipewire workers: the system daemon, `filter-chain.service`, and
+//! `biglinux-microphone-output.service`.
 //!
 //! Disabled chains are removed from disk entirely so the corresponding
 //! virtual node disappears from the PipeWire graph.
@@ -24,6 +33,7 @@ use std::fs;
 use std::io;
 use std::io::Write;
 use std::path::{Path, PathBuf};
+use std::process::{Command, Stdio};
 
 use log::{debug, info};
 
@@ -88,12 +98,13 @@ pub fn output_conf_path() -> PathBuf {
     pipewire_standalone_dir().join(OUTPUT_CONF_FILE)
 }
 
-/// Absolute path of the echo-cancel standalone config. Hosted by
-/// `biglinux-microphone-echocancel.service` and only created when the
-/// user toggles AEC on.
+/// Absolute path of the echo-cancel drop-in. Loaded inside
+/// `filter-chain.service` alongside the mic chain; only materialised
+/// when the user toggles AEC on, so the module is absent from the
+/// graph when the feature is off.
 #[must_use]
 pub fn echo_cancel_conf_path() -> PathBuf {
-    pipewire_standalone_dir().join(ECHO_CANCEL_CONF_FILE)
+    pipewire_drop_in_dir().join(ECHO_CANCEL_CONF_FILE)
 }
 
 /// File name of the WirePlumber drop-in shipped by the per-app routing
@@ -122,6 +133,11 @@ const LEGACY_FILES: &[&str] = &[
     // Per-app routing era of the Rust port.
     "wireplumber/wireplumber.conf.d/50-biglinux-output-routing.conf",
     "wireplumber/wireplumber.conf.d/50-biglinux-microphone-routing.conf",
+    // Standalone AEC era (pre drop-in consolidation): the
+    // `biglinux-microphone-echocancel.service` unit consumed this
+    // file; the unit is gone but installed copies of the conf would
+    // still be picked up by old user-enabled symlinks.
+    "pipewire/biglinux-microphone-echocancel.conf",
 ];
 
 /// Best-effort migration step: deletes every config file written by a
@@ -145,6 +161,37 @@ pub fn purge_legacy_files() {
     if let Some(runtime) = std::env::var_os("XDG_RUNTIME_DIR") {
         let path = std::path::Path::new(&runtime).join("gtcrn-ladspa-controls");
         let _ = fs::remove_file(&path);
+    }
+
+    purge_legacy_services();
+}
+
+/// Stop and disable user-level systemd units shipped by older versions
+/// that have since been folded into other workers. Specifically: the
+/// standalone `biglinux-microphone-echocancel.service` is gone now
+/// that AEC ships as a drop-in inside `filter-chain.service`. Without
+/// this step, an upgrading user keeps the old worker running until
+/// next logout because the `[Install]` symlink in
+/// `~/.config/systemd/user/default.target.wants/` outlives the unit
+/// file removed by the package upgrade.
+fn purge_legacy_services() {
+    const LEGACY_USER_UNITS: &[&str] = &["biglinux-microphone-echocancel.service"];
+    for unit in LEGACY_USER_UNITS {
+        // `disable --now` is the documented way to stop a running unit
+        // and remove its [Install] symlinks in the same call. We let
+        // failures fall through silently: the unit may simply not be
+        // present, in which case there is nothing to clean up.
+        let status = Command::new("systemctl")
+            .args(["--user", "disable", "--now", unit])
+            .stdin(Stdio::null())
+            .stdout(Stdio::null())
+            .stderr(Stdio::null())
+            .status();
+        match status {
+            Ok(s) if s.success() => info!("pipeline: stopped legacy service {unit}"),
+            Ok(_) => debug!("pipeline: legacy service {unit} not present"),
+            Err(e) => debug!("pipeline: systemctl invocation failed for {unit}: {e}"),
+        }
     }
 }
 
@@ -201,10 +248,11 @@ pub fn apply_to_dirs(
     atomic_write(&out_path, output::build_output_conf(settings).as_bytes())?;
     info!("pipeline: wrote output config to {}", out_path.display());
 
-    // Echo-cancel chain is opt-in (default off). Materialise the conf
-    // only when wanted so the dedicated systemd unit can use the conf's
-    // presence as a "should I run?" signal.
-    let ec_path = pipewire_standalone_dir.join(ECHO_CANCEL_CONF_FILE);
+    // Echo-cancel drop-in: materialised only when the user wants AEC.
+    // The drop-in lives next to the mic drop-in, so toggling AEC on /
+    // off works through `filter-chain.service` reload — no dedicated
+    // systemd unit and no extra `pipewire -c` worker.
+    let ec_path = pipewire_dropin_dir.join(ECHO_CANCEL_CONF_FILE);
     if echo_cancel::echo_cancel_wanted(settings) {
         atomic_write(
             &ec_path,

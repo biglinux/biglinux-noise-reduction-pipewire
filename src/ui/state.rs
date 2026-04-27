@@ -35,8 +35,7 @@ use crate::pipeline;
 use crate::pipeline::OUTPUT_NODE_NAME;
 use crate::services::loopback::{Loopback, LoopbackOptions};
 use crate::services::pipewire::{
-    apply_live, default_sink_name, reload_mic_chain, restart_echo_cancel_service,
-    restart_output_service, start_output_service, stop_echo_cancel_service,
+    apply_live, default_sink_name, reload_mic_chain, restart_output_service, start_output_service,
     stop_filter_chain_service,
 };
 
@@ -183,19 +182,20 @@ impl AppState {
             }
         };
 
-        // Tier 4 — bring EC up first so the mic chain reload can pin its
-        // capture to a `echo-cancel-source` that already exists.
-        reconcile_echo_cancel_service(prev.as_ref(), &snapshot);
-
-        let need_mic_reload = needs_mic_reload(prev.as_ref(), &snapshot) || !outcome.mic_pushed;
-        if need_mic_reload {
-            if pipeline::mic_chain_wanted(&snapshot) {
-                info!("state: mic topology changed — restarting filter-chain.service");
+        // Tier 4 — restart `filter-chain.service` when the mic chain
+        // topology changed *or* the AEC drop-in was just written /
+        // removed. Both modules live in the same `pipewire -c` process
+        // (filter-chain.conf.d/), so a single restart picks up both.
+        let need_chain_reload =
+            needs_mic_reload(prev.as_ref(), &snapshot) || !outcome.mic_pushed;
+        if need_chain_reload {
+            if filter_chain_wanted(&snapshot) {
+                info!("state: filter-chain drop-ins changed — restarting filter-chain.service");
                 if let Err(e) = reload_mic_chain() {
-                    error!("state: failed to reload mic chain: {e}");
+                    error!("state: failed to reload filter-chain: {e}");
                 }
             } else if let Err(e) = stop_filter_chain_service() {
-                error!("state: failed to stop mic chain: {e}");
+                error!("state: failed to stop filter-chain: {e}");
             }
         } else {
             debug!("state: mic controls pushed live, no reload");
@@ -291,23 +291,12 @@ fn capture_external_default_sink() -> Option<String> {
     Some(name)
 }
 
-/// Lifecycle for the standalone WebRTC echo-cancel `pipewire -c` unit.
-/// Opt-in feature, so unlike the output unit we **do** stop it when the
-/// user turns AEC off — leaving it running would keep an unused
-/// echo-cancel-source node in the graph and confuse picker UIs.
-fn reconcile_echo_cancel_service(prev: Option<&AppSettings>, now: &AppSettings) {
-    let was_enabled = prev.is_some_and(|s| s.echo_cancel.enabled);
-    let is_enabled = now.echo_cancel.enabled;
-
-    if is_enabled && !was_enabled {
-        if let Err(e) = restart_echo_cancel_service() {
-            error!("state: echo-cancel service start failed: {e}");
-        }
-    } else if !is_enabled && was_enabled {
-        if let Err(e) = stop_echo_cancel_service() {
-            error!("state: echo-cancel service stop failed: {e}");
-        }
-    }
+/// True when `filter-chain.service` should be running: any time the
+/// mic chain or the AEC drop-in is wanted. Both share the same
+/// `pipewire -c filter-chain.conf` process, so the unit lifecycle is
+/// the union of the two.
+fn filter_chain_wanted(settings: &AppSettings) -> bool {
+    pipeline::mic_chain_wanted(settings) || pipeline::echo_cancel_wanted(settings)
 }
 
 fn needs_mic_reload(prev: Option<&AppSettings>, now: &AppSettings) -> bool {

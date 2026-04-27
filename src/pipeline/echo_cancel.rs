@@ -7,11 +7,16 @@
 //! denoiser doesn't waste capacity attenuating audio it later has to
 //! restore.
 //!
-//! The chain runs in its own `pipewire -c` process (managed by
-//! `biglinux-microphone-echocancel.service`) for the same reason the
-//! output chain does: keeping it isolated avoids module conflicts and
-//! lets the user toggle AEC on/off without restarting the system
-//! PipeWire daemon.
+//! Hosted as a drop-in inside `~/.config/pipewire/filter-chain.conf.d/`,
+//! the AEC module loads inside the same `pipewire -c filter-chain.conf`
+//! process that hosts the mic filter chain. Sharing the worker keeps
+//! the process count down to "main daemon + filter-chain + output" with
+//! everything enabled; the output chain stays in its own process
+//! because GTCRN keeps a per-process singleton (ONNX state) and mic
+//! plus output cannot coexist there. AEC has no GTCRN, so co-locating
+//! it with the mic chain is safe — and the in-process linking between
+//! `echo-cancel-source` and the mic chain's capture side avoids an
+//! extra inter-process hop.
 //!
 //! Topology:
 //!
@@ -78,9 +83,12 @@ pub const EC_CAPTURE_NODE_NAME: &str = "echo-cancel-capture";
 /// frames and still leaves enough headroom for the downstream GTCRN
 /// filter-chain when AEC feeds it.
 pub(crate) const AEC_NODE_LATENCY: &str = "960/48000";
-/// File name of the standalone pipewire config — same convention as
-/// `biglinux-microphone-output.conf`, no directory prefix.
-pub const ECHO_CANCEL_CONF_FILE: &str = "biglinux-microphone-echocancel.conf";
+/// File name of the AEC drop-in inside `filter-chain.conf.d/`. The `05-`
+/// prefix orders it before the mic drop-in (`10-…`); pipewire merges
+/// drop-ins alphabetically into `context.modules`, so loading AEC first
+/// means `echo-cancel-source` already exists when the mic filter chain
+/// resolves its `target.object`.
+pub const ECHO_CANCEL_CONF_FILE: &str = "05-biglinux-echocancel.conf";
 
 /// True when the EC chain is wanted by the current settings. Centralised
 /// so [`super::apply_to_dirs`] and [`super::mic`] read the same flag.
@@ -89,45 +97,32 @@ pub fn echo_cancel_wanted(settings: &AppSettings) -> bool {
     settings.echo_cancel.enabled
 }
 
-/// Render the standalone pipewire config that hosts the EC module.
+/// Render the AEC drop-in fragment loaded by `filter-chain.service`.
+///
+/// The fragment only adds a single `libpipewire-module-echo-cancel`
+/// entry to `context.modules`; bootstrap modules (`module-rt`,
+/// `module-protocol-native`, `module-client-node`, `module-adapter`)
+/// are already provided by the host `filter-chain.conf`, and the
+/// process-wide clock settings stay untouched so the mic chain
+/// running in the same daemon is not affected. The AEC module pins
+/// its own latency via `node.latency = {AEC_NODE_LATENCY}` (= 20 ms),
+/// which is what `libspa-aec-webrtc` requires regardless of the
+/// driver's quantum.
+///
+/// The capture stream intentionally has no static `target.object`: a
+/// WirePlumber Lua policy hook chooses the selected physical source
+/// live, so the config stays portable across machines with different
+/// or hot-swapped microphones. The reference side runs in
+/// `monitor.mode = true`, tapping the monitor of the default sink
+/// without exposing an Audio/Sink to clients — apps continue to play
+/// to the real speaker.
 #[must_use]
 pub fn build_echo_cancel_conf(_settings: &AppSettings) -> String {
-    // The EC module's capture stream intentionally has no static
-    // `target.object`: a WirePlumber Lua policy hook chooses the
-    // selected physical source live. Leaving this in PipeWire's config
-    // avoids hard-coding device names for machines with different or
-    // hot-swapped microphones. The reference side runs in
-    // `monitor.mode = true`, which makes the module tap the monitor of
-    // the default sink without exposing an Audio/Sink to clients —
-    // apps continue to play to the real speaker.
     format!(
-        "# BigLinux Microphone — auto-generated AEC config\n\
+        "# BigLinux Microphone — auto-generated AEC drop-in\n\
          # DO NOT EDIT: this file is rebuilt every time settings change.\n\
          \n\
-         context.properties = {{\n\
-         \x20   log.level = 0\n\
-         \x20   default.clock.rate          = 48000\n\
-         \x20   default.clock.quantum       = 960\n\
-         \x20   default.clock.min-quantum   = 480\n\
-         \x20   default.clock.max-quantum   = 1920\n\
-         }}\n\
-         \n\
-         context.spa-libs = {{\n\
-         \x20   audio.convert.* = audioconvert/libspa-audioconvert\n\
-         \x20   support.*       = support/libspa-support\n\
-         }}\n\
-         \n\
          context.modules = [\n\
-         \x20   {{ name = libpipewire-module-rt\n\
-         \x20       args = {{\n\
-         \x20           nice.level    = -11\n\
-         \x20           rt.prio       = 88\n\
-         \x20       }}\n\
-         \x20       flags = [ ifexists nofail ]\n\
-         \x20   }}\n\
-         \x20   {{ name = libpipewire-module-protocol-native }}\n\
-         \x20   {{ name = libpipewire-module-client-node }}\n\
-         \x20   {{ name = libpipewire-module-adapter }}\n\
          \x20   {{ name = libpipewire-module-echo-cancel\n\
          \x20       args = {{\n\
          \x20           library.name = aec/libspa-aec-webrtc\n\
@@ -226,7 +221,6 @@ mod tests {
         // sink monitor (FL+FR) to this mono input — both channels
         // reach the canceller, just averaged.
         let conf = build_echo_cancel_conf(&enabled());
-        assert!(conf.contains("default.clock.quantum       = 960"));
         assert!(conf.contains("node.latency = 960/48000"));
         assert!(conf.contains("audio.rate = 48000"));
         assert!(conf.contains("audio.channels = 1"));
@@ -246,11 +240,24 @@ mod tests {
     }
 
     #[test]
-    fn conf_runs_with_realtime_module() {
+    fn conf_is_a_drop_in_with_only_the_aec_module() {
+        // The drop-in must not redeclare bootstrap modules (rt,
+        // protocol-native, client-node, adapter) — those are loaded by
+        // the host `filter-chain.conf`. Re-declaring them inside a
+        // drop-in either no-ops (ifexists/nofail) or, worse,
+        // double-loads adapters and confuses linking.
         let conf = build_echo_cancel_conf(&enabled());
-        assert!(conf.contains("libpipewire-module-rt"));
-        assert!(conf.contains("libpipewire-module-protocol-native"));
-        assert!(conf.contains("libpipewire-module-adapter"));
+        assert!(conf.contains("libpipewire-module-echo-cancel"));
+        assert!(!conf.contains("libpipewire-module-rt"));
+        assert!(!conf.contains("libpipewire-module-protocol-native"));
+        assert!(!conf.contains("libpipewire-module-client-node"));
+        assert!(!conf.contains("libpipewire-module-adapter"));
+        // Drop-ins also must not redefine process-wide context
+        // properties: that would override the host filter-chain's
+        // clock/log settings for every module in the same process,
+        // including the mic chain.
+        assert!(!conf.contains("context.properties"));
+        assert!(!conf.contains("default.clock"));
     }
 
     #[test]

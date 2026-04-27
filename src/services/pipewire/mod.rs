@@ -29,9 +29,8 @@ use pipewire as pw;
 pub use default_sink::default_sink_name;
 pub use live::{apply_live, LiveOutcome};
 pub use module::{
-    reload_mic_chain, restart_echo_cancel_service, restart_filter_chain_service,
-    restart_output_service, start_echo_cancel_service, start_output_service,
-    stop_echo_cancel_service, stop_filter_chain_service, stop_output_service,
+    reload_mic_chain, restart_filter_chain_service, restart_output_service, start_output_service,
+    stop_filter_chain_service, stop_output_service,
 };
 pub use sources::{
     set_default_source, set_source_volume, snapshot as snapshot_sources, source_volume, Source,

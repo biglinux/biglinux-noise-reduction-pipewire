@@ -10,12 +10,12 @@ use std::fs;
 use std::path::PathBuf;
 
 use biglinux_microphone::config::{
-    AppSettings, CompressorConfig, EqualizerConfig, GateConfig, HpfConfig, NoiseModel,
-    NoiseReductionConfig, OutputFilterSettings, StereoConfig,
+    AppSettings, CompressorConfig, EchoCancelConfig, EqualizerConfig, GateConfig, HpfConfig,
+    NoiseModel, NoiseReductionConfig, OutputFilterSettings, StereoConfig,
 };
 use biglinux_microphone::pipeline::{
-    apply_to_dirs, mic_chain_wanted, MIC_CONF_FILE, MIC_NODE_NAME, OUTPUT_CONF_FILE,
-    OUTPUT_NODE_NAME,
+    apply_to_dirs, mic_chain_wanted, ECHO_CANCEL_CONF_FILE, MIC_CONF_FILE, MIC_NODE_NAME,
+    OUTPUT_CONF_FILE, OUTPUT_NODE_NAME,
 };
 use tempfile::tempdir;
 
@@ -158,6 +158,46 @@ fn legacy_per_app_routing_drop_in_is_scrubbed() {
 
     apply_to_dirs(&AppSettings::default(), &pw, &std_dir, &wp).unwrap();
     assert!(!legacy.exists());
+}
+
+#[test]
+fn echo_cancel_conf_is_written_into_filter_chain_dropin_dir_and_removed_when_disabled() {
+    // Earlier revisions hosted the AEC config as a standalone
+    // `pipewire -c` worker with its own systemd unit. The drop-in
+    // consolidation puts it next to the mic chain so a single
+    // `filter-chain.service` worker hosts both — one fewer pipewire
+    // process. This test pins the path and the toggle behaviour.
+    let dir = tempdir().unwrap();
+    let (pw, std_dir, wp) = dirs(&dir);
+
+    let on = AppSettings {
+        echo_cancel: EchoCancelConfig { enabled: true },
+        ..AppSettings::default()
+    };
+    apply_to_dirs(&on, &pw, &std_dir, &wp).unwrap();
+
+    let dropin_path = pw.join(ECHO_CANCEL_CONF_FILE);
+    assert!(
+        dropin_path.exists(),
+        "AEC drop-in must live in filter-chain.conf.d, not the standalone dir"
+    );
+    assert!(!std_dir.join(ECHO_CANCEL_CONF_FILE).exists());
+    let body = fs::read_to_string(&dropin_path).unwrap();
+    assert!(body.contains("libpipewire-module-echo-cancel"));
+    // Drop-in must NOT redefine bootstrap modules / context properties:
+    // those are owned by the host filter-chain.conf and would conflict.
+    assert!(!body.contains("libpipewire-module-rt"));
+    assert!(!body.contains("context.properties"));
+
+    let off = AppSettings {
+        echo_cancel: EchoCancelConfig { enabled: false },
+        ..AppSettings::default()
+    };
+    apply_to_dirs(&off, &pw, &std_dir, &wp).unwrap();
+    assert!(
+        !dropin_path.exists(),
+        "AEC drop-in must be removed when the toggle goes off"
+    );
 }
 
 #[test]
