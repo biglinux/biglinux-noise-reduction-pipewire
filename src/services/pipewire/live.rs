@@ -226,8 +226,15 @@ fn mic_params(s: &AppSettings) -> Vec<(String, f64)> {
     };
 
     let mut params = vec![
-        // HPF — the filter-chain builtin `bq_highpass` node.
+        // HPF — the filter-chain builtin `bq_highpass` node. When the
+        // user enables HPF the chain is a cascade of two identical
+        // biquads (`hpf_pre` → `hpf`); both controls are addressed
+        // here so a frequency change applies to the full slope.
+        // `hpf_pre` only exists when HPF is enabled — sending the key
+        // when the node is absent is a no-op (pw-cli silently drops
+        // unknown control names) so it's safe to always include.
         ("hpf:Freq".to_owned(), hpf_freq),
+        ("hpf_pre:Freq".to_owned(), hpf_freq),
     ];
 
     // GTCRN controls only matter when the node is in the graph; when

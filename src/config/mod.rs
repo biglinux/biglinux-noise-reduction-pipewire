@@ -28,7 +28,7 @@ use serde::{Deserialize, Serialize};
 
 pub use audio::{
     GateConfig, HpfConfig, MonitorConfig, NoiseModel, NoiseReductionConfig, StereoConfig,
-    StereoMode, GATE_INTENSITY_DEFAULT, GATE_INTENSITY_MAX,
+    StereoMode, GATE_INTENSITY_DEFAULT, GATE_INTENSITY_MAX, HPF_FREQUENCY_DEFAULT,
 };
 pub use echo_cancel::EchoCancelConfig;
 pub use equalizer::{

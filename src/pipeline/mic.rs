@@ -133,17 +133,21 @@ pub fn ai_node_in_mic_chain(settings: &AppSettings) -> bool {
 }
 
 fn mic_nodes(settings: &AppSettings) -> Vec<Node> {
-    let hpf_freq = if settings.hpf.enabled {
-        f64::from(settings.hpf.frequency)
+    // When enabled we cascade two identical Butterworth biquads
+    // (Linkwitz-Riley 4th order, 24 dB/oct) so the rumble rolloff is
+    // steep enough to matter on laptop mics. When disabled a single
+    // node at a vanishingly low cutoff stays in place to avoid graph
+    // restarts and keep the downstream link target ("hpf:Out") stable
+    // for tests and live-update code paths.
+    let mut nodes: Vec<Node> = if settings.hpf.enabled {
+        let f = f64::from(settings.hpf.frequency);
+        vec![
+            Node::builtin("hpf_pre", LABEL_BQ_HIGHPASS).with_controls([("Freq", f), ("Q", 0.707)]),
+            Node::builtin("hpf", LABEL_BQ_HIGHPASS).with_controls([("Freq", f), ("Q", 0.707)]),
+        ]
     } else {
-        // A vanishingly low cutoff makes the biquad pass-through without the
-        // cost (or graph restart) of removing the node.
-        5.0
+        vec![Node::builtin("hpf", LABEL_BQ_HIGHPASS).with_controls([("Freq", 5.0), ("Q", 0.707)])]
     };
-
-    let mut nodes =
-        vec![Node::builtin("hpf", LABEL_BQ_HIGHPASS)
-            .with_controls([("Freq", hpf_freq), ("Q", 0.707)])];
 
     if ai_node_in_mic_chain(settings) {
         nodes.push(gtcrn_node(settings));
@@ -505,6 +509,36 @@ mod tests {
         s.hpf.enabled = false;
         let conf = build_mic_conf(&s);
         assert!(conf.contains("\"Freq\" = 5.0"));
+        // Only the placeholder "hpf" exists when disabled — no cascade.
+        assert!(!conf.contains("name = \"hpf_pre\""));
+    }
+
+    #[test]
+    fn conf_enabled_hpf_cascades_two_biquads() {
+        // Two identical Butterworth biquads (Q=0.707) at the same
+        // cutoff form a 24 dB/oct Linkwitz-Riley high-pass — required
+        // for the rolloff to clean rumble on laptop mics. Both nodes
+        // must be present and feed each other before the rest of the
+        // chain.
+        let mut s = default_settings();
+        s.hpf.enabled = true;
+        s.hpf.frequency = 80.0;
+        let conf = build_mic_conf(&s);
+        assert!(conf.contains("name = \"hpf_pre\""));
+        assert!(conf.contains("name = \"hpf\""));
+        assert!(conf.contains("{ output = \"hpf_pre:Out\" input = \"hpf:In\" }"));
+        // Both stages share the user-selected cutoff.
+        let occurrences = conf.matches("\"Freq\" = 80.0").count();
+        assert!(occurrences >= 2, "expected cascade to share cutoff: {conf}");
+    }
+
+    #[test]
+    fn hpf_default_frequency_protects_voice_fundamental() {
+        // 80 Hz keeps the lowest adult-male F0 (~85 Hz) intact while
+        // killing HVAC/fan rumble and 50/60 Hz mains harmonics. If
+        // someone bumps this they should weigh the impact on bass
+        // voices first.
+        assert!((crate::config::HPF_FREQUENCY_DEFAULT - 80.0).abs() < f32::EPSILON);
     }
 
     #[test]

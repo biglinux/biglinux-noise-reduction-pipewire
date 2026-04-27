@@ -321,6 +321,10 @@ fn needs_mic_reload(prev: Option<&AppSettings>, now: &AppSettings) -> bool {
         // the chain must be reloaded before the graph can use/bypass the
         // cleaned source.
         let ec_target_changed = p.echo_cancel.enabled != now.echo_cancel.enabled;
+        // HPF is a 2-biquad cascade when enabled and a single
+        // pass-through node when disabled — toggling it adds/removes
+        // `hpf_pre` from the graph, so we must reload, not live-update.
+        let hpf_topology_changed = p.hpf.enabled != now.hpf.enabled;
         p.equalizer.bands != now.equalizer.bands
             || p.equalizer.preset != now.equalizer.preset
             || p.equalizer.enabled != now.equalizer.enabled
@@ -328,6 +332,7 @@ fn needs_mic_reload(prev: Option<&AppSettings>, now: &AppSettings) -> bool {
             || voice_changer_topology_changed
             || ai_topology_changed
             || ec_target_changed
+            || hpf_topology_changed
     } else {
         now_wanted
     }
@@ -474,6 +479,23 @@ mod tests {
         };
         let mut next = prev.clone();
         next.gate.enabled = true;
+        assert!(needs_mic_reload(Some(&prev), &next));
+    }
+
+    #[test]
+    fn reload_when_mic_hpf_toggles() {
+        // Enabling HPF inserts a second `bq_highpass` (`hpf_pre`)
+        // ahead of `hpf` to form a 4th-order Linkwitz-Riley cascade —
+        // can't be done by live-updating control values alone.
+        let prev = AppSettings {
+            hpf: HpfConfig {
+                enabled: false,
+                ..HpfConfig::default()
+            },
+            ..AppSettings::default()
+        };
+        let mut next = prev.clone();
+        next.hpf.enabled = true;
         assert!(needs_mic_reload(Some(&prev), &next));
     }
 

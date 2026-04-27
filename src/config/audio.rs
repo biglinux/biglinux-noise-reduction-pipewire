@@ -114,7 +114,12 @@ impl Default for GateConfig {
 
 // ── High-pass filter (rumble removal) ────────────────────────────────
 
-pub const HPF_FREQUENCY_DEFAULT: f32 = 40.0;
+// 80 Hz sits just below the lowest adult-male fundamental (~85 Hz) and
+// well above HVAC/fan rumble + 50/60 Hz mains harmonics that dominate
+// laptop mic noise. The chain cascades two Butterworth biquads at this
+// cutoff (Linkwitz-Riley 4th order, 24 dB/oct) so the rolloff is steep
+// enough to actually clean the rumble band when the user enables HPF.
+pub const HPF_FREQUENCY_DEFAULT: f32 = 80.0;
 
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 #[serde(default)]
@@ -125,9 +130,9 @@ pub struct HpfConfig {
 
 impl Default for HpfConfig {
     fn default() -> Self {
-        // HPF off by default — many laptop mics already roll off below
-        // ~80 Hz and adding another bite there made the restored-defaults
-        // preset sound thin.
+        // HPF off by default — restored-defaults users get the AI
+        // pipeline only. When the user opts in, HPF_FREQUENCY_DEFAULT
+        // is the safe-for-voice cutoff documented above.
         Self {
             enabled: false,
             frequency: HPF_FREQUENCY_DEFAULT,
