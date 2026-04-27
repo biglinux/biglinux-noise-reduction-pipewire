@@ -1,0 +1,1498 @@
+# SOME DESCRIPTIVE TITLE.
+# Copyright (C) YEAR THE PACKAGE'S COPYRIGHT HOLDER
+# This file is distributed under the same license as the biglinux-noise-reduction-pipewire package.
+# FIRST AUTHOR <EMAIL@ADDRESS>, YEAR.
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: biglinux-noise-reduction-pipewire\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2026-04-26 16:03+0000\n"
+"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"Language-Team: LANGUAGE <LL@li.org>\n"
+"Language: \n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"X-Generator: attranslate\n"
+
+# File: biglinux-noise-reduction-
+# pipewire/src/biglinux_microphone/audio/filter_chain.py
+#: src/ui/window.rs:46 src/ui/window.rs:360
+msgid "BigLinux Microphone"
+msgstr "BigLinux Microphone"
+
+# #-#-#-#-#  biglinux-noise-reduction-pipewire.pot (biglinux-noise-reduction-
+# pipewire)  #-#-#-#-#
+# 
+# File: biglinux-noise-reduction-
+# pipewire/src/biglinux_microphone/ui/main_view.py, line: 88
+# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/config.py,
+# line: 27
+#: src/ui/window.rs:176 src/ui/widgets/source_picker.rs:65
+msgid "Microphone"
+msgstr "Mikrofon"
+
+#: src/ui/window.rs:182
+msgid "Output filter"
+msgstr "Výstupní filtr"
+
+#: src/ui/window.rs:231
+msgid "Advanced"
+msgstr "Pokročilé"
+
+#: src/ui/window.rs:234
+msgid "Show every control individually"
+msgstr "Zobrazit každý ovládací prvek samostatně"
+
+# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/window.py,
+# line: 172
+#: src/ui/window.rs:253
+msgid "Restore default settings"
+msgstr "Obnovit výchozí nastavení"
+
+#: src/ui/window.rs:256
+msgid "About BigLinux Microphone"
+msgstr "O BigLinux Microphone"
+
+# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/window.py,
+# line: 202
+#: src/ui/window.rs:261
+msgid "Main menu"
+msgstr "Hlavní nabídka"
+
+# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/window.py,
+# line: 172
+#: src/ui/window.rs:313
+msgid "Restore default settings?"
+msgstr "Obnovit výchozí nastavení?"
+
+#: src/ui/window.rs:315
+msgid ""
+"All audio processing settings will return to their factory values. Your "
+"window size and view preferences are kept."
+msgstr ""
+"Všechna nastavení zpracování zvuku se vrátí na tovární hodnoty. Velikost "
+"okna a preference zobrazení zůstanou zachovány."
+
+# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/window.py,
+# line: 175
+#: src/ui/window.rs:319
+msgid "Cancel"
+msgstr "Zrušit"
+
+# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/window.py,
+# line: 193
+#: src/ui/window.rs:320
+msgid "Restore defaults"
+msgstr "Obnovit výchozí hodnoty"
+
+#: src/ui/window.rs:369
+msgid ""
+"AI-powered microphone noise reduction with GTK4/libadwaita interface for "
+"PipeWire."
+msgstr ""
+"Redukce šumu mikrofonu poháněná AI s GTK4/libadwaita rozhraním pro PipeWire."
+
+#: src/ui/views/mic.rs:44
+msgid "Noise filter — fine-tune"
+msgstr "Filtr šumu — doladění"
+
+# File: biglinux-noise-reduction-
+# pipewire/src/biglinux_microphone/ui/main_view.py, line: 581
+#: src/ui/views/mic.rs:50
+msgid "Voice enhancements"
+msgstr "Vylepšení hlasu"
+
+# File: biglinux-noise-reduction-
+# pipewire/src/biglinux_microphone/ui/main_view.py, line: 438
+#: src/ui/views/mic.rs:56 src/ui/views/mic.rs:367
+msgid "Voice changer"
+msgstr "Změna hlasu"
+
+#: src/ui/views/mic.rs:106
+msgid ""
+"Removes the speaker's echo from your microphone — useful on calls without "
+"headphones."
+msgstr ""
+"Odstraňuje ozvěnu mluvčího z vašeho mikrofonu — užitečné při hovorech bez "
+"sluchátek."
+
+# File: biglinux-noise-reduction-
+# pipewire/src/biglinux_microphone/ui/main_view.py, line: 687
+#: src/ui/views/mic.rs:118
+msgid "Echo cancellation"
+msgstr "Potlačení ozvěny"
+
+# File: biglinux-noise-reduction-
+# pipewire/src/biglinux_microphone/ui/main_view.py, line: 709
+#: src/ui/views/mic.rs:158
+msgid "AI noise filter"
+msgstr "AI filtr šumu"
+
+#: src/ui/views/mic.rs:167
+msgid ""
+"GTCRN neural filter on your microphone. Off bypasses every fine-tune control"
+" below."
+msgstr ""
+"GTCRN neuronový filtr na vašem mikrofonu. Vypnutí obchází všechny doladění "
+"níže."
+
+# File: biglinux-noise-reduction-
+# pipewire/src/biglinux_microphone/ui/main_view.py, line: 326
+#: src/ui/views/mic.rs:184 src/ui/views/output.rs:101
+msgid "Neural model"
+msgstr "Neuronový model"
+
+#: src/ui/views/mic.rs:186
+msgid ""
+"DNS3 removes more noise but can smudge consonants. VCTK is gentler and "
+"lighter on CPU — good for podcasts."
+msgstr ""
+"DNS3 odstraňuje více šumu, ale může rozmazávat souhlásky. VCTK je jemnější a"
+" méně zatěžuje CPU — vhodné pro podcasty."
+
+#: src/ui/views/mic.rs:193 src/ui/views/output.rs:110
+msgid "GTCRN – DNS3 (strong)"
+msgstr "GTCRN – DNS3 (silný)"
+
+#: src/ui/views/mic.rs:194 src/ui/views/output.rs:111
+msgid "GTCRN – VCTK (gentle)"
+msgstr "GTCRN – VCTK (jemný)"
+
+# File: biglinux-noise-reduction-
+# pipewire/src/biglinux_microphone/ui/main_view.py, line: 323
+#: src/ui/views/mic.rs:211 src/ui/views/output.rs:128
+msgid "Model"
+msgstr "Model"
+
+#: src/ui/views/mic.rs:218 src/ui/views/output.rs:135
+msgid "Noise strength (no voice)"
+msgstr "Síla šumu (bez hlasu)"
+
+#: src/ui/views/mic.rs:220
+msgid ""
+"How hard the filter works in the gaps between words. 100% mutes anything "
+"that isn't voice."
+msgstr ""
+"Jak intenzivně filtr pracuje v mezerách mezi slovy. 100 % ztlumí vše, co "
+"není hlas."
+
+#: src/ui/views/mic.rs:226 src/ui/views/mic.rs:244 src/ui/views/output.rs:143
+#: src/ui/views/output.rs:165
+msgid "Strength"
+msgstr "Síla"
+
+#: src/ui/views/mic.rs:236 src/ui/views/output.rs:153
+msgid "Voice strength (while speaking)"
+msgstr "Síla hlasu (během mluvení)"
+
+#: src/ui/views/mic.rs:238
+msgid ""
+"How hard the filter works while you talk. Lower if your voice sounds "
+"robotic; raise if noise still bleeds through."
+msgstr ""
+"Jak silně filtr pracuje, když mluvíte. Snižte, pokud váš hlas zní roboticky;"
+" zvyšte, pokud šum stále proniká."
+
+# File: biglinux-noise-reduction-
+# pipewire/src/biglinux_microphone/ui/main_view.py, line: 392
+#: src/ui/views/mic.rs:254 src/ui/views/output.rs:175
+msgid "Voice presence"
+msgstr "Přítomnost hlasu"
+
+#: src/ui/views/mic.rs:256
+msgid ""
+"Restores high-frequency clarity (sibilants like \"s\", \"sh\") after "
+"suppression. Lower only if your voice already sounds harsh."
+msgstr ""
+"Obnovuje vysokofrekvenční čistotu (sibilanty jako „s“, „š“) po potlačení. "
+"Snižujte pouze, pokud váš hlas už zní ostrý."
+
+# File: biglinux-noise-reduction-
+# pipewire/src/biglinux_microphone/ui/main_view.py, line: 392
+#: src/ui/views/mic.rs:262 src/ui/views/output.rs:187
+msgid "Recovery"
+msgstr "Obnova"
+
+# File: biglinux-noise-reduction-
+# pipewire/src/biglinux_microphone/ui/main_view.py, line: 477
+#: src/ui/views/mic.rs:282 src/ui/views/output.rs:207
+msgid "High-pass filter"
+msgstr "Horní propust"
+
+#: src/ui/views/mic.rs:283
+msgid "Cuts low-frequency rumble — AC, wind, mic-stand bumps."
+msgstr ""
+"Odstraňuje nízkofrekvenční hučení — síťový proud, vítr, nárazy do "
+"mikrofonního stojanu."
+
+# File: biglinux-noise-reduction-
+# pipewire/src/biglinux_microphone/ui/main_view.py, line: 308
+#: src/ui/views/mic.rs:301 src/ui/views/output.rs:226
+msgid "Silence gate"
+msgstr "Brána ticha"
+
+#: src/ui/views/mic.rs:303
+msgid ""
+"Mutes the mic during pauses so listeners hear silence instead of hiss. "
+"Higher = more aggressive."
+msgstr ""
+"Ztlumí mikrofon během pauz, aby posluchači slyšeli ticho místo šumu. Vyšší "
+"hodnota = agresivnější ztlumení."
+
+# File: biglinux-noise-reduction-
+# pipewire/src/biglinux_microphone/ui/main_view.py, line: 434
+# File: biglinux-noise-reduction-
+# pipewire/src/biglinux_microphone/ui/main_view.py, line: 472
+#: src/ui/views/mic.rs:311 src/ui/views/mic.rs:457 src/ui/views/output.rs:233
+#: src/ui/views/output.rs:263 src/ui/views/simple.rs:69
+#: src/ui/views/simple.rs:177
+msgid "Intensity"
+msgstr "Intenzita"
+
+# File: biglinux-noise-reduction-
+# pipewire/src/biglinux_microphone/ui/main_view.py, line: 477
+#: src/ui/views/mic.rs:323 src/ui/views/output.rs:56
+msgid "Equalizer"
+msgstr "Ekvalizér"
+
+#: src/ui/views/mic.rs:325
+msgid ""
+"10-band parametric EQ. Pick a preset or drag each band between -40 dB and "
+"+40 dB."
+msgstr ""
+"10-pásmový parametrický ekvalizér. Vyberte přednastavení nebo táhněte každý "
+"pásmo mezi -40 dB a +40 dB."
+
+#: src/ui/views/mic.rs:369
+msgid ""
+"Shifts the pitch of your voice without retiming. Left = deeper, right = "
+"higher. Center keeps your natural voice."
+msgstr ""
+"Posouvá výšku vašeho hlasu bez změny délky. Vlevo = hlubší, vpravo = vyšší. "
+"Střed zachovává váš přirozený hlas."
+
+# File: biglinux-noise-reduction-
+# pipewire/src/biglinux_microphone/ui/main_view.py, line: 1147
+#: src/ui/views/mic.rs:389
+msgid "Deep"
+msgstr "Hluboký"
+
+#: src/ui/views/mic.rs:390
+msgid "Lower"
+msgstr "Nižší"
+
+#: src/ui/views/mic.rs:391
+msgid "Natural"
+msgstr "Přirozený"
+
+#: src/ui/views/mic.rs:392
+msgid "Higher"
+msgstr "Vyšší"
+
+#: src/ui/views/mic.rs:393
+msgid "Chipmunk"
+msgstr "Chipmunk"
+
+#: src/ui/views/mic.rs:404
+msgid "Pitch"
+msgstr "Výška tónu"
+
+#: src/ui/views/mic.rs:416 src/ui/views/simple.rs:144
+msgid "Headphones only — speakers cause feedback."
+msgstr "Pouze sluchátka — reproduktory způsobují zpětnou vazbu."
+
+# File: biglinux-noise-reduction-
+# pipewire/src/biglinux_microphone/ui/main_view.py, line: 550
+#: src/ui/views/mic.rs:426 src/ui/views/simple.rs:154
+msgid "Hear my voice"
+msgstr "Slyšet můj hlas"
+
+#: src/ui/views/mic.rs:434
+msgid "Delay (ms)"
+msgstr "Zpoždění (ms)"
+
+#: src/ui/views/mic.rs:452 src/ui/views/output.rs:255
+msgid "Compressor"
+msgstr "Kompresor"
+
+#: src/ui/views/mic.rs:453
+msgid ""
+"Evens out loud peaks and quiet parts so your voice stays at a steady volume."
+msgstr ""
+"Vyrovnává hlasité špičky a tiché části, aby váš hlas zůstal na stálé úrovni "
+"hlasitosti."
+
+# File: biglinux-noise-reduction-
+# pipewire/src/biglinux_microphone/ui/main_view.py, line: 310
+#: src/ui/views/output.rs:37
+msgid "AI noise reduction"
+msgstr "AI redukce šumu"
+
+#: src/ui/views/output.rs:43
+msgid "Audio enhancements"
+msgstr "Zvuková vylepšení"
+
+#: src/ui/views/output.rs:58
+msgid ""
+"10-band parametric EQ on what you hear. Pick a preset or drag each band "
+"between -40 dB and +40 dB."
+msgstr ""
+"10pásmový parametrický ekvalizér na to, co slyšíte. Vyberte přednastavení "
+"nebo přetáhněte každý pásmo mezi -40 dB a +40 dB."
+
+#: src/ui/views/output.rs:89
+msgid "Enable output filter"
+msgstr "Povolit výstupní filtr"
+
+#: src/ui/views/output.rs:91
+msgid ""
+"Filters audio reaching your speakers in real time. Stays attached after "
+"toggling, so playback and calls keep running."
+msgstr ""
+"Filtruje zvuk přicházející do vašich reproduktorů v reálném čase. Zůstává "
+"aktivní i po přepnutí, takže přehrávání a hovory pokračují."
+
+#: src/ui/views/output.rs:103
+msgid ""
+"DNS3 strips more noise (good for harsh streams); VCTK is gentler (good for "
+"music or clean voice)."
+msgstr ""
+"DNS3 odstraňuje více šumu (vhodné pro drsné streamy); VCTK je jemnější "
+"(vhodné pro hudbu nebo čistý hlas)."
+
+#: src/ui/views/output.rs:137
+msgid ""
+"How hard the filter works during silent moments in playback. Higher = "
+"quieter background between sentences."
+msgstr ""
+"Jak silně filtr pracuje během tichých momentů při přehrávání. Vyšší hodnota "
+"= tišší pozadí mezi větami."
+
+#: src/ui/views/output.rs:155
+msgid ""
+"How hard the filter works while voices play. Lower if they sound robotic; "
+"raise if noise still bleeds through."
+msgstr ""
+"Jak silně filtr pracuje během přehrávání hlasů. Nižší, pokud zní hlas "
+"roboticky; zvyšte, pokud šum stále proniká."
+
+#: src/ui/views/output.rs:177
+msgid ""
+"Restores high-frequency clarity after suppression. Lower only if the source "
+"already sounds harsh."
+msgstr ""
+"Obnovuje jasnost vysokých frekvencí po potlačení. Snižte pouze, pokud zdroj "
+"už zní drsně."
+
+#: src/ui/views/output.rs:208
+msgid "Cuts low-frequency rumble from playback — wind, AC noise."
+msgstr ""
+"Odstraňuje nízkofrekvenční dunění z přehrávání — vítr, hluk klimatizace."
+
+#: src/ui/views/output.rs:227
+msgid ""
+"Mutes playback during silent moments so you don't hear hiss between words."
+msgstr ""
+"Ztlumí přehrávání během tichých momentů, abyste neslyšeli šum mezi slovy."
+
+#: src/ui/views/output.rs:257
+msgid ""
+"Evens out volume across loud and quiet speakers — useful for meetings with "
+"mixed mic levels."
+msgstr ""
+"Vyrovnává hlasitost mezi hlasitými a tichými reproduktory — užitečné pro "
+"schůzky s různými úrovněmi mikrofonů."
+
+#: src/ui/views/simple.rs:115
+msgid "Noise filter"
+msgstr "Šumový filtr"
+
+#: src/ui/views/simple.rs:124
+msgid ""
+"Removes background noise from your voice with the GTCRN neural network. "
+"Higher intensity = stronger cleanup."
+msgstr ""
+"Odstraňuje šum z vašeho hlasu pomocí neuronové sítě GTCRN. Vyšší intenzita ="
+" silnější čištění."
+
+#: src/ui/views/simple.rs:170
+msgid "System sound"
+msgstr "Zvuk systému"
+
+#: src/ui/views/simple.rs:171
+msgid ""
+"Cleans background noise from everything you hear before it reaches your "
+"speakers."
+msgstr ""
+"Čistí šum na pozadí ze všeho, co slyšíte, dříve než to dosáhne vašich "
+"reproduktorů."
+
+# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/config.py,
+# line: 711
+#: src/ui/widgets/eq_card.rs:164
+msgid "Default voice"
+msgstr "Výchozí hlas"
+
+#: src/ui/widgets/eq_card.rs:165
+msgid "Flat"
+msgstr "Rovný"
+
+# File: biglinux-noise-reduction-
+# pipewire/src/biglinux_microphone/ui/main_view.py, line: 442
+#: src/ui/widgets/eq_card.rs:166
+msgid "Voice boost"
+msgstr "Zvýšení hlasu"
+
+#: src/ui/widgets/eq_card.rs:167
+msgid "Podcast"
+msgstr "Podcast"
+
+#: src/ui/widgets/eq_card.rs:168
+msgid "Warm"
+msgstr "Teplý"
+
+#: src/ui/widgets/eq_card.rs:169
+msgid "Bright"
+msgstr "Jasný"
+
+#: src/ui/widgets/eq_card.rs:170
+msgid "De-esser"
+msgstr "De-esser"
+
+#: src/ui/widgets/eq_card.rs:171
+msgid "Bass cut"
+msgstr "Odstranění basů"
+
+# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/config.py,
+# line: 602
+#: src/ui/widgets/eq_card.rs:172
+msgid "Presence"
+msgstr "Přítomnost"
+
+# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/config.py,
+# line: 607
+#: src/ui/widgets/eq_card.rs:173
+msgid "Custom"
+msgstr "Vlastní"
+
+# File: biglinux-noise-reduction-
+# pipewire/src/biglinux_microphone/ui/main_view.py, line: 489
+#: src/ui/widgets/eq_card.rs:214
+msgid "Preset"
+msgstr "Přednastavení"
+
+# File: biglinux-noise-reduction-
+# pipewire/src/biglinux_microphone/ui/main_view.py, line: 753
+#: src/ui/widgets/source_picker.rs:108
+msgid "Volume"
+msgstr "Hlasitost"
+
+#~ msgid "Configure..."
+#~ msgstr "Konfigurovat..."
+
+# File: biglinux-noise-reduction-
+# pipewire/src/biglinux_microphone/ui/main_view.py, line: 258
+#~ msgid "Loading, please wait"
+#~ msgstr "Načítání, prosím čekejte"
+
+# File: biglinux-noise-reduction-
+# pipewire/src/biglinux_microphone/ui/main_view.py, line: 227
+#~ msgid "Applying settings…"
+#~ msgstr "Používání nastavení…"
+
+# File: biglinux-noise-reduction-
+# pipewire/src/biglinux_microphone/ui/main_view.py, line: 312
+#~ msgid "Removes background noise like fan, keyboard, and air conditioning."
+#~ msgstr ""
+#~ "Odstraňuje šum na pozadí, jako je ventilátor, klávesnice a klimatizace."
+
+# File: biglinux-noise-reduction-
+# pipewire/src/biglinux_microphone/ui/main_view.py, line: 325
+#~ msgid "Maximum Cleaning"
+#~ msgstr "Maximální čištění"
+
+# File: biglinux-noise-reduction-
+# pipewire/src/biglinux_microphone/ui/main_view.py, line: 327
+#~ msgid "Smart (both combined)"
+#~ msgstr "Chytrý (oba kombinované)"
+
+# File: biglinux-noise-reduction-
+# pipewire/src/biglinux_microphone/ui/main_view.py, line: 336
+#~ msgid "Noise Removal Intensity"
+#~ msgstr "Intenzita odstranění šumu"
+
+# File: biglinux-noise-reduction-
+# pipewire/src/biglinux_microphone/ui/main_view.py, line: 355
+#~ msgid "Filter During Speech"
+#~ msgstr "Filtr během řeči"
+
+# File: biglinux-noise-reduction-
+# pipewire/src/biglinux_microphone/ui/main_view.py, line: 363
+# File: biglinux-noise-reduction-
+# pipewire/src/biglinux_microphone/ui/main_view.py, line: 381
+# File: biglinux-noise-reduction-
+# pipewire/src/biglinux_microphone/ui/main_view.py, line: 400
+#~ msgid "Off"
+#~ msgstr "Vypnuto"
+
+# File: biglinux-noise-reduction-
+# pipewire/src/biglinux_microphone/ui/main_view.py, line: 373
+#~ msgid "Syllable Protection"
+#~ msgstr "Ochrana slabik"
+
+# File: biglinux-noise-reduction-
+# pipewire/src/biglinux_microphone/ui/main_view.py, line: 420
+#~ msgid "Volume Normalizer"
+#~ msgstr "Normalizátor hlasitosti"
+
+# File: biglinux-noise-reduction-
+# pipewire/src/biglinux_microphone/ui/main_view.py, line: 422
+#~ msgid "Evens out volume — loud sounds get softer, quiet sounds get louder."
+#~ msgstr ""
+#~ "Vyrovnává hlasitost — hlasité zvuky se ztišují, tiché zvuky se zesilují."
+
+# File: biglinux-noise-reduction-
+# pipewire/src/biglinux_microphone/ui/main_view.py, line: 478
+#~ msgid "Removes low-frequency rumble"
+#~ msgstr "Odstraňuje nízkofrekvenční šum"
+
+# File: biglinux-noise-reduction-
+# pipewire/src/biglinux_microphone/ui/main_view.py, line: 487
+#~ msgid "Frequency (Hz)"
+#~ msgstr "Frekvence (Hz)"
+
+# File: biglinux-noise-reduction-
+# pipewire/src/biglinux_microphone/ui/main_view.py, line: 310
+#~ msgid "Automatically silences the microphone when you are not talking."
+#~ msgstr "Automaticky ztlumí mikrofon, když nemluvíte."
+
+# File: biglinux-noise-reduction-
+# pipewire/src/biglinux_microphone/ui/main_view.py, line: 425
+#~ msgid "Voice Effects"
+#~ msgstr "Hlasové efekty"
+
+# File: biglinux-noise-reduction-
+# pipewire/src/biglinux_microphone/ui/main_view.py, line: 436
+#~ msgid "Dual Mono"
+#~ msgstr "Dual Mono"
+
+# File: biglinux-noise-reduction-
+# pipewire/src/biglinux_microphone/ui/main_view.py, line: 443
+#~ msgid "Choose how your voice sounds to others."
+#~ msgstr "Vyberte, jak váš hlas zní pro ostatní."
+
+# File: biglinux-noise-reduction-
+# pipewire/src/biglinux_microphone/ui/main_view.py, line: 452
+# File: biglinux-noise-reduction-
+# pipewire/src/biglinux_microphone/ui/main_view.py, line: 1156
+#~ msgid "Stereo Expansion"
+#~ msgstr "Stereo rozšíření"
+
+# File: biglinux-noise-reduction-
+# pipewire/src/biglinux_microphone/ui/main_view.py, line: 453
+#~ msgid "Soundstage width. Higher = more immersive."
+#~ msgstr "Šířka zvukového pole. Vyšší = více pohlcující."
+
+# File: biglinux-noise-reduction-
+# pipewire/src/biglinux_microphone/ui/main_view.py, line: 461
+# File: biglinux-noise-reduction-
+# pipewire/src/biglinux_microphone/ui/main_view.py, line: 1158
+#~ msgid "Focus"
+#~ msgstr "Zaměřit se"
+
+# File: biglinux-noise-reduction-
+# pipewire/src/biglinux_microphone/ui/main_view.py, line: 462
+# File: biglinux-noise-reduction-
+# pipewire/src/biglinux_microphone/ui/main_view.py, line: 1159
+#~ msgid "Wide"
+#~ msgstr "Široký"
+
+# File: biglinux-noise-reduction-
+# pipewire/src/biglinux_microphone/ui/main_view.py, line: 478
+#~ msgid "Fine-tuning of bass, mids, and treble."
+#~ msgstr "Dolní, střední a vysoké frekvence."
+
+# File: biglinux-noise-reduction-
+# pipewire/src/biglinux_microphone/ui/main_view.py, line: 490
+#~ msgid "Ready-made adjustments for different situations."
+#~ msgstr "Hotové úpravy pro různé situace."
+
+# File: biglinux-noise-reduction-
+# pipewire/src/biglinux_microphone/ui/main_view.py, line: 499
+#~ msgid "Bands"
+#~ msgstr "Kapely"
+
+# File: biglinux-noise-reduction-
+# pipewire/src/biglinux_microphone/ui/main_view.py, line: 500
+#~ msgid "Adjust each frequency"
+#~ msgstr "Upravte každou frekvenci"
+
+# File: biglinux-noise-reduction-
+# pipewire/src/biglinux_microphone/ui/main_view.py, line: 689
+#~ msgid "Reduces echo and feedback when using speakers"
+#~ msgstr "Snižuje ozvěnu a zpětnou vazbu při používání reproduktorů."
+
+# File: biglinux-noise-reduction-
+# pipewire/src/biglinux_microphone/ui/main_view.py, line: 700
+#~ msgid "Automatic Gain Control"
+#~ msgstr "Automatická regulace zisku"
+
+# File: biglinux-noise-reduction-
+# pipewire/src/biglinux_microphone/ui/main_view.py, line: 701
+#~ msgid "Normalizes volume automatically"
+#~ msgstr "Automaticky normalizuje hlasitost"
+
+# File: biglinux-noise-reduction-
+# pipewire/src/biglinux_microphone/ui/main_view.py, line: 708
+#~ msgid "Noise Suppression"
+#~ msgstr "Potlačení šumu"
+
+# File: biglinux-noise-reduction-
+# pipewire/src/biglinux_microphone/ui/main_view.py, line: 716
+#~ msgid "Voice Detection"
+#~ msgstr "Detekce hlasu"
+
+# File: biglinux-noise-reduction-
+# pipewire/src/biglinux_microphone/ui/main_view.py, line: 717
+#~ msgid "Applies processing only when speech is detected"
+#~ msgstr "Zpracovává pouze při detekci řeči"
+
+# File: biglinux-noise-reduction-
+# pipewire/src/biglinux_microphone/ui/main_view.py, line: 726
+#~ msgid "Automatic Volume Control"
+#~ msgstr "Automatická regulace hlasitosti"
+
+# File: biglinux-noise-reduction-
+# pipewire/src/biglinux_microphone/ui/main_view.py, line: 728
+#~ msgid "Keeps your microphone volume at a consistent level"
+#~ msgstr "Udržuje úroveň hlasitosti vašeho mikrofonu na konstantní úrovni."
+
+# File: biglinux-noise-reduction-
+# pipewire/src/biglinux_microphone/ui/main_view.py, line: 738
+#~ msgid "Signal Level"
+#~ msgstr "Úroveň signálu"
+
+# File: biglinux-noise-reduction-
+# pipewire/src/biglinux_microphone/ui/main_view.py, line: 747
+#~ msgid "Target signal peak the microphone should reach"
+#~ msgstr "Cílový signálový vrchol, kterého by měl mikrofon dosáhnout"
+
+# File: biglinux-noise-reduction-
+# pipewire/src/biglinux_microphone/ui/main_view.py, line: 762
+#~ msgid "AGC will not reduce volume below this level"
+#~ msgstr "AGC nebude snižovat hlasitost pod tuto úroveň."
+
+# File: biglinux-noise-reduction-
+# pipewire/src/biglinux_microphone/ui/main_view.py, line: 768
+#~ msgid "Maximum Volume"
+#~ msgstr "Maximální hlasitost"
+
+# File: biglinux-noise-reduction-
+# pipewire/src/biglinux_microphone/ui/main_view.py, line: 777
+#~ msgid "AGC will not raise volume above this level"
+#~ msgstr "AGC nezvýší hlasitost nad tuto úroveň."
+
+# File: biglinux-noise-reduction-
+# pipewire/src/biglinux_microphone/ui/main_view.py, line: 783
+#~ msgid "Reactivity"
+#~ msgstr "Reaktivita"
+
+# File: biglinux-noise-reduction-
+# pipewire/src/biglinux_microphone/ui/main_view.py, line: 792
+#~ msgid "How fast the volume adjusts — higher is faster"
+#~ msgstr "Jak rychle se upravuje hlasitost — čím vyšší, tím rychlejší"
+
+# File: biglinux-noise-reduction-
+# pipewire/src/biglinux_microphone/ui/main_view.py, line: 533
+#~ msgid "Bluetooth Headset Mode"
+#~ msgstr "Režim Bluetooth sluchátek"
+
+# File: biglinux-noise-reduction-
+# pipewire/src/biglinux_microphone/ui/main_view.py, line: 540
+#~ msgid "Automatically switch between headset listening and call modes."
+#~ msgstr "Automaticky přepínat mezi režimy poslechu sluchátek a hovoru."
+
+# File: biglinux-noise-reduction-
+# pipewire/src/biglinux_microphone/ui/main_view.py, line: 549
+#~ msgid "Monitor Feedback"
+#~ msgstr "Sledovat zpětnou vazbu"
+
+# File: biglinux-noise-reduction-
+# pipewire/src/biglinux_microphone/ui/main_view.py, line: 561
+#~ msgid "Monitor Delay"
+#~ msgstr "Zpoždění monitoru"
+
+# File: biglinux-noise-reduction-
+# pipewire/src/biglinux_microphone/ui/main_view.py, line: 562
+#~ msgid "Monitor feedback delay. Useful for checking sync."
+#~ msgstr "Zpoždění zpětné vazby monitoru. Užitečné pro kontrolu synchronizace."
+
+# File: biglinux-noise-reduction-
+# pipewire/src/biglinux_microphone/ui/main_view.py, line: 569
+#~ msgid "0s"
+#~ msgstr "0s"
+
+# File: biglinux-noise-reduction-
+# pipewire/src/biglinux_microphone/ui/main_view.py, line: 569
+#~ msgid "1s"
+#~ msgstr "1s"
+
+# File: biglinux-noise-reduction-
+# pipewire/src/biglinux_microphone/ui/main_view.py, line: 771
+#~ msgid "2s"
+#~ msgstr "2s"
+
+# File: biglinux-noise-reduction-
+# pipewire/src/biglinux_microphone/ui/main_view.py, line: 569
+#~ msgid "3s"
+#~ msgstr "3s"
+
+# File: biglinux-noise-reduction-
+# pipewire/src/biglinux_microphone/ui/main_view.py, line: 569
+#~ msgid "5s"
+#~ msgstr "5s"
+
+# File: biglinux-noise-reduction-
+# pipewire/src/biglinux_microphone/ui/main_view.py, line: 903
+# File: biglinux-noise-reduction-
+# pipewire/src/biglinux_microphone/ui/main_view.py, line: 1794
+#, python-brace-format
+#~ msgid "Target signal peak: {db:.0f} dBFS"
+#~ msgstr "Cílový signál vrcholu: {db:.0f} dBFS"
+
+# File: biglinux-noise-reduction-
+# pipewire/src/biglinux_microphone/ui/main_view.py, line: 907
+# File: biglinux-noise-reduction-
+# pipewire/src/biglinux_microphone/ui/main_view.py, line: 1810
+#, python-brace-format
+#~ msgid "AGC will not reduce volume below {v}%"
+#~ msgstr "AGC nebude snižovat hlasitost pod {v}%."
+
+# File: biglinux-noise-reduction-
+# pipewire/src/biglinux_microphone/ui/main_view.py, line: 913
+# File: biglinux-noise-reduction-
+# pipewire/src/biglinux_microphone/ui/main_view.py, line: 1825
+#, python-brace-format
+#~ msgid "AGC will not raise volume above {v}%"
+#~ msgstr "AGC nezvýší hlasitost nad {v}%."
+
+# File: biglinux-noise-reduction-
+# pipewire/src/biglinux_microphone/ui/main_view.py, line: 785
+# File: biglinux-noise-reduction-
+# pipewire/src/biglinux_microphone/ui/main_view.py, line: 1321
+#, python-brace-format
+#~ msgid "Silence threshold: {percent}%"
+#~ msgstr "Prahová hodnota ticha: {percent}%"
+
+# File: biglinux-noise-reduction-
+# pipewire/src/biglinux_microphone/ui/main_view.py, line: 804
+# File: biglinux-noise-reduction-
+# pipewire/src/biglinux_microphone/ui/main_view.py, line: 1269
+#, python-brace-format
+#~ msgid "Volume correction: {percent}%"
+#~ msgstr "Oprava hlasitosti: {percent}%"
+
+# File: biglinux-noise-reduction-
+# pipewire/src/biglinux_microphone/ui/main_view.py, line: 813
+# File: biglinux-noise-reduction-
+# pipewire/src/biglinux_microphone/ui/main_view.py, line: 1290
+#, python-brace-format
+#~ msgid "Cutoff: {hz} Hz"
+#~ msgstr "Omezení: {hz} Hz"
+
+# File: biglinux-noise-reduction-
+# pipewire/src/biglinux_microphone/ui/main_view.py, line: 722
+# File: biglinux-noise-reduction-
+# pipewire/src/biglinux_microphone/ui/main_view.py, line: 1038
+#, python-brace-format
+#~ msgid "Removal aggressiveness. ({percent}%)"
+#~ msgstr "Agresivita odstranění. ({percent}%)"
+
+# File: biglinux-noise-reduction-
+# pipewire/src/biglinux_microphone/ui/main_view.py, line: 701
+# File: biglinux-noise-reduction-
+# pipewire/src/biglinux_microphone/ui/main_view.py, line: 1408
+#, python-brace-format
+#~ msgid "Monitor feedback delay. Useful for checking sync. ({delay} ms)"
+#~ msgstr ""
+#~ "Sledování zpoždění zpětné vazby. Užitečné pro kontrolu synchronizace. "
+#~ "({delay} ms)"
+
+# File: biglinux-noise-reduction-
+# pipewire/src/biglinux_microphone/ui/main_view.py, line: 930
+#~ msgid "Noise reduction disabled"
+#~ msgstr "Potlačení šumu je zakázáno."
+
+# File: biglinux-noise-reduction-
+# pipewire/src/biglinux_microphone/ui/main_view.py, line: 1249
+#~ msgid "Failed to apply settings. Please try again."
+#~ msgstr "Nepodařilo se použít nastavení. Zkuste to prosím znovu."
+
+# File: biglinux-noise-reduction-
+# pipewire/src/biglinux_microphone/ui/main_view.py, line: 1051
+#, python-brace-format
+#~ msgid "Filter intensity during speech ({percent}%)"
+#~ msgstr "Intenzita filtru během řeči ({percent}%)"
+
+# File: biglinux-noise-reduction-
+# pipewire/src/biglinux_microphone/ui/main_view.py, line: 1062
+#, python-brace-format
+#~ msgid "Pre-buffer: {ms} ms"
+#~ msgstr "Předvyrovnání: {ms} ms"
+
+# File: biglinux-noise-reduction-
+# pipewire/src/biglinux_microphone/ui/main_view.py, line: 1207
+#, python-brace-format
+#~ msgid "Voice recovery: {percent}%"
+#~ msgstr "Obnovení hlasu: {percent}%"
+
+# File: biglinux-noise-reduction-
+# pipewire/src/biglinux_microphone/ui/main_view.py, line: 1145
+#~ msgid "Voice Tonality (Pitch)"
+#~ msgstr "Hlasová tonalita (výška)"
+
+# File: biglinux-noise-reduction-
+# pipewire/src/biglinux_microphone/ui/main_view.py, line: 1148
+#~ msgid "Normal"
+#~ msgstr "Normální"
+
+# File: biglinux-noise-reduction-
+# pipewire/src/biglinux_microphone/ui/main_view.py, line: 1149
+#~ msgid "Sharp"
+#~ msgstr "Ostrý"
+
+# File: biglinux-noise-reduction-
+# pipewire/src/biglinux_microphone/ui/main_view.py, line: 1152
+#, python-brace-format
+#~ msgid "Adjust voice pitch. 0%=Deep, 50%=Normal, 100%=Sharp. ({percent}%)"
+#~ msgstr ""
+#~ "Upravte výšku hlasu. 0%=Hluboký, 50%=Normální, 100%=Ostrý. ({percent}%)"
+
+# File: biglinux-noise-reduction-
+# pipewire/src/biglinux_microphone/ui/main_view.py, line: 1161
+# File: biglinux-noise-reduction-
+# pipewire/src/biglinux_microphone/ui/main_view.py, line: 1213
+#, python-brace-format
+#~ msgid "Soundstage width. Higher = more immersive. ({percent}%)"
+#~ msgstr "Šířka zvukového pole. Vyšší = více pohlcující. ({percent}%)"
+
+# File: biglinux-noise-reduction-
+# pipewire/src/biglinux_microphone/ui/main_view.py, line: 1345
+#~ msgid "Settings successfully restored"
+#~ msgstr "Nastavení byla úspěšně obnovena."
+
+# File: biglinux-noise-reduction-
+# pipewire/src/biglinux_microphone/ui/main_view.py, line: 1361
+#~ msgid "All settings have been restored!"
+#~ msgstr "Všechna nastavení byla obnovena!"
+
+# File: biglinux-noise-reduction-
+# pipewire/src/biglinux_microphone/utils/tooltip_helper.py, line: 41
+#~ msgid ""
+#~ "Reduces unwanted background noise from your microphone\n"
+#~ "using the GTCRN neural network.\n"
+#~ "\n"
+#~ "Removes sounds like fans, air conditioning, keyboard typing,\n"
+#~ "and other ambient noise, keeping only your voice clear."
+#~ msgstr ""
+#~ "Snižuje nežádoucí šum na pozadí z vašeho mikrofonu.\n"
+#~ "\n"
+#~ "Odstraňuje zvuky jako jsou ventilátory, klimatizace, psaní na klávesnici a další okolní šum, přičemž zachovává pouze váš hlas jasný."
+
+# File: biglinux-noise-reduction-
+# pipewire/src/biglinux_microphone/utils/tooltip_helper.py, line: 47
+#~ msgid ""
+#~ "Choose how noise is cleaned:\n"
+#~ "\n"
+#~ "• Maximum Cleaning (DNS3): Removes the most noise possible.\n"
+#~ "  Best for noisy environments. May slightly change the voice.\n"
+#~ "• Natural Voice (VCTK): Gentler cleaning that keeps the voice\n"
+#~ "  more natural. Ideal for quiet environments.\n"
+#~ "• Smart (both combined): Uses DNS3 during\n"
+#~ "  silence and VCTK while you speak.\n"
+#~ "  Best result, but uses more processing power."
+#~ msgstr ""
+#~ "Vyberte, jak se šum odstraňuje:\n"
+#~ "\n"
+#~ "• Maximální čištění (DNS3): Odstraní co nejvíce šumu. Nejlepší pro hlučné prostředí. Může mírně změnit hlas.\n"
+#~ "• Přirozený hlas (VCTK): Měkčí čištění, které udržuje hlas přirozenější. Ideální pro tichá prostředí.\n"
+#~ "• Inteligentní (obojí kombinováno): Používá DNS3 během ticha a VCTK, když mluvíte. Nejlepší výsledek, ale vyžaduje více výpočetního výkonu."
+
+# File: biglinux-noise-reduction-
+# pipewire/src/biglinux_microphone/utils/tooltip_helper.py, line: 58
+#~ msgid ""
+#~ "How much noise to remove.\n"
+#~ "\n"
+#~ "• 1: Removes only the most obvious noises\n"
+#~ "• 3: Good for most situations\n"
+#~ "• 5: Removes as much noise as possible\n"
+#~ "\n"
+#~ "If the voice sounds distorted, reduce this slider."
+#~ msgstr ""
+#~ "Kolik šumu odstranit.\n"
+#~ "\n"
+#~ "• 1: Odstraní pouze nejzřejmější šumy\n"
+#~ "• 3: Dobré pro většinu situací\n"
+#~ "• 5: Odstraní co nejvíce šumu\n"
+#~ "\n"
+#~ "Pokud hlas zní zkresleně, snižte tento posuvník."
+
+# File: biglinux-noise-reduction-
+# pipewire/src/biglinux_microphone/utils/tooltip_helper.py, line: 65
+#~ msgid ""
+#~ "Whether to keep filtering active while you are speaking.\n"
+#~ "\n"
+#~ "• Off: Filter pauses during speech — voice sounds\n"
+#~ "  completely natural, but noise may leak through\n"
+#~ "• 3: Applies partial filtering during speech\n"
+#~ "• 5: Full filtering at all times, cleanest result\n"
+#~ "\n"
+#~ "Default: 5. Reduce if your voice sounds thin or robotic."
+#~ msgstr ""
+#~ "Zda udržet filtraci aktivní, zatímco mluvíte.\n"
+#~ "\n"
+#~ "• Vypnuto: Filtrace se během řeči pozastaví — hlas zní\n"
+#~ "  zcela přirozeně, ale může pronikat šum\n"
+#~ "• 3: Aplikuje částečnou filtraci během řeči\n"
+#~ "• 5: Plná filtrace za všech okolností, nejčistší výsledek\n"
+#~ "\n"
+#~ "Výchozí: 5. Snižte, pokud váš hlas zní tence nebo roboticky."
+
+# File: biglinux-noise-reduction-
+# pipewire/src/biglinux_microphone/utils/tooltip_helper.py, line: 73
+#~ msgid ""
+#~ "Prevents the beginning of words from being cut off.\n"
+#~ "\n"
+#~ "Keeps a small audio buffer so the filter can react\n"
+#~ "before you start speaking.\n"
+#~ "• Off: No delay, but may clip the first syllable\n"
+#~ "• 50ms: Recommended for most people\n"
+#~ "• 200ms: Safest for fast speakers\n"
+#~ "\n"
+#~ "Higher values add a small delay to the audio."
+#~ msgstr ""
+#~ "Zabraňuje ořezávání začátků slov.\n"
+#~ "\n"
+#~ "Udržuje malý audio buffer, aby filtr mohl reagovat\n"
+#~ "předtím, než začnete mluvit.\n"
+#~ "• Vypnuto: Žádné zpoždění, ale může oříznout první slabiku\n"
+#~ "• 50 ms: Doporučeno pro většinu lidí\n"
+#~ "• 200 ms: Nejbezpečnější pro rychlé mluvčí\n"
+#~ "\n"
+#~ "Vyšší hodnoty přidávají malé zpoždění k audiu."
+
+# File: biglinux-noise-reduction-
+# pipewire/src/biglinux_microphone/utils/tooltip_helper.py, line: 82
+#~ msgid ""
+#~ "Restores high-frequency detail lost during filtering.\n"
+#~ "\n"
+#~ "Noise removal can make voices sound muffled or thin.\n"
+#~ "This control reconstructs the treble frequencies\n"
+#~ "to bring back clarity and presence.\n"
+#~ "\n"
+#~ "• Off: No HF reconstruction\n"
+#~ "• 3: Good balance for most voices\n"
+#~ "• 5: Maximum clarity restoration\n"
+#~ "\n"
+#~ "Recommended: keep between 3 and 5."
+#~ msgstr ""
+#~ "Obnovuje vysokofrekvenční detaily ztracené během filtrování.\n"
+#~ "\n"
+#~ "Odstranění šumu může způsobit, že hlasy zní tlumeně nebo tence.\n"
+#~ "Tento ovladač rekonstrukčně obnovuje výškové frekvence\n"
+#~ "a přináší zpět jasnost a přítomnost.\n"
+#~ "\n"
+#~ "• Vypnuto: Žádná rekonstrukce HF\n"
+#~ "• 3: Dobrá rovnováha pro většinu hlasů\n"
+#~ "• 5: Maximální obnova jasnosti\n"
+#~ "\n"
+#~ "Doporučeno: udržujte mezi 3 a 5."
+
+# File: biglinux-noise-reduction-
+# pipewire/src/biglinux_microphone/utils/tooltip_helper.py, line: 91
+#~ msgid ""
+#~ "Evens out the volume of your voice.\n"
+#~ "\n"
+#~ "If you speak too loud, it lowers the volume.\n"
+#~ "If you speak too softly, it raises the volume.\n"
+#~ "\n"
+#~ "Ideal for meetings, streams, and recordings\n"
+#~ "where consistent volume matters."
+#~ msgstr ""
+#~ "Vyrovnává hlasitost vašeho hlasu.\n"
+#~ "\n"
+#~ "Pokud mluvíte příliš nahlas, sníží hlasitost.\n"
+#~ "Pokud mluvíte příliš tiše, zvýší hlasitost.\n"
+#~ "\n"
+#~ "Ideální pro schůzky, streamy a nahrávky,\n"
+#~ "kde je důležitá konzistentní hlasitost."
+
+# File: biglinux-noise-reduction-
+# pipewire/src/biglinux_microphone/utils/tooltip_helper.py, line: 109
+#~ msgid ""
+#~ "How much volume correction to apply.\n"
+#~ "\n"
+#~ "• 1: Gentle correction, very natural sound\n"
+#~ "• 3: Good for most people\n"
+#~ "• 5: Strong leveling — whisper and shout\n"
+#~ "  come out at similar volume\n"
+#~ "\n"
+#~ "Start with 3 and adjust to taste."
+#~ msgstr ""
+#~ "Kolik korekce hlasitosti aplikovat.\n"
+#~ "\n"
+#~ "• 1: Jemná korekce, velmi přirozený zvuk\n"
+#~ "• 3: Dobré pro většinu lidí\n"
+#~ "• 5: Silné vyrovnání — šepoty a výkřiky\n"
+#~ "  vycházejí při podobné hlasitosti\n"
+#~ "\n"
+#~ "Začněte s 3 a upravte podle chuti."
+
+# File: biglinux-noise-reduction-
+# pipewire/src/biglinux_microphone/utils/tooltip_helper.py, line: 107
+#~ msgid ""
+#~ "Silence filter that mutes the mic when you're not speaking.\n"
+#~ "\n"
+#~ "Works after noise reduction. Eliminates any residual\n"
+#~ "sound that the filter didn't fully remove.\n"
+#~ "\n"
+#~ "When you stop talking, there is complete silence."
+#~ msgstr ""
+#~ "Filtr hluku, který ztlumí mikrofon, když nemluvíte.\n"
+#~ "\n"
+#~ "Funguje po redukci šumu. Odstraní jakýkoli zbytkový\n"
+#~ "zvuk, který filtr úplně neodstranil.\n"
+#~ "\n"
+#~ "Když přestanete mluvit, nastane úplné ticho."
+
+# File: biglinux-noise-reduction-
+# pipewire/src/biglinux_microphone/utils/tooltip_helper.py, line: 124
+#~ msgid ""
+#~ "Controls how aggressively the gate removes residual noise.\n"
+#~ "\n"
+#~ "• 1: Only mutes during long silences\n"
+#~ "• 3: Good for most voices\n"
+#~ "• 5: Complete silence between words\n"
+#~ "\n"
+#~ "Start at 3 and adjust to taste."
+#~ msgstr ""
+#~ "Ovládá, jak agresivně brána odstraňuje zbytkový šum.\n"
+#~ "\n"
+#~ "• 1: Ztlumí pouze během dlouhých tich\n"
+#~ "• 3: Dobré pro většinu hlasů\n"
+#~ "• 5: Úplné ticho mezi slovy\n"
+#~ "\n"
+#~ "Začněte na 3 a upravte podle chuti."
+
+# File: biglinux-noise-reduction-
+# pipewire/src/biglinux_microphone/utils/tooltip_helper.py, line: 121
+#~ msgid ""
+#~ "Voice effects and stereo processing.\n"
+#~ "\n"
+#~ "Converts your mono microphone to stereo or applies\n"
+#~ "professional effects for streaming and podcasting."
+#~ msgstr ""
+#~ "Hlasové efekty a stereo zpracování.\n"
+#~ "\n"
+#~ "Převádí váš mono mikrofon na stereo nebo aplikuje\n"
+#~ "profesionální efekty pro streamování a podcasting."
+
+# File: biglinux-noise-reduction-
+# pipewire/src/biglinux_microphone/utils/tooltip_helper.py, line: 137
+#~ msgid ""
+#~ "Choose the voice effect:\n"
+#~ "\n"
+#~ "• Dual Mono: Duplicates signal to both channels (stereo)\n"
+#~ "• Voice Changer: Changes voice pitch (deeper or higher)"
+#~ msgstr ""
+#~ "Vyberte efekt hlasu:\n"
+#~ "\n"
+#~ "• Dvojité mono: Duplikuje signál do obou kanálů (stereo)\n"
+#~ "• Změna hlasu: Mění výšku hlasu (hlubší nebo vyšší)"
+
+# File: biglinux-noise-reduction-
+# pipewire/src/biglinux_microphone/utils/tooltip_helper.py, line: 142
+#~ msgid ""
+#~ "Intensity of the selected effect.\n"
+#~ "\n"
+#~ "• Voice Changer: Pitch (low to high)"
+#~ msgstr ""
+#~ "Intenzita vybraného efektu.\n"
+#~ "\n"
+#~ "• Změna hlasu: Výška (nízká až vysoká)"
+
+# File: biglinux-noise-reduction-
+# pipewire/src/biglinux_microphone/utils/tooltip_helper.py, line: 147
+#~ msgid ""
+#~ "High-pass filter that removes low frequencies.\n"
+#~ "\n"
+#~ "Cuts rumble, hum, and other low-frequency noise\n"
+#~ "below the chosen frequency. Keeps your voice clear\n"
+#~ "without affecting speech quality."
+#~ msgstr ""
+#~ "Vysokopropustný filtr, který odstraňuje nízké frekvence.\n"
+#~ "\n"
+#~ "Odstraňuje šum, brum a další nízkofrekvenční hluk\n"
+#~ "pod zvolenou frekvencí. Udržuje váš hlas jasný\n"
+#~ "bez ovlivnění kvality řeči."
+
+# File: biglinux-noise-reduction-
+# pipewire/src/biglinux_microphone/utils/tooltip_helper.py, line: 153
+#~ msgid ""
+#~ "Cut-off frequency for the high-pass filter.\n"
+#~ "\n"
+#~ "Frequencies below this value are removed.\n"
+#~ "• 80 Hz: Removes deep rumble only\n"
+#~ "• 120 Hz: Good for most voices\n"
+#~ "• 200 Hz: Aggressive cut, may thin the voice\n"
+#~ "\n"
+#~ "Default: 80 Hz."
+#~ msgstr ""
+#~ "Frekvence pro vysokopropustný filtr.\n"
+#~ "\n"
+#~ "Frekvence pod touto hodnotou jsou odstraněny.\n"
+#~ "• 80 Hz: Odstraní hluboké dunění\n"
+#~ "• 120 Hz: Dobré pro většinu hlasů\n"
+#~ "• 200 Hz: Agresivní řez, může ztenčit hlas\n"
+#~ "\n"
+#~ "Výchozí: 80 Hz."
+
+# File: biglinux-noise-reduction-
+# pipewire/src/biglinux_microphone/utils/tooltip_helper.py, line: 138
+#~ msgid ""
+#~ "Equalizer to adjust the tone of your voice.\n"
+#~ "\n"
+#~ "Increase or decrease specific frequencies\n"
+#~ "to make speech clearer or warmer."
+#~ msgstr ""
+#~ "Ekvalizér pro úpravu tónu vašeho hlasu.\n"
+#~ "\n"
+#~ "Zvyšte nebo snižte specifické frekvence\n"
+#~ "pro zřetelnější nebo teplejší projev."
+
+# File: biglinux-noise-reduction-
+# pipewire/src/biglinux_microphone/utils/tooltip_helper.py, line: 115
+#~ msgid ""
+#~ "Quick presets for common use cases:\n"
+#~ "\n"
+#~ "• Flat: No changes\n"
+#~ "• Voice Boost: Enhance vocal clarity\n"
+#~ "• Podcast: Professional broadcast sound\n"
+#~ "• Warm: Rich, full tone\n"
+#~ "• Bright: Clear, crisp sound"
+#~ msgstr ""
+#~ "Rychlé předvolby pro běžné případy použití:\n"
+#~ "\n"
+#~ "• Ploché: Žádné změny\n"
+#~ "• Zvýšení hlasu: Zlepšení jasnosti hlasu\n"
+#~ "• Podcast: Profesionální vysílací zvuk\n"
+#~ "• Teplé: Bohatý, plný tón\n"
+#~ "• Jasné: Čistý, ostrý zvuk"
+
+# File: biglinux-noise-reduction-
+# pipewire/src/biglinux_microphone/utils/tooltip_helper.py, line: 123
+#~ msgid ""
+#~ "Adjust individual frequency bands:\n"
+#~ "\n"
+#~ "• Left bands (31-250 Hz): Bass and low frequencies\n"
+#~ "• Middle bands (500-2000 Hz): Voice fundamentals\n"
+#~ "• Right bands (4000-16000 Hz): Brightness and clarity\n"
+#~ "\n"
+#~ "Drag sliders up to boost, down to cut."
+#~ msgstr ""
+#~ "Upravte jednotlivé frekvenční pásma:\n"
+#~ "\n"
+#~ "• Levá pásma (31-250 Hz): Basové a nízké frekvence\n"
+#~ "• Střední pásma (500-2000 Hz): Základní tóny hlasu\n"
+#~ "• Pravá pásma (4000-16000 Hz): Jasnost a čistota\n"
+#~ "\n"
+#~ "Táhněte posuvníky nahoru pro zvýšení, dolů pro snížení."
+
+# File: biglinux-noise-reduction-
+# pipewire/src/biglinux_microphone/utils/tooltip_helper.py, line: 136
+#~ msgid ""
+#~ "Activate audio loopback (Monitor).\n"
+#~ "\n"
+#~ "Allows hearing your own processed voice to test adjustments.\n"
+#~ "Note: There will always be a small delay (latency) in the return."
+#~ msgstr ""
+#~ "Aktivovat smyčku zvuku (Monitor).\n"
+#~ "\n"
+#~ "Umožňuje slyšet svůj vlastní zpracovaný hlas pro testování úprav.\n"
+#~ "Poznámka: Vždy bude existovat malé zpoždění (latence) při návratu."
+
+# File: biglinux-noise-reduction-
+# pipewire/src/biglinux_microphone/utils/tooltip_helper.py, line: 141
+#~ msgid ""
+#~ "Add an extra delay to the monitor return.\n"
+#~ "\n"
+#~ "Useful for checking audio/video sync in recordings or to avoid mental confusion when speaking and hearing yourself immediately."
+#~ msgstr ""
+#~ "Přidejte další zpoždění při návratu monitoru.\n"
+#~ "\n"
+#~ "Užitečné pro kontrolu synchronizace zvuku a videa v nahrávkách nebo pro vyhnutí se mentálnímu zmatení, když mluvíte a slyšíte se okamžitě."
+
+# File: biglinux-noise-reduction-
+# pipewire/src/biglinux_microphone/utils/tooltip_helper.py, line: 147
+#~ msgid ""
+#~ "Automatically switches your headset between listening mode and call mode "
+#~ "when you use the microphone. Note: Using the headset microphone generally "
+#~ "reduces both headphone and microphone quality."
+#~ msgstr ""
+#~ "Automaticky přepíná vaši sluchátka mezi režimem poslechu a režimem hovoru, "
+#~ "když používáte mikrofon. Poznámka: Používání mikrofonu sluchátek obvykle "
+#~ "snižuje kvalitu jak sluchátek, tak mikrofonu."
+
+# File: biglinux-noise-reduction-
+# pipewire/src/biglinux_microphone/utils/tooltip_helper.py, line: 199
+#~ msgid ""
+#~ "Enables acoustic echo cancellation using WebRTC AEC.\n"
+#~ "\n"
+#~ "Reduces echo and feedback when using speakers instead of headphones. Captures the speaker output and removes it from the microphone signal."
+#~ msgstr ""
+#~ "Povoluje zrušení akustické ozvěny pomocí WebRTC AEC.\n"
+#~ "\n"
+#~ "Snižuje ozvěnu a zpětnou vazbu při používání reproduktorů místo sluchátek. Zachycuje výstup reproduktoru a odstraňuje ho ze signálu mikrofonu."
+
+# File: biglinux-noise-reduction-
+# pipewire/src/biglinux_microphone/utils/tooltip_helper.py, line: 204
+#~ msgid ""
+#~ "Automatic gain control for the echo canceller.\n"
+#~ "\n"
+#~ "Adjusts the microphone volume automatically to keep\n"
+#~ "the signal level consistent. Disable if your voice\n"
+#~ "sounds unnaturally amplified or compressed."
+#~ msgstr ""
+#~ "Automatická regulace zisku pro zrušení ozvěny.\n"
+#~ "\n"
+#~ "Automaticky upravuje hlasitost mikrofonu, aby udržela\n"
+#~ "úroveň signálu konzistentní. Zakázat, pokud váš hlas\n"
+#~ "zní nepřirozeně zesíleně nebo komprimovaně."
+
+# File: biglinux-noise-reduction-
+# pipewire/src/biglinux_microphone/utils/tooltip_helper.py, line: 210
+#~ msgid ""
+#~ "Additional noise suppression inside the echo canceller.\n"
+#~ "\n"
+#~ "Provides extra noise removal on top of the main GTCRN filter.\n"
+#~ "May reduce audio quality — only enable in very noisy environments."
+#~ msgstr ""
+#~ "Další potlačení šumu uvnitř zrušovače ozvěny.\n"
+#~ "\n"
+#~ "Poskytuje dodatečné odstranění šumu nad hlavním filtrem GTCRN.\n"
+#~ "Může snížit kvalitu zvuku — povolte pouze v velmi hlučných prostředích."
+
+# File: biglinux-noise-reduction-
+# pipewire/src/biglinux_microphone/utils/tooltip_helper.py, line: 215
+#~ msgid ""
+#~ "Voice activity detection for the echo canceller.\n"
+#~ "\n"
+#~ "Helps the AEC distinguish speech from noise.\n"
+#~ "Can improve echo removal accuracy but may interfere\n"
+#~ "with the main noise reduction. Disabled by default."
+#~ msgstr ""
+#~ "Detekce hlasové aktivity pro zrušení ozvěny.\n"
+#~ "\n"
+#~ "Pomáhá AEC rozlišovat řeč od šumu.\n"
+#~ "Může zlepšit přesnost odstranění ozvěny, ale může zasahovat\n"
+#~ "do hlavního potlačení šumu. Ve výchozím nastavení je zakázáno."
+
+# File: biglinux-noise-reduction-
+# pipewire/src/biglinux_microphone/utils/tooltip_helper.py, line: 213
+#~ msgid ""
+#~ "Automatic Volume Control.\n"
+#~ "\n"
+#~ "Uses a compressor in the PipeWire filter chain to\n"
+#~ "automatically normalize your microphone level.\n"
+#~ "Keeps your voice at a consistent volume regardless\n"
+#~ "of how close or far you are from the microphone."
+#~ msgstr ""
+#~ "Automatická regulace hlasitosti.\n"
+#~ "\n"
+#~ "Používá kompresor v řetězci filtrů PipeWire k\n"
+#~ "automatickému normalizování úrovně vašeho mikrofonu.\n"
+#~ "Udržuje váš hlas na konzistentní hlasitosti bez ohledu\n"
+#~ "na to, jak blízko nebo daleko jste od mikrofonu."
+
+# File: biglinux-noise-reduction-
+# pipewire/src/biglinux_microphone/utils/tooltip_helper.py, line: 220
+#~ msgid ""
+#~ "Target signal level for the microphone.\n"
+#~ "\n"
+#~ "Controls the output level of the automatic\n"
+#~ "volume normalizer.\n"
+#~ "100% = close to 0 dBFS (loudest).\n"
+#~ "70% ≈ −7 dBFS (comfortable). Default: 70%."
+#~ msgstr ""
+#~ "Cílová úroveň signálu pro mikrofon.\n"
+#~ "\n"
+#~ "Ovládá výstupní úroveň automatického\n"
+#~ "normalizátoru hlasitosti.\n"
+#~ "100 % = blízko 0 dBFS (nejhlasitější).\n"
+#~ "70 % ≈ −7 dBFS (pohodlné). Výchozí: 70 %."
+
+# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/config.py,
+# line: 712
+#~ msgid "Subtle presence boost for clear speech."
+#~ msgstr "Subtilní zvýšení přítomnosti pro jasnou řeč."
+
+# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/config.py,
+# line: 567
+#~ msgid "Natural (No Effects)"
+#~ msgstr "Přirozený (Žádné efekty)"
+
+# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/config.py,
+# line: 568
+#~ msgid "Original sound without changes."
+#~ msgstr "Originální zvuk bez změn."
+
+# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/config.py,
+# line: 572
+#~ msgid "Crystal Voice"
+#~ msgstr "Křišťálový hlas"
+
+# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/config.py,
+# line: 573
+#~ msgid "Focuses on clarity and intelligibility."
+#~ msgstr "Zaměřuje se na jasnost a srozumitelnost."
+
+# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/config.py,
+# line: 577
+#~ msgid "Radio Host"
+#~ msgstr "Rádio moderátor"
+
+# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/config.py,
+# line: 578
+#~ msgid "Full and deep voice (Broadcast)."
+#~ msgstr "Hlas plný a hluboký (Vysílání)."
+
+# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/config.py,
+# line: 582
+#~ msgid "Velvet Voice"
+#~ msgstr "Sametový hlas"
+
+# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/config.py,
+# line: 583
+#~ msgid "Warm and pleasant tone."
+#~ msgstr "Teplý a příjemný tón."
+
+# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/config.py,
+# line: 587
+#~ msgid "Extra Brightness"
+#~ msgstr "Extra jasnost"
+
+# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/config.py,
+# line: 588
+#~ msgid "Enhance treble and details."
+#~ msgstr "Zvyšte výšky a detaily."
+
+# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/config.py,
+# line: 592
+#~ msgid "Soften 'S' (De-esser)"
+#~ msgstr "Zjemnit 'S' (De-esser)"
+
+# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/config.py,
+# line: 593
+#~ msgid "Reduces sibilance and annoying high-pitched sounds."
+#~ msgstr "Snižuje syčení a nepříjemné vysokofrekvenční zvuky."
+
+# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/config.py,
+# line: 597
+#~ msgid "Remove Rumble"
+#~ msgstr "Odstranit Rumble"
+
+# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/config.py,
+# line: 598
+#~ msgid "Eliminates low-frequency noise (trucks, bumps)."
+#~ msgstr "Odstraňuje nízkofrekvenční šum (nákladní vozy, nerovnosti)."
+
+# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/config.py,
+# line: 603
+#~ msgid "Brings the voice to the 'front' of the mix."
+#~ msgstr "Přináší hlas na 'přední' část mixu."
+
+# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/config.py,
+# line: 608
+#~ msgid "Manual adjustment."
+#~ msgstr "Manuální úprava."
+
+# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/window.py,
+# line: 173
+#~ msgid "This will return all adjustments to their original defaults."
+#~ msgstr "Tímto se vrátí všechny úpravy na jejich původní výchozí hodnoty."
+
+# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/window.py,
+# line: 176
+#~ msgid "Restore"
+#~ msgstr "Obnovit"
+
+# File: biglinux-noise-reduction-
+# pipewire/usr/share/bigbashview/apps/microphone/noise_reducer.py, line: 276
+#~ msgid "About"
+#~ msgstr "O aplikaci"
+
+# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/window.py,
+# line: 196
+#~ msgid "Quit"
+#~ msgstr "Ukončit"
+
+# File: biglinux-noise-reduction-
+# pipewire/src/biglinux_microphone/application.py, line: 217
+#~ msgid "Legal"
+#~ msgstr "Právní"
+
+# File: biglinux-noise-reduction-
+# pipewire/src/biglinux_microphone/application.py, line: 220
+#~ msgid ""
+#~ "The GPL-3.0 license applies to this configuration interface. The projects "
+#~ "used to apply the filters have their own licenses."
+#~ msgstr ""
+#~ "Licence GPL-3.0 se vztahuje na toto konfigurační rozhraní. Projekty použité "
+#~ "k aplikaci filtrů mají své vlastní licence."
+
+# File: biglinux-noise-reduction-
+# pipewire/src/biglinux_microphone/application.py, line: 227
+#~ msgid "Technologies used"
+#~ msgstr "Použité technologie"
+
+# File: biglinux-noise-reduction-
+# pipewire/src/biglinux_microphone/application.py, line: 251
+#~ msgid "Use expanders to access settings"
+#~ msgstr "Použijte expandéry pro přístup k nastavením"
+
+#~ msgid "Open settings…"
+#~ msgstr "Otevřít nastavení…"
+
+#~ msgid "Filter noise"
+#~ msgstr "Filtrovat šum"
+
+#~ msgid "Microphone filter"
+#~ msgstr "Filtr mikrofonu"
+
+#~ msgid "Cleans your voice for calls and recordings"
+#~ msgstr "Vyčistí váš hlas pro hovory a nahrávky"
+
+#~ msgid "System sound filter"
+#~ msgstr "Filtr systémového zvuku"
+
+#~ msgid "Cleans every sound the system plays before it reaches your speakers"
+#~ msgstr "Vyčistí každý zvuk systému, než dorazí do reproduktorů"
+
+#~ msgid "About Filter noise"
+#~ msgstr "O aplikaci Filtrovat šum"
+
+#~ msgid "Built on"
+#~ msgstr "Postaveno na"
+
+#~ msgid ""
+#~ "Real-time noise filter for microphone capture and system audio playback. "
+#~ "Powered by the GTCRN neural network running as a LADSPA plugin on top of "
+#~ "PipeWire — every filter is driven by a WirePlumber smart-filter so the "
+#~ "default source and sink stay clean even after device changes."
+#~ msgstr ""
+#~ "Real-time noise filter for microphone capture and system audio playback. "
+#~ "Powered by the GTCRN neural network running as a LADSPA plugin on top of "
+#~ "PipeWire — every filter is driven by a WirePlumber smart-filter so the "
+#~ "default source and sink stay clean even after device changes."

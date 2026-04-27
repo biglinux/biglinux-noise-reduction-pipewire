@@ -1,0 +1,79 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- Copyright (C) 2026 BigLinux Team -->
+<component type="desktop-application">
+  <id>br.com.biglinux.microphone</id>
+  <launchable type="desktop-id">br.com.biglinux.microphone.desktop</launchable>
+
+  <name>BigLinux Microphone</name>
+  <summary>AI-powered microphone noise reduction for PipeWire</summary>
+
+  <metadata_license>CC0-1.0</metadata_license>
+  <project_license>GPL-3.0-or-later</project_license>
+
+  <developer id="com.biglinux">
+    <name>BigLinux Team</name>
+  </developer>
+
+  <description>
+    <p>
+      BigLinux Microphone inserts a PipeWire filter chain on the default
+      audio source, powered by the GTCRN deep-learning speech enhancement
+      plugin. The result is a clean, noise-free microphone signal for
+      every application — meetings, streams, voice notes — with no need
+      to pick a virtual source manually.
+    </p>
+    <p>Main features:</p>
+    <ul>
+      <li>GTCRN neural-network noise reduction with DNS3 and VCTK models.</li>
+      <li>Silence gate and broadcast-style compressor tuned for voice.</li>
+      <li>WebRTC acoustic echo cancellation (opt-in) for calls without headphones.</li>
+      <li>Output filter that cleans every sound the system plays
+          before it reaches your speakers — useful for noisy meeting
+          calls without changing the default audio device.</li>
+      <li>Live spectrum analyser driven by the PipeWire graph.</li>
+      <li>Zero manual routing — relies on WirePlumber 0.5 smart filters.</li>
+      <li>Plasma 6 system-tray applet for one-click toggling.</li>
+    </ul>
+  </description>
+
+  <categories>
+    <category>AudioVideo</category>
+    <category>Audio</category>
+    <category>Mixer</category>
+  </categories>
+
+  <keywords>
+    <keyword>microphone</keyword>
+    <keyword>noise reduction</keyword>
+    <keyword>pipewire</keyword>
+    <keyword>gtcrn</keyword>
+    <keyword>filter chain</keyword>
+  </keywords>
+
+  <url type="homepage">https://github.com/biglinux/biglinux-noise-reduction-pipewire</url>
+  <url type="bugtracker">https://github.com/biglinux/biglinux-noise-reduction-pipewire/issues</url>
+
+  <supports>
+    <control>pointing</control>
+    <control>keyboard</control>
+    <control>touch</control>
+  </supports>
+
+  <content_rating type="oars-1.1"/>
+
+  <releases>
+    <release version="5.0.0" date="2026-04-26">
+      <description>
+        <p>
+          Full Rust rewrite. Drops the legacy Python stack in favour of
+          WirePlumber smart-filter integration, a typed settings model,
+          conditional GTCRN/pitch/gate nodes (loaded only when the user
+          actually enables them), VAD-aware noise-reduction strength,
+          equalizer presets, voice changer with preset marks, real-time
+          spectrum analyser, opt-in WebRTC echo cancellation, and a
+          background service with proper systemd hardening.
+        </p>
+      </description>
+    </release>
+  </releases>
+</component>

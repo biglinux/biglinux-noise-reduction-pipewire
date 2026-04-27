@@ -1,0 +1,19 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 80">
+  <!-- Threshold line -->
+  <line x1="6" y1="48" x2="114" y2="48" stroke="#3584e4" stroke-width="0.8" stroke-dasharray="3,2"/>
+  <text x="114" y="46" font-family="sans-serif" font-size="4" fill="#3584e4" text-anchor="end">threshold</text>
+  <!-- Below-threshold quiet noise (gated, gray dotted) -->
+  <path d="M6,49 L10,50 L13,49 L16,51 L19,49 L22,50"
+        stroke="#999" stroke-width="0.8" fill="none" stroke-dasharray="1,1"/>
+  <!-- Speech burst above threshold -->
+  <path d="M28,48 Q34,20 40,48 Q46,28 52,48 Q58,32 64,48 Q70,30 76,48"
+        stroke="#3584e4" stroke-width="2" fill="none"/>
+  <!-- Trailing quiet (gated again) -->
+  <path d="M82,49 L86,50 L90,49 L94,51 L98,49 L102,50 L106,49 L110,51"
+        stroke="#999" stroke-width="0.8" fill="none" stroke-dasharray="1,1"/>
+  <!-- Labels -->
+  <text x="14" y="62" font-family="sans-serif" font-size="4.5" fill="#999" text-anchor="middle">muted</text>
+  <text x="52" y="14" font-family="sans-serif" font-size="4.5" fill="#3584e4" text-anchor="middle">passes</text>
+  <text x="96" y="62" font-family="sans-serif" font-size="4.5" fill="#999" text-anchor="middle">muted</text>
+  <text x="60" y="78" font-family="sans-serif" font-size="5.5" fill="#999" text-anchor="middle">Mutes quiet pauses, lets voice through</text>
+</svg>

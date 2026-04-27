@@ -1,0 +1,50 @@
+[Unit]
+Description=BigLinux Microphone — reconcile PipeWire filter chain with saved settings
+Documentation=https://github.com/biglinux/biglinux-noise-reduction-pipewire
+PartOf=pipewire.service
+After=pipewire.service wireplumber.service
+Wants=pipewire.service wireplumber.service
+
+[Service]
+Type=oneshot
+ExecStart=/usr/bin/biglinux-microphone-cli autostart
+RemainAfterExit=yes
+# Reconciliation is cheap; treat failures as "user removed the service"
+# rather than retrying in a loop. The GUI can always rerun `autostart`
+# or `apply` manually after fixing whatever was wrong.
+SuccessExitStatus=0
+TimeoutStartSec=15s
+StandardOutput=journal
+StandardError=journal
+
+# ── Hardening ────────────────────────────────────────────────────────
+# Read-only access to /usr and /etc; the tool only writes under
+# $HOME/.config so leaving ProtectHome unset is intentional.
+ProtectSystem=strict
+ProtectKernelTunables=true
+ProtectKernelModules=true
+ProtectKernelLogs=true
+ProtectClock=true
+ProtectControlGroups=true
+ProtectHostname=true
+ProtectProc=invisible
+PrivateTmp=true
+PrivateDevices=true
+NoNewPrivileges=true
+LockPersonality=true
+MemoryDenyWriteExecute=true
+RestrictNamespaces=true
+RestrictRealtime=true
+RestrictSUIDSGID=true
+RemoveIPC=true
+CapabilityBoundingSet=
+AmbientCapabilities=
+SystemCallArchitectures=native
+# PipeWire talks over a unix socket; we also need AF_NETLINK for some
+# pw-cli error paths that call getifaddrs internally.
+RestrictAddressFamilies=AF_UNIX AF_NETLINK
+SystemCallFilter=@system-service
+SystemCallErrorNumber=EPERM
+
+[Install]
+WantedBy=default.target

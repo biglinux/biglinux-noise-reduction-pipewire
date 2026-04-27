@@ -1,0 +1,13 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 80">
+  <!-- Microphone capsule -->
+  <rect x="52" y="14" width="16" height="30" rx="8" fill="#3584e4"/>
+  <rect x="48" y="36" width="24" height="2" fill="#1c5fb4"/>
+  <path d="M44,38 Q60,58 76,38" stroke="#3584e4" stroke-width="2" fill="none"/>
+  <line x1="60" y1="58" x2="60" y2="68" stroke="#3584e4" stroke-width="2"/>
+  <line x1="52" y1="68" x2="68" y2="68" stroke="#3584e4" stroke-width="2"/>
+  <!-- Sound waves -->
+  <path d="M30,30 Q22,40 30,50" stroke="#3584e4" stroke-width="1.5" fill="none" opacity="0.6"/>
+  <path d="M22,22 Q10,40 22,58" stroke="#3584e4" stroke-width="1.5" fill="none" opacity="0.4"/>
+  <path d="M90,30 Q98,40 90,50" stroke="#3584e4" stroke-width="1.5" fill="none" opacity="0.6"/>
+  <path d="M98,22 Q110,40 98,58" stroke="#3584e4" stroke-width="1.5" fill="none" opacity="0.4"/>
+</svg>

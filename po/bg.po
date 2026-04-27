@@ -1,0 +1,1501 @@
+# SOME DESCRIPTIVE TITLE.
+# Copyright (C) YEAR THE PACKAGE'S COPYRIGHT HOLDER
+# This file is distributed under the same license as the biglinux-noise-reduction-pipewire package.
+# FIRST AUTHOR <EMAIL@ADDRESS>, YEAR.
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: biglinux-noise-reduction-pipewire\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2026-04-26 16:03+0000\n"
+"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"Language-Team: LANGUAGE <LL@li.org>\n"
+"Language: \n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"X-Generator: attranslate\n"
+
+# File: biglinux-noise-reduction-
+# pipewire/src/biglinux_microphone/audio/filter_chain.py
+#: src/ui/window.rs:46 src/ui/window.rs:360
+msgid "BigLinux Microphone"
+msgstr "BigLinux Microphone"
+
+# #-#-#-#-#  biglinux-noise-reduction-pipewire.pot (biglinux-noise-reduction-
+# pipewire)  #-#-#-#-#
+# 
+# File: biglinux-noise-reduction-
+# pipewire/src/biglinux_microphone/ui/main_view.py, line: 88
+# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/config.py,
+# line: 27
+#: src/ui/window.rs:176 src/ui/widgets/source_picker.rs:65
+msgid "Microphone"
+msgstr "Микрофон"
+
+#: src/ui/window.rs:182
+msgid "Output filter"
+msgstr "Филтър за изход"
+
+#: src/ui/window.rs:231
+msgid "Advanced"
+msgstr "Разширени"
+
+#: src/ui/window.rs:234
+msgid "Show every control individually"
+msgstr "Покажи всеки контрол поотделно"
+
+# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/window.py,
+# line: 172
+#: src/ui/window.rs:253
+msgid "Restore default settings"
+msgstr "Възстановяване на фабричните настройки"
+
+#: src/ui/window.rs:256
+msgid "About BigLinux Microphone"
+msgstr "За BigLinux Microphone"
+
+# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/window.py,
+# line: 202
+#: src/ui/window.rs:261
+msgid "Main menu"
+msgstr "Главно меню"
+
+# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/window.py,
+# line: 172
+#: src/ui/window.rs:313
+msgid "Restore default settings?"
+msgstr "Възстановяване на фабричните настройки?"
+
+#: src/ui/window.rs:315
+msgid ""
+"All audio processing settings will return to their factory values. Your "
+"window size and view preferences are kept."
+msgstr ""
+"Всички настройки за аудио обработка ще се върнат към фабричните си "
+"стойности. Размерът на прозореца и предпочитанията за изглед се запазват."
+
+# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/window.py,
+# line: 175
+#: src/ui/window.rs:319
+msgid "Cancel"
+msgstr "Отмяна"
+
+# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/window.py,
+# line: 193
+#: src/ui/window.rs:320
+msgid "Restore defaults"
+msgstr "Възстанови фабричните настройки"
+
+#: src/ui/window.rs:369
+msgid ""
+"AI-powered microphone noise reduction with GTK4/libadwaita interface for "
+"PipeWire."
+msgstr ""
+"Шумопотискане на микрофона с изкуствен интелект с GTK4/libadwaita интерфейс "
+"за PipeWire."
+
+#: src/ui/views/mic.rs:44
+msgid "Noise filter — fine-tune"
+msgstr "Филтър за шум — фина настройка"
+
+# File: biglinux-noise-reduction-
+# pipewire/src/biglinux_microphone/ui/main_view.py, line: 581
+#: src/ui/views/mic.rs:50
+msgid "Voice enhancements"
+msgstr "Подобрения на гласа"
+
+# File: biglinux-noise-reduction-
+# pipewire/src/biglinux_microphone/ui/main_view.py, line: 438
+#: src/ui/views/mic.rs:56 src/ui/views/mic.rs:367
+msgid "Voice changer"
+msgstr "Промяна на гласа"
+
+#: src/ui/views/mic.rs:106
+msgid ""
+"Removes the speaker's echo from your microphone — useful on calls without "
+"headphones."
+msgstr ""
+"Премахва ехото на говорителя от микрофона ви — полезно при разговори без "
+"слушалки."
+
+# File: biglinux-noise-reduction-
+# pipewire/src/biglinux_microphone/ui/main_view.py, line: 687
+#: src/ui/views/mic.rs:118
+msgid "Echo cancellation"
+msgstr "Премахване на ехо"
+
+# File: biglinux-noise-reduction-
+# pipewire/src/biglinux_microphone/ui/main_view.py, line: 709
+#: src/ui/views/mic.rs:158
+msgid "AI noise filter"
+msgstr "AI филтър за шум"
+
+#: src/ui/views/mic.rs:167
+msgid ""
+"GTCRN neural filter on your microphone. Off bypasses every fine-tune control"
+" below."
+msgstr ""
+"GTCRN невронен филтър на вашия микрофон. Изключването заобикаля всички фини "
+"настройки по-долу."
+
+# File: biglinux-noise-reduction-
+# pipewire/src/biglinux_microphone/ui/main_view.py, line: 326
+#: src/ui/views/mic.rs:184 src/ui/views/output.rs:101
+msgid "Neural model"
+msgstr "Невронен модел"
+
+#: src/ui/views/mic.rs:186
+msgid ""
+"DNS3 removes more noise but can smudge consonants. VCTK is gentler and "
+"lighter on CPU — good for podcasts."
+msgstr ""
+"DNS3 премахва повече шум, но може да замъгли съгласните. VCTK е по-щадящ и "
+"по-лек за процесора — подходящ за подкасти."
+
+#: src/ui/views/mic.rs:193 src/ui/views/output.rs:110
+msgid "GTCRN – DNS3 (strong)"
+msgstr "GTCRN – DNS3 (силен)"
+
+#: src/ui/views/mic.rs:194 src/ui/views/output.rs:111
+msgid "GTCRN – VCTK (gentle)"
+msgstr "GTCRN – VCTK (щадящ)"
+
+# File: biglinux-noise-reduction-
+# pipewire/src/biglinux_microphone/ui/main_view.py, line: 323
+#: src/ui/views/mic.rs:211 src/ui/views/output.rs:128
+msgid "Model"
+msgstr "Модел"
+
+#: src/ui/views/mic.rs:218 src/ui/views/output.rs:135
+msgid "Noise strength (no voice)"
+msgstr "Интензивност на шума (без глас)"
+
+#: src/ui/views/mic.rs:220
+msgid ""
+"How hard the filter works in the gaps between words. 100% mutes anything "
+"that isn't voice."
+msgstr ""
+"Колко силно филтърът работи в паузите между думите. 100% заглушава всичко, "
+"което не е глас."
+
+#: src/ui/views/mic.rs:226 src/ui/views/mic.rs:244 src/ui/views/output.rs:143
+#: src/ui/views/output.rs:165
+msgid "Strength"
+msgstr "Интензивност"
+
+#: src/ui/views/mic.rs:236 src/ui/views/output.rs:153
+msgid "Voice strength (while speaking)"
+msgstr "Сила на гласа (докато говорите)"
+
+#: src/ui/views/mic.rs:238
+msgid ""
+"How hard the filter works while you talk. Lower if your voice sounds "
+"robotic; raise if noise still bleeds through."
+msgstr ""
+"Колко силно работи филтърът, докато говорите. Намалете, ако гласът ви звучи "
+"роботизиран; увеличете, ако шумът все още преминава."
+
+# File: biglinux-noise-reduction-
+# pipewire/src/biglinux_microphone/ui/main_view.py, line: 392
+#: src/ui/views/mic.rs:254 src/ui/views/output.rs:175
+msgid "Voice presence"
+msgstr "Присъствие на глас"
+
+#: src/ui/views/mic.rs:256
+msgid ""
+"Restores high-frequency clarity (sibilants like \"s\", \"sh\") after "
+"suppression. Lower only if your voice already sounds harsh."
+msgstr ""
+"Възстановява високочестотната яснота (сибилантни звуци като \"с\", \"ш\") "
+"след потискане. Намалете само ако гласът ви вече звучи остър."
+
+# File: biglinux-noise-reduction-
+# pipewire/src/biglinux_microphone/ui/main_view.py, line: 392
+#: src/ui/views/mic.rs:262 src/ui/views/output.rs:187
+msgid "Recovery"
+msgstr "Възстановяване"
+
+# File: biglinux-noise-reduction-
+# pipewire/src/biglinux_microphone/ui/main_view.py, line: 477
+#: src/ui/views/mic.rs:282 src/ui/views/output.rs:207
+msgid "High-pass filter"
+msgstr "Високочестотен филтър"
+
+#: src/ui/views/mic.rs:283
+msgid "Cuts low-frequency rumble — AC, wind, mic-stand bumps."
+msgstr ""
+"Отрязва нискочестотен шум — ток, вятър, удари в стойката на микрофона."
+
+# File: biglinux-noise-reduction-
+# pipewire/src/biglinux_microphone/ui/main_view.py, line: 308
+#: src/ui/views/mic.rs:301 src/ui/views/output.rs:226
+msgid "Silence gate"
+msgstr "Праг на тишина"
+
+#: src/ui/views/mic.rs:303
+msgid ""
+"Mutes the mic during pauses so listeners hear silence instead of hiss. "
+"Higher = more aggressive."
+msgstr ""
+"Заглушава микрофона по време на паузи, така че слушателите чуват тишина "
+"вместо шум. По-високо = по-агресивно."
+
+# File: biglinux-noise-reduction-
+# pipewire/src/biglinux_microphone/ui/main_view.py, line: 434
+# File: biglinux-noise-reduction-
+# pipewire/src/biglinux_microphone/ui/main_view.py, line: 472
+#: src/ui/views/mic.rs:311 src/ui/views/mic.rs:457 src/ui/views/output.rs:233
+#: src/ui/views/output.rs:263 src/ui/views/simple.rs:69
+#: src/ui/views/simple.rs:177
+msgid "Intensity"
+msgstr "Интензивност"
+
+# File: biglinux-noise-reduction-
+# pipewire/src/biglinux_microphone/ui/main_view.py, line: 477
+#: src/ui/views/mic.rs:323 src/ui/views/output.rs:56
+msgid "Equalizer"
+msgstr "Еквалайзер"
+
+#: src/ui/views/mic.rs:325
+msgid ""
+"10-band parametric EQ. Pick a preset or drag each band between -40 dB and "
+"+40 dB."
+msgstr ""
+"10-лентов параметричен еквалайзер. Изберете предварителна настройка или "
+"плъзнете всеки лент между -40 dB и +40 dB."
+
+#: src/ui/views/mic.rs:369
+msgid ""
+"Shifts the pitch of your voice without retiming. Left = deeper, right = "
+"higher. Center keeps your natural voice."
+msgstr ""
+"Променя височината на гласа ви без да променя времето. Вляво = по-дълбок, "
+"вдясно = по-висок. Центърът запазва естествения ви глас."
+
+# File: biglinux-noise-reduction-
+# pipewire/src/biglinux_microphone/ui/main_view.py, line: 1147
+#: src/ui/views/mic.rs:389
+msgid "Deep"
+msgstr "Дълбок"
+
+#: src/ui/views/mic.rs:390
+msgid "Lower"
+msgstr "По-ниско"
+
+#: src/ui/views/mic.rs:391
+msgid "Natural"
+msgstr "Естествено"
+
+#: src/ui/views/mic.rs:392
+msgid "Higher"
+msgstr "По-високо"
+
+#: src/ui/views/mic.rs:393
+msgid "Chipmunk"
+msgstr "Катерица"
+
+#: src/ui/views/mic.rs:404
+msgid "Pitch"
+msgstr "Височина"
+
+#: src/ui/views/mic.rs:416 src/ui/views/simple.rs:144
+msgid "Headphones only — speakers cause feedback."
+msgstr "Само слушалки — говорителите причиняват обратна връзка."
+
+# File: biglinux-noise-reduction-
+# pipewire/src/biglinux_microphone/ui/main_view.py, line: 550
+#: src/ui/views/mic.rs:426 src/ui/views/simple.rs:154
+msgid "Hear my voice"
+msgstr "Чуй гласа ми"
+
+#: src/ui/views/mic.rs:434
+msgid "Delay (ms)"
+msgstr "Забавяне (мс)"
+
+#: src/ui/views/mic.rs:452 src/ui/views/output.rs:255
+msgid "Compressor"
+msgstr "Компресор"
+
+#: src/ui/views/mic.rs:453
+msgid ""
+"Evens out loud peaks and quiet parts so your voice stays at a steady volume."
+msgstr ""
+"Изравнява силните пикове и тихите части, за да поддържа гласа ви с постоянна"
+" сила на звука."
+
+# File: biglinux-noise-reduction-
+# pipewire/src/biglinux_microphone/ui/main_view.py, line: 310
+#: src/ui/views/output.rs:37
+msgid "AI noise reduction"
+msgstr "AI намаляване на шума"
+
+#: src/ui/views/output.rs:43
+msgid "Audio enhancements"
+msgstr "Аудио подобрения"
+
+#: src/ui/views/output.rs:58
+msgid ""
+"10-band parametric EQ on what you hear. Pick a preset or drag each band "
+"between -40 dB and +40 dB."
+msgstr ""
+"10-лентов параметричен еквалайзер за това, което чувате. Изберете "
+"предварително зададен режим или плъзнете всеки лент между -40 dB и +40 dB."
+
+#: src/ui/views/output.rs:89
+msgid "Enable output filter"
+msgstr "Активиране на изходния филтър"
+
+#: src/ui/views/output.rs:91
+msgid ""
+"Filters audio reaching your speakers in real time. Stays attached after "
+"toggling, so playback and calls keep running."
+msgstr ""
+"Филтрира аудиото, достигащо до високоговорителите ви в реално време. Остава "
+"активен след превключване, така че възпроизвеждането и разговорите "
+"продължават."
+
+#: src/ui/views/output.rs:103
+msgid ""
+"DNS3 strips more noise (good for harsh streams); VCTK is gentler (good for "
+"music or clean voice)."
+msgstr ""
+"DNS3 премахва повече шум (подходящ за груби потоци); VCTK е по-щадящ "
+"(подходящ за музика или чист глас)."
+
+#: src/ui/views/output.rs:137
+msgid ""
+"How hard the filter works during silent moments in playback. Higher = "
+"quieter background between sentences."
+msgstr ""
+"Колко силно филтърът работи по време на тихи моменти при възпроизвеждане. "
+"По-високо = по-тих фон между изреченията."
+
+#: src/ui/views/output.rs:155
+msgid ""
+"How hard the filter works while voices play. Lower if they sound robotic; "
+"raise if noise still bleeds through."
+msgstr ""
+"Колко силно филтърът работи докато звучат гласове. По-ниско, ако звучат "
+"роботизирано; увеличете, ако шумът все още преминава."
+
+#: src/ui/views/output.rs:177
+msgid ""
+"Restores high-frequency clarity after suppression. Lower only if the source "
+"already sounds harsh."
+msgstr ""
+"Възстановява високочестотната яснота след потискане. Намалете само ако "
+"източникът вече звучи остро."
+
+#: src/ui/views/output.rs:208
+msgid "Cuts low-frequency rumble from playback — wind, AC noise."
+msgstr ""
+"Отрязва нискочестотен шум от възпроизвеждането — вятър, шум от климатик."
+
+#: src/ui/views/output.rs:227
+msgid ""
+"Mutes playback during silent moments so you don't hear hiss between words."
+msgstr ""
+"Заглушава възпроизвеждането по време на тихи моменти, за да не чувате шум "
+"между думите."
+
+#: src/ui/views/output.rs:257
+msgid ""
+"Evens out volume across loud and quiet speakers — useful for meetings with "
+"mixed mic levels."
+msgstr ""
+"Изравнява силата на звука между силни и тихи говорители — полезно за срещи с"
+" различни нива на микрофоните."
+
+#: src/ui/views/simple.rs:115
+msgid "Noise filter"
+msgstr "Филтър за шум"
+
+#: src/ui/views/simple.rs:124
+msgid ""
+"Removes background noise from your voice with the GTCRN neural network. "
+"Higher intensity = stronger cleanup."
+msgstr ""
+"Премахва фоновия шум от гласа ви с невронната мрежа GTCRN. По-висока "
+"интензивност = по-силно почистване."
+
+#: src/ui/views/simple.rs:170
+msgid "System sound"
+msgstr "Системен звук"
+
+#: src/ui/views/simple.rs:171
+msgid ""
+"Cleans background noise from everything you hear before it reaches your "
+"speakers."
+msgstr ""
+"Почиства фоновия шум от всичко, което чувате, преди да достигне до "
+"високоговорителите ви."
+
+# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/config.py,
+# line: 711
+#: src/ui/widgets/eq_card.rs:164
+msgid "Default voice"
+msgstr "По подразбиране глас"
+
+#: src/ui/widgets/eq_card.rs:165
+msgid "Flat"
+msgstr "Плосък"
+
+# File: biglinux-noise-reduction-
+# pipewire/src/biglinux_microphone/ui/main_view.py, line: 442
+#: src/ui/widgets/eq_card.rs:166
+msgid "Voice boost"
+msgstr "Увеличаване на гласа"
+
+#: src/ui/widgets/eq_card.rs:167
+msgid "Podcast"
+msgstr "Подкаст"
+
+#: src/ui/widgets/eq_card.rs:168
+msgid "Warm"
+msgstr "Топъл"
+
+#: src/ui/widgets/eq_card.rs:169
+msgid "Bright"
+msgstr "Ярък"
+
+#: src/ui/widgets/eq_card.rs:170
+msgid "De-esser"
+msgstr "Премахване на сибилантите"
+
+#: src/ui/widgets/eq_card.rs:171
+msgid "Bass cut"
+msgstr "Отсичане на басите"
+
+# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/config.py,
+# line: 602
+#: src/ui/widgets/eq_card.rs:172
+msgid "Presence"
+msgstr "Присъствие"
+
+# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/config.py,
+# line: 607
+#: src/ui/widgets/eq_card.rs:173
+msgid "Custom"
+msgstr "Персонализиран"
+
+# File: biglinux-noise-reduction-
+# pipewire/src/biglinux_microphone/ui/main_view.py, line: 489
+#: src/ui/widgets/eq_card.rs:214
+msgid "Preset"
+msgstr "Предварителна настройка"
+
+# File: biglinux-noise-reduction-
+# pipewire/src/biglinux_microphone/ui/main_view.py, line: 753
+#: src/ui/widgets/source_picker.rs:108
+msgid "Volume"
+msgstr "Сила на звука"
+
+#~ msgid "Configure..."
+#~ msgstr "Конфигуриране..."
+
+# File: biglinux-noise-reduction-
+# pipewire/src/biglinux_microphone/ui/main_view.py, line: 258
+#~ msgid "Loading, please wait"
+#~ msgstr "Зареждане, моля изчакайте"
+
+# File: biglinux-noise-reduction-
+# pipewire/src/biglinux_microphone/ui/main_view.py, line: 227
+#~ msgid "Applying settings…"
+#~ msgstr "Прилагане на настройки…"
+
+# File: biglinux-noise-reduction-
+# pipewire/src/biglinux_microphone/ui/main_view.py, line: 312
+#~ msgid "Removes background noise like fan, keyboard, and air conditioning."
+#~ msgstr "Премахва фоновия шум като вентилатор, клавиатура и климатик."
+
+# File: biglinux-noise-reduction-
+# pipewire/src/biglinux_microphone/ui/main_view.py, line: 325
+#~ msgid "Maximum Cleaning"
+#~ msgstr "Максимално почистване"
+
+# File: biglinux-noise-reduction-
+# pipewire/src/biglinux_microphone/ui/main_view.py, line: 327
+#~ msgid "Smart (both combined)"
+#~ msgstr "Умен (и двете комбинирани)"
+
+# File: biglinux-noise-reduction-
+# pipewire/src/biglinux_microphone/ui/main_view.py, line: 336
+#~ msgid "Noise Removal Intensity"
+#~ msgstr "Интензивност на премахване на шум"
+
+# File: biglinux-noise-reduction-
+# pipewire/src/biglinux_microphone/ui/main_view.py, line: 355
+#~ msgid "Filter During Speech"
+#~ msgstr "Филтриране по време на реч"
+
+# File: biglinux-noise-reduction-
+# pipewire/src/biglinux_microphone/ui/main_view.py, line: 363
+# File: biglinux-noise-reduction-
+# pipewire/src/biglinux_microphone/ui/main_view.py, line: 381
+# File: biglinux-noise-reduction-
+# pipewire/src/biglinux_microphone/ui/main_view.py, line: 400
+#~ msgid "Off"
+#~ msgstr "Изключено"
+
+# File: biglinux-noise-reduction-
+# pipewire/src/biglinux_microphone/ui/main_view.py, line: 373
+#~ msgid "Syllable Protection"
+#~ msgstr "Защита на срички"
+
+# File: biglinux-noise-reduction-
+# pipewire/src/biglinux_microphone/ui/main_view.py, line: 420
+#~ msgid "Volume Normalizer"
+#~ msgstr "Нормализатор на звука"
+
+# File: biglinux-noise-reduction-
+# pipewire/src/biglinux_microphone/ui/main_view.py, line: 422
+#~ msgid "Evens out volume — loud sounds get softer, quiet sounds get louder."
+#~ msgstr ""
+#~ "Изравнява звука — силните звуци стават по-тихи, а тихите звуци стават по-"
+#~ "силни."
+
+# File: biglinux-noise-reduction-
+# pipewire/src/biglinux_microphone/ui/main_view.py, line: 478
+#~ msgid "Removes low-frequency rumble"
+#~ msgstr "Премахва нискочестотен шум"
+
+# File: biglinux-noise-reduction-
+# pipewire/src/biglinux_microphone/ui/main_view.py, line: 487
+#~ msgid "Frequency (Hz)"
+#~ msgstr "Честота (Hz)"
+
+# File: biglinux-noise-reduction-
+# pipewire/src/biglinux_microphone/ui/main_view.py, line: 310
+#~ msgid "Automatically silences the microphone when you are not talking."
+#~ msgstr "Автоматично заглушава микрофона, когато не говорите."
+
+# File: biglinux-noise-reduction-
+# pipewire/src/biglinux_microphone/ui/main_view.py, line: 425
+#~ msgid "Voice Effects"
+#~ msgstr "Гласови ефекти"
+
+# File: biglinux-noise-reduction-
+# pipewire/src/biglinux_microphone/ui/main_view.py, line: 436
+#~ msgid "Dual Mono"
+#~ msgstr "Двоен моно"
+
+# File: biglinux-noise-reduction-
+# pipewire/src/biglinux_microphone/ui/main_view.py, line: 443
+#~ msgid "Choose how your voice sounds to others."
+#~ msgstr "Изберете как да звучи гласът ви за другите."
+
+# File: biglinux-noise-reduction-
+# pipewire/src/biglinux_microphone/ui/main_view.py, line: 452
+# File: biglinux-noise-reduction-
+# pipewire/src/biglinux_microphone/ui/main_view.py, line: 1156
+#~ msgid "Stereo Expansion"
+#~ msgstr "Стерео разширение"
+
+# File: biglinux-noise-reduction-
+# pipewire/src/biglinux_microphone/ui/main_view.py, line: 453
+#~ msgid "Soundstage width. Higher = more immersive."
+#~ msgstr "Ширина на звуковата сцена. По-висока = по-поглъщащо."
+
+# File: biglinux-noise-reduction-
+# pipewire/src/biglinux_microphone/ui/main_view.py, line: 461
+# File: biglinux-noise-reduction-
+# pipewire/src/biglinux_microphone/ui/main_view.py, line: 1158
+#~ msgid "Focus"
+#~ msgstr "Фокус"
+
+# File: biglinux-noise-reduction-
+# pipewire/src/biglinux_microphone/ui/main_view.py, line: 462
+# File: biglinux-noise-reduction-
+# pipewire/src/biglinux_microphone/ui/main_view.py, line: 1159
+#~ msgid "Wide"
+#~ msgstr "Широк"
+
+# File: biglinux-noise-reduction-
+# pipewire/src/biglinux_microphone/ui/main_view.py, line: 478
+#~ msgid "Fine-tuning of bass, mids, and treble."
+#~ msgstr "Фино настройване на бас, средни и високи тонове."
+
+# File: biglinux-noise-reduction-
+# pipewire/src/biglinux_microphone/ui/main_view.py, line: 490
+#~ msgid "Ready-made adjustments for different situations."
+#~ msgstr "Готови настройки за различни ситуации."
+
+# File: biglinux-noise-reduction-
+# pipewire/src/biglinux_microphone/ui/main_view.py, line: 499
+#~ msgid "Bands"
+#~ msgstr "Групи"
+
+# File: biglinux-noise-reduction-
+# pipewire/src/biglinux_microphone/ui/main_view.py, line: 500
+#~ msgid "Adjust each frequency"
+#~ msgstr "Настройте всяка честота."
+
+# File: biglinux-noise-reduction-
+# pipewire/src/biglinux_microphone/ui/main_view.py, line: 689
+#~ msgid "Reduces echo and feedback when using speakers"
+#~ msgstr "Намалява ехото и обратната връзка при използване на високоговорители."
+
+# File: biglinux-noise-reduction-
+# pipewire/src/biglinux_microphone/ui/main_view.py, line: 700
+#~ msgid "Automatic Gain Control"
+#~ msgstr "Автоматичен контрол на усилването"
+
+# File: biglinux-noise-reduction-
+# pipewire/src/biglinux_microphone/ui/main_view.py, line: 701
+#~ msgid "Normalizes volume automatically"
+#~ msgstr "Автоматично нормализира звука"
+
+# File: biglinux-noise-reduction-
+# pipewire/src/biglinux_microphone/ui/main_view.py, line: 708
+#~ msgid "Noise Suppression"
+#~ msgstr "Потискане на шум"
+
+# File: biglinux-noise-reduction-
+# pipewire/src/biglinux_microphone/ui/main_view.py, line: 716
+#~ msgid "Voice Detection"
+#~ msgstr "Разпознаване на глас"
+
+# File: biglinux-noise-reduction-
+# pipewire/src/biglinux_microphone/ui/main_view.py, line: 717
+#~ msgid "Applies processing only when speech is detected"
+#~ msgstr "Прилага обработка само когато се открие реч."
+
+# File: biglinux-noise-reduction-
+# pipewire/src/biglinux_microphone/ui/main_view.py, line: 726
+#~ msgid "Automatic Volume Control"
+#~ msgstr "Автоматичен контрол на звука"
+
+# File: biglinux-noise-reduction-
+# pipewire/src/biglinux_microphone/ui/main_view.py, line: 728
+#~ msgid "Keeps your microphone volume at a consistent level"
+#~ msgstr "Поддържа микрофонната ви сила на звука на постоянна стойност."
+
+# File: biglinux-noise-reduction-
+# pipewire/src/biglinux_microphone/ui/main_view.py, line: 738
+#~ msgid "Signal Level"
+#~ msgstr "Ниво на сигнала"
+
+# File: biglinux-noise-reduction-
+# pipewire/src/biglinux_microphone/ui/main_view.py, line: 747
+#~ msgid "Target signal peak the microphone should reach"
+#~ msgstr "Целевият сигнален пик, който микрофонът трябва да достигне"
+
+# File: biglinux-noise-reduction-
+# pipewire/src/biglinux_microphone/ui/main_view.py, line: 762
+#~ msgid "AGC will not reduce volume below this level"
+#~ msgstr "AGC няма да намали звука под това ниво."
+
+# File: biglinux-noise-reduction-
+# pipewire/src/biglinux_microphone/ui/main_view.py, line: 768
+#~ msgid "Maximum Volume"
+#~ msgstr "Максимален обем"
+
+# File: biglinux-noise-reduction-
+# pipewire/src/biglinux_microphone/ui/main_view.py, line: 777
+#~ msgid "AGC will not raise volume above this level"
+#~ msgstr "AGC няма да увеличи звука над това ниво."
+
+# File: biglinux-noise-reduction-
+# pipewire/src/biglinux_microphone/ui/main_view.py, line: 783
+#~ msgid "Reactivity"
+#~ msgstr "Реактивност"
+
+# File: biglinux-noise-reduction-
+# pipewire/src/biglinux_microphone/ui/main_view.py, line: 792
+#~ msgid "How fast the volume adjusts — higher is faster"
+#~ msgstr "Колко бързо се регулира силата на звука — по-високото е по-бързо"
+
+# File: biglinux-noise-reduction-
+# pipewire/src/biglinux_microphone/ui/main_view.py, line: 533
+#~ msgid "Bluetooth Headset Mode"
+#~ msgstr "Режим на Bluetooth слушалки"
+
+# File: biglinux-noise-reduction-
+# pipewire/src/biglinux_microphone/ui/main_view.py, line: 540
+#~ msgid "Automatically switch between headset listening and call modes."
+#~ msgstr ""
+#~ "Автоматично превключване между режим на слушане с слушалки и режим на "
+#~ "разговор."
+
+# File: biglinux-noise-reduction-
+# pipewire/src/biglinux_microphone/ui/main_view.py, line: 549
+#~ msgid "Monitor Feedback"
+#~ msgstr "Обратна връзка за мониторинга"
+
+# File: biglinux-noise-reduction-
+# pipewire/src/biglinux_microphone/ui/main_view.py, line: 561
+#~ msgid "Monitor Delay"
+#~ msgstr "Забавяне на монитора"
+
+# File: biglinux-noise-reduction-
+# pipewire/src/biglinux_microphone/ui/main_view.py, line: 562
+#~ msgid "Monitor feedback delay. Useful for checking sync."
+#~ msgstr ""
+#~ "Забавяне на обратната връзка на монитора. Полезно за проверка на "
+#~ "синхронизацията."
+
+# File: biglinux-noise-reduction-
+# pipewire/src/biglinux_microphone/ui/main_view.py, line: 569
+#~ msgid "0s"
+#~ msgstr "0s"
+
+# File: biglinux-noise-reduction-
+# pipewire/src/biglinux_microphone/ui/main_view.py, line: 569
+#~ msgid "1s"
+#~ msgstr "1s"
+
+# File: biglinux-noise-reduction-
+# pipewire/src/biglinux_microphone/ui/main_view.py, line: 771
+#~ msgid "2s"
+#~ msgstr "2s"
+
+# File: biglinux-noise-reduction-
+# pipewire/src/biglinux_microphone/ui/main_view.py, line: 569
+#~ msgid "3s"
+#~ msgstr "3s"
+
+# File: biglinux-noise-reduction-
+# pipewire/src/biglinux_microphone/ui/main_view.py, line: 569
+#~ msgid "5s"
+#~ msgstr "5s"
+
+# File: biglinux-noise-reduction-
+# pipewire/src/biglinux_microphone/ui/main_view.py, line: 903
+# File: biglinux-noise-reduction-
+# pipewire/src/biglinux_microphone/ui/main_view.py, line: 1794
+#, python-brace-format
+#~ msgid "Target signal peak: {db:.0f} dBFS"
+#~ msgstr "Пиков сигнал на целта: {db:.0f} dBFS"
+
+# File: biglinux-noise-reduction-
+# pipewire/src/biglinux_microphone/ui/main_view.py, line: 907
+# File: biglinux-noise-reduction-
+# pipewire/src/biglinux_microphone/ui/main_view.py, line: 1810
+#, python-brace-format
+#~ msgid "AGC will not reduce volume below {v}%"
+#~ msgstr "AGC няма да намали звука под {v}%"
+
+# File: biglinux-noise-reduction-
+# pipewire/src/biglinux_microphone/ui/main_view.py, line: 913
+# File: biglinux-noise-reduction-
+# pipewire/src/biglinux_microphone/ui/main_view.py, line: 1825
+#, python-brace-format
+#~ msgid "AGC will not raise volume above {v}%"
+#~ msgstr "AGC няма да увеличи звука над {v}%"
+
+# File: biglinux-noise-reduction-
+# pipewire/src/biglinux_microphone/ui/main_view.py, line: 785
+# File: biglinux-noise-reduction-
+# pipewire/src/biglinux_microphone/ui/main_view.py, line: 1321
+#, python-brace-format
+#~ msgid "Silence threshold: {percent}%"
+#~ msgstr "Праг на тишина: {percent}%"
+
+# File: biglinux-noise-reduction-
+# pipewire/src/biglinux_microphone/ui/main_view.py, line: 804
+# File: biglinux-noise-reduction-
+# pipewire/src/biglinux_microphone/ui/main_view.py, line: 1269
+#, python-brace-format
+#~ msgid "Volume correction: {percent}%"
+#~ msgstr "Корекция на звука: {percent}%"
+
+# File: biglinux-noise-reduction-
+# pipewire/src/biglinux_microphone/ui/main_view.py, line: 813
+# File: biglinux-noise-reduction-
+# pipewire/src/biglinux_microphone/ui/main_view.py, line: 1290
+#, python-brace-format
+#~ msgid "Cutoff: {hz} Hz"
+#~ msgstr "Отсечка: {hz} Hz"
+
+# File: biglinux-noise-reduction-
+# pipewire/src/biglinux_microphone/ui/main_view.py, line: 722
+# File: biglinux-noise-reduction-
+# pipewire/src/biglinux_microphone/ui/main_view.py, line: 1038
+#, python-brace-format
+#~ msgid "Removal aggressiveness. ({percent}%)"
+#~ msgstr "Агресивност на премахване. ({percent}%)"
+
+# File: biglinux-noise-reduction-
+# pipewire/src/biglinux_microphone/ui/main_view.py, line: 701
+# File: biglinux-noise-reduction-
+# pipewire/src/biglinux_microphone/ui/main_view.py, line: 1408
+#, python-brace-format
+#~ msgid "Monitor feedback delay. Useful for checking sync. ({delay} ms)"
+#~ msgstr ""
+#~ "Забавяне на обратната връзка на монитора. Полезно за проверка на "
+#~ "синхронизацията. ({delay} ms)"
+
+# File: biglinux-noise-reduction-
+# pipewire/src/biglinux_microphone/ui/main_view.py, line: 930
+#~ msgid "Noise reduction disabled"
+#~ msgstr "Намаляване на шума деактивирано"
+
+# File: biglinux-noise-reduction-
+# pipewire/src/biglinux_microphone/ui/main_view.py, line: 1249
+#~ msgid "Failed to apply settings. Please try again."
+#~ msgstr "Неуспешно прилагане на настройките. Моля, опитайте отново."
+
+# File: biglinux-noise-reduction-
+# pipewire/src/biglinux_microphone/ui/main_view.py, line: 1051
+#, python-brace-format
+#~ msgid "Filter intensity during speech ({percent}%)"
+#~ msgstr "Интензивност на филтъра по време на реч ({percent}%)"
+
+# File: biglinux-noise-reduction-
+# pipewire/src/biglinux_microphone/ui/main_view.py, line: 1062
+#, python-brace-format
+#~ msgid "Pre-buffer: {ms} ms"
+#~ msgstr "Предварителен буфер: {ms} ms"
+
+# File: biglinux-noise-reduction-
+# pipewire/src/biglinux_microphone/ui/main_view.py, line: 1207
+#, python-brace-format
+#~ msgid "Voice recovery: {percent}%"
+#~ msgstr "Възстановяване на глас: {percent}%"
+
+# File: biglinux-noise-reduction-
+# pipewire/src/biglinux_microphone/ui/main_view.py, line: 1145
+#~ msgid "Voice Tonality (Pitch)"
+#~ msgstr "Тоналност на гласа (височина)"
+
+# File: biglinux-noise-reduction-
+# pipewire/src/biglinux_microphone/ui/main_view.py, line: 1148
+#~ msgid "Normal"
+#~ msgstr "Нормален"
+
+# File: biglinux-noise-reduction-
+# pipewire/src/biglinux_microphone/ui/main_view.py, line: 1149
+#~ msgid "Sharp"
+#~ msgstr "Остър"
+
+# File: biglinux-noise-reduction-
+# pipewire/src/biglinux_microphone/ui/main_view.py, line: 1152
+#, python-brace-format
+#~ msgid "Adjust voice pitch. 0%=Deep, 50%=Normal, 100%=Sharp. ({percent}%)"
+#~ msgstr ""
+#~ "Настройте височината на гласа. 0%=Дълбок, 50%=Нормален, 100%=Остър. "
+#~ "({percent}%)"
+
+# File: biglinux-noise-reduction-
+# pipewire/src/biglinux_microphone/ui/main_view.py, line: 1161
+# File: biglinux-noise-reduction-
+# pipewire/src/biglinux_microphone/ui/main_view.py, line: 1213
+#, python-brace-format
+#~ msgid "Soundstage width. Higher = more immersive. ({percent}%)"
+#~ msgstr "Ширина на звуковата сцена. По-висока = по-поглъщащо. ({percent}%)"
+
+# File: biglinux-noise-reduction-
+# pipewire/src/biglinux_microphone/ui/main_view.py, line: 1345
+#~ msgid "Settings successfully restored"
+#~ msgstr "Настройките бяха успешно възстановени."
+
+# File: biglinux-noise-reduction-
+# pipewire/src/biglinux_microphone/ui/main_view.py, line: 1361
+#~ msgid "All settings have been restored!"
+#~ msgstr "Всички настройки са възстановени!"
+
+# File: biglinux-noise-reduction-
+# pipewire/src/biglinux_microphone/utils/tooltip_helper.py, line: 41
+#~ msgid ""
+#~ "Reduces unwanted background noise from your microphone\n"
+#~ "using the GTCRN neural network.\n"
+#~ "\n"
+#~ "Removes sounds like fans, air conditioning, keyboard typing,\n"
+#~ "and other ambient noise, keeping only your voice clear."
+#~ msgstr ""
+#~ "Намалява нежелания фонов шум от вашия микрофон.\n"
+#~ "\n"
+#~ "Премахва звуци като вентилатори, климатик, писане на клавиатура и друг фонов шум, запазвайки само вашия глас ясен."
+
+# File: biglinux-noise-reduction-
+# pipewire/src/biglinux_microphone/utils/tooltip_helper.py, line: 47
+#~ msgid ""
+#~ "Choose how noise is cleaned:\n"
+#~ "\n"
+#~ "• Maximum Cleaning (DNS3): Removes the most noise possible.\n"
+#~ "  Best for noisy environments. May slightly change the voice.\n"
+#~ "• Natural Voice (VCTK): Gentler cleaning that keeps the voice\n"
+#~ "  more natural. Ideal for quiet environments.\n"
+#~ "• Smart (both combined): Uses DNS3 during\n"
+#~ "  silence and VCTK while you speak.\n"
+#~ "  Best result, but uses more processing power."
+#~ msgstr ""
+#~ "Изберете как да се почисти шумът:\n"
+#~ "\n"
+#~ "• Максимално почистване (DNS3): Премахва най-много шум възможно. Най-добре за шумни среди. Може леко да промени гласа.\n"
+#~ "• Естествен глас (VCTK): По-нежно почистване, което запазва гласа по-естествен. Идеално за тихи среди.\n"
+#~ "• Умен (комбинирано): Използва DNS3 по време на мълчание и VCTK, докато говорите. Най-добър резултат, но изисква повече изчислителна мощ."
+
+# File: biglinux-noise-reduction-
+# pipewire/src/biglinux_microphone/utils/tooltip_helper.py, line: 58
+#~ msgid ""
+#~ "How much noise to remove.\n"
+#~ "\n"
+#~ "• 1: Removes only the most obvious noises\n"
+#~ "• 3: Good for most situations\n"
+#~ "• 5: Removes as much noise as possible\n"
+#~ "\n"
+#~ "If the voice sounds distorted, reduce this slider."
+#~ msgstr ""
+#~ "Колко шум да се премахне.\n"
+#~ "\n"
+#~ "• 1: Премахва само най-очевидния шум\n"
+#~ "• 3: Добре за повечето ситуации\n"
+#~ "• 5: Премахва колкото се може повече шум\n"
+#~ "\n"
+#~ "Ако гласът звучи изкривен, намалете този плъзгач."
+
+# File: biglinux-noise-reduction-
+# pipewire/src/biglinux_microphone/utils/tooltip_helper.py, line: 65
+#~ msgid ""
+#~ "Whether to keep filtering active while you are speaking.\n"
+#~ "\n"
+#~ "• Off: Filter pauses during speech — voice sounds\n"
+#~ "  completely natural, but noise may leak through\n"
+#~ "• 3: Applies partial filtering during speech\n"
+#~ "• 5: Full filtering at all times, cleanest result\n"
+#~ "\n"
+#~ "Default: 5. Reduce if your voice sounds thin or robotic."
+#~ msgstr ""
+#~ "Дали да запазите филтрирането активно, докато говорите.\n"
+#~ "\n"
+#~ "• Изключено: Филтърът спира по време на реч — гласът звучи\n"
+#~ "  напълно естествено, но шумът може да проникне\n"
+#~ "• 3: Прилага частично филтриране по време на реч\n"
+#~ "• 5: Пълно филтриране по всяко време, най-чист резултат\n"
+#~ "\n"
+#~ "По подразбиране: 5. Намалете, ако гласът ви звучи тънко или роботизирано."
+
+# File: biglinux-noise-reduction-
+# pipewire/src/biglinux_microphone/utils/tooltip_helper.py, line: 73
+#~ msgid ""
+#~ "Prevents the beginning of words from being cut off.\n"
+#~ "\n"
+#~ "Keeps a small audio buffer so the filter can react\n"
+#~ "before you start speaking.\n"
+#~ "• Off: No delay, but may clip the first syllable\n"
+#~ "• 50ms: Recommended for most people\n"
+#~ "• 200ms: Safest for fast speakers\n"
+#~ "\n"
+#~ "Higher values add a small delay to the audio."
+#~ msgstr ""
+#~ "Предотвратява отрязването на началото на думите.\n"
+#~ "\n"
+#~ "Поддържа малък аудио буфер, така че филтърът да може да реагира\n"
+#~ "преди да започнете да говорите.\n"
+#~ "• Изключено: Няма забавяне, но може да отреже първата сричка\n"
+#~ "• 50мс: Препоръчително за повечето хора\n"
+#~ "• 200мс: Най-сигурно за бързи говорители\n"
+#~ "\n"
+#~ "По-високите стойности добавят малко забавяне към аудиото."
+
+# File: biglinux-noise-reduction-
+# pipewire/src/biglinux_microphone/utils/tooltip_helper.py, line: 82
+#~ msgid ""
+#~ "Restores high-frequency detail lost during filtering.\n"
+#~ "\n"
+#~ "Noise removal can make voices sound muffled or thin.\n"
+#~ "This control reconstructs the treble frequencies\n"
+#~ "to bring back clarity and presence.\n"
+#~ "\n"
+#~ "• Off: No HF reconstruction\n"
+#~ "• 3: Good balance for most voices\n"
+#~ "• 5: Maximum clarity restoration\n"
+#~ "\n"
+#~ "Recommended: keep between 3 and 5."
+#~ msgstr ""
+#~ "Възстановява височинните детайли, загубени по време на филтриране.\n"
+#~ "\n"
+#~ "Премахването на шум може да накара гласовете да звучат заглушено или тънко.\n"
+#~ "Този контрол реконструира високите честоти,\n"
+#~ "за да възвърне яснотата и присъствието.\n"
+#~ "\n"
+#~ "• Изключено: Няма HF реконструкция\n"
+#~ "• 3: Добър баланс за повечето гласове\n"
+#~ "• 5: Максимално възстановяване на яснотата\n"
+#~ "\n"
+#~ "Препоръчително: да се поддържа между 3 и 5."
+
+# File: biglinux-noise-reduction-
+# pipewire/src/biglinux_microphone/utils/tooltip_helper.py, line: 91
+#~ msgid ""
+#~ "Evens out the volume of your voice.\n"
+#~ "\n"
+#~ "If you speak too loud, it lowers the volume.\n"
+#~ "If you speak too softly, it raises the volume.\n"
+#~ "\n"
+#~ "Ideal for meetings, streams, and recordings\n"
+#~ "where consistent volume matters."
+#~ msgstr ""
+#~ "Изравнява силата на гласа ви.\n"
+#~ "\n"
+#~ "Ако говорите твърде силно, намалява силата.\n"
+#~ "Ако говорите твърде тихо, увеличава силата.\n"
+#~ "\n"
+#~ "Идеален за срещи, потоци и записи,\n"
+#~ "където последователната сила е важна."
+
+# File: biglinux-noise-reduction-
+# pipewire/src/biglinux_microphone/utils/tooltip_helper.py, line: 109
+#~ msgid ""
+#~ "How much volume correction to apply.\n"
+#~ "\n"
+#~ "• 1: Gentle correction, very natural sound\n"
+#~ "• 3: Good for most people\n"
+#~ "• 5: Strong leveling — whisper and shout\n"
+#~ "  come out at similar volume\n"
+#~ "\n"
+#~ "Start with 3 and adjust to taste."
+#~ msgstr ""
+#~ "Колко корекция на звука да приложите.\n"
+#~ "\n"
+#~ "• 1: Лека корекция, много естествен звук\n"
+#~ "• 3: Добре за повечето хора\n"
+#~ "• 5: Силно нивелиране — шепот и вик\n"
+#~ "  излизат с подобен обем\n"
+#~ "\n"
+#~ "Започнете с 3 и регулирайте според вкуса."
+
+# File: biglinux-noise-reduction-
+# pipewire/src/biglinux_microphone/utils/tooltip_helper.py, line: 107
+#~ msgid ""
+#~ "Silence filter that mutes the mic when you're not speaking.\n"
+#~ "\n"
+#~ "Works after noise reduction. Eliminates any residual\n"
+#~ "sound that the filter didn't fully remove.\n"
+#~ "\n"
+#~ "When you stop talking, there is complete silence."
+#~ msgstr ""
+#~ "Филтър за тишина, който заглушава микрофона, когато не говорите.\n"
+#~ "\n"
+#~ "Работи след намаляване на шума. Премахва всякакъв остатъчен звук, който филтърът не е успял напълно да премахне.\n"
+#~ "\n"
+#~ "Когато спрете да говорите, настъпва пълна тишина."
+
+# File: biglinux-noise-reduction-
+# pipewire/src/biglinux_microphone/utils/tooltip_helper.py, line: 124
+#~ msgid ""
+#~ "Controls how aggressively the gate removes residual noise.\n"
+#~ "\n"
+#~ "• 1: Only mutes during long silences\n"
+#~ "• 3: Good for most voices\n"
+#~ "• 5: Complete silence between words\n"
+#~ "\n"
+#~ "Start at 3 and adjust to taste."
+#~ msgstr ""
+#~ "Контролира колко агресивно вратата премахва остатъчния шум.\n"
+#~ "\n"
+#~ "• 1: Заглушава само по време на дълги мълчания\n"
+#~ "• 3: Добре за повечето гласове\n"
+#~ "• 5: Пълна тишина между думите\n"
+#~ "\n"
+#~ "Започнете от 3 и регулирайте според вкуса."
+
+# File: biglinux-noise-reduction-
+# pipewire/src/biglinux_microphone/utils/tooltip_helper.py, line: 121
+#~ msgid ""
+#~ "Voice effects and stereo processing.\n"
+#~ "\n"
+#~ "Converts your mono microphone to stereo or applies\n"
+#~ "professional effects for streaming and podcasting."
+#~ msgstr ""
+#~ "Ефекти за глас и стерео обработка.\n"
+#~ "\n"
+#~ "Превръща вашия моно микрофон в стерео или прилага\n"
+#~ "професионални ефекти за стрийминг и подкастинг."
+
+# File: biglinux-noise-reduction-
+# pipewire/src/biglinux_microphone/utils/tooltip_helper.py, line: 137
+#~ msgid ""
+#~ "Choose the voice effect:\n"
+#~ "\n"
+#~ "• Dual Mono: Duplicates signal to both channels (stereo)\n"
+#~ "• Voice Changer: Changes voice pitch (deeper or higher)"
+#~ msgstr ""
+#~ "Изберете ефекта на гласа:\n"
+#~ "\n"
+#~ "• Двоен моно: Дублира сигнала в двата канала (стерео)\n"
+#~ "• Промяна на гласа: Променя височината на гласа (по-дълбок или по-висок)"
+
+# File: biglinux-noise-reduction-
+# pipewire/src/biglinux_microphone/utils/tooltip_helper.py, line: 142
+#~ msgid ""
+#~ "Intensity of the selected effect.\n"
+#~ "\n"
+#~ "• Voice Changer: Pitch (low to high)"
+#~ msgstr ""
+#~ "Интензивност на избрания ефект.\n"
+#~ "\n"
+#~ "• Преобразувател на глас: Тон (нисък до висок)"
+
+# File: biglinux-noise-reduction-
+# pipewire/src/biglinux_microphone/utils/tooltip_helper.py, line: 147
+#~ msgid ""
+#~ "High-pass filter that removes low frequencies.\n"
+#~ "\n"
+#~ "Cuts rumble, hum, and other low-frequency noise\n"
+#~ "below the chosen frequency. Keeps your voice clear\n"
+#~ "without affecting speech quality."
+#~ msgstr ""
+#~ "Високочестотен филтър, който премахва ниските честоти.\n"
+#~ "\n"
+#~ "Премахва трептене, бучене и други нискочестотни шумове под избраната честота. Запазва гласа ви ясен, без да влияе на качеството на речта."
+
+# File: biglinux-noise-reduction-
+# pipewire/src/biglinux_microphone/utils/tooltip_helper.py, line: 153
+#~ msgid ""
+#~ "Cut-off frequency for the high-pass filter.\n"
+#~ "\n"
+#~ "Frequencies below this value are removed.\n"
+#~ "• 80 Hz: Removes deep rumble only\n"
+#~ "• 120 Hz: Good for most voices\n"
+#~ "• 200 Hz: Aggressive cut, may thin the voice\n"
+#~ "\n"
+#~ "Default: 80 Hz."
+#~ msgstr ""
+#~ "Честота на отрязване за високопропускателния филтър.\n"
+#~ "\n"
+#~ "Честотите под тази стойност се отстраняват.\n"
+#~ "• 80 Hz: Премахва дълбокото бучене само\n"
+#~ "• 120 Hz: Добро за повечето гласове\n"
+#~ "• 200 Hz: Агресивно отрязване, може да изтъни гласа\n"
+#~ "\n"
+#~ "По подразбиране: 80 Hz."
+
+# File: biglinux-noise-reduction-
+# pipewire/src/biglinux_microphone/utils/tooltip_helper.py, line: 138
+#~ msgid ""
+#~ "Equalizer to adjust the tone of your voice.\n"
+#~ "\n"
+#~ "Increase or decrease specific frequencies\n"
+#~ "to make speech clearer or warmer."
+#~ msgstr ""
+#~ "Еквалайзер за регулиране на тона на гласа ви.\n"
+#~ "\n"
+#~ "Увеличете или намалете специфични честоти, за да направите речта по-ясна или по-топла."
+
+# File: biglinux-noise-reduction-
+# pipewire/src/biglinux_microphone/utils/tooltip_helper.py, line: 115
+#~ msgid ""
+#~ "Quick presets for common use cases:\n"
+#~ "\n"
+#~ "• Flat: No changes\n"
+#~ "• Voice Boost: Enhance vocal clarity\n"
+#~ "• Podcast: Professional broadcast sound\n"
+#~ "• Warm: Rich, full tone\n"
+#~ "• Bright: Clear, crisp sound"
+#~ msgstr ""
+#~ "Бързи настройки за често срещани случаи на употреба:\n"
+#~ "\n"
+#~ "• Плосък: Без промени\n"
+#~ "• Увеличаване на гласа: Подобряване на вокалната яснота\n"
+#~ "• Подкаст: Професионален звук за излъчване\n"
+#~ "• Топъл: Богат, пълен тон\n"
+#~ "• Ясен: Ясен, остър звук"
+
+# File: biglinux-noise-reduction-
+# pipewire/src/biglinux_microphone/utils/tooltip_helper.py, line: 123
+#~ msgid ""
+#~ "Adjust individual frequency bands:\n"
+#~ "\n"
+#~ "• Left bands (31-250 Hz): Bass and low frequencies\n"
+#~ "• Middle bands (500-2000 Hz): Voice fundamentals\n"
+#~ "• Right bands (4000-16000 Hz): Brightness and clarity\n"
+#~ "\n"
+#~ "Drag sliders up to boost, down to cut."
+#~ msgstr ""
+#~ "Настройте индивидуалните честотни ленти:\n"
+#~ "\n"
+#~ "• Леви ленти (31-250 Hz): Бас и ниски честоти\n"
+#~ "• Средни ленти (500-2000 Hz): Основи на гласа\n"
+#~ "• Десни ленти (4000-16000 Hz): Яркост и яснота\n"
+#~ "\n"
+#~ "Плъзнете плъзгачите нагоре, за да увеличите, надолу, за да намалите."
+
+# File: biglinux-noise-reduction-
+# pipewire/src/biglinux_microphone/utils/tooltip_helper.py, line: 136
+#~ msgid ""
+#~ "Activate audio loopback (Monitor).\n"
+#~ "\n"
+#~ "Allows hearing your own processed voice to test adjustments.\n"
+#~ "Note: There will always be a small delay (latency) in the return."
+#~ msgstr ""
+#~ "Активирайте аудио обратна връзка (Монитор).\n"
+#~ "\n"
+#~ "Позволява да чуете собствения си обработен глас, за да тествате настройките.\n"
+#~ "Забележка: Винаги ще има малко закъснение (латентност) в връщането."
+
+# File: biglinux-noise-reduction-
+# pipewire/src/biglinux_microphone/utils/tooltip_helper.py, line: 141
+#~ msgid ""
+#~ "Add an extra delay to the monitor return.\n"
+#~ "\n"
+#~ "Useful for checking audio/video sync in recordings or to avoid mental confusion when speaking and hearing yourself immediately."
+#~ msgstr ""
+#~ "Добавете допълнително забавяне при връщането на монитора.\n"
+#~ "\n"
+#~ "Полезно за проверка на синхронизацията на аудио/видео в записи или за избягване на умствено объркване, когато говорите и чувате себе си веднага."
+
+# File: biglinux-noise-reduction-
+# pipewire/src/biglinux_microphone/utils/tooltip_helper.py, line: 147
+#~ msgid ""
+#~ "Automatically switches your headset between listening mode and call mode "
+#~ "when you use the microphone. Note: Using the headset microphone generally "
+#~ "reduces both headphone and microphone quality."
+#~ msgstr ""
+#~ "Автоматично превключва слушалките ви между режим на слушане и режим на "
+#~ "разговор, когато използвате микрофона. Забележка: Използването на микрофона "
+#~ "на слушалките обикновено намалява качеството на слушалките и микрофона."
+
+# File: biglinux-noise-reduction-
+# pipewire/src/biglinux_microphone/utils/tooltip_helper.py, line: 199
+#~ msgid ""
+#~ "Enables acoustic echo cancellation using WebRTC AEC.\n"
+#~ "\n"
+#~ "Reduces echo and feedback when using speakers instead of headphones. Captures the speaker output and removes it from the microphone signal."
+#~ msgstr ""
+#~ "Активира акустично потискане на еха с помощта на WebRTC AEC.\n"
+#~ "\n"
+#~ "Намалява ехото и обратната връзка при използване на говорители вместо слушалки. Улавя звука от говорителя и го премахва от сигнала на микрофона."
+
+# File: biglinux-noise-reduction-
+# pipewire/src/biglinux_microphone/utils/tooltip_helper.py, line: 204
+#~ msgid ""
+#~ "Automatic gain control for the echo canceller.\n"
+#~ "\n"
+#~ "Adjusts the microphone volume automatically to keep\n"
+#~ "the signal level consistent. Disable if your voice\n"
+#~ "sounds unnaturally amplified or compressed."
+#~ msgstr ""
+#~ "Автоматичен контрол на усилването за устройството за потискане на ехо.\n"
+#~ "\n"
+#~ "Автоматично регулира силата на звука на микрофона, за да поддържа\n"
+#~ "постоянно ниво на сигнала. Деактивирайте, ако гласът ви\n"
+#~ "звучи ненормално усилен или компресиран."
+
+# File: biglinux-noise-reduction-
+# pipewire/src/biglinux_microphone/utils/tooltip_helper.py, line: 210
+#~ msgid ""
+#~ "Additional noise suppression inside the echo canceller.\n"
+#~ "\n"
+#~ "Provides extra noise removal on top of the main GTCRN filter.\n"
+#~ "May reduce audio quality — only enable in very noisy environments."
+#~ msgstr ""
+#~ "Допълнително потискане на шума вътре в устройството за отмяна на ехо.\n"
+#~ "\n"
+#~ "Осигурява допълнително премахване на шума над основния GTCRN филтър.\n"
+#~ "Може да намали качеството на звука — активирайте само в много шумни среди."
+
+# File: biglinux-noise-reduction-
+# pipewire/src/biglinux_microphone/utils/tooltip_helper.py, line: 215
+#~ msgid ""
+#~ "Voice activity detection for the echo canceller.\n"
+#~ "\n"
+#~ "Helps the AEC distinguish speech from noise.\n"
+#~ "Can improve echo removal accuracy but may interfere\n"
+#~ "with the main noise reduction. Disabled by default."
+#~ msgstr ""
+#~ "Детекция на гласова активност за ехо анулиращото устройство.\n"
+#~ "\n"
+#~ "Помага на AEC да различава речта от шума.\n"
+#~ "Може да подобри точността на премахване на ехото, но може да пречи\n"
+#~ "на основното намаляване на шума. Деактивирано по подразбиране."
+
+# File: biglinux-noise-reduction-
+# pipewire/src/biglinux_microphone/utils/tooltip_helper.py, line: 213
+#~ msgid ""
+#~ "Automatic Volume Control.\n"
+#~ "\n"
+#~ "Uses a compressor in the PipeWire filter chain to\n"
+#~ "automatically normalize your microphone level.\n"
+#~ "Keeps your voice at a consistent volume regardless\n"
+#~ "of how close or far you are from the microphone."
+#~ msgstr ""
+#~ "Автоматичен контрол на звука.\n"
+#~ "\n"
+#~ "Използва компресор в веригата на филтъра PipeWire, за да\n"
+#~ "автоматично нормализира нивото на микрофона ви.\n"
+#~ "Поддържа гласа ви на постоянен обем, независимо\n"
+#~ "колко близо или далеч сте от микрофона."
+
+# File: biglinux-noise-reduction-
+# pipewire/src/biglinux_microphone/utils/tooltip_helper.py, line: 220
+#~ msgid ""
+#~ "Target signal level for the microphone.\n"
+#~ "\n"
+#~ "Controls the output level of the automatic\n"
+#~ "volume normalizer.\n"
+#~ "100% = close to 0 dBFS (loudest).\n"
+#~ "70% ≈ −7 dBFS (comfortable). Default: 70%."
+#~ msgstr ""
+#~ "Целево ниво на сигнала за микрофона.\n"
+#~ "\n"
+#~ "Контролира изходното ниво на автоматичния\n"
+#~ "нормализатор на звука.\n"
+#~ "100% = близо до 0 dBFS (най-силно).\n"
+#~ "70% ≈ −7 dBFS (удобно). По подразбиране: 70%."
+
+# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/config.py,
+# line: 712
+#~ msgid "Subtle presence boost for clear speech."
+#~ msgstr "Незабележимо повишаване на присъствието за ясна реч."
+
+# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/config.py,
+# line: 567
+#~ msgid "Natural (No Effects)"
+#~ msgstr "Естествено (Без ефекти)"
+
+# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/config.py,
+# line: 568
+#~ msgid "Original sound without changes."
+#~ msgstr "Оригинален звук без промени."
+
+# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/config.py,
+# line: 572
+#~ msgid "Crystal Voice"
+#~ msgstr "Кристална гласова връзка"
+
+# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/config.py,
+# line: 573
+#~ msgid "Focuses on clarity and intelligibility."
+#~ msgstr "Съсредоточава се върху яснотата и разбираемостта."
+
+# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/config.py,
+# line: 577
+#~ msgid "Radio Host"
+#~ msgstr "Радио водещ"
+
+# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/config.py,
+# line: 578
+#~ msgid "Full and deep voice (Broadcast)."
+#~ msgstr "Пълен и дълбок глас (Излъчване)."
+
+# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/config.py,
+# line: 582
+#~ msgid "Velvet Voice"
+#~ msgstr "Кадифен глас"
+
+# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/config.py,
+# line: 583
+#~ msgid "Warm and pleasant tone."
+#~ msgstr "Топъл и приятен тон."
+
+# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/config.py,
+# line: 587
+#~ msgid "Extra Brightness"
+#~ msgstr "Допълнителна яркост"
+
+# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/config.py,
+# line: 588
+#~ msgid "Enhance treble and details."
+#~ msgstr "Подобрете височините и детайлите."
+
+# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/config.py,
+# line: 592
+#~ msgid "Soften 'S' (De-esser)"
+#~ msgstr "Загладете 'S' (Де-есер)"
+
+# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/config.py,
+# line: 593
+#~ msgid "Reduces sibilance and annoying high-pitched sounds."
+#~ msgstr "Намалява сибилантността и дразнещите високи звуци."
+
+# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/config.py,
+# line: 597
+#~ msgid "Remove Rumble"
+#~ msgstr "Премахнете Rumble"
+
+# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/config.py,
+# line: 598
+#~ msgid "Eliminates low-frequency noise (trucks, bumps)."
+#~ msgstr "Премахва нискочестотен шум (камиони, неравности)."
+
+# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/config.py,
+# line: 603
+#~ msgid "Brings the voice to the 'front' of the mix."
+#~ msgstr "Извежда гласа на 'преден' план в микса."
+
+# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/config.py,
+# line: 608
+#~ msgid "Manual adjustment."
+#~ msgstr "Ръчно регулиране."
+
+# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/window.py,
+# line: 173
+#~ msgid "This will return all adjustments to their original defaults."
+#~ msgstr "Това ще върне всички настройки към техните оригинални стойности."
+
+# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/window.py,
+# line: 176
+#~ msgid "Restore"
+#~ msgstr "Възстанови"
+
+# File: biglinux-noise-reduction-
+# pipewire/usr/share/bigbashview/apps/microphone/noise_reducer.py, line: 276
+#~ msgid "About"
+#~ msgstr "За програмата"
+
+# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/window.py,
+# line: 196
+#~ msgid "Quit"
+#~ msgstr "Изход"
+
+# File: biglinux-noise-reduction-
+# pipewire/src/biglinux_microphone/application.py, line: 217
+#~ msgid "Legal"
+#~ msgstr "Правен"
+
+# File: biglinux-noise-reduction-
+# pipewire/src/biglinux_microphone/application.py, line: 220
+#~ msgid ""
+#~ "The GPL-3.0 license applies to this configuration interface. The projects "
+#~ "used to apply the filters have their own licenses."
+#~ msgstr ""
+#~ "Лицензията GPL-3.0 се прилага за този конфигурационен интерфейс. Проектите, "
+#~ "използвани за прилагане на филтрите, имат свои собствени лицензи."
+
+# File: biglinux-noise-reduction-
+# pipewire/src/biglinux_microphone/application.py, line: 227
+#~ msgid "Technologies used"
+#~ msgstr "Използвани технологии"
+
+# File: biglinux-noise-reduction-
+# pipewire/src/biglinux_microphone/application.py, line: 251
+#~ msgid "Use expanders to access settings"
+#~ msgstr "Използвайте разширители, за да получите достъп до настройките."
+
+#~ msgid "Open settings…"
+#~ msgstr "Отвори настройките…"
+
+#~ msgid "Filter noise"
+#~ msgstr "Филтриране на шум"
+
+#~ msgid "Microphone filter"
+#~ msgstr "Филтър за микрофон"
+
+#~ msgid "Cleans your voice for calls and recordings"
+#~ msgstr "Изчиства гласа ви за разговори и записи"
+
+#~ msgid "System sound filter"
+#~ msgstr "Филтър за системен звук"
+
+#~ msgid "Cleans every sound the system plays before it reaches your speakers"
+#~ msgstr "Изчиства всеки звук, преди да достигне високоговорителите"
+
+#~ msgid "About Filter noise"
+#~ msgstr "Относно Филтриране на шум"
+
+#~ msgid "Built on"
+#~ msgstr "Изградено върху"
+
+#~ msgid ""
+#~ "Real-time noise filter for microphone capture and system audio playback. "
+#~ "Powered by the GTCRN neural network running as a LADSPA plugin on top of "
+#~ "PipeWire — every filter is driven by a WirePlumber smart-filter so the "
+#~ "default source and sink stay clean even after device changes."
+#~ msgstr ""
+#~ "Real-time noise filter for microphone capture and system audio playback. "
+#~ "Powered by the GTCRN neural network running as a LADSPA plugin on top of "
+#~ "PipeWire — every filter is driven by a WirePlumber smart-filter so the "
+#~ "default source and sink stay clean even after device changes."

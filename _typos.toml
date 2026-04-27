@@ -1,0 +1,22 @@
+[default]
+extend-ignore-identifiers-re = [
+    # LADSPA plugin identifiers
+    "gverb",
+    "sc4m",
+    # Audio processing
+    "hpf",
+    "DNS3",
+    "VCTK",
+    # PipeWire CLI tools
+    "wpctl",
+]
+
+[files]
+extend-exclude = [
+    "target/**",
+    "po/**/*.po",
+    "po/*.pot",
+    "build-locale/**",
+    "*.mo",
+    "*.svg",
+]

@@ -1,0 +1,18 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 80">
+  <!-- Frequency axis -->
+  <line x1="10" y1="60" x2="110" y2="60" stroke="#999" stroke-width="0.6"/>
+  <line x1="10" y1="60" x2="10" y2="14" stroke="#999" stroke-width="0.6"/>
+  <text x="10" y="70" font-family="sans-serif" font-size="4" fill="#999" text-anchor="start">200Hz</text>
+  <text x="60" y="70" font-family="sans-serif" font-size="4" fill="#999" text-anchor="middle">8kHz</text>
+  <text x="110" y="70" font-family="sans-serif" font-size="4" fill="#999" text-anchor="end">16kHz</text>
+  <!-- Original spectrum (low + high) -->
+  <path d="M10,38 L20,30 L30,28 L40,30 L50,33 L60,38 L70,45 L80,52 L90,56 L100,58 L110,59"
+        stroke="#999" stroke-width="1.2" fill="none" opacity="0.6"/>
+  <!-- Restored upper-band spectrum -->
+  <path d="M10,38 L20,30 L30,28 L40,30 L50,33 L60,38 L65,32 L72,28 L80,30 L88,32 L96,34 L104,36 L110,38"
+        stroke="#3584e4" stroke-width="2" fill="none"/>
+  <!-- Marker for 8 kHz crossover -->
+  <line x1="60" y1="14" x2="60" y2="60" stroke="#3584e4" stroke-width="0.6" stroke-dasharray="2,2"/>
+  <text x="60" y="20" font-family="sans-serif" font-size="4" fill="#3584e4" text-anchor="middle">crossover</text>
+  <text x="60" y="78" font-family="sans-serif" font-size="5.5" fill="#999" text-anchor="middle">Rebuilds sibilants and high-band clarity</text>
+</svg>

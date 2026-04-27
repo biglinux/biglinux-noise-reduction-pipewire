@@ -1,59 +1,76 @@
 /*
- * SPDX-FileCopyleftText: 2022 Bruno Gonçalves <bigbruno@gmail.com> and Rafael Ruscher <rruscher@gmail.com>
+ * SPDX-FileCopyleftText: 2022-2026 Bruno Goncalves <bigbruno@gmail.com>
+ *                                  and Rafael Ruscher <rruscher@gmail.com>
  *
  * SPDX-License-Identifier: GPL-2.0-or-later
  */
 import QtQuick
+import QtQuick.Layouts
 import org.kde.plasma.plasmoid
 import org.kde.plasma.core as PlasmaCore
+import org.kde.plasma.components as PlasmaComponents
 import org.kde.kirigami as Kirigami
 import org.kde.plasma.plasma5support as Plasma5Support
 
 PlasmoidItem {
     id: root
-    property string outputText
-    property bool isActive: false
 
-    // Constants
-    readonly property int defaultInterval: 7000
-    readonly property int toggleInterval: 1500
-    readonly property string checkCommand: 'sh -c "test -f ~/.config/pipewire/filter-chain.conf.d/source-ulunas-smart.conf || test -f ~/.config/pipewire/filter-chain.conf.d/source-gtcrn-smart.conf"'
+    // ── Status the icon + popup react to ─────────────────────────────
+    property bool micEnabled: false
+    property bool outputEnabled: false
 
-    // Function to run the command
-    function runCommand() {
-        executable.exec(checkCommand)
+    readonly property bool anyEnabled: micEnabled || outputEnabled
+
+    // ── Polling cadence ──────────────────────────────────────────────
+    readonly property int defaultInterval: 7000   // 7 s — idle
+    readonly property int toggleInterval: 1500    // 1.5 s — settle right after a toggle
+
+    // ── External commands the plasmoid issues ────────────────────────
+    readonly property string statusCommand: "/usr/bin/biglinux-microphone-cli status"
+    readonly property string toggleMicCommand: "/usr/bin/biglinux-microphone-cli toggle-mic"
+    readonly property string toggleOutputCommand: "/usr/bin/biglinux-microphone-cli toggle-output"
+    readonly property string openConfigCommand: "/usr/bin/biglinux-microphone"
+
+    // Block one inotifywait event per CLI write so our own toggle does
+    // not bounce back through the file watcher. Decremented when the
+    // watcher emits.
+    property int suppressFileEvents: 0
+    // Watches the GTK app's settings file. `inotify-tools` is an
+    // optional dependency — if absent, the spawn fails harmlessly and
+    // the polling Timer remains the only refresh path.
+    readonly property string watchCommand:
+        "sh -c 'inotifywait -q -e modify,close_write,move_self --format=. " +
+        "\"${HOME}/.config/biglinux-microphone/settings.json\" 2>/dev/null'"
+
+    function refreshStatus() {
+        executable.exec(statusCommand)
     }
-
-    // Function to toggle the noise reduction
-    function toggle() {
-        var command = isActive ? 'stop' : 'start'
-        executable.exec('/usr/bin/pipewire-noise-remove ' + command)
-        timer.interval = toggleInterval  // Shorten the interval for quick feedback
+    function toggleMic() {
+        suppressFileEvents += 1
+        executable.exec(toggleMicCommand)
+        timer.interval = toggleInterval
     }
-
-    // Function to open the GTK configurator
-    function openConfigurator() {
-        executable.exec('big-microphone-noise-reduction')
+    function toggleOutput() {
+        suppressFileEvents += 1
+        executable.exec(toggleOutputCommand)
+        timer.interval = toggleInterval
     }
-
-    preferredRepresentation: fullRepresentation
-    // Active = in systray and Passive in notification area
-    Plasmoid.status: {
-        //return PlasmaCore.Types.ActiveStatus;
-        return PlasmaCore.Types.PassiveStatus;
-    }
-
-    // Context menu action to open the GTK configurator
-    // Uses the translated text from the built-in configure action
-    Plasmoid.contextualActions: [
-        PlasmaCore.Action {
-            text: Plasmoid.internalAction("configure") ? Plasmoid.internalAction("configure").text : i18n("Configure...")
-            icon.name: "configure"
-            onTriggered: openConfigurator()
+    function startSettingsWatch() {
+        if (watcher.connectedSources.length === 0) {
+            watcher.connectSource(watchCommand)
         }
-    ]
+    }
+    function openConfigurator() {
+        executable.exec(openConfigCommand)
+    }
 
-    // Hide the built-in Plasma configure action to prevent duplicate entries
+    Plasmoid.status: PlasmaCore.Types.PassiveStatus
+    Plasmoid.icon: anyEnabled ? "big-noise-reduction-on" : "big-noise-reduction-off"
+
+    // No `Plasmoid.contextualActions` here on purpose: Plasma 6 already
+    // injects a "Configure {Plasmoid.title}…" entry into the tray
+    // right-click menu, and the popup Button below covers the same
+    // shortcut. Adding our own custom action duplicates the gear icon.
     Component.onCompleted: {
         var configureAction = Plasmoid.internalAction("configure")
         if (configureAction) {
@@ -61,64 +78,216 @@ PlasmoidItem {
         }
     }
 
+    // ── Subprocess plumbing ──────────────────────────────────────────
     Plasma5Support.DataSource {
-        id: "executable"
-        signal exited(string sourceName, int exitCode, int exitStatus, string stdout, string stderr)
-        function exec(cmd) {
-            connectSource(cmd);
-        }
-
+        id: executable
         engine: "executable"
         connectedSources: []
+
+        signal exited(string sourceName, int exitCode, int exitStatus, string stdout, string stderr)
+
+        function exec(cmd) {
+            connectSource(cmd)
+        }
+
         onNewData: function(sourceName, data) {
-            var exitCode = data["exit code"];
-            var exitStatus = data["exit status"];
-            var stdout = data["stdout"];
-            var stderr = data["stderr"];
-            exited(sourceName, exitCode, exitStatus, stdout, stderr);
-            disconnectSource(sourceName);
+            exited(sourceName,
+                   data["exit code"],
+                   data["exit status"],
+                   data["stdout"],
+                   data["stderr"])
+            disconnectSource(sourceName)
         }
     }
 
     Connections {
-        function onExited(sourceName, exitCode, exitStatus, stdout, stderr) {
-            if (sourceName == checkCommand) {
-                Qt.callLater(function() {
-                    root.outputText = stdout;
-                    root.isActive = (exitCode === 0);
-                });
-            } else {
-                // Was a toggle command, force immediate check
-                runCommand()
-            }
-            timer.restart();
-        }
-
         target: executable
+
+        function onExited(sourceName, exitCode, exitStatus, stdout, stderr) {
+            if (sourceName === root.statusCommand) {
+                root.parseStatus(stdout)
+            } else {
+                // It was a toggle (or the configurator launch). Force an
+                // immediate status refresh so the icon flips without waiting
+                // for the slow polling interval.
+                root.refreshStatus()
+            }
+            timer.restart()
+        }
     }
 
-    // Timer to periodically run the command
+    // Lightweight JSON parse: status output is a single flat object with
+    // boolean values, so we don't need a full JSON.parse — but using it
+    // keeps us forward-compatible if the schema grows.
+    function parseStatus(stdout) {
+        try {
+            var obj = JSON.parse(stdout)
+            micEnabled = !!obj.mic_enabled
+            outputEnabled = !!obj.output_enabled
+        } catch (e) {
+            console.warn("micnoise: could not parse status output:", e, stdout)
+        }
+    }
+
     Timer {
         id: timer
         interval: defaultInterval
-        onTriggered: runCommand()
+        repeat: true
+        running: true
+        onTriggered: refreshStatus()
         Component.onCompleted: {
-            triggered()
+            refreshStatus()
+            startSettingsWatch()
         }
     }
 
-    fullRepresentation: PlasmoidItem {
-        Kirigami.Icon {
-            id: icon
-            source: isActive ? 'big-noise-reduction-on' : 'big-noise-reduction-off'
-            height: Math.min(parent.height, parent.width)
-            width: Math.min(parent.height, parent.width)
-            anchors.fill: parent
+    // ── Instant push from GTK app / CLI / manual edits ───────────────
+    // `inotifywait` blocks until the settings file changes, then exits.
+    // When it exits we refresh and respawn it — exactly one round-trip
+    // per external write, no polling between events. Falls back
+    // gracefully to the 7 s Timer above when inotify-tools is missing.
+    Plasma5Support.DataSource {
+        id: watcher
+        engine: "executable"
+        connectedSources: []
+
+        onNewData: function(sourceName, data) {
+            disconnectSource(sourceName)
+            // Skip exactly one event right after we ourselves toggled,
+            // so the CLI write we just triggered doesn't echo back.
+            if (suppressFileEvents > 0) {
+                suppressFileEvents -= 1
+            } else {
+                refreshStatus()
+            }
+            settingsWatchRespawn.restart()
         }
+    }
+    // Respawn the watcher off the signal handler so connectSource()
+    // doesn't reenter the engine while it's still tearing down the
+    // previous source.
+    Timer {
+        id: settingsWatchRespawn
+        interval: 100
+        repeat: false
+        onTriggered: startSettingsWatch()
+    }
+
+    // ── Compact (tray icon) ──────────────────────────────────────────
+    compactRepresentation: Kirigami.Icon {
+        source: root.anyEnabled ? "big-noise-reduction-on" : "big-noise-reduction-off"
+        active: mouseArea.containsMouse
 
         MouseArea {
+            id: mouseArea
             anchors.fill: parent
-            onClicked: toggle()
+            hoverEnabled: true
+            acceptedButtons: Qt.LeftButton | Qt.MiddleButton
+            onClicked: function(mouse) {
+                if (mouse.button === Qt.MiddleButton) {
+                    root.openConfigurator()
+                } else {
+                    root.expanded = !root.expanded
+                }
+            }
+        }
+    }
+
+    // ── Full (popup) ────────────────────────────────────────────────
+    fullRepresentation: ColumnLayout {
+        Layout.preferredWidth: Kirigami.Units.gridUnit * 18
+        Layout.preferredHeight: Kirigami.Units.gridUnit * 9
+        spacing: Kirigami.Units.smallSpacing
+
+        PlasmaComponents.Label {
+            Layout.fillWidth: true
+            Layout.margins: Kirigami.Units.smallSpacing
+            text: i18nd("biglinux-noise-reduction-pipewire","Filter noise")
+            font.bold: true
+            elide: Text.ElideRight
+        }
+
+        // Mic toggle row
+        RowLayout {
+            Layout.fillWidth: true
+            Layout.leftMargin: Kirigami.Units.smallSpacing
+            Layout.rightMargin: Kirigami.Units.smallSpacing
+            spacing: Kirigami.Units.smallSpacing
+
+            Kirigami.Icon {
+                source: "audio-input-microphone-symbolic"
+                Layout.preferredWidth: Kirigami.Units.iconSizes.medium
+                Layout.preferredHeight: Kirigami.Units.iconSizes.medium
+            }
+            ColumnLayout {
+                Layout.fillWidth: true
+                spacing: 0
+                PlasmaComponents.Label {
+                    text: i18nd("biglinux-noise-reduction-pipewire","Microphone filter")
+                    elide: Text.ElideRight
+                    Layout.fillWidth: true
+                }
+                PlasmaComponents.Label {
+                    text: i18nd("biglinux-noise-reduction-pipewire","Cleans your voice for calls and recordings")
+                    opacity: 0.7
+                    font.pixelSize: Kirigami.Theme.smallFont.pixelSize
+                    elide: Text.ElideRight
+                    Layout.fillWidth: true
+                    wrapMode: Text.WordWrap
+                }
+            }
+            PlasmaComponents.Switch {
+                checked: root.micEnabled
+                onToggled: root.toggleMic()
+            }
+        }
+
+        // Output toggle row
+        RowLayout {
+            Layout.fillWidth: true
+            Layout.leftMargin: Kirigami.Units.smallSpacing
+            Layout.rightMargin: Kirigami.Units.smallSpacing
+            spacing: Kirigami.Units.smallSpacing
+
+            Kirigami.Icon {
+                source: "audio-headphones-symbolic"
+                Layout.preferredWidth: Kirigami.Units.iconSizes.medium
+                Layout.preferredHeight: Kirigami.Units.iconSizes.medium
+            }
+            ColumnLayout {
+                Layout.fillWidth: true
+                spacing: 0
+                PlasmaComponents.Label {
+                    text: i18nd("biglinux-noise-reduction-pipewire","System sound filter")
+                    elide: Text.ElideRight
+                    Layout.fillWidth: true
+                }
+                PlasmaComponents.Label {
+                    text: i18nd("biglinux-noise-reduction-pipewire","Cleans every sound the system plays before it reaches your speakers")
+                    opacity: 0.7
+                    font.pixelSize: Kirigami.Theme.smallFont.pixelSize
+                    elide: Text.ElideRight
+                    wrapMode: Text.WordWrap
+                    Layout.fillWidth: true
+                }
+            }
+            PlasmaComponents.Switch {
+                checked: root.outputEnabled
+                onToggled: root.toggleOutput()
+            }
+        }
+
+        Item { Layout.fillHeight: true }
+
+        PlasmaComponents.Button {
+            Layout.alignment: Qt.AlignRight
+            Layout.margins: Kirigami.Units.smallSpacing
+            text: i18nd("biglinux-noise-reduction-pipewire","Open settings…")
+            icon.name: "preferences-desktop-sound"
+            onClicked: {
+                root.openConfigurator()
+                root.expanded = false
+            }
         }
     }
 }

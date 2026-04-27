@@ -1,0 +1,37 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 80">
+  <!-- Neural network: 3 layers of nodes -->
+  <g fill="#3584e4">
+    <circle cx="20" cy="20" r="3"/>
+    <circle cx="20" cy="40" r="3"/>
+    <circle cx="20" cy="60" r="3"/>
+    <circle cx="60" cy="14" r="3"/>
+    <circle cx="60" cy="32" r="3"/>
+    <circle cx="60" cy="48" r="3"/>
+    <circle cx="60" cy="66" r="3"/>
+    <circle cx="100" cy="30" r="3"/>
+    <circle cx="100" cy="50" r="3"/>
+  </g>
+  <g stroke="#3584e4" stroke-width="0.6" opacity="0.5">
+    <line x1="20" y1="20" x2="60" y2="14"/>
+    <line x1="20" y1="20" x2="60" y2="32"/>
+    <line x1="20" y1="20" x2="60" y2="48"/>
+    <line x1="20" y1="20" x2="60" y2="66"/>
+    <line x1="20" y1="40" x2="60" y2="14"/>
+    <line x1="20" y1="40" x2="60" y2="32"/>
+    <line x1="20" y1="40" x2="60" y2="48"/>
+    <line x1="20" y1="40" x2="60" y2="66"/>
+    <line x1="20" y1="60" x2="60" y2="14"/>
+    <line x1="20" y1="60" x2="60" y2="32"/>
+    <line x1="20" y1="60" x2="60" y2="48"/>
+    <line x1="20" y1="60" x2="60" y2="66"/>
+    <line x1="60" y1="14" x2="100" y2="30"/>
+    <line x1="60" y1="14" x2="100" y2="50"/>
+    <line x1="60" y1="32" x2="100" y2="30"/>
+    <line x1="60" y1="32" x2="100" y2="50"/>
+    <line x1="60" y1="48" x2="100" y2="30"/>
+    <line x1="60" y1="48" x2="100" y2="50"/>
+    <line x1="60" y1="66" x2="100" y2="30"/>
+    <line x1="60" y1="66" x2="100" y2="50"/>
+  </g>
+  <text x="60" y="78" font-family="sans-serif" font-size="5.5" fill="#999" text-anchor="middle">Neural network choice</text>
+</svg>

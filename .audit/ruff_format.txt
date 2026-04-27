@@ -1,9 +1,0 @@
-Would reformat: src/biglinux_microphone/audio/filter_chain.py
-Would reformat: src/biglinux_microphone/cli.py
-Would reformat: src/biglinux_microphone/config.py
-Would reformat: src/biglinux_microphone/services/pipewire_service.py
-Would reformat: src/biglinux_microphone/ui/main_view.py
-Would reformat: src/biglinux_microphone/utils/tooltip_helper.py
-Would reformat: tests/test_echo_cancel.py
-Would reformat: tests/test_race_conditions.py
-8 files would be reformatted, 27 files already formatted

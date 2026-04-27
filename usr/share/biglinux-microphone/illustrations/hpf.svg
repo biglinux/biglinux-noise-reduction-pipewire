@@ -1,0 +1,15 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 80">
+  <!-- Axis -->
+  <line x1="10" y1="58" x2="110" y2="58" stroke="#999" stroke-width="0.6"/>
+  <line x1="10" y1="58" x2="10" y2="14" stroke="#999" stroke-width="0.6"/>
+  <text x="10" y="68" font-family="sans-serif" font-size="4" fill="#999" text-anchor="start">20Hz</text>
+  <text x="38" y="68" font-family="sans-serif" font-size="4" fill="#3584e4" text-anchor="middle">cutoff</text>
+  <text x="110" y="68" font-family="sans-serif" font-size="4" fill="#999" text-anchor="end">20kHz</text>
+  <!-- Filter curve: rising knee then flat -->
+  <path d="M10,55 L20,52 L28,46 L34,32 L42,20 L60,18 L80,18 L100,18 L110,18"
+        stroke="#3584e4" stroke-width="2" fill="none"/>
+  <!-- Cut region (rumble) -->
+  <path d="M10,55 L20,52 L28,46 L34,32 L34,58 L10,58 Z" fill="#999" opacity="0.25"/>
+  <text x="22" y="50" font-family="sans-serif" font-size="4" fill="#999" text-anchor="middle">cut</text>
+  <text x="60" y="78" font-family="sans-serif" font-size="5.5" fill="#999" text-anchor="middle">Removes rumble below the cutoff</text>
+</svg>

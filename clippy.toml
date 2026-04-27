@@ -1,0 +1,19 @@
+msrv = "1.82.0"
+
+# ── Complexity thresholds ──────────────────────────────────────────
+cognitive-complexity-threshold = 25
+too-many-arguments-threshold = 8
+type-complexity-threshold = 300
+excessive-nesting-threshold = 10
+
+# ── Naming / style thresholds ─────────────────────────────────────
+single-char-binding-names-threshold = 5
+enum-variant-name-threshold = 3
+struct-field-name-threshold = 3
+
+# ── Size thresholds ───────────────────────────────────────────────
+trivial-copy-size-limit = 16
+large-error-threshold = 256
+
+# ── Dependency duplicates (cargo-deny covers this too) ────────────
+allowed-duplicate-crates = []

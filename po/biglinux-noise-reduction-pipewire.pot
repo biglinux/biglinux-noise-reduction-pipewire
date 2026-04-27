@@ -1,0 +1,339 @@
+# SOME DESCRIPTIVE TITLE.
+# Copyright (C) YEAR BigLinux Team
+# This file is distributed under the same license as the biglinux-noise-reduction-pipewire package.
+# FIRST AUTHOR <EMAIL@ADDRESS>, YEAR.
+#
+#, fuzzy
+msgid ""
+msgstr ""
+"Project-Id-Version: biglinux-noise-reduction-pipewire 5.0.0\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2026-04-26 16:03+0000\n"
+"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"Language-Team: LANGUAGE <LL@li.org>\n"
+"Language: \n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+
+
+#: src/ui/window.rs:46 src/ui/window.rs:360
+msgid "BigLinux Microphone"
+msgstr ""
+
+#: src/ui/window.rs:176 src/ui/widgets/source_picker.rs:65
+msgid "Microphone"
+msgstr ""
+
+#: src/ui/window.rs:182
+msgid "Output filter"
+msgstr ""
+
+#: src/ui/window.rs:231
+msgid "Advanced"
+msgstr ""
+
+#: src/ui/window.rs:234
+msgid "Show every control individually"
+msgstr ""
+
+#: src/ui/window.rs:253
+msgid "Restore default settings"
+msgstr ""
+
+#: src/ui/window.rs:256
+msgid "About BigLinux Microphone"
+msgstr ""
+
+#: src/ui/window.rs:261
+msgid "Main menu"
+msgstr ""
+
+#: src/ui/window.rs:313
+msgid "Restore default settings?"
+msgstr ""
+
+#: src/ui/window.rs:315
+msgid "All audio processing settings will return to their factory values. Your window size and view preferences are kept."
+msgstr ""
+
+#: src/ui/window.rs:319
+msgid "Cancel"
+msgstr ""
+
+#: src/ui/window.rs:320
+msgid "Restore defaults"
+msgstr ""
+
+#: src/ui/window.rs:369
+msgid "AI-powered microphone noise reduction with GTK4/libadwaita interface for PipeWire."
+msgstr ""
+
+#: src/ui/views/mic.rs:44
+msgid "Noise filter — fine-tune"
+msgstr ""
+
+#: src/ui/views/mic.rs:50
+msgid "Voice enhancements"
+msgstr ""
+
+#: src/ui/views/mic.rs:56 src/ui/views/mic.rs:367
+msgid "Voice changer"
+msgstr ""
+
+#: src/ui/views/mic.rs:106
+msgid "Removes the speaker's echo from your microphone — useful on calls without headphones."
+msgstr ""
+
+#: src/ui/views/mic.rs:118
+msgid "Echo cancellation"
+msgstr ""
+
+#: src/ui/views/mic.rs:158
+msgid "AI noise filter"
+msgstr ""
+
+#: src/ui/views/mic.rs:167
+msgid "GTCRN neural filter on your microphone. Off bypasses every fine-tune control below."
+msgstr ""
+
+#: src/ui/views/mic.rs:184 src/ui/views/output.rs:101
+msgid "Neural model"
+msgstr ""
+
+#: src/ui/views/mic.rs:186
+msgid "DNS3 removes more noise but can smudge consonants. VCTK is gentler and lighter on CPU — good for podcasts."
+msgstr ""
+
+#: src/ui/views/mic.rs:193 src/ui/views/output.rs:110
+msgid "GTCRN – DNS3 (strong)"
+msgstr ""
+
+#: src/ui/views/mic.rs:194 src/ui/views/output.rs:111
+msgid "GTCRN – VCTK (gentle)"
+msgstr ""
+
+#: src/ui/views/mic.rs:211 src/ui/views/output.rs:128
+msgid "Model"
+msgstr ""
+
+#: src/ui/views/mic.rs:218 src/ui/views/output.rs:135
+msgid "Noise strength (no voice)"
+msgstr ""
+
+#: src/ui/views/mic.rs:220
+msgid "How hard the filter works in the gaps between words. 100% mutes anything that isn't voice."
+msgstr ""
+
+#: src/ui/views/mic.rs:226 src/ui/views/mic.rs:244 src/ui/views/output.rs:143 src/ui/views/output.rs:165
+msgid "Strength"
+msgstr ""
+
+#: src/ui/views/mic.rs:236 src/ui/views/output.rs:153
+msgid "Voice strength (while speaking)"
+msgstr ""
+
+#: src/ui/views/mic.rs:238
+msgid "How hard the filter works while you talk. Lower if your voice sounds robotic; raise if noise still bleeds through."
+msgstr ""
+
+#: src/ui/views/mic.rs:254 src/ui/views/output.rs:175
+msgid "Voice presence"
+msgstr ""
+
+#: src/ui/views/mic.rs:256
+msgid "Restores high-frequency clarity (sibilants like \"s\", \"sh\") after suppression. Lower only if your voice already sounds harsh."
+msgstr ""
+
+#: src/ui/views/mic.rs:262 src/ui/views/output.rs:187
+msgid "Recovery"
+msgstr ""
+
+#: src/ui/views/mic.rs:282 src/ui/views/output.rs:207
+msgid "High-pass filter"
+msgstr ""
+
+#: src/ui/views/mic.rs:283
+msgid "Cuts low-frequency rumble — AC, wind, mic-stand bumps."
+msgstr ""
+
+#: src/ui/views/mic.rs:301 src/ui/views/output.rs:226
+msgid "Silence gate"
+msgstr ""
+
+#: src/ui/views/mic.rs:303
+msgid "Mutes the mic during pauses so listeners hear silence instead of hiss. Higher = more aggressive."
+msgstr ""
+
+#: src/ui/views/mic.rs:311 src/ui/views/mic.rs:457 src/ui/views/output.rs:233 src/ui/views/output.rs:263 src/ui/views/simple.rs:69 src/ui/views/simple.rs:177
+msgid "Intensity"
+msgstr ""
+
+#: src/ui/views/mic.rs:323 src/ui/views/output.rs:56
+msgid "Equalizer"
+msgstr ""
+
+#: src/ui/views/mic.rs:325
+msgid "10-band parametric EQ. Pick a preset or drag each band between -40 dB and +40 dB."
+msgstr ""
+
+#: src/ui/views/mic.rs:369
+msgid "Shifts the pitch of your voice without retiming. Left = deeper, right = higher. Center keeps your natural voice."
+msgstr ""
+
+#: src/ui/views/mic.rs:389
+msgid "Deep"
+msgstr ""
+
+#: src/ui/views/mic.rs:390
+msgid "Lower"
+msgstr ""
+
+#: src/ui/views/mic.rs:391
+msgid "Natural"
+msgstr ""
+
+#: src/ui/views/mic.rs:392
+msgid "Higher"
+msgstr ""
+
+#: src/ui/views/mic.rs:393
+msgid "Chipmunk"
+msgstr ""
+
+#: src/ui/views/mic.rs:404
+msgid "Pitch"
+msgstr ""
+
+#: src/ui/views/mic.rs:416 src/ui/views/simple.rs:144
+msgid "Headphones only — speakers cause feedback."
+msgstr ""
+
+#: src/ui/views/mic.rs:426 src/ui/views/simple.rs:154
+msgid "Hear my voice"
+msgstr ""
+
+#: src/ui/views/mic.rs:434
+msgid "Delay (ms)"
+msgstr ""
+
+#: src/ui/views/mic.rs:452 src/ui/views/output.rs:255
+msgid "Compressor"
+msgstr ""
+
+#: src/ui/views/mic.rs:453
+msgid "Evens out loud peaks and quiet parts so your voice stays at a steady volume."
+msgstr ""
+
+#: src/ui/views/output.rs:37
+msgid "AI noise reduction"
+msgstr ""
+
+#: src/ui/views/output.rs:43
+msgid "Audio enhancements"
+msgstr ""
+
+#: src/ui/views/output.rs:58
+msgid "10-band parametric EQ on what you hear. Pick a preset or drag each band between -40 dB and +40 dB."
+msgstr ""
+
+#: src/ui/views/output.rs:89
+msgid "Enable output filter"
+msgstr ""
+
+#: src/ui/views/output.rs:91
+msgid "Filters audio reaching your speakers in real time. Stays attached after toggling, so playback and calls keep running."
+msgstr ""
+
+#: src/ui/views/output.rs:103
+msgid "DNS3 strips more noise (good for harsh streams); VCTK is gentler (good for music or clean voice)."
+msgstr ""
+
+#: src/ui/views/output.rs:137
+msgid "How hard the filter works during silent moments in playback. Higher = quieter background between sentences."
+msgstr ""
+
+#: src/ui/views/output.rs:155
+msgid "How hard the filter works while voices play. Lower if they sound robotic; raise if noise still bleeds through."
+msgstr ""
+
+#: src/ui/views/output.rs:177
+msgid "Restores high-frequency clarity after suppression. Lower only if the source already sounds harsh."
+msgstr ""
+
+#: src/ui/views/output.rs:208
+msgid "Cuts low-frequency rumble from playback — wind, AC noise."
+msgstr ""
+
+#: src/ui/views/output.rs:227
+msgid "Mutes playback during silent moments so you don't hear hiss between words."
+msgstr ""
+
+#: src/ui/views/output.rs:257
+msgid "Evens out volume across loud and quiet speakers — useful for meetings with mixed mic levels."
+msgstr ""
+
+#: src/ui/views/simple.rs:115
+msgid "Noise filter"
+msgstr ""
+
+#: src/ui/views/simple.rs:124
+msgid "Removes background noise from your voice with the GTCRN neural network. Higher intensity = stronger cleanup."
+msgstr ""
+
+#: src/ui/views/simple.rs:170
+msgid "System sound"
+msgstr ""
+
+#: src/ui/views/simple.rs:171
+msgid "Cleans background noise from everything you hear before it reaches your speakers."
+msgstr ""
+
+#: src/ui/widgets/eq_card.rs:164
+msgid "Default voice"
+msgstr ""
+
+#: src/ui/widgets/eq_card.rs:165
+msgid "Flat"
+msgstr ""
+
+#: src/ui/widgets/eq_card.rs:166
+msgid "Voice boost"
+msgstr ""
+
+#: src/ui/widgets/eq_card.rs:167
+msgid "Podcast"
+msgstr ""
+
+#: src/ui/widgets/eq_card.rs:168
+msgid "Warm"
+msgstr ""
+
+#: src/ui/widgets/eq_card.rs:169
+msgid "Bright"
+msgstr ""
+
+#: src/ui/widgets/eq_card.rs:170
+msgid "De-esser"
+msgstr ""
+
+#: src/ui/widgets/eq_card.rs:171
+msgid "Bass cut"
+msgstr ""
+
+#: src/ui/widgets/eq_card.rs:172
+msgid "Presence"
+msgstr ""
+
+#: src/ui/widgets/eq_card.rs:173
+msgid "Custom"
+msgstr ""
+
+#: src/ui/widgets/eq_card.rs:214
+msgid "Preset"
+msgstr ""
+
+#: src/ui/widgets/source_picker.rs:108
+msgid "Volume"
+msgstr ""

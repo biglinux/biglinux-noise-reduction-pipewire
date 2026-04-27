@@ -1,7 +1,24 @@
 #!/bin/bash
+# shellcheck shell=bash
+set -euo pipefail
 
-# Add ["filter.smart.name"] = big.filter-microphone, after line with ["filter.smart"\] = true,
+# Insert `["filter.smart.name"] = "big.filter-microphone"` after the
+# `["filter.smart"] = true,` line so BT routes through our filter chain.
+# The value MUST be a quoted string — bare `big.filter-microphone` is
+# parsed by Lua as `(big.filter) - microphone`, an arithmetic op on two
+# global lookups that are nil at WP startup.
 
-if ! grep -q 'big.filter-microphone' /usr/share/wireplumber/scripts/monitors/bluez.lua; then
-    sed -i '/^\s*\["filter.smart"\] = true,/a\      ["filter.smart.name"] = big.filter-microphone,' /usr/share/wireplumber/scripts/monitors/bluez.lua
+readonly bluez_lua=/usr/share/wireplumber/scripts/monitors/bluez.lua
+
+if [[ ! -f "${bluez_lua}" ]]; then
+    exit 0
+fi
+
+if ! grep -q '"big.filter-microphone"' "${bluez_lua}"; then
+    # Repair any pre-existing unquoted line written by older versions of
+    # this hook before adding a new (quoted) entry.
+    sed -i 's|\["filter.smart.name"\] = big.filter-microphone,|["filter.smart.name"] = "big.filter-microphone",|g' "${bluez_lua}"
+    if ! grep -q '"big.filter-microphone"' "${bluez_lua}"; then
+        sed -i '/^\s*\["filter.smart"\] = true,/a\      ["filter.smart.name"] = "big.filter-microphone",' "${bluez_lua}"
+    fi
 fi

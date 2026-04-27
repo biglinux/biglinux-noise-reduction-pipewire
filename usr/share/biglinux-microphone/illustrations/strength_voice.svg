@@ -1,0 +1,24 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 80">
+  <!-- Speech bubble indicator at top -->
+  <g transform="translate(8,4)">
+    <path d="M2,2 L11,2 Q13,2 13,4 L13,9 Q13,11 11,11 L7,11 L4,14 L4,11 Q2,11 2,9 L2,4 Q2,2 4,2 Z"
+          fill="#3584e4"/>
+    <text x="18" y="11" font-family="sans-serif" font-size="5" fill="#3584e4">voice detected</text>
+  </g>
+  <!-- Voice waveform with noise overlay (left) -->
+  <path d="M5,42 Q10,28 15,42 Q20,56 25,42 Q30,28 35,42 Q38,50 41,42"
+        stroke="#1c5fb4" stroke-width="2" fill="none"/>
+  <path d="M5,42 L7,40 L9,44 L11,38 L13,46 L15,40 L18,44 L21,38 L24,46 L27,40 L30,44 L33,38 L36,46 L39,42"
+        stroke="#e8e8e8" stroke-width="1.5" fill="none" opacity="0.5"/>
+  <!-- Arrow with speech-strength label -->
+  <line x1="46" y1="42" x2="60" y2="42" stroke="#3584e4" stroke-width="1.5"/>
+  <polygon points="60,38 67,42 60,46" fill="#3584e4"/>
+  <text x="53" y="36" font-family="sans-serif" font-size="4.5" fill="#3584e4" text-anchor="middle">Voice strength</text>
+  <!-- Cleaned voice (right): same shape, less noise overlay -->
+  <path d="M72,42 Q78,28 84,42 Q90,56 96,42 Q102,28 108,42"
+        stroke="#3584e4" stroke-width="2" fill="none"/>
+  <!-- Labels -->
+  <text x="22" y="62" font-family="sans-serif" font-size="5" fill="#999" text-anchor="middle">Voice + noise</text>
+  <text x="90" y="62" font-family="sans-serif" font-size="5" fill="#3584e4" text-anchor="middle">Clear voice</text>
+  <text x="60" y="76" font-family="sans-serif" font-size="5.5" fill="#999" text-anchor="middle">Filter strength while you are speaking</text>
+</svg>

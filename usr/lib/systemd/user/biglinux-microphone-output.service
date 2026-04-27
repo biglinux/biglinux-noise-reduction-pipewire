@@ -1,0 +1,52 @@
+[Unit]
+Description=BigLinux Microphone — output-side noise reduction filter
+Documentation=https://github.com/biglinux/biglinux-noise-reduction-pipewire
+PartOf=pipewire.service
+After=pipewire.service wireplumber.service
+Requisite=pipewire.service
+Wants=pipewire.service wireplumber.service
+
+[Service]
+Type=simple
+ExecStart=/usr/bin/pipewire -c %h/.config/pipewire/biglinux-microphone-output.conf
+Restart=on-failure
+RestartSec=2s
+# Do not thrash systemd if the conf is absent (the main app removes it
+# when the user disables the output filter — systemd then stops the
+# unit cleanly via `stop`).
+RestartPreventExitStatus=254
+StandardOutput=journal
+StandardError=journal
+
+# ── Realtime budget ──────────────────────────────────────────────────
+# Audio dropouts are worse than the small extra blast-radius from RT
+# scheduling, so we raise the rlimits the standalone pipewire process
+# needs to honour the rt.prio/nice.level it requests via
+# libpipewire-module-rt. CAP_SYS_NICE below preserves the capability
+# even though hardening keeps every other privilege off.
+LimitRTPRIO=95
+LimitNICE=-19
+LimitMEMLOCK=infinity
+
+# ── Hardening ────────────────────────────────────────────────────────
+NoNewPrivileges=true
+ProtectKernelTunables=true
+ProtectKernelModules=true
+ProtectKernelLogs=true
+ProtectControlGroups=true
+ProtectHostname=true
+ProtectProc=invisible
+PrivateTmp=true
+RestrictNamespaces=true
+RestrictRealtime=false
+RestrictSUIDSGID=true
+LockPersonality=true
+CapabilityBoundingSet=CAP_SYS_NICE
+AmbientCapabilities=
+RestrictAddressFamilies=AF_UNIX AF_NETLINK
+SystemCallArchitectures=native
+SystemCallFilter=@system-service @resources
+SystemCallErrorNumber=EPERM
+
+[Install]
+WantedBy=default.target

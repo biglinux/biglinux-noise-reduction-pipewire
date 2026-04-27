@@ -1,0 +1,193 @@
+# Maintainer: Bruno Goncalves <bigbruno@gmail.com>
+# shellcheck shell=bash disable=SC2034,SC2154
+
+pkgname=biglinux-noise-reduction-pipewire
+pkgdesc="AI-powered microphone noise reduction with GTK4/libadwaita interface for PipeWire"
+# BigLinux rolling-release convention: pkgver is derived from the build
+# date so every CI build is uniquely identifiable. pkgrel stays numeric.
+pkgver=$(date +%y.%m.%d)
+pkgrel=$(date +%H%M)
+arch=('x86_64')
+url="https://github.com/biglinux/${pkgname}"
+license=('GPL-3.0-or-later')
+depends=(
+    'pipewire>=1.4'
+    'wireplumber>=0.5'
+    'gtcrn-ladspa'
+    'swh-plugins'
+    'gtk4>=4.20'
+    'libadwaita>=1.8'
+    'libpipewire'
+    'glib2'
+    'cairo'
+    'glibc'
+    'gcc-libs'
+)
+makedepends=(
+    'rust'
+    'cargo'
+    'gettext'
+    'pkgconf'
+    'clang'
+)
+optdepends=(
+    'wireplumber: required for smart-filter routing (already a hard dep)'
+    'inotify-tools: instant Plasma applet sync with the GTK config window'
+)
+# This package provides the noise-reduction LADSPA host and the
+# per-app output filter integration.
+provides=('biglinux-microphone')
+conflicts=('biglinux-microphone')
+replaces=('biglinux-microphone')
+install="${pkgname}.install"
+
+# ---------------------------------------------------------------------------
+# Local-source detection (dev fast path). PKGBUILD lives in
+# packaging/arch/, so the repo root is two levels up.
+# Falls back to git+upstream for CI / remote builds.
+# ---------------------------------------------------------------------------
+_has_workspace_files() {
+    local root="$1"
+    [ -f "${root}/Cargo.toml" ] && [ -d "${root}/src" ] && [ -d "${root}/po" ]
+}
+
+_local_root=""
+if [ "${BIGMIC_FORCE_GIT:-0}" != "1" ] && [ -n "${BASH_SOURCE[0]:-}" ]; then
+    _pkg_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" 2>/dev/null && pwd -P)"
+    if [ -n "${_pkg_dir}" ]; then
+        _candidate="$(cd "${_pkg_dir}/../.." && pwd -P)"
+        if _has_workspace_files "${_candidate}"; then
+            _local_root="${_candidate}"
+        fi
+        unset _candidate
+    fi
+fi
+
+if [ -n "${_local_root}" ]; then
+    echo "==> Local source detected at ${_local_root} — skipping git fetch" >&2
+    source=()
+    b2sums=()
+else
+    echo "==> No local source found, will fetch from ${url}.git" >&2
+    source=("git+${url}.git")
+    b2sums=('SKIP')
+fi
+
+prepare() {
+    if [ -z "${_local_root}" ]; then
+        return 0
+    fi
+    msg2 "Mirroring local source tree from ${_local_root}"
+    mkdir -p "${srcdir}/${pkgname}"
+    if command -v rsync >/dev/null 2>&1; then
+        rsync -a --delete \
+            --exclude='/target' \
+            --exclude='/.git' \
+            --exclude='/packaging/arch/pkg' \
+            --exclude='/packaging/arch/src' \
+            --exclude='*.pkg.tar.*' \
+            --exclude='*.log' \
+            "${_local_root}/" "${srcdir}/${pkgname}/"
+    else
+        cp -a "${_local_root}/." "${srcdir}/${pkgname}/"
+        rm -rf \
+            "${srcdir}/${pkgname}/target" \
+            "${srcdir}/${pkgname}/.git" \
+            "${srcdir}/${pkgname}/packaging/arch/pkg" \
+            "${srcdir}/${pkgname}/packaging/arch/src"
+    fi
+}
+
+build() {
+    cd "${srcdir}/${pkgname}" || exit 1
+    cargo build --release --locked
+
+    # Compile translations (.po → .mo)
+    install -d "${srcdir}/${pkgname}/build-locale"
+    for po in po/*.po; do
+        [ -f "$po" ] || continue
+        lang=$(basename "$po" .po)
+        install -d "build-locale/${lang}/LC_MESSAGES"
+        msgfmt "$po" -o "build-locale/${lang}/LC_MESSAGES/${pkgname}.mo"
+    done
+}
+
+check() {
+    cd "${srcdir}/${pkgname}" || exit 1
+    cargo test --release --locked
+}
+
+package() {
+    cd "${srcdir}/${pkgname}" || exit 1
+
+    # Binaries
+    install -Dm755 target/release/biglinux-microphone \
+        "${pkgdir}/usr/bin/biglinux-microphone"
+    install -Dm755 target/release/biglinux-microphone-cli \
+        "${pkgdir}/usr/bin/biglinux-microphone-cli"
+
+    # Desktop / metainfo / icons
+    install -Dm644 usr/share/applications/br.com.biglinux.microphone.desktop \
+        "${pkgdir}/usr/share/applications/br.com.biglinux.microphone.desktop"
+    install -Dm644 usr/share/metainfo/br.com.biglinux.microphone.metainfo.xml \
+        "${pkgdir}/usr/share/metainfo/br.com.biglinux.microphone.metainfo.xml"
+
+    # systemd user units
+    install -Dm644 usr/lib/systemd/user/biglinux-microphone.service \
+        "${pkgdir}/usr/lib/systemd/user/biglinux-microphone.service"
+    install -Dm644 usr/lib/systemd/user/biglinux-microphone-output.service \
+        "${pkgdir}/usr/lib/systemd/user/biglinux-microphone-output.service"
+    install -Dm644 usr/lib/systemd/user/biglinux-microphone-echocancel.service \
+        "${pkgdir}/usr/lib/systemd/user/biglinux-microphone-echocancel.service"
+
+    # WirePlumber policy hook: keeps the echo-cancel capture stream on
+    # the selected physical microphone while devices/defaults change.
+    install -Dm644 usr/share/wireplumber/scripts/biglinux/echo-cancel-routing.lua \
+        "${pkgdir}/usr/share/wireplumber/scripts/biglinux/echo-cancel-routing.lua"
+    install -Dm644 usr/share/wireplumber/wireplumber.conf.d/60-biglinux-echo-cancel-routing.conf \
+        "${pkgdir}/usr/share/wireplumber/wireplumber.conf.d/60-biglinux-echo-cancel-routing.conf"
+
+    # Pacman hook + helper (BigLinux bluetooth autoswitch)
+    if [ -f usr/share/libalpm/hooks/pipewire-filter-bluetooth.hook ]; then
+        install -Dm644 usr/share/libalpm/hooks/pipewire-filter-bluetooth.hook \
+            "${pkgdir}/usr/share/libalpm/hooks/pipewire-filter-bluetooth.hook"
+    fi
+    if [ -f usr/share/libalpm/scripts/pipewire-filter-bluetooth ]; then
+        install -Dm755 usr/share/libalpm/scripts/pipewire-filter-bluetooth \
+            "${pkgdir}/usr/share/libalpm/scripts/pipewire-filter-bluetooth"
+    fi
+
+    # App icon (must match the .desktop Icon= and AppStream <id>)
+    install -Dm644 usr/share/icons/hicolor/scalable/apps/br.com.biglinux.microphone.svg \
+        "${pkgdir}/usr/share/icons/hicolor/scalable/apps/br.com.biglinux.microphone.svg"
+    # Status icons used by the Plasma applet for tray feedback
+    install -Dm644 usr/share/icons/hicolor/scalable/status/big-noise-reduction-on.svg \
+        "${pkgdir}/usr/share/icons/hicolor/scalable/status/big-noise-reduction-on.svg"
+    install -Dm644 usr/share/icons/hicolor/scalable/status/big-noise-reduction-off.svg \
+        "${pkgdir}/usr/share/icons/hicolor/scalable/status/big-noise-reduction-off.svg"
+
+    # Plasma 6 system-tray applet
+    install -Dm644 usr/share/plasma/plasmoids/org.biglinux.micnoise/metadata.json \
+        "${pkgdir}/usr/share/plasma/plasmoids/org.biglinux.micnoise/metadata.json"
+    install -Dm644 usr/share/plasma/plasmoids/org.biglinux.micnoise/contents/ui/main.qml \
+        "${pkgdir}/usr/share/plasma/plasmoids/org.biglinux.micnoise/contents/ui/main.qml"
+
+    # SVG illustrations rendered inside the GTK didactic cards
+    install -d "${pkgdir}/usr/share/biglinux-microphone/illustrations"
+    install -m644 usr/share/biglinux-microphone/illustrations/*.svg \
+        "${pkgdir}/usr/share/biglinux-microphone/illustrations/"
+
+    # Translations
+    for mo in build-locale/*/LC_MESSAGES/*.mo; do
+        [ -f "$mo" ] || continue
+        install -Dm644 "$mo" "${pkgdir}/usr/share/${mo#build-}"
+    done
+
+    # License + docs
+    if [ -f LICENSE ]; then
+        install -Dm644 LICENSE "${pkgdir}/usr/share/licenses/${pkgname}/LICENSE"
+    fi
+    if [ -f README.md ]; then
+        install -Dm644 README.md "${pkgdir}/usr/share/doc/${pkgname}/README.md"
+    fi
+}

@@ -1,0 +1,17 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 80">
+  <!-- Loud peaks (left, gray) -->
+  <path d="M5,42 L10,18 L15,42 L20,46 L25,42 L30,12 L35,42 L40,40"
+        stroke="#999" stroke-width="1.6" fill="none"/>
+  <!-- Arrow -->
+  <line x1="46" y1="38" x2="60" y2="38" stroke="#3584e4" stroke-width="1.5"/>
+  <polygon points="60,34 67,38 60,42" fill="#3584e4"/>
+  <!-- Even waveform (right, blue) -->
+  <path d="M72,40 L77,28 L82,40 L87,42 L92,40 L97,26 L102,40 L107,40"
+        stroke="#3584e4" stroke-width="2" fill="none"/>
+  <!-- Threshold ceilings -->
+  <line x1="5" y1="22" x2="40" y2="22" stroke="#999" stroke-width="0.5" stroke-dasharray="2,2"/>
+  <line x1="72" y1="30" x2="107" y2="30" stroke="#3584e4" stroke-width="0.5" stroke-dasharray="2,2"/>
+  <text x="22" y="62" font-family="sans-serif" font-size="5" fill="#999" text-anchor="middle">Loud peaks</text>
+  <text x="90" y="62" font-family="sans-serif" font-size="5" fill="#3584e4" text-anchor="middle">Even level</text>
+  <text x="60" y="76" font-family="sans-serif" font-size="5.5" fill="#999" text-anchor="middle">Tames loud parts, lifts quiet ones</text>
+</svg>

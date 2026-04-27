@@ -1,0 +1,23 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 80">
+  <!-- Input waveform (low pitch, wide cycles) -->
+  <path d="M5,40 Q12,22 19,40 T33,40 T47,40"
+        stroke="#999" stroke-width="1.5" fill="none"/>
+  <!-- Arrow -->
+  <line x1="52" y1="38" x2="66" y2="38" stroke="#3584e4" stroke-width="1.5"/>
+  <polygon points="66,34 73,38 66,42" fill="#3584e4"/>
+  <!-- Output waveform (higher pitch, tighter cycles) -->
+  <path d="M75,40 Q79,26 83,40 T91,40 T99,40 T107,40 T115,40"
+        stroke="#3584e4" stroke-width="2" fill="none"/>
+  <!-- Pitch marker dots -->
+  <circle cx="12" cy="22" r="1.5" fill="#999"/>
+  <circle cx="26" cy="22" r="1.5" fill="#999"/>
+  <circle cx="40" cy="22" r="1.5" fill="#999"/>
+  <circle cx="79" cy="26" r="1.5" fill="#3584e4"/>
+  <circle cx="87" cy="26" r="1.5" fill="#3584e4"/>
+  <circle cx="95" cy="26" r="1.5" fill="#3584e4"/>
+  <circle cx="103" cy="26" r="1.5" fill="#3584e4"/>
+  <circle cx="111" cy="26" r="1.5" fill="#3584e4"/>
+  <text x="26" y="60" font-family="sans-serif" font-size="5" fill="#999" text-anchor="middle">Original pitch</text>
+  <text x="93" y="60" font-family="sans-serif" font-size="5" fill="#3584e4" text-anchor="middle">Shifted pitch</text>
+  <text x="60" y="74" font-family="sans-serif" font-size="5.5" fill="#999" text-anchor="middle">Voice changer (deep ↔ high)</text>
+</svg>

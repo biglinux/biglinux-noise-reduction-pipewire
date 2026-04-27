@@ -1,0 +1,119 @@
+# Flatpak manifest for biglinux-noise-reduction-pipewire (GUI configurator).
+#
+# Local test build (source = this working tree):
+#   flatpak-builder --user --install --force-clean build-dir \
+#       packaging/flatpak/br.com.biglinux.microphone.yml
+#
+# Flathub submission: pin the source to a tag/commit (replace `type: dir`
+# with `type: git`) and generate the offline cargo sources via
+# `packaging/flatpak/generate-cargo-sources.sh` (creates cargo-sources.json),
+# then drop `--share=network` from build-args.
+#
+# Caveats — read before publishing:
+#   * Audio processing depends on host-side LADSPA plugins
+#     (`gtcrn-ladspa`, `swh-plugins`) and runs through host PipeWire +
+#     WirePlumber. The Flatpak ships only the configurator GUI / CLI;
+#     filters live in user PipeWire/WirePlumber config under
+#     `~/.config/{pipewire,wireplumber}/`.
+#   * The Plasma 6 applet, systemd user units, the WirePlumber Lua
+#     policy hook, and the libalpm bluetooth-autoswitch helper are
+#     host integration — not packaged here. Distro packages
+#     (PKGBUILD / .deb / .rpm) remain the supported path for them.
+app-id: br.com.biglinux.microphone
+runtime: org.gnome.Platform
+# GNOME 48 = Freedesktop 24.08 base. Bump together with the GNOME
+# release branch (one-year support window). Keep `rust-stable` aligned
+# with the chosen runtime: `flatpak info -m org.gnome.Sdk//<ver>`.
+runtime-version: '48'
+sdk: org.gnome.Sdk
+sdk-extensions:
+  - org.freedesktop.Sdk.Extension.rust-stable
+command: biglinux-microphone
+
+finish-args:
+  # Display + input
+  - --socket=wayland
+  - --socket=fallback-x11
+  - --share=ipc
+  - --device=dri
+  # Audio: PipeWire socket for spectrum analyzer + live param probes
+  - --socket=pipewire
+  # PipeWire / WirePlumber configuration that the GUI writes to
+  - --filesystem=xdg-config/pipewire:create
+  - --filesystem=xdg-config/wireplumber:create
+  # App's own settings file
+  - --filesystem=xdg-config/biglinux-microphone:create
+  # systemd --user control through the host bus (start/stop the helper
+  # services that run the filter chain)
+  - --talk-name=org.freedesktop.systemd1
+  - --system-talk-name=org.freedesktop.systemd1
+  # Desktop / theme integration
+  - --filesystem=xdg-config/gtk-3.0:ro
+  - --filesystem=xdg-config/gtk-4.0:ro
+
+build-options:
+  append-path: /usr/lib/sdk/rust-stable/bin
+  build-args:
+    # Drop on Flathub once cargo-sources.json is wired up.
+    - --share=network
+  env:
+    CARGO_HOME: /run/build/biglinux-noise-reduction-pipewire/cargo
+    RUST_BACKTRACE: '1'
+
+modules:
+  - name: biglinux-noise-reduction-pipewire
+    buildsystem: simple
+    build-commands:
+      # Build both binaries (GUI + CLI)
+      - cargo build --release --locked
+
+      # Binaries
+      - install -Dm755 target/release/biglinux-microphone     "${FLATPAK_DEST}/bin/biglinux-microphone"
+      - install -Dm755 target/release/biglinux-microphone-cli "${FLATPAK_DEST}/bin/biglinux-microphone-cli"
+
+      # Desktop entry
+      - install -Dm644 usr/share/applications/br.com.biglinux.microphone.desktop
+          "${FLATPAK_DEST}/share/applications/br.com.biglinux.microphone.desktop"
+
+      # AppStream metadata (Flathub gate)
+      - install -Dm644 usr/share/metainfo/br.com.biglinux.microphone.metainfo.xml
+          "${FLATPAK_DEST}/share/metainfo/br.com.biglinux.microphone.metainfo.xml"
+
+      # App icon
+      - install -Dm644 usr/share/icons/hicolor/scalable/apps/br.com.biglinux.microphone.svg
+          "${FLATPAK_DEST}/share/icons/hicolor/scalable/apps/br.com.biglinux.microphone.svg"
+
+      # Status icons (used by the host Plasma applet, harmless to ship)
+      - install -Dm644 usr/share/icons/hicolor/scalable/status/big-noise-reduction-on.svg
+          "${FLATPAK_DEST}/share/icons/hicolor/scalable/status/big-noise-reduction-on.svg"
+      - install -Dm644 usr/share/icons/hicolor/scalable/status/big-noise-reduction-off.svg
+          "${FLATPAK_DEST}/share/icons/hicolor/scalable/status/big-noise-reduction-off.svg"
+
+      # Didactic illustrations rendered inside the GTK preference cards
+      - install -d "${FLATPAK_DEST}/share/biglinux-microphone/illustrations"
+      - |
+        for svg in usr/share/biglinux-microphone/illustrations/*.svg; do
+          install -m644 "$svg" "${FLATPAK_DEST}/share/biglinux-microphone/illustrations/"
+        done
+
+      # Compile + install translations
+      - |
+        for po in po/*.po; do
+          lang="$(basename "$po" .po)"
+          locale_dir="${lang//-/_}"
+          msgfmt -o "/tmp/${lang}.mo" "$po"
+          install -Dm644 "/tmp/${lang}.mo" \
+            "${FLATPAK_DEST}/share/locale/${locale_dir}/LC_MESSAGES/biglinux-noise-reduction-pipewire.mo"
+        done
+
+    sources:
+      - type: dir
+        # Local working tree. For Flathub, swap for a `type: git` block
+        # pinning the release tag and ship `cargo-sources.json` for
+        # offline crate fetching.
+        path: ../..
+        skip:
+          - target
+          - .git
+          - packaging/arch/pkg
+          - packaging/arch/src

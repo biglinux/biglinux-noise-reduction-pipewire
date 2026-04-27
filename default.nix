@@ -1,53 +1,82 @@
 {
-  python3Packages,
-  pipewire,
-  gtk4,
-  libadwaita,
-  gst_all_1,
+  lib,
+  rustPlatform,
   pkg-config,
   wrapGAppsHook4,
-  gobject-introspection,
+  gettext,
+  glib,
+  gtk4,
+  libadwaita,
+  cairo,
+  pipewire,
+  clang,
 }:
 
-python3Packages.buildPythonApplication {
+rustPlatform.buildRustPackage {
   pname = "biglinux-noise-reduction-pipewire";
   version = "5.0.0";
 
-  src = ./.;
+  src = lib.cleanSource ./.;
 
-  pyproject = true;
-
-  build-system = with python3Packages; [ setuptools ];
-  dependencies = with python3Packages; [
-    pygobject3
-    pycairo
-    numpy
-  ];
+  cargoLock = {
+    lockFile = ./Cargo.lock;
+  };
 
   nativeBuildInputs = [
     pkg-config
     wrapGAppsHook4
-    gobject-introspection
+    gettext
+    clang
   ];
 
   buildInputs = [
-    pipewire
+    glib
     gtk4
     libadwaita
-    gst_all_1.gstreamer
-    gst_all_1.gst-plugins-base
-    gst_all_1.gst-plugins-good
+    cairo
+    pipewire
   ];
 
-  postInstall = ''
-    cp $src/usr/share $out/share -r
-    cp $src/usr/bin/* $out/bin/ -r
+  preBuild = ''
+    install -d build-locale
+    for po in po/*.po; do
+      lang=$(basename "$po" .po)
+      install -d "build-locale/''${lang}/LC_MESSAGES"
+      msgfmt -o "build-locale/''${lang}/LC_MESSAGES/biglinux-noise-reduction-pipewire.mo" "$po"
+    done
   '';
 
-  meta = {
-    description = "AI-powered microphone noise reduction with GTK4/Libadwaita interface for PipeWire";
+  postInstall = ''
+    install -Dm644 usr/share/applications/br.com.biglinux.microphone.desktop \
+      "$out/share/applications/br.com.biglinux.microphone.desktop"
+    install -Dm644 usr/share/metainfo/br.com.biglinux.microphone.metainfo.xml \
+      "$out/share/metainfo/br.com.biglinux.microphone.metainfo.xml"
+    install -Dm644 usr/share/icons/hicolor/scalable/apps/br.com.biglinux.microphone.svg \
+      "$out/share/icons/hicolor/scalable/apps/br.com.biglinux.microphone.svg"
+    install -Dm644 usr/share/icons/hicolor/scalable/status/big-noise-reduction-on.svg \
+      "$out/share/icons/hicolor/scalable/status/big-noise-reduction-on.svg"
+    install -Dm644 usr/share/icons/hicolor/scalable/status/big-noise-reduction-off.svg \
+      "$out/share/icons/hicolor/scalable/status/big-noise-reduction-off.svg"
+
+    install -d "$out/share/biglinux-microphone/illustrations"
+    install -m644 usr/share/biglinux-microphone/illustrations/*.svg \
+      "$out/share/biglinux-microphone/illustrations/"
+
+    install -Dm644 usr/share/plasma/plasmoids/org.biglinux.micnoise/metadata.json \
+      "$out/share/plasma/plasmoids/org.biglinux.micnoise/metadata.json"
+    install -Dm644 usr/share/plasma/plasmoids/org.biglinux.micnoise/contents/ui/main.qml \
+      "$out/share/plasma/plasmoids/org.biglinux.micnoise/contents/ui/main.qml"
+
+    for mo in build-locale/*/LC_MESSAGES/*.mo; do
+      install -Dm644 "$mo" "$out/share/''${mo#build-}"
+    done
+  '';
+
+  meta = with lib; {
+    description = "AI-powered noise reduction for microphone and system audio (PipeWire + GTK4)";
     homepage = "https://github.com/biglinux/biglinux-noise-reduction-pipewire";
-    license = "GPL-3.0-or-later";
-    mainProgram = "big-microphone-noise-reduction";
+    license = licenses.gpl3Plus;
+    platforms = platforms.linux;
+    mainProgram = "biglinux-microphone";
   };
 }

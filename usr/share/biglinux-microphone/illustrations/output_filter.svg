@@ -1,0 +1,28 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 80">
+  <!-- Speaker icon -->
+  <g transform="translate(86,22)">
+    <rect x="0" y="6" width="6" height="14" fill="#3584e4"/>
+    <polygon points="6,4 18,-4 18,30 6,22" fill="#3584e4"/>
+    <path d="M22,6 Q26,13 22,20" stroke="#3584e4" stroke-width="1.5" fill="none"/>
+    <path d="M26,2 Q32,13 26,24" stroke="#3584e4" stroke-width="1.5" fill="none" opacity="0.6"/>
+  </g>
+  <!-- Source / app icons (left) -->
+  <g transform="translate(8,16)">
+    <rect x="0" y="0" width="14" height="10" rx="2" fill="#999" opacity="0.6"/>
+    <rect x="0" y="14" width="14" height="10" rx="2" fill="#999" opacity="0.6"/>
+    <rect x="0" y="28" width="14" height="10" rx="2" fill="#999" opacity="0.6"/>
+    <text x="7" y="7" font-family="sans-serif" font-size="4" fill="#fff" text-anchor="middle">app</text>
+    <text x="7" y="21" font-family="sans-serif" font-size="4" fill="#fff" text-anchor="middle">app</text>
+    <text x="7" y="35" font-family="sans-serif" font-size="4" fill="#fff" text-anchor="middle">app</text>
+  </g>
+  <!-- Filter box (center) -->
+  <rect x="42" y="20" width="32" height="22" rx="4" fill="none" stroke="#3584e4" stroke-width="1.5"/>
+  <text x="58" y="34" font-family="sans-serif" font-size="6" fill="#3584e4" text-anchor="middle">filter</text>
+  <!-- Arrows -->
+  <line x1="22" y1="22" x2="42" y2="26" stroke="#3584e4" stroke-width="1"/>
+  <line x1="22" y1="36" x2="42" y2="32" stroke="#3584e4" stroke-width="1"/>
+  <line x1="22" y1="50" x2="42" y2="38" stroke="#3584e4" stroke-width="1"/>
+  <line x1="74" y1="32" x2="86" y2="32" stroke="#3584e4" stroke-width="1.5"/>
+  <polygon points="86,29 92,32 86,35" fill="#3584e4"/>
+  <text x="60" y="76" font-family="sans-serif" font-size="5.5" fill="#999" text-anchor="middle">Cleans whatever your speakers play</text>
+</svg>

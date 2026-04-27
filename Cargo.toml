@@ -1,0 +1,122 @@
+[package]
+name = "biglinux-microphone"
+version = "5.0.0"
+edition = "2021"
+authors = ["BigLinux Team <dev@biglinux.com.br>"]
+license = "GPL-3.0-or-later"
+description = "AI-powered microphone noise reduction with GTK4/libadwaita interface for PipeWire"
+homepage = "https://github.com/biglinux/biglinux-noise-reduction-pipewire"
+repository = "https://github.com/biglinux/biglinux-noise-reduction-pipewire"
+rust-version = "1.82"
+
+[lib]
+name = "biglinux_microphone"
+path = "src/lib.rs"
+
+[[bin]]
+name = "biglinux-microphone"
+path = "src/bin/gui.rs"
+
+[[bin]]
+name = "biglinux-microphone-cli"
+path = "src/bin/cli.rs"
+
+[profile.release]
+codegen-units = 1
+lto = true
+strip = true
+opt-level = 3
+
+[profile.dev]
+opt-level = 1
+
+[dependencies]
+# Serialization (settings.json persistence)
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+
+# Logging
+log = "0.4"
+pretty_env_logger = "0.5"
+
+# XDG directories for config/data/cache discovery
+dirs = "6"
+
+# PipeWire client — registry listening, node property inspection, live
+# parameter updates (Props). libspa is re-exported by `pipewire::spa`, so
+# we don't depend on it directly until the SPA POD builder for live
+# parameter updates lands in a later stage.
+pipewire = "0.9"
+
+# Cross-thread channel between the PipeWire main-loop thread and the UI
+# (or CLI) consumer.
+async-channel = "2"
+
+# FFT for the spectrum analyser. `rustfft` is pure Rust, so no libffts
+# FFI to worry about — and it compiles under Miri for unit tests.
+rustfft = "6"
+
+# GTK4 + libadwaita stack for the configuration GUI. Versions match the
+# big-media-player project to keep the shared knowledge base consistent.
+adw = { version = "0.9", features = ["v1_8"], package = "libadwaita" }
+gtk = { version = "0.11", features = ["v4_20"], package = "gtk4" }
+glib = "0.22"
+gio = "0.22"
+cairo = { version = "0.22", package = "cairo-rs" }
+
+# gettext bindings for translating user-facing strings.
+gettext-rs = { version = "0.7", features = ["gettext-system"] }
+
+[dev-dependencies]
+tempfile = "3"
+
+[package.metadata.cargo-machete]
+# gettext-rs exposes its API under the `gettextrs` crate name, which
+# machete's name matcher doesn't see through.
+ignored = ["gettext-rs"]
+
+[lints.clippy]
+pedantic = { level = "warn", priority = -1 }
+# Suppress noisy pedantic lints for GTK / subprocess-heavy projects
+module_name_repetitions = "allow"
+must_use_candidate = "allow"
+missing_errors_doc = "allow"
+missing_panics_doc = "allow"
+cast_possible_truncation = "allow"
+cast_sign_loss = "allow"
+cast_precision_loss = "allow"
+cast_possible_wrap = "allow"
+doc_markdown = "allow"
+wildcard_imports = "allow"
+similar_names = "allow"
+items_after_statements = "allow"
+option_if_let_else = "allow"
+needless_pass_by_value = "allow"
+too_many_lines = "allow"
+struct_excessive_bools = "allow"
+fn_params_excessive_bools = "allow"
+
+# ── Restriction lints (opt-in, high value) ────────────────────────
+dbg_macro = "warn"
+todo = "warn"
+rc_buffer = "warn"
+rc_mutex = "warn"
+verbose_file_reads = "warn"
+unseparated_literal_suffix = "warn"
+
+# ── FFI / unsafe hygiene ──────────────────────────────────────────
+not_unsafe_ptr_arg_deref = "deny"
+ptr_as_ptr = "warn"
+
+# ── Allowed after review ──────────────────────────────────────────
+float_cmp = "allow"  # preset values use exact equality by design
+
+[lints.rust]
+unsafe_op_in_unsafe_fn = "warn"
+dead_code = "warn"
+unused_imports = "warn"
+unused_variables = "warn"
+unused_mut = "warn"
+unreachable_code = "warn"
+unreachable_patterns = "warn"
+trivial_numeric_casts = "warn"
