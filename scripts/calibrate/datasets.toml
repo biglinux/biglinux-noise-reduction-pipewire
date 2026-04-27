@@ -1,0 +1,48 @@
+# Manifest of external resources used by the calibration system.
+#
+# Files listed here are NEVER committed to the repo — they're fetched
+# into the cache directory (`scripts/calibrate/setup.sh` resolves it
+# from $XDG_CACHE_HOME or `~/.cache/biglinux-noise-reduction-pipewire/`)
+# and re-downloaded if missing. Pin checksums whenever upstream provides
+# them so a calibration run from scratch is reproducible.
+
+[dnsmos]
+# Microsoft DNSMOS P.835 reference model — predicts SIG/BAK/OVRL MOS
+# without a clean reference signal. ~50 MB. License: MIT.
+description = "DNSMOS P.835 ONNX (no-reference speech quality MOS)"
+url = "https://raw.githubusercontent.com/microsoft/DNS-Challenge/master/DNSMOS/DNSMOS/sig_bak_ovr.onnx"
+target = "models/dnsmos/sig_bak_ovr.onnx"
+
+[dnsmos_p808]
+description = "DNSMOS P.808 (overall MOS, single-head, faster)"
+url = "https://raw.githubusercontent.com/microsoft/DNS-Challenge/master/DNSMOS/DNSMOS/model_v8.onnx"
+target = "models/dnsmos/model_v8.onnx"
+
+# DNS Challenge full corpus is ~500 GB — far too big. We grab a subset
+# of the noisy/clean pairs from the test set (DNS-5 blind set is ~5 GB).
+# Each entry is unpacked into `<cache>/datasets/dns/`.
+[[dataset]]
+id = "dns5_blind_test"
+description = "DNS Challenge 5 blind test set — noisy/clean pairs (~5 GB)"
+# Microsoft hosts the blind set on Azure storage; the manifest below is
+# stable but the URL may rotate. Update via `setup.sh --refresh-manifest`
+# if downloads start 404'ing.
+url = "https://github.com/microsoft/DNS-Challenge/raw/master/manifests/blind_testset_5.tsv"
+target = "datasets/dns/manifest.tsv"
+fetch_strategy = "manifest"
+
+# Local samples already in the workspace — no download, just discovered.
+[local_samples]
+description = "Real recordings already in /home/bruno/codigo-pacotes/multimidia"
+search_root = "/home/bruno/codigo-pacotes/multimidia"
+patterns = [
+    "audio-com-ruido-de-carro.ogg",
+    "ruido-embrulho-de-doce.wav",
+    "ruido-ate-10-minut-e-5-segundos-e-apos-isso-tem-fala.wav",
+    "ruidos.wav",
+    "fala-sobre-arcade-audio-limpo-mas-com-outros-sons-em-algumas-partes.m4a",
+    "assim-teste.wav",
+    "mic_aec.wav",
+    "testando.wav",
+    "esta.wav",
+]

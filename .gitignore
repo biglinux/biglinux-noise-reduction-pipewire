@@ -31,3 +31,13 @@ Thumbs.db
 *.profraw
 tarpaulin-report.html
 cobertura.xml
+
+# Calibration system: virtualenv + ad-hoc artefacts. Models and
+# datasets fetched by setup.sh live in $XDG_CACHE_HOME, never inside
+# the repo, but cover stray local copies just in case.
+scripts/calibrate/.venv/
+scripts/calibrate/**/__pycache__/
+scripts/calibrate/reports/
+scripts/calibrate/signals/
+scripts/calibrate/models/
+scripts/calibrate/datasets/
