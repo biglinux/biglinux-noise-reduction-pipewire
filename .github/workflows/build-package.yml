@@ -7,7 +7,6 @@ on:
   workflow_dispatch:
   push:
     branches:
-      - "main"
       - "**stable**"
       - "**testing**"
 
@@ -45,4 +44,3 @@ jobs:
       #     webhook_url: https://nebulaapi.nimbusnetwork.dev/webhook
       #     webhook_secret: ${{ secrets.WEBHOOK_TOKEN }}
       #     data: '{ "event_type": "${{ github.repository }}", "branch": "${{ github.ref_name }}", "url": "https://github.com/${{ github.repository }}"}'
-
