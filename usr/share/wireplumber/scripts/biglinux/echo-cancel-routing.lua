@@ -55,6 +55,13 @@ local function metadata_object (source, name)
 end
 
 local function disable_legacy_aec_smart_filter (source, si)
+  -- Cheap short-circuit: linkable's own properties already carry the
+  -- node name, so we can bail before allocating the node proxy. The
+  -- hook fires for every `session-item-added`; this keeps the cost
+  -- O(1) for streams that aren't `echo-cancel-source`.
+  if si.properties ["node.name"] ~= EC_SOURCE_NAME then
+    return
+  end
   local node = si:get_associated_proxy ("node")
   if node == nil or node.properties ["node.name"] ~= EC_SOURCE_NAME then
     return
@@ -452,6 +459,70 @@ SimpleEventHook {
 -- stays wrong until the next unrelated rescan. Force a rescan as soon
 -- as we see the new linkable so the sink-target hook above re-runs
 -- and `maybe_retarget_output_smart_filter` re-evaluates routing.
+-- React to default sink/source changes. `wpctl set-default` (or any
+-- other client writing to the `default` metadata) does not emit a
+-- `session-item-added`, so the hooks above never re-evaluate. Without
+-- this hook, switching the default sink while a stream is already
+-- linked leaves the AEC reference and the `output-biglinux` smart
+-- filter pinned to the previous target. Listening on metadata changes
+-- closes that gap by re-running the smart-filter retarget and asking
+-- the linker to re-evaluate every link.
+SimpleEventHook {
+  name = "biglinux/default-changed-rescan",
+  interests = {
+    EventInterest {
+      Constraint { "event.type", "=", "metadata-changed" },
+      Constraint { "metadata.name", "=", "default" },
+      Constraint { "event.subject.key", "c",
+        "default.configured.audio.sink",
+        "default.audio.sink",
+        "default.configured.audio.source",
+        "default.audio.source",
+      },
+    },
+  },
+  execute = function (event)
+    local source = event:get_source ()
+    local om = source:call ("get-object-manager", "session-item")
+    maybe_retarget_output_smart_filter (source, om)
+    source:call ("schedule-rescan", "linking")
+    log:info ("default audio metadata changed; scheduled rescan")
+  end
+}:register ()
+
+-- Mirror of `output-smart-filter-retarget` for removals. When
+-- `jamesdsp_sink` (or `output-biglinux` itself) goes away, we need to
+-- reconcile the `filters` metadata so the override does not keep
+-- pointing at a node that no longer exists. `session-item-added` does
+-- not cover this — only `session-item-removed` fires when a sink is
+-- unloaded, e.g. JamesDSP being stopped or re-launched.
+SimpleEventHook {
+  name = "biglinux/session-item-removed-retarget",
+  interests = {
+    EventInterest {
+      Constraint { "event.type", "=", "session-item-removed" },
+      Constraint { "event.session-item.interface", "=", "linkable" },
+    },
+  },
+  execute = function (event)
+    local si = event:get_subject ()
+    if si == nil then
+      return
+    end
+    local name = si.properties ["node.name"]
+    -- Only react to nodes that participate in the smart-filter wiring.
+    -- Any other linkable being removed cannot affect our routing, and
+    -- skipping early keeps removal storms cheap (e.g. when a browser
+    -- tab tears down dozens of streams at once).
+    if name ~= JAMESDSP_SINK_NAME and name ~= OUTPUT_FILTER_NODE_NAME then
+      return
+    end
+    local source = event:get_source ()
+    local om = source:call ("get-object-manager", "session-item")
+    maybe_retarget_output_smart_filter (source, om)
+  end
+}:register ()
+
 SimpleEventHook {
   name = "biglinux/jamesdsp-sink-rescan",
   before = "linking/rescan-trigger",
