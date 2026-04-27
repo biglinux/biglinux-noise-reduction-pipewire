@@ -8,30 +8,138 @@ on:
 
 env:
   CARGO_TERM_COLOR: always
+  RUSTFLAGS: -D warnings
+
+permissions:
+  contents: read
+
+# Cancel in-progress runs for the same ref. Pushing a fixup wastes
+# nothing.
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
 
 jobs:
-  check:
+  fmt:
+    name: rustfmt
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-
-      - name: Setup Rust
-        uses: dtolnay/rust-toolchain@stable
+      - uses: dtolnay/rust-toolchain@stable
         with:
-          components: clippy, rustfmt
+          components: rustfmt
+      - run: cargo fmt --all --check
 
+  clippy:
+    name: clippy (strict)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          components: clippy
       - uses: Swatinem/rust-cache@v2
+      - run: cargo clippy --all-targets --all-features -- -D warnings
 
-      - name: Install cargo tools
-        run: |
-          cargo install cargo-deny --locked
-          cargo install cargo-machete --locked
+  test:
+    name: tests
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+      - uses: Swatinem/rust-cache@v2
+      - run: cargo test --all-features --locked
 
-      - name: Install lizard (cyclomatic complexity)
+  msrv:
+    name: MSRV (1.82)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@1.82.0
+      - uses: Swatinem/rust-cache@v2
+      - run: cargo build --all-features --locked
+
+  release-build:
+    name: release build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+      - uses: Swatinem/rust-cache@v2
+      - run: cargo build --release --locked
+
+  deny:
+    name: cargo-deny (advisories + licenses + bans)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: EmbarkStudios/cargo-deny-action@v2
+        with:
+          command: check
+
+  machete:
+    name: cargo-machete (unused deps)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: bnjbvr/cargo-machete@main
+
+  typos:
+    name: typos (spellcheck)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: crate-ci/typos@master
+
+  complexity:
+    name: lizard (CCN <= 25) + jscpd (duplication)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install lizard
         run: pipx install lizard
-
-      - name: Install jscpd (duplicate-code detector)
+      - name: Install jscpd
         run: npm install -g jscpd
+      - name: Cyclomatic complexity
+        run: lizard src/ -l rust -C 25 -w
+      - name: Duplicate-code detector
+        run: jscpd --min-lines 50 --min-tokens 100 --threshold 5 --reporters console --silent src/
 
-      - name: Canonical quality gate
-        run: bash scripts/quality-check.sh --ci
+  i18n:
+    name: gettext catalogs (msgfmt -c)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install gettext
+        run: sudo apt-get update && sudo apt-get install -y gettext
+      - name: Validate every .po
+        run: |
+          fail=0
+          for po in po/*.po; do
+            if ! msgfmt -c -o /dev/null "$po" 2>&1; then
+              echo "::error file=$po::invalid catalog"
+              fail=1
+            fi
+          done
+          exit "$fail"
+
+  flatpak-manifest:
+    name: flatpak manifest lint
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: YAML parse
+        run: python3 -c "import yaml; yaml.safe_load(open('packaging/flatpak/br.com.biglinux.microphone.yml'))"
+
+  shell:
+    name: shellcheck
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: ludeeus/action-shellcheck@master
+        env:
+          SHELLCHECK_OPTS: -e SC2034,SC2154
+        with:
+          scandir: ./scripts
+          additional_files: |
+            packaging/flatpak/generate-cargo-sources.sh
