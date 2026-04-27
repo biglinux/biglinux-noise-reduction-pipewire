@@ -11,6 +11,8 @@ log = Log.open_topic ("s-biglinux-aec")
 
 local EC_CAPTURE_NODE_NAME = "echo-cancel-capture"
 local EC_SOURCE_NAME = "echo-cancel-source"
+local EC_SINK_NODE_NAME = "echo-cancel-sink"
+local JAMESDSP_SINK_NAME = "jamesdsp_sink"
 
 local VIRTUAL_SOURCE_NAMES = {
   ["mic-biglinux"] = true,
@@ -103,6 +105,21 @@ local function is_real_capture_source (si)
   end
 
   return true
+end
+
+local function lookup_sink_by_name (om, name)
+  if name == nil then
+    return nil
+  end
+
+  for si in om:iterate { type = "SiLinkable" } do
+    local props = si.properties
+    if props ["node.name"] == name
+        and props ["media.class"] == "Audio/Sink" then
+      return si
+    end
+  end
+  return nil
 end
 
 local function lookup_real_source_by_name (om, name)
@@ -230,5 +247,67 @@ SimpleEventHook {
     log:info (si,
       "routing echo cancel capture to "
       .. tostring (target.properties ["node.name"]))
+  end
+}:register ()
+
+-- When JamesDSP is active, all streams that actually reach the speakers
+-- end up mixed into `jamesdsp_sink` (either directly, when JamesDSP
+-- moves an app's stream onto its own sink, or via the BigLinux output
+-- filter whose `output-biglinux-out` is itself moved there). The
+-- default routing of `echo-cancel-sink` only sees `output-biglinux`,
+-- so streams that JamesDSP relocates bypass the AEC reference and
+-- their echo path can no longer be subtracted. Pin the AEC reference
+-- to `jamesdsp_sink` whenever it exists so the cancellation matches
+-- the post-effect signal that physically plays.
+SimpleEventHook {
+  name = "biglinux/echo-cancel-sink-target",
+  after = "linking/find-defined-target",
+  before = {
+    "linking/find-filter-target",
+    "linking/find-default-target",
+    "linking/find-best-target",
+    "linking/prepare-link",
+  },
+  interests = {
+    EventInterest {
+      Constraint { "event.type", "=", "select-target" },
+    },
+  },
+  execute = function (event)
+    local source, om, si, si_props, si_flags, target =
+        lutils:unwrap_select_target_event (event)
+
+    if si_props ["node.name"] ~= EC_SINK_NODE_NAME then
+      return
+    end
+
+    -- Note: do NOT bail when `target` is already set. The AEC module
+    -- runs with `monitor.mode = true`, so the default sink is baked
+    -- into `target.object` and resolved before this hook fires. We
+    -- still want to replace that pre-resolved target with
+    -- `jamesdsp_sink` whenever it exists.
+    local candidate = lookup_sink_by_name (om, JAMESDSP_SINK_NAME)
+    if not candidate then
+      log:info (si, "no jamesdsp_sink present, leaving AEC reference as-is")
+      return
+    end
+
+    if not lutils.canLink (si_props, candidate) then
+      log:warning (si, "jamesdsp_sink is not linkable as AEC reference")
+      return
+    end
+
+    local passthrough_compatible, can_passthrough =
+        lutils.checkPassthroughCompatibility (si, candidate)
+    if not passthrough_compatible then
+      log:warning (si, "jamesdsp_sink passthrough incompatible")
+      return
+    end
+
+    si_flags.has_defined_target = true
+    si_flags.has_node_defined_target = false
+    si_flags.can_passthrough = can_passthrough
+    event:set_data ("target", candidate)
+    log:warning (si, "routing AEC reference to " .. JAMESDSP_SINK_NAME)
   end
 }:register ()
