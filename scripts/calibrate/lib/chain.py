@@ -167,8 +167,10 @@ def apply_gtcrn(
 ) -> np.ndarray:
     """Run GTCRN denoiser on `x`. `strength` blends dry/wet (1.0=full).
 
-    Resamples to 16 kHz internally if the input is at a different rate
-    (production runs at 48 kHz, this mirrors the LADSPA STFT shim)."""
+    The shipped ONNX is the **streaming** GTCRN: it processes one STFT
+    frame per call and carries three recurrent caches (`conv_cache`,
+    `tra_cache`, `inter_cache`) between calls. Cache shapes match the
+    LADSPA wrapper at `ladspa/src/model.rs`."""
     sess = session.ensure_loaded()
     if sess is None:
         return x.astype(np.float32)
@@ -179,35 +181,60 @@ def apply_gtcrn(
     else:
         x16 = x.astype(np.float32)
 
-    # STFT framing
     win = np.hanning(GTCRN_NFFT).astype(np.float32)
     n_frames = 1 + max(0, (len(x16) - GTCRN_NFFT) // GTCRN_HOP)
     if n_frames <= 0:
         return x.astype(np.float32)
 
-    spec = np.zeros((1, GTCRN_BINS, n_frames, 2), dtype=np.float32)
-    for f in range(n_frames):
-        seg = x16[f * GTCRN_HOP : f * GTCRN_HOP + GTCRN_NFFT] * win
-        S = np.fft.rfft(seg, n=GTCRN_NFFT)
-        spec[0, :, f, 0] = S.real
-        spec[0, :, f, 1] = S.imag
+    # Initial caches — zero state, shapes mirror LADSPA `model.rs`.
+    conv_cache = np.zeros((2, 1, 16, 16, 33), dtype=np.float32)
+    tra_cache = np.zeros((2, 3, 1, 1, 16), dtype=np.float32)
+    inter_cache = np.zeros((2, 1, 33, 16), dtype=np.float32)
 
-    inputs = {sess.get_inputs()[0].name: spec}
-    out = sess.run(None, inputs)[0]  # [1, bins, frames, 2]
+    # Resolve input names once. Order in the model file: mix, conv,
+    # tra, inter — but we look them up to be defensive.
+    in_names = [i.name for i in sess.get_inputs()]
+    name_mix = next(n for n in in_names if "mix" in n.lower() or n == in_names[0])
+    name_conv = next(n for n in in_names if "conv" in n.lower())
+    name_tra = next(n for n in in_names if "tra" in n.lower())
+    name_inter = next(n for n in in_names if "inter" in n.lower())
+
     enhanced = np.zeros_like(x16)
     norm = np.zeros_like(x16) + 1e-9
+
     for f in range(n_frames):
-        S = out[0, :, f, 0] + 1j * out[0, :, f, 1]
-        seg = np.fft.irfft(S, n=GTCRN_NFFT).astype(np.float32) * win
-        enhanced[f * GTCRN_HOP : f * GTCRN_HOP + GTCRN_NFFT] += seg
+        seg = x16[f * GTCRN_HOP : f * GTCRN_HOP + GTCRN_NFFT] * win
+        S = np.fft.rfft(seg, n=GTCRN_NFFT).astype(np.complex64)
+        spec_in = np.zeros((1, GTCRN_BINS, 1, 2), dtype=np.float32)
+        spec_in[0, :, 0, 0] = S.real
+        spec_in[0, :, 0, 1] = S.imag
+
+        outputs = sess.run(
+            None,
+            {
+                name_mix: spec_in,
+                name_conv: conv_cache,
+                name_tra: tra_cache,
+                name_inter: inter_cache,
+            },
+        )
+        # Output 0 is the enhanced spectrum; 1..3 are updated caches.
+        enh = outputs[0]
+        conv_cache = outputs[1]
+        tra_cache = outputs[2]
+        inter_cache = outputs[3]
+
+        S_enh = enh[0, :, 0, 0] + 1j * enh[0, :, 0, 1]
+        time = np.fft.irfft(S_enh, n=GTCRN_NFFT).astype(np.float32) * win
+        enhanced[f * GTCRN_HOP : f * GTCRN_HOP + GTCRN_NFFT] += time
         norm[f * GTCRN_HOP : f * GTCRN_HOP + GTCRN_NFFT] += win * win
+
     enhanced = enhanced / norm
 
     if sr != GTCRN_SR:
         from scipy.signal import resample_poly
 
         enhanced = resample_poly(enhanced, sr, GTCRN_SR).astype(np.float32)
-    # Length match (resample_poly may round)
     n = min(len(enhanced), len(x))
     enhanced = enhanced[:n]
     dry = x[:n].astype(np.float32)

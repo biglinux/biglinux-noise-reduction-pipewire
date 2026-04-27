@@ -136,7 +136,7 @@ def main() -> int:
     if not args.samples_dir:
         args.samples_dir = [
             Path("/home/bruno/codigo-pacotes/multimidia"),
-            _default_cache() / "datasets/dns/wav",
+            _default_cache() / "datasets/voicebank_demand/noisy_testset_wav",
             _default_cache() / "signals",
         ]
 

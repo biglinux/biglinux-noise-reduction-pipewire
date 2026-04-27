@@ -36,9 +36,9 @@ What `setup.sh` fetches:
 
 | Resource | Size | Path |
 |---|---|---|
-| DNSMOS P.835 ONNX | ~50 MB | `<cache>/models/dnsmos/sig_bak_ovr.onnx` |
-| DNSMOS P.808 ONNX | ~50 MB | `<cache>/models/dnsmos/model_v8.onnx` |
-| DNS-5 blind set   | ~5 GB  | `<cache>/datasets/dns/wav/` |
+| DNSMOS P.835 ONNX     | ~1 MB    | `<cache>/models/dnsmos/sig_bak_ovr.onnx` |
+| DNSMOS P.808 ONNX     | ~220 KB  | `<cache>/models/dnsmos/model_v8.onnx` |
+| VoiceBank+DEMAND test | ~250 MB  | `<cache>/datasets/voicebank_demand/{clean,noisy}_testset_wav/` |
 
 GTCRN ONNX is not fetched: the sibling project at
 `/home/bruno/codigo-pacotes/multimidia/gtcrn-ladspa/ladspa/models/`

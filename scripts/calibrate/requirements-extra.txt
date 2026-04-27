@@ -1,0 +1,8 @@
+# Optional metrics. Install with `pip install -r requirements-extra.txt`
+# after the base venv is up. Both bring native code that may need a
+# matching Python ABI (no wheels on Python 3.14 at time of writing).
+#
+# pesq         — ITU-T P.862 wideband; needs a C compiler.
+# faster-whisper — WER scoring; pulls torch/ctranslate2.
+pesq>=0.0.4
+faster-whisper>=1.0

@@ -46,10 +46,25 @@ if [[ $SKIP_DEPS -eq 0 ]]; then
     if [[ ! -d "$VENV" ]]; then
         python3 -m venv "$VENV"
     fi
+    # Many distros mount /tmp `noexec`, which breaks pip when it tries
+    # to dlopen build-env .so files (numpy/scipy header probes fail
+    # with "failed to map segment from shared object"). Point pip at an
+    # exec-friendly tempdir under the venv so wheels from source can
+    # actually finish building.
+    export TMPDIR="$VENV/tmp"
+    mkdir -p "$TMPDIR"
+
     # shellcheck disable=SC1091
     source "$VENV/bin/activate"
     python -m pip install --upgrade pip wheel
     python -m pip install -r "$SCRIPT_DIR/requirements.txt"
+    if [[ -f "$SCRIPT_DIR/requirements-extra.txt" ]]; then
+        # Optional native deps (pesq, faster-whisper). Best-effort: a
+        # failure here does not block the rest of the bootstrap because
+        # PESQ and WER are nice-to-have on top of DNSMOS + STOI.
+        python -m pip install -r "$SCRIPT_DIR/requirements-extra.txt" || \
+            printf '  WARNING: optional metrics (pesq/whisper) failed to install — continuing.\n'
+    fi
     deactivate
 fi
 
@@ -75,47 +90,39 @@ if [[ $SKIP_MODELS -eq 0 ]]; then
         "$CACHE_ROOT/models/dnsmos/model_v8.onnx"
 fi
 
-# ── DNS-5 blind set (~5 GB) ─────────────────────────────────────────
-# The DNS-Challenge repo distributes the blind set as TSV manifests
-# pointing at Azure blob URLs. We pull the manifest and iterate.
+# ── VoiceBank+DEMAND test set (~250 MB) ─────────────────────────────
+# The Microsoft DNS-Challenge blind manifests broke (404 against
+# `master`). VoiceBank+DEMAND is the long-standing Edinburgh DataShare
+# benchmark for speech enhancement and gives us paired clean/noisy
+# WAVs at 48 kHz — exactly what the chain emulator needs to score
+# PESQ/STOI/SI-SDR alongside the no-reference DNSMOS metric.
 if [[ $SKIP_DATASET -eq 0 ]]; then
-    printf '\n[2/2] DNS-5 blind test set (~5 GB) into %s\n' "$CACHE_ROOT/datasets/dns/"
-    MANIFEST="$CACHE_ROOT/datasets/dns/blind_testset_5.tsv"
-    fetch \
-        "https://raw.githubusercontent.com/microsoft/DNS-Challenge/master/manifests/blind_testset_5.tsv" \
-        "$MANIFEST" || {
-            printf '  WARNING: blind manifest 404. Falling back to a known stable\n'
-            printf '           noisy-only subset (~2 GB) from the V3 release.\n'
-            fetch \
-                "https://github.com/microsoft/DNS-Challenge/raw/interspeech2021/datasets/test_set/synthetic/no_reverb/noisy/manifest.txt" \
-                "$MANIFEST"
-        }
+    DS_DIR="$CACHE_ROOT/datasets/voicebank_demand"
+    mkdir -p "$DS_DIR"
+    printf '\n[2/2] VoiceBank+DEMAND test set into %s\n' "$DS_DIR"
 
-    if [[ -f "$MANIFEST" ]]; then
-        WAV_DIR="$CACHE_ROOT/datasets/dns/wav"
-        mkdir -p "$WAV_DIR"
-        # Manifest format varies; treat each non-empty, non-comment line
-        # as either a URL or a relative path under the DNS-Challenge LFS
-        # tree. We dedupe and rate-limit to be polite.
-        TOTAL=$(grep -cvE '^#|^$' "$MANIFEST" || echo 0)
-        i=0
-        while IFS= read -r line; do
-            [[ -z "$line" || "$line" == \#* ]] && continue
-            i=$((i + 1))
-            url="$line"
-            [[ "$url" != http* ]] && \
-                url="https://raw.githubusercontent.com/microsoft/DNS-Challenge/master/$line"
-            name="$(basename "$url")"
-            dest="$WAV_DIR/$name"
-            if [[ -f "$dest" && $FORCE -eq 0 ]]; then
-                continue
-            fi
-            printf '  [%d/%d] %s\n' "$i" "$TOTAL" "$name"
-            curl -fsSL --retry 2 --retry-delay 2 -o "$dest.partial" "$url" && \
-                mv "$dest.partial" "$dest" || \
-                printf '    skip (fetch failed): %s\n' "$name"
-        done < "$MANIFEST"
-    fi
+    # Edinburgh DataShare DOI 10.7488/ds/2117. The handle URLs are
+    # stable since 2017 and serve direct ZIPs.
+    BASE="https://datashare.ed.ac.uk/bitstream/handle/10283/2791"
+    for archive in clean_testset_wav noisy_testset_wav; do
+        zip="$DS_DIR/${archive}.zip"
+        ok="$DS_DIR/${archive}/.extracted"
+        if [[ -f "$ok" && $FORCE -eq 0 ]]; then
+            printf '  skip (extracted): %s\n' "$archive"
+            continue
+        fi
+        fetch "$BASE/${archive}.zip" "$zip" || {
+            printf '  WARNING: %s download failed — skipping.\n' "$archive"
+            continue
+        }
+        rm -rf "$DS_DIR/${archive}"
+        if unzip -q -o "$zip" -d "$DS_DIR"; then
+            : > "$DS_DIR/${archive}/.extracted"
+            rm -f "$zip"
+        else
+            printf '  WARNING: failed to unzip %s — keeping the .zip.\n' "$archive"
+        fi
+    done
 fi
 
 printf '\nDone. Cache root: %s\n' "$CACHE_ROOT"
