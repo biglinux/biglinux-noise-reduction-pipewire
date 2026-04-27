@@ -88,9 +88,15 @@ const PRESETS: &[Preset] = &[
         id: "bass_cut",
         bands: [-40.0, -35.0, -25.0, -15.0, -5.0, 0.0, 0.0, 0.0, 0.0, 0.0],
     },
+    // Broadcast-style presence boost: keeps the voice fundamental
+    // intact (0 dB at 125 Hz), trims the "boxy" 250-500 Hz region
+    // that muddies laptop-mic capture, then pushes the consonant
+    // clarity band (2-4 kHz, indices 6-7) where intelligibility
+    // actually lives. A small lift at 8 kHz adds "air" without
+    // amplifying the hiss floor at 16 kHz.
     Preset {
         id: "presence",
-        bands: [-5.0, 0.0, 5.0, 10.0, 15.0, 20.0, 15.0, 10.0, 5.0, 0.0],
+        bands: [0.0, 0.0, 0.0, -3.0, -2.0, 2.0, 8.0, 10.0, 5.0, 0.0],
     },
     Preset {
         id: "custom",
@@ -167,5 +173,29 @@ mod tests {
         assert!(flat.iter().all(|b| (*b - 0.0).abs() < f32::EPSILON));
 
         assert!(eq_preset_bands("nonexistent").is_none());
+    }
+
+    #[test]
+    fn presence_preset_emphasises_consonant_clarity_band() {
+        // Presence is the broadcast intelligibility curve: the gain
+        // peak must land on 2 kHz / 4 kHz (indices 6 and 7) — that's
+        // where the consonants the user actually wants live. A peak
+        // anywhere else means the preset is mislabelled.
+        let bands = eq_preset_bands("presence").expect("presence preset exists");
+        let peak_idx = bands
+            .iter()
+            .enumerate()
+            .max_by(|a, b| a.1.partial_cmp(b.1).unwrap())
+            .map(|(i, _)| i)
+            .unwrap();
+        assert!(
+            peak_idx == 6 || peak_idx == 7,
+            "presence peak must sit on 2 kHz or 4 kHz, got index {peak_idx}",
+        );
+        // Voice fundamental must be untouched — boosting 125 Hz turns
+        // a presence preset into a generic warmth preset.
+        assert!(bands[2].abs() < f32::EPSILON, "125 Hz must stay flat");
+        // 16 kHz hiss must not be amplified.
+        assert!(bands[9] <= 0.0, "16 kHz must not boost hiss");
     }
 }
