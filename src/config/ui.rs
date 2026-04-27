@@ -42,6 +42,11 @@ impl WindowConfig {
 #[serde(default)]
 pub struct UiConfig {
     pub show_advanced: bool,
+    /// Set when the user ticks "do not warn again" in the dialog that
+    /// flags a stale `~/.local/share/wireplumber/scripts/biglinux/`
+    /// override. Persisted so the warning does not reappear on every
+    /// app launch once the user has acknowledged it.
+    pub dismiss_wp_override_warning: bool,
 }
 
 #[cfg(test)]

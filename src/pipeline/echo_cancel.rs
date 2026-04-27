@@ -135,6 +135,7 @@ pub fn build_echo_cancel_conf(_settings: &AppSettings) -> String {
          \x20           monitor.mode = true\n\
          \x20           audio.rate = 48000\n\
          \x20           audio.channels = 1\n\
+         \x20           audio.position = [ MONO ]\n\
          \x20           buffer.max_size = 250\n\
          \x20           capture.props = {{\n\
          \x20               node.name    = \"{EC_CAPTURE_NODE_NAME}\"\n\
@@ -216,11 +217,20 @@ mod tests {
         // WebRTC AEC processes 10 ms frames. 960/48000 is exactly two
         // frames; 1024/48000 would make libspa-aec-webrtc return errors
         // under load.
+        //
+        // `audio.channels = 1` + `audio.position = [ MONO ]` keep the
+        // AEC mono. The mic is mono and `libspa-aec-webrtc` expects
+        // ref and capture channel counts to match. Stereo content from
+        // the physical speaker monitor is downmixed to mono by
+        // PipeWire's audioconvert when WirePlumber links the stereo
+        // sink monitor (FL+FR) to this mono input — both channels
+        // reach the canceller, just averaged.
         let conf = build_echo_cancel_conf(&enabled());
         assert!(conf.contains("default.clock.quantum       = 960"));
         assert!(conf.contains("node.latency = 960/48000"));
         assert!(conf.contains("audio.rate = 48000"));
         assert!(conf.contains("audio.channels = 1"));
+        assert!(conf.contains("audio.position = [ MONO ]"));
         assert!(conf.contains("buffer.max_size = 250"));
     }
 

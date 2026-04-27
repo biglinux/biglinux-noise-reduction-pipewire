@@ -16,6 +16,7 @@ use crate::pipeline;
 use crate::services::audio_monitor::{AudioMonitor, MonitorConfig};
 
 use super::state::AppState;
+use super::widgets::wp_override_warning;
 use super::window;
 
 /// Thin wrapper around `adw::Application` that keeps the domain services
@@ -84,6 +85,8 @@ impl MicrophoneApplication {
 
         let window = window::build(&self.inner, Rc::clone(&self.state), Rc::clone(&monitor));
         window.present();
+
+        wp_override_warning::maybe_show(&window, Rc::clone(&self.state));
     }
 
     fn on_shutdown(&self) {

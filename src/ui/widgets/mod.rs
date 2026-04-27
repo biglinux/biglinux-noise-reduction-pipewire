@@ -7,3 +7,4 @@ pub mod didactic;
 pub mod eq_card;
 pub mod source_picker;
 pub mod spectrum;
+pub mod wp_override_warning;

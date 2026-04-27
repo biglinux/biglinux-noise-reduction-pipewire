@@ -7,4 +7,5 @@ src/ui/views/output.rs
 src/ui/views/simple.rs
 src/ui/widgets/eq_card.rs
 src/ui/widgets/source_picker.rs
+src/ui/widgets/wp_override_warning.rs
 usr/share/plasma/plasmoids/org.biglinux.micnoise/contents/ui/main.qml

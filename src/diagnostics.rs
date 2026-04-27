@@ -10,7 +10,7 @@
 //! tools (a future GUI "diagnostics" pane, integration tests, packaging
 //! smoke checks) without depending on the binary target.
 
-use std::path::Path;
+use std::path::{Path, PathBuf};
 use std::process::{Command, ExitCode, Stdio};
 
 use crate::config::gtcrn_plugin;
@@ -24,6 +24,19 @@ const EC_NODE_TAG: &str = "\"echo-cancel-source\"";
 const FILTER_CHAIN_UNIT: &str = "filter-chain.service";
 const OUTPUT_UNIT: &str = "biglinux-microphone-output.service";
 const ECHO_CANCEL_UNIT: &str = "biglinux-microphone-echocancel.service";
+const WP_PACKAGED_LUA: &str = "/usr/share/wireplumber/scripts/biglinux/echo-cancel-routing.lua";
+const WP_USER_LUA_RELATIVE: &str = ".local/share/wireplumber/scripts/biglinux/echo-cancel-routing.lua";
+
+/// Where WirePlumber loads a user-local override of the AEC routing
+/// script from. Anything in this path silently shadows the packaged
+/// copy and is the single most common reason fresh package updates do
+/// nothing on a developer's machine.
+#[must_use]
+pub fn user_local_wp_script_override() -> Option<PathBuf> {
+    let home = std::env::var_os("HOME")?;
+    let path = PathBuf::from(home).join(WP_USER_LUA_RELATIVE);
+    if path.is_file() { Some(path) } else { None }
+}
 
 /// Run every probe and return an [`ExitCode`] equal to the failure count.
 #[must_use]
@@ -40,6 +53,7 @@ pub fn doctor() -> ExitCode {
     check_generated_configs(&mut report);
     check_graph_nodes(&mut report);
     check_echo_cancel(&mut report);
+    check_wireplumber_script(&mut report);
     print_unit_state();
 
     println!();
@@ -162,6 +176,76 @@ fn check_echo_cancel(report: &mut Report) {
         graph_dump.contains(EC_NODE_TAG),
         "pw-cli ls Node | grep echo-cancel-source",
     );
+
+    let link_dump = Command::new("pw-link")
+        .arg("-l")
+        .stdin(Stdio::null())
+        .stderr(Stdio::null())
+        .output()
+        .map(|o| String::from_utf8_lossy(&o.stdout).into_owned())
+        .unwrap_or_default();
+    let aec_ref_to_alsa = link_dump.lines().any(|l| {
+        l.contains("alsa_output.") && l.contains(":monitor_") && {
+            let next_line_aec = link_dump
+                .lines()
+                .skip_while(|x| *x != l)
+                .nth(1)
+                .is_some_and(|n| n.contains("echo-cancel-sink:input_"));
+            next_line_aec
+        }
+    }) || link_dump.lines().any(|l| {
+        l.contains("echo-cancel-sink:input_")
+            && link_dump
+                .lines()
+                .skip_while(|x| *x != l)
+                .take(8)
+                .any(|n| n.contains("|<-") && n.contains("alsa_output.") && n.contains(":monitor_"))
+    });
+    report.check(
+        "AEC reference linked to physical ALSA sink",
+        aec_ref_to_alsa,
+        "pw-link -l | grep -A1 echo-cancel-sink",
+    );
+}
+
+/// Detect a stale `~/.local/share/wireplumber/scripts/biglinux/` copy
+/// that masks the packaged routing hook. WirePlumber's base-dirs
+/// lookup picks the user copy first, so an old version here means the
+/// fix you just installed via pacman never runs.
+fn check_wireplumber_script(report: &mut Report) {
+    let installed = Path::new(WP_PACKAGED_LUA);
+    report.check(
+        "packaged AEC routing script installed",
+        installed.exists(),
+        WP_PACKAGED_LUA,
+    );
+
+    if let Some(override_path) = user_local_wp_script_override() {
+        let same = match (
+            std::fs::read(WP_PACKAGED_LUA),
+            std::fs::read(&override_path),
+        ) {
+            (Ok(a), Ok(b)) => a == b,
+            _ => false,
+        };
+        if same {
+            println!(
+                "[warn] WirePlumber script override at {} matches the packaged copy — \
+                 harmless but redundant; consider removing it",
+                override_path.display(),
+            );
+        } else {
+            report.check(
+                "no stale WirePlumber script override",
+                false,
+                &format!(
+                    "{} shadows {} — delete the override so package updates apply",
+                    override_path.display(),
+                    WP_PACKAGED_LUA,
+                ),
+            );
+        }
+    }
 }
 
 fn check_graph_nodes(report: &mut Report) {
