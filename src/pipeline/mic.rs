@@ -76,6 +76,22 @@ pub fn build_mic_conf(settings: &AppSettings) -> String {
     graph.render(RenderMode::DropIn)
 }
 
+/// Tear down every mic-side flag in one go. Called by the simple-view
+/// master switch and the Plasma applet `toggle-mic` action so a single
+/// "off" click reaches all reasons `filter-chain.service` would stay
+/// alive — default-on flags (`echo_cancel`, `stereo`) would otherwise
+/// keep the worker running silently. Advanced view leaves the flags
+/// independent and does not call this.
+pub fn cascade_mic_off(settings: &mut AppSettings) {
+    settings.noise_reduction.enabled = false;
+    settings.echo_cancel.enabled = false;
+    settings.gate.enabled = false;
+    settings.hpf.enabled = false;
+    settings.stereo.enabled = false;
+    settings.equalizer.enabled = false;
+    settings.compressor.enabled = false;
+}
+
 /// Does the current settings snapshot ask for *any* microphone
 /// processing? When this returns `false` we skip writing the mic chain
 /// config entirely so the user doesn't see a "BigLinux Microphone"
@@ -379,6 +395,28 @@ mod tests {
 
     fn default_settings() -> AppSettings {
         AppSettings::default()
+    }
+
+    #[test]
+    fn cascade_mic_off_drops_every_filter_chain_dependency() {
+        // Defaults leave noise_reduction, echo_cancel and stereo on.
+        // mic_chain_wanted ORs over all flags, so cascading must clear
+        // every one of them — otherwise the simple-view master toggle
+        // off leaves filter-chain.service running on the surviving
+        // default-on flags and the user sees no process drop.
+        let mut s = AppSettings::default();
+        assert!(mic_chain_wanted(&s));
+
+        cascade_mic_off(&mut s);
+
+        assert!(!s.noise_reduction.enabled);
+        assert!(!s.echo_cancel.enabled);
+        assert!(!s.gate.enabled);
+        assert!(!s.hpf.enabled);
+        assert!(!s.stereo.enabled);
+        assert!(!s.equalizer.enabled);
+        assert!(!s.compressor.enabled);
+        assert!(!mic_chain_wanted(&s));
     }
 
     #[test]

@@ -319,14 +319,19 @@ fn live_update() -> ExitCode {
     }
 }
 
-/// Flip `noise_reduction.enabled` (the master mic switch). When the
-/// resulting state still leaves at least one mic filter on, the mic
-/// chain stays loaded; otherwise it is torn down. Used by the Plasma
-/// applet for one-click toggling.
+/// Flip the mic master. Off cascades through every mic-side flag so
+/// the Plasma applet (which has no fine-grained controls) actually
+/// stops `filter-chain.service` instead of leaving it alive on
+/// `echo_cancel`/`stereo` defaults. On only re-enables `noise_reduction`
+/// — the user can re-enable individual sub-filters from the GUI.
 fn toggle_mic() -> ExitCode {
     let mut settings = AppSettings::load();
     let new_state = !settings.noise_reduction.enabled;
-    settings.noise_reduction.enabled = new_state;
+    if new_state {
+        settings.noise_reduction.enabled = true;
+    } else {
+        pipeline::cascade_mic_off(&mut settings);
+    }
 
     if let Err(e) = settings.save() {
         return exit_with_error(&format!("toggle-mic save: {e}"));

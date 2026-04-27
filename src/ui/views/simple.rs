@@ -11,6 +11,7 @@ use std::rc::Rc;
 use gtk::prelude::*;
 use gtk::{Align, Box as GtkBox, Label, Orientation, ScrolledWindow};
 
+use crate::pipeline::cascade_mic_off;
 use crate::services::pipewire::source_volume;
 
 use super::super::i18n::i18n;
@@ -85,7 +86,17 @@ fn noise_filter_header(state: &Rc<AppState>) -> GtkBox {
         let state = Rc::clone(state);
         switch.connect_active_notify(move |sw| {
             let on = sw.is_active();
-            state.mutate(|s| s.noise_reduction.enabled = on);
+            state.mutate(|s| {
+                s.noise_reduction.enabled = on;
+                if !on {
+                    // Simple-view master is the only mic-side toggle the
+                    // user sees. Cascade so a single click tears down
+                    // every reason `filter-chain.service` would stay
+                    // alive — otherwise default-on flags (echo_cancel,
+                    // stereo) silently keep the worker running.
+                    cascade_mic_off(s);
+                }
+            });
         });
     }
 

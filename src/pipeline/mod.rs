@@ -44,7 +44,7 @@ pub use echo_cancel::{
     ECHO_CANCEL_CONF_FILE, EC_CAPTURE_NODE_NAME, EC_SOURCE_NAME,
 };
 pub use mic::{
-    ai_node_in_mic_chain, build_mic_conf as build_mic_conf_for, mic_chain_wanted,
+    ai_node_in_mic_chain, build_mic_conf as build_mic_conf_for, cascade_mic_off, mic_chain_wanted,
     MIC_CAPTURE_NODE_NAME, MIC_CONF_FILE, MIC_DESCRIPTION, MIC_NODE_NAME,
 };
 pub use output::{
