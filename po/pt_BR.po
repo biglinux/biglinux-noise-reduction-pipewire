@@ -1,0 +1,489 @@
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: biglinux-noise-reduction-pipewire\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2026-04-28 13:29\n"
+"PO-Revision-Date: 2026-04-28 13:29\n"
+"Last-Translator: Translation Automator <auto@translator.ai>\n"
+"Language-Team: Portuguese (Brazil) <pt_BR@li.org>\n"
+"Language: pt_BR\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+
+#: src/ui/window.rs:46 src/ui/window.rs:374
+#, fuzzy
+msgid "Filter noise"
+msgstr "Filter noise"
+
+#: src/ui/window.rs:186 src/ui/widgets/source_picker.rs:65
+#, fuzzy
+msgid "Microphone"
+msgstr "Microphone"
+
+#: src/ui/window.rs:192
+#, fuzzy
+msgid "Output filter"
+msgstr "Output filter"
+
+#: src/ui/window.rs:241
+#, fuzzy
+msgid "Advanced"
+msgstr "Advanced"
+
+#: src/ui/window.rs:244
+#, fuzzy
+msgid "Show every control individually"
+msgstr "Show every control individually"
+
+#: src/ui/window.rs:263
+#, fuzzy
+msgid "Restore default settings"
+msgstr "Restore default settings"
+
+#: src/ui/window.rs:266
+#, fuzzy
+msgid "About Filter noise"
+msgstr "About Filter noise"
+
+#. Icon-only control needs an explicit accessible label; tooltips
+#. alone are not surfaced as accessible names by every reader.
+#: src/ui/window.rs:271 src/ui/window.rs:276
+#, fuzzy
+msgid "Main menu"
+msgstr "Main menu"
+
+#: src/ui/window.rs:327
+#, fuzzy
+msgid "Restore default settings?"
+msgstr "Restore default settings?"
+
+#: src/ui/window.rs:329
+#, fuzzy
+msgid ""
+"All audio processing settings will return to their factory values. Your "
+"window size and view preferences are kept."
+msgstr ""
+"All audio processing settings will return to their factory values. Your "
+"window size and view preferences are kept."
+
+#: src/ui/window.rs:333
+#, fuzzy
+msgid "Cancel"
+msgstr "Cancel"
+
+#: src/ui/window.rs:334
+#, fuzzy
+msgid "Restore defaults"
+msgstr "Restore defaults"
+
+#: src/ui/window.rs:383
+#, fuzzy
+msgid ""
+"Real-time noise filter for microphone capture and system audio playback. "
+"Powered by the GTCRN neural network running as a LADSPA plugin on top of "
+"PipeWire — every filter is driven by a WirePlumber smart-filter so the "
+"default source and sink stay clean even after device changes."
+msgstr ""
+"Real-time noise filter for microphone capture and system audio playback. "
+"Powered by the GTCRN neural network running as a LADSPA plugin on top of "
+"PipeWire — every filter is driven by a WirePlumber smart-filter so the "
+"default source and sink stay clean even after device changes."
+
+#: src/ui/window.rs:390
+#, fuzzy
+msgid "Built on"
+msgstr "Built on"
+
+#: src/ui/views/mic.rs:46
+#, fuzzy
+msgid "Noise filter — fine-tune"
+msgstr "Noise filter — fine-tune"
+
+#: src/ui/views/mic.rs:50
+#, fuzzy
+msgid "Voice enhancements"
+msgstr "Voice enhancements"
+
+#: src/ui/views/mic.rs:56 src/ui/views/mic.rs:317
+#, fuzzy
+msgid "Voice changer"
+msgstr "Voice changer"
+
+#: src/ui/views/mic.rs:89 src/ui/views/mic.rs:261 src/ui/views/mic.rs:419
+#: src/ui/views/output.rs:101 src/ui/views/output.rs:187
+#: src/ui/views/output.rs:217 src/ui/views/simple.rs:69
+#: src/ui/views/simple.rs:185
+#, fuzzy
+msgid "Intensity"
+msgstr "Intensity"
+
+#: src/ui/views/mic.rs:115
+#, fuzzy
+msgid "Echo cancellation"
+msgstr "Echo cancellation"
+
+#: src/ui/views/mic.rs:117
+#, fuzzy
+msgid ""
+"Removes speaker bleed from your microphone using the WebRTC AEC. Turn off "
+"when wearing headphones or when troubleshooting microphone routing."
+msgstr ""
+"Removes speaker bleed from your microphone using the WebRTC AEC. Turn off "
+"when wearing headphones or when troubleshooting microphone routing."
+
+#: src/ui/views/mic.rs:162 src/ui/views/simple.rs:124
+#, fuzzy
+msgid "Noise filter"
+msgstr "Noise filter"
+
+#: src/ui/views/mic.rs:171 src/ui/views/simple.rs:133
+#, fuzzy
+msgid ""
+"Removes background noise from your voice with the GTCRN neural network. "
+"Higher intensity = stronger cleanup."
+msgstr ""
+"Removes background noise from your voice with the GTCRN neural network. "
+"Higher intensity = stronger cleanup."
+
+#: src/ui/views/mic.rs:188 src/ui/views/output.rs:111
+#, fuzzy
+msgid "Neural model"
+msgstr "Neural model"
+
+#: src/ui/views/mic.rs:197 src/ui/views/output.rs:122
+#, fuzzy
+msgid "Model"
+msgstr "Model"
+
+#: src/ui/views/mic.rs:204 src/ui/views/output.rs:129
+#, fuzzy
+msgid "Voice presence"
+msgstr "Voice presence"
+
+#: src/ui/views/mic.rs:206
+#, fuzzy
+msgid ""
+"Restores high-frequency clarity (sibilants like \"s\", \"sh\") after "
+"suppression. Lower only if your voice already sounds harsh."
+msgstr ""
+"Restores high-frequency clarity (sibilants like \"s\", \"sh\") after "
+"suppression. Lower only if your voice already sounds harsh."
+
+#: src/ui/views/mic.rs:212 src/ui/views/output.rs:141
+#, fuzzy
+msgid "Recovery"
+msgstr "Recovery"
+
+#: src/ui/views/mic.rs:232 src/ui/views/output.rs:161
+#, fuzzy
+msgid "High-pass filter"
+msgstr "High-pass filter"
+
+#: src/ui/views/mic.rs:233
+#, fuzzy
+msgid "Cuts low-frequency rumble — AC, wind, mic-stand bumps."
+msgstr "Cuts low-frequency rumble — AC, wind, mic-stand bumps."
+
+#: src/ui/views/mic.rs:251 src/ui/views/output.rs:180
+#, fuzzy
+msgid "Silence gate"
+msgstr "Silence gate"
+
+#: src/ui/views/mic.rs:253
+#, fuzzy
+msgid ""
+"Mutes the mic during pauses so listeners hear silence instead of hiss. "
+"Higher = more aggressive."
+msgstr ""
+"Mutes the mic during pauses so listeners hear silence instead of hiss. "
+"Higher = more aggressive."
+
+#: src/ui/views/mic.rs:273 src/ui/views/output.rs:57
+#, fuzzy
+msgid "Equalizer"
+msgstr "Equalizer"
+
+#: src/ui/views/mic.rs:275
+#, fuzzy
+msgid ""
+"10-band parametric EQ. Pick a preset or drag each band between -40 dB and "
+"+40 dB."
+msgstr ""
+"10-band parametric EQ. Pick a preset or drag each band between -40 dB and "
+"+40 dB."
+
+#: src/ui/views/mic.rs:319
+#, fuzzy
+msgid ""
+"Shifts the pitch of your voice without retiming. Left = deeper, right = "
+"higher. Center keeps your natural voice."
+msgstr ""
+"Shifts the pitch of your voice without retiming. Left = deeper, right = "
+"higher. Center keeps your natural voice."
+
+#: src/ui/views/mic.rs:339
+#, fuzzy
+msgid "Deep"
+msgstr "Deep"
+
+#: src/ui/views/mic.rs:340
+#, fuzzy
+msgid "Lower"
+msgstr "Lower"
+
+#: src/ui/views/mic.rs:341
+#, fuzzy
+msgid "Natural"
+msgstr "Natural"
+
+#: src/ui/views/mic.rs:342
+#, fuzzy
+msgid "Higher"
+msgstr "Higher"
+
+#: src/ui/views/mic.rs:343
+#, fuzzy
+msgid "Chipmunk"
+msgstr "Chipmunk"
+
+#: src/ui/views/mic.rs:354
+#, fuzzy
+msgid "Pitch"
+msgstr "Pitch"
+
+#: src/ui/views/mic.rs:366 src/ui/views/simple.rs:153
+#, fuzzy
+msgid "Headphones only — speakers cause feedback."
+msgstr "Headphones only — speakers cause feedback."
+
+#: src/ui/views/mic.rs:376 src/ui/views/simple.rs:163
+#, fuzzy
+msgid "Hear my voice"
+msgstr "Hear my voice"
+
+#: src/ui/views/mic.rs:386
+#, fuzzy
+msgid "Self-listen delay"
+msgstr "Self-listen delay"
+
+#: src/ui/views/mic.rs:388
+#, fuzzy
+msgid ""
+"Round-trip latency for the \"Hear my voice\" monitor. Raise only if the "
+"loopback sounds rushed or chops on your hardware."
+msgstr ""
+"Round-trip latency for the \"Hear my voice\" monitor. Raise only if the "
+"loopback sounds rushed or chops on your hardware."
+
+#: src/ui/views/mic.rs:394
+#, fuzzy
+msgid "Delay (ms)"
+msgstr "Delay (ms)"
+
+#: src/ui/views/mic.rs:414 src/ui/views/output.rs:209
+#, fuzzy
+msgid "Compressor"
+msgstr "Compressor"
+
+#: src/ui/views/mic.rs:415
+#, fuzzy
+msgid ""
+"Evens out loud peaks and quiet parts so your voice stays at a steady volume."
+msgstr ""
+"Evens out loud peaks and quiet parts so your voice stays at a steady volume."
+
+#: src/ui/views/output.rs:40
+#, fuzzy
+msgid "AI noise reduction"
+msgstr "AI noise reduction"
+
+#: src/ui/views/output.rs:44
+#, fuzzy
+msgid "Audio enhancements"
+msgstr "Audio enhancements"
+
+#: src/ui/views/output.rs:59
+#, fuzzy
+msgid ""
+"10-band parametric EQ on what you hear. Pick a preset or drag each band "
+"between -40 dB and +40 dB."
+msgstr ""
+"10-band parametric EQ on what you hear. Pick a preset or drag each band "
+"between -40 dB and +40 dB."
+
+#: src/ui/views/output.rs:95 src/ui/views/simple.rs:179
+#, fuzzy
+msgid "System sound"
+msgstr "System sound"
+
+#: src/ui/views/output.rs:96 src/ui/views/simple.rs:180
+#, fuzzy
+msgid ""
+"Cleans background noise from everything you hear before it reaches your "
+"speakers."
+msgstr ""
+"Cleans background noise from everything you hear before it reaches your "
+"speakers."
+
+#: src/ui/views/output.rs:131
+#, fuzzy
+msgid ""
+"Restores high-frequency clarity after suppression. Lower only if the source "
+"already sounds harsh."
+msgstr ""
+"Restores high-frequency clarity after suppression. Lower only if the source "
+"already sounds harsh."
+
+#: src/ui/views/output.rs:162
+#, fuzzy
+msgid "Cuts low-frequency rumble from playback — wind, AC noise."
+msgstr "Cuts low-frequency rumble from playback — wind, AC noise."
+
+#: src/ui/views/output.rs:181
+#, fuzzy
+msgid ""
+"Mutes playback during silent moments so you don't hear hiss between words."
+msgstr ""
+"Mutes playback during silent moments so you don't hear hiss between words."
+
+#: src/ui/views/output.rs:211
+#, fuzzy
+msgid ""
+"Evens out volume across loud and quiet speakers — useful for meetings with "
+"mixed mic levels."
+msgstr ""
+"Evens out volume across loud and quiet speakers — useful for meetings with "
+"mixed mic levels."
+
+#: src/ui/widgets/eq_card.rs:164
+#, fuzzy
+msgid "Default voice"
+msgstr "Default voice"
+
+#: src/ui/widgets/eq_card.rs:165
+#, fuzzy
+msgid "Flat"
+msgstr "Flat"
+
+#: src/ui/widgets/eq_card.rs:166
+#, fuzzy
+msgid "Voice boost"
+msgstr "Voice boost"
+
+#: src/ui/widgets/eq_card.rs:167
+#, fuzzy
+msgid "Podcast"
+msgstr "Podcast"
+
+#: src/ui/widgets/eq_card.rs:168
+#, fuzzy
+msgid "Warm"
+msgstr "Warm"
+
+#: src/ui/widgets/eq_card.rs:169
+#, fuzzy
+msgid "Bright"
+msgstr "Bright"
+
+#: src/ui/widgets/eq_card.rs:170
+#, fuzzy
+msgid "De-esser"
+msgstr "De-esser"
+
+#: src/ui/widgets/eq_card.rs:171
+#, fuzzy
+msgid "Bass cut"
+msgstr "Bass cut"
+
+#: src/ui/widgets/eq_card.rs:172
+#, fuzzy
+msgid "Presence"
+msgstr "Presence"
+
+#: src/ui/widgets/eq_card.rs:173
+#, fuzzy
+msgid "Custom"
+msgstr "Custom"
+
+#: src/ui/widgets/eq_card.rs:214
+#, fuzzy
+msgid "Preset"
+msgstr "Preset"
+
+#: src/ui/widgets/model_picker.rs:42
+#, fuzzy
+msgid "DeepFilterNet3 (48 kHz)"
+msgstr "DeepFilterNet3 (48 kHz)"
+
+#: src/ui/widgets/model_picker.rs:44
+#, fuzzy
+msgid "DeepFilterNet3 (48 kHz) — not installed"
+msgstr "DeepFilterNet3 (48 kHz) — not installed"
+
+#: src/ui/widgets/model_picker.rs:47
+#, fuzzy
+msgid "GTCRN – DNS3 (16 kHz, strong)"
+msgstr "GTCRN – DNS3 (16 kHz, strong)"
+
+#: src/ui/widgets/model_picker.rs:48
+#, fuzzy
+msgid "GTCRN – VCTK (16 kHz, gentle)"
+msgstr "GTCRN – VCTK (16 kHz, gentle)"
+
+#: src/ui/widgets/model_picker.rs:111
+#, fuzzy
+msgid ""
+"DNS3 removes more noise but can smudge consonants. VCTK is gentler and "
+"lighter on CPU. DeepFilterNet3 is a full-band 48 kHz model with the cleanest"
+" output and the highest CPU cost."
+msgstr ""
+"DNS3 removes more noise but can smudge consonants. VCTK is gentler and "
+"lighter on CPU. DeepFilterNet3 is a full-band 48 kHz model with the cleanest"
+" output and the highest CPU cost."
+
+#: src/ui/widgets/model_picker.rs:118
+#, fuzzy
+msgid ""
+"DNS3 removes more noise but can smudge consonants. VCTK is gentler and "
+"lighter on CPU — good for podcasts."
+msgstr ""
+"DNS3 removes more noise but can smudge consonants. VCTK is gentler and "
+"lighter on CPU — good for podcasts."
+
+#: src/ui/widgets/source_picker.rs:108
+#, fuzzy
+msgid "Volume"
+msgstr "Volume"
+
+#: src/ui/widgets/wp_override_warning.rs:51
+#, fuzzy
+msgid "Configuração do WirePlumber sobreposta"
+msgstr "Configuração do WirePlumber sobreposta"
+
+#: src/ui/widgets/wp_override_warning.rs:58
+#, fuzzy
+msgid "Manter"
+msgstr "Manter"
+
+#: src/ui/widgets/wp_override_warning.rs:59
+#, fuzzy
+msgid "Remover sobreposição"
+msgstr "Remover sobreposição"
+
+#: src/ui/widgets/wp_override_warning.rs:63
+#, fuzzy
+msgid "Não avisar de novo"
+msgstr "Não avisar de novo"
+
+#: src/ui/widgets/wp_override_warning.rs:133
+#, fuzzy
+msgid ""
+"The file <tt>{path}</tt> is masking the packaged AEC routing script. Package updates won't take effect while this local copy exists.\n"
+"\n"
+"Recommended: remove the override and restart WirePlumber."
+msgstr ""
+"The file <tt>{path}</tt> is masking the packaged AEC routing script. Package updates won't take effect while this local copy exists.\n"
+"\n"
+"Recommended: remove the override and restart WirePlumber."
