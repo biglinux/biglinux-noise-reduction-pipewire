@@ -26,9 +26,11 @@ if ! command -v xtr >/dev/null 2>&1; then
 fi
 
 # Collect source paths from POTFILES.in, skipping comments / blanks.
-mapfile -t SOURCES < <(grep -vE '^\s*(#|$)' "$POTFILES")
+# xtr only parses Rust; .qml strings are extracted by Plasma's own
+# build pipeline (KI18n) and don't belong in the cargo-side POT.
+mapfile -t SOURCES < <(grep -vE '^\s*(#|$)' "$POTFILES" | grep -E '\.rs$')
 if [[ ${#SOURCES[@]} -eq 0 ]]; then
-    printf 'refresh-pot: POTFILES.in has no sources\n' >&2
+    printf 'refresh-pot: POTFILES.in has no Rust sources\n' >&2
     exit 1
 fi
 

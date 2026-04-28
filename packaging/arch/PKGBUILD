@@ -31,8 +31,13 @@ makedepends=(
     'clang'
 )
 optdepends=(
-    'wireplumber: required for smart-filter routing (already a hard dep)'
     'inotify-tools: instant Plasma applet sync with the GTK config window'
+    'deepfilternet-ladspa: full-band 48 kHz DeepFilterNet3 denoiser (UI exposes it when installed)'
+    'plasma-workspace: Plasma 6 system tray applet'
+    'qt6-declarative: QML runtime for the Plasma 6 system tray applet'
+    'kirigami: Plasma 6 system tray applet styling'
+    'libplasma: Plasma 6 system tray applet host'
+    'plasma5support: Plasma 6 system tray applet legacy support module'
 )
 # This package provides the noise-reduction LADSPA host and the
 # per-app output filter integration.
@@ -102,13 +107,18 @@ build() {
     cd "${srcdir}/${pkgname}" || exit 1
     cargo build --release --locked
 
-    # Compile translations (.po → .mo)
+    # Compile translations (.po → .mo). The .mo basename MUST match the
+    # textdomain bound by the Rust binary (`biglinux-microphone`,
+    # defined in src/config/paths.rs::GETTEXT_PACKAGE) — gettext looks
+    # up `<locale>/LC_MESSAGES/<textdomain>.mo`. Naming after $pkgname
+    # would silently install unreachable catalogs.
+    _textdomain='biglinux-microphone'
     install -d "${srcdir}/${pkgname}/build-locale"
     for po in po/*.po; do
         [ -f "$po" ] || continue
         lang=$(basename "$po" .po)
         install -d "build-locale/${lang}/LC_MESSAGES"
-        msgfmt "$po" -o "build-locale/${lang}/LC_MESSAGES/${pkgname}.mo"
+        msgfmt "$po" -o "build-locale/${lang}/LC_MESSAGES/${_textdomain}.mo"
     done
 }
 
@@ -137,6 +147,19 @@ package() {
         "${pkgdir}/usr/lib/systemd/user/biglinux-microphone.service"
     install -Dm644 usr/lib/systemd/user/biglinux-microphone-output.service \
         "${pkgdir}/usr/lib/systemd/user/biglinux-microphone-output.service"
+
+    # systemd drop-in lifting the RT/MEMLOCK budget on the upstream
+    # filter-chain.service so module-rt can actually grant rt.prio=88
+    # to the data-loop hosting the GTCRN/DFN3 LADSPA node.
+    install -Dm644 usr/lib/systemd/user/filter-chain.service.d/10-biglinux-rt.conf \
+        "${pkgdir}/usr/lib/systemd/user/filter-chain.service.d/10-biglinux-rt.conf"
+
+    # PipeWire filter-chain priority drop-in: pairs with the systemd
+    # rlimits above to override module-rt args (nice=-11 / rt.prio=88)
+    # so our denoiser runs at the same scheduling tier as the main
+    # PipeWire data loop.
+    install -Dm644 usr/share/pipewire/filter-chain.conf.d/50-biglinux-priority.conf \
+        "${pkgdir}/usr/share/pipewire/filter-chain.conf.d/50-biglinux-priority.conf"
 
     # WirePlumber policy hook: keeps the echo-cancel capture stream on
     # the selected physical microphone while devices/defaults change.

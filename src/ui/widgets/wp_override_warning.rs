@@ -130,10 +130,9 @@ fn notify_restart_needed() {
 
 fn format_body(path: &Path) -> String {
     let translated = i18n(
-        "O arquivo <tt>{path}</tt> está mascarando a versão do pacote do script \
-         de roteamento do AEC. Atualizações do pacote não terão efeito enquanto \
-         essa cópia local existir.\n\n\
-         Recomendado: remover a sobreposição e reiniciar o WirePlumber.",
+        "The file <tt>{path}</tt> is masking the packaged AEC routing script. \
+         Package updates won't take effect while this local copy exists.\n\n\
+         Recommended: remove the override and restart WirePlumber.",
     );
     translated.replace("{path}", &glib::markup_escape_text(&path.to_string_lossy()))
 }

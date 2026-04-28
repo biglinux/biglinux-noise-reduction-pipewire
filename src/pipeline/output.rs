@@ -38,13 +38,15 @@
 use std::fmt::Write as _;
 
 use crate::config::{
-    eq_preset_bands, AppSettings, CompressorDerived, GateDerived, EQ_BANDS_HZ, EQ_BAND_COUNT,
+    deepfilter_attenuation_db, eq_preset_bands, AppSettings, CompressorDerived, GateDerived,
+    EQ_BANDS_HZ, EQ_BAND_COUNT,
 };
 
 use super::graph::{Graph, Link, RenderMode};
 use super::nodes::{
-    Node, LABEL_BQ_HIGHPASS, LABEL_COPY, LABEL_GTCRN_MONO, LABEL_MIXER, LABEL_PARAM_EQ,
-    LABEL_SC4_MONO, LABEL_SWH_GATE, LADSPA_GTCRN, LADSPA_SC4_MONO, LADSPA_SWH_GATE,
+    Node, LABEL_BQ_HIGHPASS, LABEL_COPY, LABEL_DEEPFILTER_MONO, LABEL_GTCRN_MONO, LABEL_MIXER,
+    LABEL_PARAM_EQ, LABEL_SC4_MONO, LABEL_SWH_GATE, LADSPA_DEEPFILTER, LADSPA_GTCRN,
+    LADSPA_SC4_MONO, LADSPA_SWH_GATE,
 };
 
 /// Stem used as the `node.name` of the output virtual sink.
@@ -111,15 +113,33 @@ fn output_nodes(settings: &AppSettings) -> Vec<Node> {
     };
 
     let nr = &of.noise_reduction;
-    let gtcrn = Node::ladspa("ai", LADSPA_GTCRN, LABEL_GTCRN_MONO).with_controls([
-        ("Enable", if ai_processing { 1.0 } else { 0.0 }),
-        ("Strength", f64::from(nr.strength)),
-        ("Model", f64::from(nr.model.ladspa_control())),
-        ("SpeechStrength", f64::from(nr.strength)),
-        ("LookaheadMs", f64::from(nr.lookahead_ms)),
-        ("ModelBlend", f64::from(nr.model_blending)),
-        ("VoiceRecovery", f64::from(nr.voice_recovery)),
-    ]);
+    // Backend swap (GTCRN ↔ DFN3) is a topology change — selecting DFN3
+    // emits a different LADSPA plugin with a different control surface
+    // and port names. The reconciler treats `model` changes as
+    // restart-worthy, so live-toggling between the two is intentionally
+    // not graceful (one-shot restart on swap).
+    let denoiser = if nr.model.is_deepfilter() {
+        // DFN3 has no `Enable` port, so master-off / NR-off renders the
+        // node with `Attenuation Limit = 0` to make it a passthrough.
+        let atten_db = if ai_processing {
+            deepfilter_attenuation_db(nr.strength)
+        } else {
+            0.0
+        };
+        Node::ladspa("ai", LADSPA_DEEPFILTER, LABEL_DEEPFILTER_MONO)
+            .with_ports("Audio In", "Audio Out")
+            .with_controls([("Attenuation Limit (dB)", atten_db)])
+    } else {
+        Node::ladspa("ai", LADSPA_GTCRN, LABEL_GTCRN_MONO).with_controls([
+            ("Enable", if ai_processing { 1.0 } else { 0.0 }),
+            ("Strength", f64::from(nr.strength)),
+            ("Model", f64::from(nr.model.ladspa_control())),
+            ("SpeechStrength", f64::from(nr.strength)),
+            ("LookaheadMs", f64::from(nr.lookahead_ms)),
+            ("ModelBlend", f64::from(nr.model_blending)),
+            ("VoiceRecovery", f64::from(nr.voice_recovery)),
+        ])
+    };
 
     let gate_d = GateDerived::from_config(&of.gate);
     let gate_threshold = if gate_enabled {
@@ -184,8 +204,9 @@ fn output_nodes(settings: &AppSettings) -> Vec<Node> {
         Node::builtin("hpf", LABEL_BQ_HIGHPASS).with_controls([("Freq", hpf_freq), ("Q", 0.707)]),
         // GTCRN is always wired in; toggling master flips its Enable
         // port between 0 and 1, which the live update path can push
-        // without restarting the unit.
-        gtcrn,
+        // without restarting the unit. DFN3 has no Enable port, so
+        // master-off renders it with Attenuation Limit = 0 instead.
+        denoiser,
         gate,
         compressor,
         param_eq_node(settings),
@@ -222,11 +243,21 @@ fn param_eq_node(settings: &AppSettings) -> Node {
         .with_config(cfg)
 }
 
-fn output_links(_nodes: &[Node]) -> Vec<Link> {
+fn output_links(nodes: &[Node]) -> Vec<Link> {
+    // The denoiser node's port names depend on the backend (GTCRN uses
+    // "Input"/"Output", DFN3 uses "Audio In"/"Audio Out"). Look the
+    // active node up so the rendered links stay in sync with whichever
+    // plugin was emitted by `output_nodes`.
+    let ai = nodes
+        .iter()
+        .find(|n| n.name == "ai")
+        .expect("output graph always wires the `ai` denoiser node");
+    let ai_in = format!("ai:{}", ai.input_port);
+    let ai_out = format!("ai:{}", ai.output_port);
     vec![
         Link::new("mixer:Out", "hpf:In"),
-        Link::new("hpf:Out", "ai:Input"),
-        Link::new("ai:Output", "gate:Input"),
+        Link::new("hpf:Out", ai_in),
+        Link::new(ai_out, "gate:Input"),
         Link::new("gate:Output", "compressor:Input"),
         Link::new("compressor:Output", "eq:In 1"),
         Link::new("eq:Out 1", "copy_l:In"),

@@ -44,14 +44,15 @@
 use std::fmt::Write as _;
 
 use crate::config::{
-    eq_preset_bands, AppSettings, CompressorDerived, StereoMode, EQ_BANDS_HZ, EQ_BAND_COUNT,
+    deepfilter_attenuation_db, eq_preset_bands, AppSettings, CompressorDerived, StereoMode,
+    EQ_BANDS_HZ, EQ_BAND_COUNT,
 };
 
 use super::graph::{Graph, Link, RenderMode};
 use super::nodes::{
-    Node, LABEL_AMP, LABEL_BQ_HIGHPASS, LABEL_COPY, LABEL_GTCRN_MONO, LABEL_PARAM_EQ,
-    LABEL_PITCH_SCALE, LABEL_SC4_MONO, LADSPA_AMP, LADSPA_GTCRN, LADSPA_PITCH_SCALE,
-    LADSPA_SC4_MONO,
+    Node, LABEL_AMP, LABEL_BQ_HIGHPASS, LABEL_COPY, LABEL_DEEPFILTER_MONO, LABEL_GTCRN_MONO,
+    LABEL_PARAM_EQ, LABEL_PITCH_SCALE, LABEL_SC4_MONO, LABEL_SWH_GATE, LADSPA_AMP,
+    LADSPA_DEEPFILTER, LADSPA_GTCRN, LADSPA_PITCH_SCALE, LADSPA_SC4_MONO, LADSPA_SWH_GATE,
 };
 
 /// Stem used for the smart filter name — the outward-facing
@@ -150,7 +151,13 @@ fn mic_nodes(settings: &AppSettings) -> Vec<Node> {
     };
 
     if ai_node_in_mic_chain(settings) {
-        nodes.push(gtcrn_node(settings));
+        nodes.push(denoiser_node(settings));
+        // DFN3 has no integrated gate, unlike GTCRN. When the user wants
+        // the silence gate alongside DFN3 we wire a standalone SWH gate
+        // immediately after it (same plugin the output chain uses).
+        if settings.noise_reduction.model.is_deepfilter() && settings.gate.enabled {
+            nodes.push(standalone_gate_node(settings));
+        }
     }
 
     if settings.compressor.enabled {
@@ -190,6 +197,14 @@ fn compressor_node(settings: &AppSettings) -> Node {
     ])
 }
 
+fn denoiser_node(settings: &AppSettings) -> Node {
+    if settings.noise_reduction.model.is_deepfilter() {
+        deepfilter_node(settings)
+    } else {
+        gtcrn_node(settings)
+    }
+}
+
 fn gtcrn_node(settings: &AppSettings) -> Node {
     let nr = &settings.noise_reduction;
     let gate = &settings.gate;
@@ -217,6 +232,33 @@ fn gtcrn_node(settings: &AppSettings) -> Node {
         ("Range (dB)", gate_derived.range_db),
         ("LF Key Filter (Hz)", 200.0),
         ("HF Key Filter (Hz)", 5000.0),
+    ])
+}
+
+/// DeepFilterNet3 mono node. The plugin has no `Enable` port — toggling
+/// noise-reduction off while DFN3 is selected drops the node from the
+/// graph (a reload, not a live update). The strength→cap mapping lives
+/// in [`deepfilter_attenuation_db`] (quadratic curve aligned with the
+/// upstream cap-as-perceptual-knob guidance).
+fn deepfilter_node(settings: &AppSettings) -> Node {
+    let nr = &settings.noise_reduction;
+    let atten_db = deepfilter_attenuation_db(nr.strength);
+    Node::ladspa("ai", LADSPA_DEEPFILTER, LABEL_DEEPFILTER_MONO)
+        .with_ports("Audio In", "Audio Out")
+        .with_controls([("Attenuation Limit (dB)", atten_db)])
+}
+
+fn standalone_gate_node(settings: &AppSettings) -> Node {
+    let gate_d = crate::config::GateDerived::from_config(&settings.gate);
+    Node::ladspa("gate", LADSPA_SWH_GATE, LABEL_SWH_GATE).with_controls([
+        ("Threshold (dB)", gate_d.threshold_db),
+        ("Attack (ms)", gate_d.attack_ms),
+        ("Hold (ms)", gate_d.hold_ms),
+        ("Decay (ms)", gate_d.release_ms),
+        ("Range (dB)", gate_d.range_db),
+        ("LF key filter (Hz)", 200.0),
+        ("HF key filter (Hz)", 6000.0),
+        ("Output select (-1 = key listen, 0 = gate, 1 = bypass)", 0.0),
     ])
 }
 

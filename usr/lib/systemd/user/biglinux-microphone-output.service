@@ -22,8 +22,10 @@ StandardError=journal
 # Audio dropouts are worse than the small extra blast-radius from RT
 # scheduling, so we raise the rlimits the standalone pipewire process
 # needs to honour the rt.prio/nice.level it requests via
-# libpipewire-module-rt. CAP_SYS_NICE below preserves the capability
-# even though hardening keeps every other privilege off.
+# libpipewire-module-rt. RT scheduling itself is granted by rtkit;
+# `CapabilityBoundingSet` / `AmbientCapabilities` are deliberately
+# omitted because user-mode systemd cannot drop caps and configuring
+# them yields `218/CAPABILITIES` on startup.
 LimitRTPRIO=95
 LimitNICE=-19
 LimitMEMLOCK=infinity
@@ -41,8 +43,6 @@ RestrictNamespaces=true
 RestrictRealtime=false
 RestrictSUIDSGID=true
 LockPersonality=true
-CapabilityBoundingSet=CAP_SYS_NICE
-AmbientCapabilities=
 RestrictAddressFamilies=AF_UNIX AF_NETLINK
 SystemCallArchitectures=native
 SystemCallFilter=@system-service @resources

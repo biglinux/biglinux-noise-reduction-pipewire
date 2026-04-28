@@ -27,8 +27,9 @@ use log::{debug, error, info};
 use serde::{Deserialize, Serialize};
 
 pub use audio::{
-    GateConfig, HpfConfig, MonitorConfig, NoiseModel, NoiseReductionConfig, StereoConfig,
-    StereoMode, GATE_INTENSITY_DEFAULT, GATE_INTENSITY_MAX, HPF_FREQUENCY_DEFAULT,
+    deepfilter_attenuation_db, GateConfig, HpfConfig, MonitorConfig, NoiseModel,
+    NoiseReductionConfig, StereoConfig, StereoMode, GATE_INTENSITY_DEFAULT, GATE_INTENSITY_MAX,
+    HPF_FREQUENCY_DEFAULT,
 };
 pub use echo_cancel::EchoCancelConfig;
 pub use equalizer::{
@@ -36,8 +37,9 @@ pub use equalizer::{
 };
 pub use output_filter::OutputFilterSettings;
 pub use paths::{
-    app_id, app_version, config_dir, gettext_package, gtcrn_plugin, illustrations_dir, ladspa_dir,
-    settings_file, APP_DATA_DIR, APP_ID, EQ_BANDS_HZ, GETTEXT_PACKAGE,
+    app_id, app_version, config_dir, deepfilter_available, deepfilter_plugin, gettext_package,
+    gtcrn_plugin, illustrations_dir, ladspa_dir, settings_file, APP_DATA_DIR, APP_ID, EQ_BANDS_HZ,
+    GETTEXT_PACKAGE,
 };
 pub use processing::{CompressorConfig, CompressorDerived, GateDerived, ProcessingChain};
 pub use ui::{UiConfig, WindowConfig};
@@ -75,13 +77,31 @@ impl AppSettings {
             return Self::default();
         };
         match serde_json::from_str::<Self>(&content) {
-            Ok(s) => s,
+            Ok(mut s) => {
+                s.demote_unavailable_models();
+                s
+            }
             Err(e) => {
                 error!(
                     "settings: parse error at {}: {e} — falling back to defaults",
                     path.display()
                 );
                 Self::default()
+            }
+        }
+    }
+
+    /// Settings may persist `DeepFilterNet3` from a previous run while
+    /// the optional `deepfilternet-ladspa` package has since been
+    /// uninstalled. Demote silently to the default GTCRN variant so the
+    /// rendered filter-chain doesn't reference a missing .so.
+    fn demote_unavailable_models(&mut self) {
+        if !deepfilter_available() {
+            if self.noise_reduction.model.is_deepfilter() {
+                self.noise_reduction.model = NoiseModel::default();
+            }
+            if self.output_filter.noise_reduction.model.is_deepfilter() {
+                self.output_filter.noise_reduction.model = NoiseModel::default();
             }
         }
     }

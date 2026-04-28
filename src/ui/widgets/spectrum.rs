@@ -35,7 +35,7 @@ use crate::services::audio_monitor::SpectrumFrame;
 pub const BAND_COUNT: usize = 30;
 
 /// Drawing area height in logical pixels.
-const WIDGET_HEIGHT: i32 = 220;
+const WIDGET_HEIGHT: i32 = 200;
 
 /// Animation hz. 30 Hz keeps the bars smooth to the eye while halving
 /// the redraw + interpolation cost compared to the previous 60 Hz timer.

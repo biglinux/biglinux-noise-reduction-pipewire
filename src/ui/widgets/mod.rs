@@ -5,6 +5,7 @@
 
 pub mod didactic;
 pub mod eq_card;
+pub mod model_picker;
 pub mod source_picker;
 pub mod spectrum;
 pub mod wp_override_warning;

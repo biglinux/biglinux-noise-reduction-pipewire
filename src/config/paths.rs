@@ -56,6 +56,23 @@ pub fn gtcrn_plugin() -> PathBuf {
     ladspa_dir().join("libgtcrn_ladspa.so")
 }
 
+/// Path to the DeepFilterNet3 LADSPA plugin shared object. Shipped by
+/// the optional `deepfilternet-ladspa` package — call
+/// [`deepfilter_available`] before assuming it exists.
+#[must_use]
+pub fn deepfilter_plugin() -> PathBuf {
+    ladspa_dir().join("libdeep_filter_ladspa.so")
+}
+
+/// Whether the DeepFilterNet3 LADSPA plugin is currently installed.
+/// Used by the UI to gate the DFN3 option in the model selector and by
+/// the settings loader to fall back to GTCRN when an installed system
+/// previously had DFN3 selected and then uninstalled the package.
+#[must_use]
+pub fn deepfilter_available() -> bool {
+    deepfilter_plugin().exists()
+}
+
 /// Package version read from `Cargo.toml`.
 #[must_use]
 pub fn app_version() -> &'static str {

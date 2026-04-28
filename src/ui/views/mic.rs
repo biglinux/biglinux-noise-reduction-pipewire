@@ -11,7 +11,7 @@ use std::rc::Rc;
 use gtk::prelude::*;
 use gtk::{Align, Box as GtkBox, Label, Orientation, ScrolledWindow};
 
-use crate::config::{NoiseModel, StereoMode, GATE_INTENSITY_MAX};
+use crate::config::{StereoMode, GATE_INTENSITY_MAX};
 use crate::services::pipewire::source_volume;
 
 use super::super::i18n::i18n;
@@ -21,7 +21,7 @@ use super::super::widgets::didactic::{
     switch_row, u32_slider, u8_slider, DidacticCard,
 };
 use super::super::widgets::eq_card::{build_eq_card, EqMutation};
-use super::super::widgets::source_picker;
+use super::super::widgets::{model_picker, source_picker};
 
 pub fn build(state: &Rc<AppState>) -> gtk::Widget {
     let scroll = ScrolledWindow::builder()
@@ -186,32 +186,14 @@ fn model_card(state: &Rc<AppState>) -> DidacticCard {
     let card = DidacticCard::new(
         "model.svg",
         &i18n("Neural model"),
-        &i18n(
-            "DNS3 removes more noise but can smudge consonants. VCTK is \
-             gentler and lighter on CPU — good for podcasts.",
-        ),
+        &model_picker::description(),
         None,
     );
-
-    let dropdown = gtk::DropDown::from_strings(&[
-        &i18n("GTCRN – DNS3 (strong)"),
-        &i18n("GTCRN – VCTK (gentle)"),
-    ]);
-    dropdown.set_selected(match state.settings().noise_reduction.model {
-        NoiseModel::GtcrnDns3 => 0,
-        NoiseModel::GtcrnVctk => 1,
-    });
-    {
+    let initial = state.settings().noise_reduction.model;
+    let dropdown = model_picker::build(initial, {
         let state = Rc::clone(state);
-        dropdown.connect_selected_notify(move |dd| {
-            let pick = match dd.selected() {
-                0 => NoiseModel::GtcrnDns3,
-                _ => NoiseModel::GtcrnVctk,
-            };
-            state.mutate(|s| s.noise_reduction.model = pick);
-        });
-    }
-
+        move |pick| state.mutate(|s| s.noise_reduction.model = pick)
+    });
     card.add_row(&labelled_row(&i18n("Model"), &dropdown));
     card
 }

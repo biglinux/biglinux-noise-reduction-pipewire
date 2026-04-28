@@ -316,6 +316,15 @@ fn needs_mic_reload(prev: Option<&AppSettings>, now: &AppSettings) -> bool {
             || (voice_is_on && (p.stereo.width - now.stereo.width).abs() > f32::EPSILON);
         let ai_topology_changed =
             pipeline::ai_node_in_mic_chain(p) != pipeline::ai_node_in_mic_chain(now);
+        // Selecting a different denoiser backend swaps the LADSPA
+        // plugin (GTCRN ↔ DFN3) — different .so, different control
+        // surface, different port names. Only a reload picks that up.
+        // While DFN3 is active a separate SWH gate node also rides
+        // alongside `ai`, so toggling the gate flag has to reload too
+        // (instead of being a pure live update like with GTCRN's
+        // integrated gate).
+        let denoiser_topology_changed = p.noise_reduction.model != now.noise_reduction.model
+            || (now.noise_reduction.model.is_deepfilter() && p.gate.enabled != now.gate.enabled);
         // `target.object = "echo-cancel-source"` is added on the capture
         // side only when AEC is on. Toggling AEC rewrites that prop, so
         // the chain must be reloaded before the graph can use/bypass the
@@ -331,6 +340,7 @@ fn needs_mic_reload(prev: Option<&AppSettings>, now: &AppSettings) -> bool {
             || p.compressor.enabled != now.compressor.enabled
             || voice_changer_topology_changed
             || ai_topology_changed
+            || denoiser_topology_changed
             || ec_target_changed
             || hpf_topology_changed
     } else {
@@ -339,14 +349,16 @@ fn needs_mic_reload(prev: Option<&AppSettings>, now: &AppSettings) -> bool {
 }
 
 fn output_topology_changed(prev: Option<&AppSettings>, now: &AppSettings) -> bool {
-    // GTCRN is now permanently wired into the output graph: NR / master
-    // toggles flip its `Enable` port via the live update path instead of
-    // restarting the unit. Only EQ band/preset edits actually rewrite
-    // the on-disk graph today, so that's the only signal here.
+    // GTCRN is permanently wired in the output graph; NR / master
+    // toggles flip its `Enable` port via the live update path. EQ
+    // band/preset changes rewrite the graph, and so does selecting a
+    // different denoiser backend (GTCRN ↔ DFN3) since the LADSPA
+    // plugin and port names differ.
     prev.is_some_and(|p| {
         p.output_filter.equalizer.bands != now.output_filter.equalizer.bands
             || p.output_filter.equalizer.preset != now.output_filter.equalizer.preset
             || p.output_filter.equalizer.enabled != now.output_filter.equalizer.enabled
+            || p.output_filter.noise_reduction.model != now.output_filter.noise_reduction.model
     })
 }
 

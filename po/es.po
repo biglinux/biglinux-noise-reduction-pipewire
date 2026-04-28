@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: biglinux-noise-reduction-pipewire\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-04-26 16:03+0000\n"
+"POT-Creation-Date: 2026-04-28 15:42+0000\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: \n"
@@ -16,11 +16,9 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "X-Generator: attranslate\n"
 
-# File: biglinux-noise-reduction-
-# pipewire/src/biglinux_microphone/audio/filter_chain.py
-#: src/ui/window.rs:46 src/ui/window.rs:360
-msgid "BigLinux Microphone"
-msgstr "BigLinux Microphone"
+#: src/ui/window.rs:46 src/ui/window.rs:374
+msgid "Filter noise"
+msgstr "Filtrar ruido"
 
 # #-#-#-#-#  biglinux-noise-reduction-pipewire.pot (biglinux-noise-reduction-
 # pipewire)  #-#-#-#-#
@@ -29,45 +27,47 @@ msgstr "BigLinux Microphone"
 # pipewire/src/biglinux_microphone/ui/main_view.py, line: 88
 # File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/config.py,
 # line: 27
-#: src/ui/window.rs:176 src/ui/widgets/source_picker.rs:65
+#: src/ui/window.rs:186 src/ui/widgets/source_picker.rs:65
 msgid "Microphone"
 msgstr "Micrófono"
 
-#: src/ui/window.rs:182
+#: src/ui/window.rs:192
 msgid "Output filter"
 msgstr "Filtro de salida"
 
-#: src/ui/window.rs:231
+#: src/ui/window.rs:241
 msgid "Advanced"
 msgstr "Avanzado"
 
-#: src/ui/window.rs:234
+#: src/ui/window.rs:244
 msgid "Show every control individually"
 msgstr "Mostrar cada control individualmente"
 
 # File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/window.py,
 # line: 172
-#: src/ui/window.rs:253
+#: src/ui/window.rs:263
 msgid "Restore default settings"
 msgstr "Restaurar configuración predeterminada"
 
-#: src/ui/window.rs:256
-msgid "About BigLinux Microphone"
-msgstr "Acerca de BigLinux Microphone"
+#: src/ui/window.rs:266
+msgid "About Filter noise"
+msgstr "Acerca de Filtrar ruido"
 
 # File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/window.py,
 # line: 202
-#: src/ui/window.rs:261
+#. Icon-only control needs an explicit accessible label; tooltips
+#. alone are not surfaced as accessible names by every reader.
+#: src/ui/window.rs:271 src/ui/window.rs:276
 msgid "Main menu"
 msgstr "Menú principal"
 
 # File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/window.py,
 # line: 172
-#: src/ui/window.rs:313
+#: src/ui/window.rs:327
 msgid "Restore default settings?"
 msgstr "¿Restaurar configuración predeterminada?"
 
-#: src/ui/window.rs:315
+#: src/ui/window.rs:329
 msgid ""
 "All audio processing settings will return to their factory values. Your "
 "window size and view preferences are kept."
@@ -77,25 +77,34 @@ msgstr ""
 
 # File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/window.py,
 # line: 175
-#: src/ui/window.rs:319
+#: src/ui/window.rs:333
 msgid "Cancel"
 msgstr "Cancelar"
 
 # File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/window.py,
 # line: 193
-#: src/ui/window.rs:320
+#: src/ui/window.rs:334
 msgid "Restore defaults"
 msgstr "Restaurar valores predeterminados"
 
-#: src/ui/window.rs:369
+#: src/ui/window.rs:383
 msgid ""
-"AI-powered microphone noise reduction with GTK4/libadwaita interface for "
-"PipeWire."
+"Real-time noise filter for microphone capture and system audio playback. "
+"Powered by the GTCRN neural network running as a LADSPA plugin on top of "
+"PipeWire — every filter is driven by a WirePlumber smart-filter so the "
+"default source and sink stay clean even after device changes."
 msgstr ""
-"Reducción de ruido en micrófono con IA y interfaz GTK4/libadwaita para "
-"PipeWire."
+"Filtro de ruido en tiempo real para la captura del micrófono y la "
+"reproducción del audio del sistema. Impulsado por la red neuronal GTCRN "
+"ejecutándose como un complemento LADSPA sobre PipeWire — cada filtro lo "
+"controla un smart-filter de WirePlumber para que la fuente y el destino "
+"predeterminados permanezcan limpios incluso tras cambios de dispositivo."
 
-#: src/ui/views/mic.rs:44
+#: src/ui/window.rs:390
+msgid "Built on"
+msgstr "Basado en"
+
+#: src/ui/views/mic.rs:46
 msgid "Noise filter — fine-tune"
 msgstr "Filtro de ruido — ajuste fino"
 
@@ -107,102 +116,67 @@ msgstr "Mejoras de voz"
 
 # File: biglinux-noise-reduction-
 # pipewire/src/biglinux_microphone/ui/main_view.py, line: 438
-#: src/ui/views/mic.rs:56 src/ui/views/mic.rs:367
+#: src/ui/views/mic.rs:56 src/ui/views/mic.rs:317
 msgid "Voice changer"
 msgstr "Cambiador de voz"
 
-#: src/ui/views/mic.rs:106
-msgid ""
-"Removes the speaker's echo from your microphone — useful on calls without "
-"headphones."
-msgstr ""
-"Elimina el eco del altavoz en tu micrófono — útil en llamadas sin "
-"auriculares."
+# File: biglinux-noise-reduction-
+# pipewire/src/biglinux_microphone/ui/main_view.py, line: 434
+# File: biglinux-noise-reduction-
+# pipewire/src/biglinux_microphone/ui/main_view.py, line: 472
+#: src/ui/views/mic.rs:89 src/ui/views/mic.rs:261 src/ui/views/mic.rs:419
+#: src/ui/views/output.rs:101 src/ui/views/output.rs:187
+#: src/ui/views/output.rs:217 src/ui/views/simple.rs:69
+#: src/ui/views/simple.rs:185
+msgid "Intensity"
+msgstr "Intensidad"
 
 # File: biglinux-noise-reduction-
 # pipewire/src/biglinux_microphone/ui/main_view.py, line: 687
-#: src/ui/views/mic.rs:118
+#: src/ui/views/mic.rs:115
 msgid "Echo cancellation"
 msgstr "Cancelación de eco"
 
-# File: biglinux-noise-reduction-
-# pipewire/src/biglinux_microphone/ui/main_view.py, line: 709
-#: src/ui/views/mic.rs:158
-msgid "AI noise filter"
-msgstr "Filtro de ruido AI"
-
-#: src/ui/views/mic.rs:167
+#: src/ui/views/mic.rs:117
+#, fuzzy
 msgid ""
-"GTCRN neural filter on your microphone. Off bypasses every fine-tune control"
-" below."
+"Removes speaker bleed from your microphone using the WebRTC AEC. Turn off "
+"when wearing headphones or when troubleshooting microphone routing."
 msgstr ""
-"Filtro neuronal GTCRN en tu micrófono. Apagado omite todos los controles de "
-"ajuste fino a continuación."
+"Removes speaker bleed from your microphone using the WebRTC AEC. Turn off "
+"when wearing headphones or when troubleshooting microphone routing."
+
+#: src/ui/views/mic.rs:162 src/ui/views/simple.rs:124
+msgid "Noise filter"
+msgstr "Filtro de ruido"
+
+#: src/ui/views/mic.rs:171 src/ui/views/simple.rs:133
+msgid ""
+"Removes background noise from your voice with the GTCRN neural network. "
+"Higher intensity = stronger cleanup."
+msgstr ""
+"Elimina el ruido de fondo de tu voz con la red neuronal GTCRN. Mayor "
+"intensidad = limpieza más fuerte."
 
 # File: biglinux-noise-reduction-
 # pipewire/src/biglinux_microphone/ui/main_view.py, line: 326
-#: src/ui/views/mic.rs:184 src/ui/views/output.rs:101
+#: src/ui/views/mic.rs:188 src/ui/views/output.rs:111
 msgid "Neural model"
 msgstr "Modelo neuronal"
 
-#: src/ui/views/mic.rs:186
-msgid ""
-"DNS3 removes more noise but can smudge consonants. VCTK is gentler and "
-"lighter on CPU — good for podcasts."
-msgstr ""
-"DNS3 elimina más ruido pero puede difuminar consonantes. VCTK es más suave y"
-" consume menos CPU — bueno para podcasts."
-
-#: src/ui/views/mic.rs:193 src/ui/views/output.rs:110
-msgid "GTCRN – DNS3 (strong)"
-msgstr "GTCRN – DNS3 (fuerte)"
-
-#: src/ui/views/mic.rs:194 src/ui/views/output.rs:111
-msgid "GTCRN – VCTK (gentle)"
-msgstr "GTCRN – VCTK (suave)"
-
 # File: biglinux-noise-reduction-
 # pipewire/src/biglinux_microphone/ui/main_view.py, line: 323
-#: src/ui/views/mic.rs:211 src/ui/views/output.rs:128
+#: src/ui/views/mic.rs:197 src/ui/views/output.rs:122
 msgid "Model"
 msgstr "Modelo"
 
-#: src/ui/views/mic.rs:218 src/ui/views/output.rs:135
-msgid "Noise strength (no voice)"
-msgstr "Intensidad del ruido (sin voz)"
-
-#: src/ui/views/mic.rs:220
-msgid ""
-"How hard the filter works in the gaps between words. 100% mutes anything "
-"that isn't voice."
-msgstr ""
-"Qué tan fuerte actúa el filtro en los espacios entre palabras. 100% silencia"
-" todo lo que no sea voz."
-
-#: src/ui/views/mic.rs:226 src/ui/views/mic.rs:244 src/ui/views/output.rs:143
-#: src/ui/views/output.rs:165
-msgid "Strength"
-msgstr "Intensidad"
-
-#: src/ui/views/mic.rs:236 src/ui/views/output.rs:153
-msgid "Voice strength (while speaking)"
-msgstr "Intensidad de la voz (mientras hablas)"
-
-#: src/ui/views/mic.rs:238
-msgid ""
-"How hard the filter works while you talk. Lower if your voice sounds "
-"robotic; raise if noise still bleeds through."
-msgstr ""
-"Qué tan fuerte actúa el filtro mientras hablas. Baja si tu voz suena "
-"robótica; sube si el ruido aún se filtra."
-
 # File: biglinux-noise-reduction-
 # pipewire/src/biglinux_microphone/ui/main_view.py, line: 392
-#: src/ui/views/mic.rs:254 src/ui/views/output.rs:175
+#: src/ui/views/mic.rs:204 src/ui/views/output.rs:129
 msgid "Voice presence"
 msgstr "Presencia de voz"
 
-#: src/ui/views/mic.rs:256
+#: src/ui/views/mic.rs:206
 msgid ""
 "Restores high-frequency clarity (sibilants like \"s\", \"sh\") after "
 "suppression. Lower only if your voice already sounds harsh."
@@ -212,17 +186,17 @@ msgstr ""
 
 # File: biglinux-noise-reduction-
 # pipewire/src/biglinux_microphone/ui/main_view.py, line: 392
-#: src/ui/views/mic.rs:262 src/ui/views/output.rs:187
+#: src/ui/views/mic.rs:212 src/ui/views/output.rs:141
 msgid "Recovery"
 msgstr "Recuperación"
 
 # File: biglinux-noise-reduction-
 # pipewire/src/biglinux_microphone/ui/main_view.py, line: 477
-#: src/ui/views/mic.rs:282 src/ui/views/output.rs:207
+#: src/ui/views/mic.rs:232 src/ui/views/output.rs:161
 msgid "High-pass filter"
 msgstr "Filtro pasa altos"
 
-#: src/ui/views/mic.rs:283
+#: src/ui/views/mic.rs:233
 msgid "Cuts low-frequency rumble — AC, wind, mic-stand bumps."
 msgstr ""
 "Elimina el retumbe de bajas frecuencias — corriente alterna, viento, golpes "
@@ -230,11 +204,11 @@ msgstr ""
 
 # File: biglinux-noise-reduction-
 # pipewire/src/biglinux_microphone/ui/main_view.py, line: 308
-#: src/ui/views/mic.rs:301 src/ui/views/output.rs:226
+#: src/ui/views/mic.rs:251 src/ui/views/output.rs:180
 msgid "Silence gate"
 msgstr "Puerta de silencio"
 
-#: src/ui/views/mic.rs:303
+#: src/ui/views/mic.rs:253
 msgid ""
 "Mutes the mic during pauses so listeners hear silence instead of hiss. "
 "Higher = more aggressive."
@@ -243,22 +217,12 @@ msgstr ""
 "silencio en lugar de siseo. Más alto = más agresivo."
 
 # File: biglinux-noise-reduction-
-# pipewire/src/biglinux_microphone/ui/main_view.py, line: 434
-# File: biglinux-noise-reduction-
-# pipewire/src/biglinux_microphone/ui/main_view.py, line: 472
-#: src/ui/views/mic.rs:311 src/ui/views/mic.rs:457 src/ui/views/output.rs:233
-#: src/ui/views/output.rs:263 src/ui/views/simple.rs:69
-#: src/ui/views/simple.rs:177
-msgid "Intensity"
-msgstr "Intensidad"
-
-# File: biglinux-noise-reduction-
 # pipewire/src/biglinux_microphone/ui/main_view.py, line: 477
-#: src/ui/views/mic.rs:323 src/ui/views/output.rs:56
+#: src/ui/views/mic.rs:273 src/ui/views/output.rs:57
 msgid "Equalizer"
 msgstr "Ecualizador"
 
-#: src/ui/views/mic.rs:325
+#: src/ui/views/mic.rs:275
 msgid ""
 "10-band parametric EQ. Pick a preset or drag each band between -40 dB and "
 "+40 dB."
@@ -266,7 +230,7 @@ msgstr ""
 "Ecualizador paramétrico de 10 bandas. Elige un preset o arrastra cada banda "
 "entre -40 dB y +40 dB."
 
-#: src/ui/views/mic.rs:369
+#: src/ui/views/mic.rs:319
 msgid ""
 "Shifts the pitch of your voice without retiming. Left = deeper, right = "
 "higher. Center keeps your natural voice."
@@ -276,49 +240,63 @@ msgstr ""
 
 # File: biglinux-noise-reduction-
 # pipewire/src/biglinux_microphone/ui/main_view.py, line: 1147
-#: src/ui/views/mic.rs:389
+#: src/ui/views/mic.rs:339
 msgid "Deep"
 msgstr "Profundo"
 
-#: src/ui/views/mic.rs:390
+#: src/ui/views/mic.rs:340
 msgid "Lower"
 msgstr "Más bajo"
 
-#: src/ui/views/mic.rs:391
+#: src/ui/views/mic.rs:341
 msgid "Natural"
 msgstr "Natural"
 
-#: src/ui/views/mic.rs:392
+#: src/ui/views/mic.rs:342
 msgid "Higher"
 msgstr "Más alto"
 
-#: src/ui/views/mic.rs:393
+#: src/ui/views/mic.rs:343
 msgid "Chipmunk"
 msgstr "Ardilla"
 
-#: src/ui/views/mic.rs:404
+#: src/ui/views/mic.rs:354
 msgid "Pitch"
 msgstr "Tono"
 
-#: src/ui/views/mic.rs:416 src/ui/views/simple.rs:144
+#: src/ui/views/mic.rs:366 src/ui/views/simple.rs:153
 msgid "Headphones only — speakers cause feedback."
 msgstr "Solo auriculares — los altavoces causan retroalimentación."
 
 # File: biglinux-noise-reduction-
 # pipewire/src/biglinux_microphone/ui/main_view.py, line: 550
-#: src/ui/views/mic.rs:426 src/ui/views/simple.rs:154
+#: src/ui/views/mic.rs:376 src/ui/views/simple.rs:163
 msgid "Hear my voice"
 msgstr "Escuchar mi voz"
 
-#: src/ui/views/mic.rs:434
+#: src/ui/views/mic.rs:386
+#, fuzzy
+msgid "Self-listen delay"
+msgstr "Self-listen delay"
+
+#: src/ui/views/mic.rs:388
+#, fuzzy
+msgid ""
+"Round-trip latency for the \"Hear my voice\" monitor. Raise only if the "
+"loopback sounds rushed or chops on your hardware."
+msgstr ""
+"Round-trip latency for the \"Hear my voice\" monitor. Raise only if the "
+"loopback sounds rushed or chops on your hardware."
+
+#: src/ui/views/mic.rs:394
 msgid "Delay (ms)"
 msgstr "Retardo (ms)"
 
-#: src/ui/views/mic.rs:452 src/ui/views/output.rs:255
+#: src/ui/views/mic.rs:414 src/ui/views/output.rs:209
 msgid "Compressor"
 msgstr "Compresor"
 
-#: src/ui/views/mic.rs:453
+#: src/ui/views/mic.rs:415
 msgid ""
 "Evens out loud peaks and quiet parts so your voice stays at a steady volume."
 msgstr ""
@@ -327,15 +305,15 @@ msgstr ""
 
 # File: biglinux-noise-reduction-
 # pipewire/src/biglinux_microphone/ui/main_view.py, line: 310
-#: src/ui/views/output.rs:37
+#: src/ui/views/output.rs:40
 msgid "AI noise reduction"
 msgstr "Reducción de ruido AI"
 
-#: src/ui/views/output.rs:43
+#: src/ui/views/output.rs:44
 msgid "Audio enhancements"
 msgstr "Mejoras de audio"
 
-#: src/ui/views/output.rs:58
+#: src/ui/views/output.rs:59
 msgid ""
 "10-band parametric EQ on what you hear. Pick a preset or drag each band "
 "between -40 dB and +40 dB."
@@ -343,43 +321,19 @@ msgstr ""
 "Ecualizador paramétrico de 10 bandas en lo que escuchas. Elige un preset o "
 "arrastra cada banda entre -40 dB y +40 dB."
 
-#: src/ui/views/output.rs:89
-msgid "Enable output filter"
-msgstr "Activar filtro de salida"
+#: src/ui/views/output.rs:95 src/ui/views/simple.rs:179
+msgid "System sound"
+msgstr "Sonido del sistema"
 
-#: src/ui/views/output.rs:91
+#: src/ui/views/output.rs:96 src/ui/views/simple.rs:180
 msgid ""
-"Filters audio reaching your speakers in real time. Stays attached after "
-"toggling, so playback and calls keep running."
+"Cleans background noise from everything you hear before it reaches your "
+"speakers."
 msgstr ""
-"Filtra el audio que llega a tus altavoces en tiempo real. Permanece activo "
-"tras alternar, para que la reproducción y las llamadas sigan funcionando."
+"Limpia el ruido de fondo de todo lo que escuchas antes de que llegue a tus "
+"altavoces."
 
-#: src/ui/views/output.rs:103
-msgid ""
-"DNS3 strips more noise (good for harsh streams); VCTK is gentler (good for "
-"music or clean voice)."
-msgstr ""
-"DNS3 elimina más ruido (ideal para transmisiones con ruido fuerte); VCTK es "
-"más suave (ideal para música o voz limpia)."
-
-#: src/ui/views/output.rs:137
-msgid ""
-"How hard the filter works during silent moments in playback. Higher = "
-"quieter background between sentences."
-msgstr ""
-"Qué tan fuerte actúa el filtro durante los momentos de silencio en la "
-"reproducción. Más alto = fondo más silencioso entre frases."
-
-#: src/ui/views/output.rs:155
-msgid ""
-"How hard the filter works while voices play. Lower if they sound robotic; "
-"raise if noise still bleeds through."
-msgstr ""
-"Qué tan fuerte actúa el filtro mientras suenan voces. Más bajo si suenan "
-"robóticas; aumenta si el ruido aún se filtra."
-
-#: src/ui/views/output.rs:177
+#: src/ui/views/output.rs:131
 msgid ""
 "Restores high-frequency clarity after suppression. Lower only if the source "
 "already sounds harsh."
@@ -387,50 +341,26 @@ msgstr ""
 "Restaura la claridad de las frecuencias altas tras la supresión. Baja solo "
 "si la fuente ya suena áspera."
 
-#: src/ui/views/output.rs:208
+#: src/ui/views/output.rs:162
 msgid "Cuts low-frequency rumble from playback — wind, AC noise."
 msgstr ""
 "Elimina el retumbe de bajas frecuencias en la reproducción — viento, ruido "
 "de aire acondicionado."
 
-#: src/ui/views/output.rs:227
+#: src/ui/views/output.rs:181
 msgid ""
 "Mutes playback during silent moments so you don't hear hiss between words."
 msgstr ""
 "Silencia la reproducción durante momentos de silencio para que no escuches "
 "siseo entre palabras."
 
-#: src/ui/views/output.rs:257
+#: src/ui/views/output.rs:211
 msgid ""
 "Evens out volume across loud and quiet speakers — useful for meetings with "
 "mixed mic levels."
 msgstr ""
 "Igualar el volumen entre altavoces fuertes y silenciosos — útil para "
 "reuniones con niveles de micrófono variados."
-
-#: src/ui/views/simple.rs:115
-msgid "Noise filter"
-msgstr "Filtro de ruido"
-
-#: src/ui/views/simple.rs:124
-msgid ""
-"Removes background noise from your voice with the GTCRN neural network. "
-"Higher intensity = stronger cleanup."
-msgstr ""
-"Elimina el ruido de fondo de tu voz con la red neuronal GTCRN. Mayor "
-"intensidad = limpieza más fuerte."
-
-#: src/ui/views/simple.rs:170
-msgid "System sound"
-msgstr "Sonido del sistema"
-
-#: src/ui/views/simple.rs:171
-msgid ""
-"Cleans background noise from everything you hear before it reaches your "
-"speakers."
-msgstr ""
-"Limpia el ruido de fondo de todo lo que escuchas antes de que llegue a tus "
-"altavoces."
 
 # File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/config.py,
 # line: 711
@@ -486,11 +416,168 @@ msgstr "Personalizado"
 msgid "Preset"
 msgstr "Preajuste"
 
+#: src/ui/widgets/model_picker.rs:42
+#, fuzzy
+msgid "DeepFilterNet3 (48 kHz)"
+msgstr "DeepFilterNet3 (48 kHz)"
+
+#: src/ui/widgets/model_picker.rs:44
+#, fuzzy
+msgid "DeepFilterNet3 (48 kHz) — not installed"
+msgstr "DeepFilterNet3 (48 kHz) — not installed"
+
+#: src/ui/widgets/model_picker.rs:47
+#, fuzzy
+msgid "GTCRN – DNS3 (16 kHz, strong)"
+msgstr "GTCRN – DNS3 (fuerte)"
+
+#: src/ui/widgets/model_picker.rs:48
+#, fuzzy
+msgid "GTCRN – VCTK (16 kHz, gentle)"
+msgstr "GTCRN – VCTK (suave)"
+
+#: src/ui/widgets/model_picker.rs:111
+#, fuzzy
+msgid ""
+"DNS3 removes more noise but can smudge consonants. VCTK is gentler and "
+"lighter on CPU. DeepFilterNet3 is a full-band 48 kHz model with the cleanest"
+" output and the highest CPU cost."
+msgstr ""
+"DNS3 elimina más ruido pero puede difuminar consonantes. VCTK es más suave y"
+" consume menos CPU — bueno para podcasts."
+
+#: src/ui/widgets/model_picker.rs:118
+msgid ""
+"DNS3 removes more noise but can smudge consonants. VCTK is gentler and "
+"lighter on CPU — good for podcasts."
+msgstr ""
+"DNS3 elimina más ruido pero puede difuminar consonantes. VCTK es más suave y"
+" consume menos CPU — bueno para podcasts."
+
 # File: biglinux-noise-reduction-
 # pipewire/src/biglinux_microphone/ui/main_view.py, line: 753
 #: src/ui/widgets/source_picker.rs:108
 msgid "Volume"
 msgstr "Volumen"
+
+#: src/ui/widgets/wp_override_warning.rs:51
+#, fuzzy
+msgid "Configuração do WirePlumber sobreposta"
+msgstr "Configuração do WirePlumber sobreposta"
+
+#: src/ui/widgets/wp_override_warning.rs:58
+#, fuzzy
+msgid "Manter"
+msgstr "Manter"
+
+#: src/ui/widgets/wp_override_warning.rs:59
+#, fuzzy
+msgid "Remover sobreposição"
+msgstr "Remover sobreposição"
+
+#: src/ui/widgets/wp_override_warning.rs:63
+#, fuzzy
+msgid "Não avisar de novo"
+msgstr "Não avisar de novo"
+
+#: src/ui/widgets/wp_override_warning.rs:133
+#, fuzzy
+msgid ""
+"The file <tt>{path}</tt> is masking the packaged AEC routing script. Package updates won't take effect while this local copy exists.\n"
+"\n"
+"Recommended: remove the override and restart WirePlumber."
+msgstr ""
+"The file <tt>{path}</tt> is masking the packaged AEC routing script. Package updates won't take effect while this local copy exists.\n"
+"\n"
+"Recommended: remove the override and restart WirePlumber."
+
+# File: biglinux-noise-reduction-
+# pipewire/src/biglinux_microphone/audio/filter_chain.py
+#~ msgid "BigLinux Microphone"
+#~ msgstr "BigLinux Microphone"
+
+#~ msgid "About BigLinux Microphone"
+#~ msgstr "Acerca de BigLinux Microphone"
+
+#~ msgid ""
+#~ "AI-powered microphone noise reduction with GTK4/libadwaita interface for "
+#~ "PipeWire."
+#~ msgstr ""
+#~ "Reducción de ruido en micrófono con IA y interfaz GTK4/libadwaita para "
+#~ "PipeWire."
+
+#~ msgid ""
+#~ "Removes the speaker's echo from your microphone — useful on calls without "
+#~ "headphones."
+#~ msgstr ""
+#~ "Elimina el eco del altavoz en tu micrófono — útil en llamadas sin "
+#~ "auriculares."
+
+# File: biglinux-noise-reduction-
+# pipewire/src/biglinux_microphone/ui/main_view.py, line: 709
+#~ msgid "AI noise filter"
+#~ msgstr "Filtro de ruido AI"
+
+#~ msgid ""
+#~ "GTCRN neural filter on your microphone. Off bypasses every fine-tune control"
+#~ " below."
+#~ msgstr ""
+#~ "Filtro neuronal GTCRN en tu micrófono. Apagado omite todos los controles de "
+#~ "ajuste fino a continuación."
+
+#~ msgid "Noise strength (no voice)"
+#~ msgstr "Intensidad del ruido (sin voz)"
+
+#~ msgid ""
+#~ "How hard the filter works in the gaps between words. 100% mutes anything "
+#~ "that isn't voice."
+#~ msgstr ""
+#~ "Qué tan fuerte actúa el filtro en los espacios entre palabras. 100% silencia"
+#~ " todo lo que no sea voz."
+
+#~ msgid "Strength"
+#~ msgstr "Intensidad"
+
+#~ msgid "Voice strength (while speaking)"
+#~ msgstr "Intensidad de la voz (mientras hablas)"
+
+#~ msgid ""
+#~ "How hard the filter works while you talk. Lower if your voice sounds "
+#~ "robotic; raise if noise still bleeds through."
+#~ msgstr ""
+#~ "Qué tan fuerte actúa el filtro mientras hablas. Baja si tu voz suena "
+#~ "robótica; sube si el ruido aún se filtra."
+
+#~ msgid "Enable output filter"
+#~ msgstr "Activar filtro de salida"
+
+#~ msgid ""
+#~ "Filters audio reaching your speakers in real time. Stays attached after "
+#~ "toggling, so playback and calls keep running."
+#~ msgstr ""
+#~ "Filtra el audio que llega a tus altavoces en tiempo real. Permanece activo "
+#~ "tras alternar, para que la reproducción y las llamadas sigan funcionando."
+
+#~ msgid ""
+#~ "DNS3 strips more noise (good for harsh streams); VCTK is gentler (good for "
+#~ "music or clean voice)."
+#~ msgstr ""
+#~ "DNS3 elimina más ruido (ideal para transmisiones con ruido fuerte); VCTK es "
+#~ "más suave (ideal para música o voz limpia)."
+
+#~ msgid ""
+#~ "How hard the filter works during silent moments in playback. Higher = "
+#~ "quieter background between sentences."
+#~ msgstr ""
+#~ "Qué tan fuerte actúa el filtro durante los momentos de silencio en la "
+#~ "reproducción. Más alto = fondo más silencioso entre frases."
+
+#~ msgid ""
+#~ "How hard the filter works while voices play. Lower if they sound robotic; "
+#~ "raise if noise still bleeds through."
+#~ msgstr ""
+#~ "Qué tan fuerte actúa el filtro mientras suenan voces. Más bajo si suenan "
+#~ "robóticas; aumenta si el ruido aún se filtra."
 
 #~ msgid "Configure..."
 #~ msgstr "Configurar..."
@@ -1467,9 +1554,6 @@ msgstr "Volumen"
 #~ msgid "Open settings…"
 #~ msgstr "Abrir ajustes…"
 
-#~ msgid "Filter noise"
-#~ msgstr "Filtrar ruido"
-
 #~ msgid "Microphone filter"
 #~ msgstr "Filtro de micrófono"
 
@@ -1481,21 +1565,3 @@ msgstr "Volumen"
 
 #~ msgid "Cleans every sound the system plays before it reaches your speakers"
 #~ msgstr "Limpia cada sonido antes de llegar a tus altavoces"
-
-#~ msgid "About Filter noise"
-#~ msgstr "Acerca de Filtrar ruido"
-
-#~ msgid "Built on"
-#~ msgstr "Basado en"
-
-#~ msgid ""
-#~ "Real-time noise filter for microphone capture and system audio playback. "
-#~ "Powered by the GTCRN neural network running as a LADSPA plugin on top of "
-#~ "PipeWire — every filter is driven by a WirePlumber smart-filter so the "
-#~ "default source and sink stay clean even after device changes."
-#~ msgstr ""
-#~ "Filtro de ruido en tiempo real para la captura del micrófono y la "
-#~ "reproducción del audio del sistema. Impulsado por la red neuronal GTCRN "
-#~ "ejecutándose como un complemento LADSPA sobre PipeWire — cada filtro lo "
-#~ "controla un smart-filter de WirePlumber para que la fuente y el destino "
-#~ "predeterminados permanezcan limpios incluso tras cambios de dispositivo."

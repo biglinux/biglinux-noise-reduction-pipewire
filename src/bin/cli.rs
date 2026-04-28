@@ -10,7 +10,6 @@
 //! | `apply`        | Write every config file under the user's XDG directories |
 //! | `remove`       | Delete every file previously written by `apply` |
 //! | `list-apps`    | Scan the PipeWire graph for routable audio streams |
-//! | `spectrum`     | Stream a low-resolution spectrum ASCII meter |
 //! | `autostart`    | Reconcile graph with saved settings (login hook) |
 //! | `reload`       | Restart filter-chain.service + output unit |
 //! | `live-update`  | Push current settings into the running chain |
@@ -24,9 +23,6 @@ use std::time::{Duration, Instant};
 
 use biglinux_microphone::config::AppSettings;
 use biglinux_microphone::pipeline;
-use biglinux_microphone::services::audio_monitor::{
-    AudioMonitor, Event as MonitorEvent, MonitorConfig,
-};
 use biglinux_microphone::services::pipewire::{Event, PwService, StreamDirection};
 
 /// Subcommand parsed from `argv[1]`. Keeping the dispatch in an enum
@@ -41,7 +37,6 @@ enum Cmd {
     Apply,
     Remove,
     ListApps,
-    Spectrum,
     Autostart,
     Reload,
     LiveUpdate,
@@ -62,7 +57,6 @@ impl Cmd {
             "apply" => Self::Apply,
             "remove" => Self::Remove,
             "list-apps" => Self::ListApps,
-            "spectrum" => Self::Spectrum,
             "autostart" => Self::Autostart,
             "reload" => Self::Reload,
             "live-update" => Self::LiveUpdate,
@@ -87,7 +81,6 @@ impl Cmd {
             Self::Apply => apply_configs(),
             Self::Remove => remove_configs(),
             Self::ListApps => list_audio_apps(),
-            Self::Spectrum => print_spectrum(),
             Self::Autostart => autostart(),
             Self::Reload => reload_services(),
             Self::LiveUpdate => live_update(),
@@ -129,7 +122,6 @@ COMMANDS:
     apply           Write every config file under the user's XDG dirs
     remove          Delete every config file previously written by apply
     list-apps       Scan the PipeWire graph for routable audio streams
-    spectrum        Stream a low-resolution spectrum ASCII meter (Ctrl-C to stop)
     autostart       Reconcile the PipeWire graph with the saved settings
                     (runs at login via the systemd user unit)
     reload          Explicitly restart filter-chain.service + output unit
@@ -438,45 +430,6 @@ fn list_audio_apps() -> ExitCode {
     });
     print_streams(&collected);
     ExitCode::SUCCESS
-}
-
-/// Stream the spectrum analyser to stdout as an ASCII meter.
-fn print_spectrum() -> ExitCode {
-    let monitor = AudioMonitor::start(MonitorConfig::default());
-    let events = monitor.events();
-
-    const PRINT_EVERY: u64 = 6;
-
-    loop {
-        match events.recv_blocking() {
-            Ok(MonitorEvent::Frame(frame)) => {
-                if frame.seq % PRINT_EVERY != 0 {
-                    continue;
-                }
-                let bars = render_bars(&frame.bands_db);
-                println!("rms={:>6.1} dB  {}", frame.rms_db, bars);
-            }
-            Ok(MonitorEvent::Fatal(e)) => {
-                monitor.shutdown();
-                return exit_with_error(&e);
-            }
-            Err(_) => break,
-        }
-    }
-    monitor.shutdown();
-    ExitCode::SUCCESS
-}
-
-fn render_bars(bands_db: &[f32]) -> String {
-    const GLYPHS: &[char] = &[' ', '▁', '▂', '▃', '▄', '▅', '▆', '▇', '█'];
-    bands_db
-        .iter()
-        .map(|&db| {
-            let norm = ((db + 60.0) / 60.0).clamp(0.0, 1.0);
-            let idx = (norm * (GLYPHS.len() as f32 - 1.0)).round() as usize;
-            GLYPHS[idx]
-        })
-        .collect()
 }
 
 /// Reset the user-level filter-chain units after an upgrade.

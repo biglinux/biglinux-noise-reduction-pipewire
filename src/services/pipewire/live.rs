@@ -27,7 +27,10 @@ use std::process::{Command, Stdio};
 
 use log::{debug, trace, warn};
 
-use crate::config::{AppSettings, CompressorDerived, GateDerived, EQ_BANDS_HZ, EQ_BAND_COUNT};
+use crate::config::{
+    deepfilter_attenuation_db, AppSettings, CompressorDerived, GateDerived, EQ_BANDS_HZ,
+    EQ_BAND_COUNT,
+};
 use crate::pipeline::{
     ai_node_in_mic_chain, output_ai_processing, MIC_CAPTURE_NODE_NAME, OUTPUT_NODE_NAME,
 };
@@ -242,21 +245,38 @@ fn mic_params(s: &AppSettings) -> Vec<(String, f64)> {
     // drops unknown control names) but pruning them keeps the trace
     // log honest about what the running graph actually accepts.
     if ai_node_in_mic_chain(s) {
-        params.extend([
-            ("ai:Enable".to_owned(), if nr.enabled { 1.0 } else { 0.0 }),
-            ("ai:Strength".to_owned(), f64::from(nr.strength)),
-            ("ai:Model".to_owned(), f64::from(nr.model.ladspa_control())),
-            ("ai:SpeechStrength".to_owned(), f64::from(nr.strength)),
-            ("ai:LookaheadMs".to_owned(), f64::from(nr.lookahead_ms)),
-            ("ai:ModelBlend".to_owned(), f64::from(nr.model_blending)),
-            ("ai:VoiceRecovery".to_owned(), f64::from(nr.voice_recovery)),
-            // Integrated gate (same LADSPA plugin as GTCRN).
-            ("ai:Threshold (dB)".to_owned(), threshold_db),
-            ("ai:Attack (ms)".to_owned(), gate_derived.attack_ms),
-            ("ai:Hold (ms)".to_owned(), gate_derived.hold_ms),
-            ("ai:Release (ms)".to_owned(), gate_derived.release_ms),
-            ("ai:Range (dB)".to_owned(), gate_derived.range_db),
-        ]);
+        if nr.model.is_deepfilter() {
+            // DFN3 has a single live-tunable knob — the attenuation cap
+            // driven by the user's strength slider. The gate (when
+            // enabled) lives in a separate `gate:` SWH-gate node.
+            let atten_db = deepfilter_attenuation_db(nr.strength);
+            params.push(("ai:Attenuation Limit (dB)".to_owned(), atten_db));
+            if s.gate.enabled {
+                params.extend([
+                    ("gate:Threshold (dB)".to_owned(), gate_derived.threshold_db),
+                    ("gate:Attack (ms)".to_owned(), gate_derived.attack_ms),
+                    ("gate:Hold (ms)".to_owned(), gate_derived.hold_ms),
+                    ("gate:Decay (ms)".to_owned(), gate_derived.release_ms),
+                    ("gate:Range (dB)".to_owned(), gate_derived.range_db),
+                ]);
+            }
+        } else {
+            params.extend([
+                ("ai:Enable".to_owned(), if nr.enabled { 1.0 } else { 0.0 }),
+                ("ai:Strength".to_owned(), f64::from(nr.strength)),
+                ("ai:Model".to_owned(), f64::from(nr.model.ladspa_control())),
+                ("ai:SpeechStrength".to_owned(), f64::from(nr.strength)),
+                ("ai:LookaheadMs".to_owned(), f64::from(nr.lookahead_ms)),
+                ("ai:ModelBlend".to_owned(), f64::from(nr.model_blending)),
+                ("ai:VoiceRecovery".to_owned(), f64::from(nr.voice_recovery)),
+                // Integrated gate (same LADSPA plugin as GTCRN).
+                ("ai:Threshold (dB)".to_owned(), threshold_db),
+                ("ai:Attack (ms)".to_owned(), gate_derived.attack_ms),
+                ("ai:Hold (ms)".to_owned(), gate_derived.hold_ms),
+                ("ai:Release (ms)".to_owned(), gate_derived.release_ms),
+                ("ai:Range (dB)".to_owned(), gate_derived.range_db),
+            ]);
+        }
     }
 
     append_compressor_params(
@@ -298,18 +318,27 @@ fn output_params(s: &AppSettings) -> Vec<(String, f64)> {
     // is the one and only path that reflects the user's choice — the
     // standalone unit stays running so streams don't get yanked.
     let ai_processing = output_ai_processing(s);
-    params.extend([
-        (
-            "ai:Enable".to_owned(),
-            if ai_processing { 1.0 } else { 0.0 },
-        ),
-        ("ai:Strength".to_owned(), f64::from(nr.strength)),
-        ("ai:Model".to_owned(), f64::from(nr.model.ladspa_control())),
-        ("ai:SpeechStrength".to_owned(), f64::from(nr.strength)),
-        ("ai:LookaheadMs".to_owned(), f64::from(nr.lookahead_ms)),
-        ("ai:ModelBlend".to_owned(), f64::from(nr.model_blending)),
-        ("ai:VoiceRecovery".to_owned(), f64::from(nr.voice_recovery)),
-    ]);
+    if nr.model.is_deepfilter() {
+        let atten_db = if ai_processing {
+            deepfilter_attenuation_db(nr.strength)
+        } else {
+            0.0
+        };
+        params.push(("ai:Attenuation Limit (dB)".to_owned(), atten_db));
+    } else {
+        params.extend([
+            (
+                "ai:Enable".to_owned(),
+                if ai_processing { 1.0 } else { 0.0 },
+            ),
+            ("ai:Strength".to_owned(), f64::from(nr.strength)),
+            ("ai:Model".to_owned(), f64::from(nr.model.ladspa_control())),
+            ("ai:SpeechStrength".to_owned(), f64::from(nr.strength)),
+            ("ai:LookaheadMs".to_owned(), f64::from(nr.lookahead_ms)),
+            ("ai:ModelBlend".to_owned(), f64::from(nr.model_blending)),
+            ("ai:VoiceRecovery".to_owned(), f64::from(nr.voice_recovery)),
+        ]);
+    }
 
     params.extend([
         // Standalone SWH gate — "Output select" = 1.0 bypasses.

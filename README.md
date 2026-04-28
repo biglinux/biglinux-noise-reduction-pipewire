@@ -13,7 +13,10 @@ sync.
 
 ### AI noise reduction
 - **GTCRN neural network** — voice-grade denoising via a LADSPA host
-- **DNS3 & VCTK models** — aggressive or gentle profiles
+- **DNS3 & VCTK models** (16 kHz) — aggressive or gentle profiles
+- **DeepFilterNet3** (full-band 48 kHz) — optional backend, exposed in
+  the model dropdown when the `deepfilternet-ladspa` package is
+  installed; same intensity slider drives its attenuation cap
 
 ### Audio processing
 - **Equalizer** with presets (Voice Boost, Podcast, Warm, Bright, De-esser, Low-cut)
@@ -48,8 +51,10 @@ sync.
 ### Runtime
 - Linux with PipeWire **>= 1.4** + WirePlumber **>= 0.5**
 - GTK4 **>= 4.20** and libadwaita **>= 1.8**
-- `gtcrn-ladspa` (neural denoiser plugin)
+- `gtcrn-ladspa` (neural denoiser plugin — GTCRN backend)
 - `swh-plugins` (gate, compressor, pitch shifter)
+- `deepfilternet-ladspa` *(optional)* — enables the DeepFilterNet3
+  full-band 48 kHz backend in the model dropdown
 
 ### Build (from source)
 - Rust **>= 1.82** (`rustup` recommended)
@@ -62,5 +67,6 @@ GNU General Public License v3.0 - see [LICENSE](LICENSE) for details.
 ## Acknowledgments
 
 - [GTCRN Project](https://github.com/Xiaobin-Rong/gtcrn) - Neural network for noise reduction
+- [DeepFilterNet](https://github.com/Rikorose/DeepFilterNet) - Full-band neural denoiser (DFN3 backend)
 - [PipeWire](https://pipewire.org/) - Modern audio server
 - [GTK4](https://gtk.org/) / [Libadwaita](https://gnome.pages.gitlab.gnome.org/libadwaita/) - UI framework

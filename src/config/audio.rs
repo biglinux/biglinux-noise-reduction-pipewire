@@ -8,16 +8,22 @@ use serde::{Deserialize, Serialize};
 
 // ── Noise reduction (GTCRN) ──────────────────────────────────────────
 
-/// GTCRN model variant. The numeric value is forwarded as the LADSPA
-/// `model` control input.
+/// Denoiser backend. GTCRN variants share one LADSPA plugin and switch
+/// via the `Model` control input. DFN3 is a different plugin entirely
+/// (full-band 48 kHz DeepFilterNet3) — selecting it swaps the LADSPA
+/// node, which forces a filter-chain reload.
 #[derive(Debug, Clone, Copy, Default, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(try_from = "u8", into = "u8")]
 pub enum NoiseModel {
-    /// Strongest noise reduction, highest quality.
+    /// Strongest GTCRN noise reduction, highest quality.
     #[default]
     GtcrnDns3 = 0,
-    /// Gentler noise reduction, lower CPU cost.
+    /// Gentler GTCRN noise reduction, lower CPU cost.
     GtcrnVctk = 1,
+    /// DeepFilterNet3 — premium full-band 48 kHz model. Requires the
+    /// optional `deepfilternet-ladspa` package; the UI hides this option
+    /// when the plugin shared object isn't installed.
+    DeepFilterNet3 = 2,
 }
 
 impl TryFrom<u8> for NoiseModel {
@@ -27,6 +33,7 @@ impl TryFrom<u8> for NoiseModel {
         match v {
             0 => Ok(Self::GtcrnDns3),
             1 => Ok(Self::GtcrnVctk),
+            2 => Ok(Self::DeepFilterNet3),
             other => Err(format!("unknown NoiseModel value: {other}")),
         }
     }
@@ -39,11 +46,38 @@ impl From<NoiseModel> for u8 {
 }
 
 impl NoiseModel {
-    /// LADSPA control value for the GTCRN plugin's `model` input.
+    /// LADSPA control value for the GTCRN plugin's `model` input. Only
+    /// meaningful for GTCRN variants; DFN3 is a different LADSPA plugin
+    /// and ignores this number.
     #[must_use]
     pub fn ladspa_control(self) -> f32 {
-        f32::from(u8::from(self))
+        match self {
+            Self::GtcrnVctk => 1.0,
+            // GTCRN DNS3 wires the model select to 0; DFN3 is a
+            // different LADSPA plugin entirely and ignores this value.
+            Self::GtcrnDns3 | Self::DeepFilterNet3 => 0.0,
+        }
     }
+
+    #[must_use]
+    pub fn is_deepfilter(self) -> bool {
+        matches!(self, Self::DeepFilterNet3)
+    }
+}
+
+/// Map the unified `strength` slider (0..=1) onto DFN3's
+/// `Attenuation Limit (dB)` control. Upstream documents the cap
+/// perceptually as: ~6-12 dB light, ~18-24 dB medium, 100 dB = no
+/// limit (max NR). A linear `s * 100` mapping saturates the
+/// perceptual range above `s≈0.1` because real noise rarely needs
+/// more than 24 dB suppression — the slider feels binary. The
+/// quadratic curve `s² * 100` lands at ~6 dB (s=0.25), ~25 dB
+/// (s=0.5), ~56 dB (s=0.75), 100 dB (s=1.0), giving usable travel
+/// across the slider that aligns with the upstream guidance.
+#[must_use]
+pub fn deepfilter_attenuation_db(strength: f32) -> f64 {
+    let s = strength.clamp(0.0, 1.0);
+    f64::from(s * s) * 100.0
 }
 
 pub const STRENGTH_DEFAULT: f32 = 1.0;
@@ -239,6 +273,19 @@ mod tests {
         assert!(c.enabled);
         assert_eq!(c.model, NoiseModel::GtcrnDns3);
         assert!((c.strength - STRENGTH_DEFAULT).abs() < f32::EPSILON);
+    }
+
+    #[test]
+    fn deepfilter_attenuation_curve_is_quadratic() {
+        // Endpoints + clamp.
+        assert!((deepfilter_attenuation_db(0.0) - 0.0).abs() < 1e-6);
+        assert!((deepfilter_attenuation_db(1.0) - 100.0).abs() < 1e-6);
+        assert!((deepfilter_attenuation_db(-1.0) - 0.0).abs() < 1e-6);
+        assert!((deepfilter_attenuation_db(2.0) - 100.0).abs() < 1e-6);
+        // Quadratic midpoints — give the slider perceptible travel
+        // (linear `s*100` saturates DFN3 above s≈0.1 in practice).
+        assert!((deepfilter_attenuation_db(0.5) - 25.0).abs() < 1e-4);
+        assert!((deepfilter_attenuation_db(0.25) - 6.25).abs() < 1e-4);
     }
 
     #[test]
