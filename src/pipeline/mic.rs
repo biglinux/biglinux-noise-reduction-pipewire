@@ -367,11 +367,24 @@ fn capture_props(settings: &AppSettings) -> String {
         "1024/48000"
     };
 
+    // `node.lock-quantum = true` keeps PipeWire from re-negotiating the
+    // graph quantum while this chain is active. Without the lock, the
+    // graph re-negotiates every time an app connects/disconnects (call
+    // clients hot-plug capture streams), and the resulting buffer
+    // re-allocations on a USB driver under load show up as the
+    // crackle-correlated-with-remote-talk symptom. Per pipewire-props(7)
+    // the lock auto-releases once this node deactivates, so devices
+    // unrelated to this chain stay on their negotiated defaults. The
+    // existing `node.pause-on-idle = false` is enough to ride out
+    // brief unlink/relink cycles during a call without falling back
+    // to `node.always-process` (which would burn CPU running GTCRN
+    // inference 24/7 even when no app is capturing).
     let mut props = vec![
         "node.name = \"mic-biglinux-capture\"".to_owned(),
         "node.passive = true".to_owned(),
         format!("node.latency = \"{latency}\""),
         "node.pause-on-idle = false".to_owned(),
+        "node.lock-quantum = true".to_owned(),
         "audio.rate = 48000".to_owned(),
         "audio.position = [ MONO ]".to_owned(),
     ];
@@ -421,6 +434,7 @@ fn playback_props(settings: &AppSettings) -> String {
         "media.class = Audio/Source".to_owned(),
         format!("node.latency = \"{latency}\""),
         "node.pause-on-idle = false".to_owned(),
+        "node.lock-quantum = true".to_owned(),
         "audio.rate = 48000".to_owned(),
         "audio.position = [ FL FR ]".to_owned(),
         "filter.smart = true".to_owned(),

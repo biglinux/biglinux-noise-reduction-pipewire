@@ -281,12 +281,20 @@ fn capture_props(target_sink_name: Option<&str>) -> String {
     // filter inserts unambiguously between apps and that exact sink.
     // The user's chosen default device stays the visible default in
     // every volume control — only the routing changes.
+    // See `mic.rs::capture_props` for rationale on lock-quantum — same
+    // reasoning, applied to the output filter chain so the system-sound
+    // denoiser doesn't trigger renegotiation every time an app
+    // starts/stops playback during a call. `pause-on-idle = false` is
+    // enough to ride out brief unlink/relink cycles; we deliberately
+    // avoid `node.always-process` so GTCRN/DFN3 inference doesn't burn
+    // CPU 24/7 when no app is playing audio.
     let mut props = vec![
         format!("node.name = \"{OUTPUT_NODE_NAME}\""),
         format!("node.description = \"{OUTPUT_DESCRIPTION}\""),
         "media.class = Audio/Sink".to_owned(),
         "node.latency = \"1024/48000\"".to_owned(),
         "node.pause-on-idle = false".to_owned(),
+        "node.lock-quantum = true".to_owned(),
         "audio.rate = 48000".to_owned(),
         "audio.channels = 2".to_owned(),
         "audio.position = [ FL FR ]".to_owned(),
@@ -328,6 +336,7 @@ fn playback_props() -> String {
         "node.passive = true".to_owned(),
         "node.latency = \"1024/48000\"".to_owned(),
         "node.pause-on-idle = false".to_owned(),
+        "node.lock-quantum = true".to_owned(),
         "audio.rate = 48000".to_owned(),
         "audio.channels = 2".to_owned(),
         "audio.position = [ FL FR ]".to_owned(),

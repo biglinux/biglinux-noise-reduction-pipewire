@@ -161,19 +161,21 @@ package() {
     install -Dm644 usr/share/pipewire/filter-chain.conf.d/50-biglinux-priority.conf \
         "${pkgdir}/usr/share/pipewire/filter-chain.conf.d/50-biglinux-priority.conf"
 
-    # Pin the negotiated PipeWire quantum + rate so every node in the
-    # graph (USB mic driver, LADSPA chain, alsa output) runs at the
-    # same buffer size. Mismatched quanta caused ~70 capture drops/s
-    # under call load — audible as crackle synced with remote talk.
-    install -Dm644 usr/share/pipewire/pipewire.conf.d/50-biglinux-quantum.conf \
-        "${pkgdir}/usr/share/pipewire/pipewire.conf.d/50-biglinux-quantum.conf"
-
     # WirePlumber policy hook: keeps the echo-cancel capture stream on
     # the selected physical microphone while devices/defaults change.
     install -Dm644 usr/share/wireplumber/scripts/biglinux/echo-cancel-routing.lua \
         "${pkgdir}/usr/share/wireplumber/scripts/biglinux/echo-cancel-routing.lua"
     install -Dm644 usr/share/wireplumber/wireplumber.conf.d/60-biglinux-echo-cancel-routing.conf \
         "${pkgdir}/usr/share/wireplumber/wireplumber.conf.d/60-biglinux-echo-cancel-routing.conf"
+
+    # Per-device USB headroom rule (api.alsa.headroom = 1024 frames,
+    # ~21 ms at 48 kHz). Absorbs USB SOF jitter on consumer mics /
+    # headsets / DACs without forcing a global quantum/rate, which
+    # would break pro-audio interfaces and Bluetooth on diverse
+    # hardware. Built-in HDA, BT and pro-audio match nothing in this
+    # rule and stay on negotiated defaults.
+    install -Dm644 usr/share/wireplumber/wireplumber.conf.d/61-biglinux-usb-headroom.conf \
+        "${pkgdir}/usr/share/wireplumber/wireplumber.conf.d/61-biglinux-usb-headroom.conf"
 
     # Pacman hook + helper (BigLinux bluetooth autoswitch)
     if [ -f usr/share/libalpm/hooks/pipewire-filter-bluetooth.hook ]; then
