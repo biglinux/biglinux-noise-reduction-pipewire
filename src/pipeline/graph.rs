@@ -79,16 +79,20 @@ impl Graph {
 
         if mode == RenderMode::Standalone {
             // Minimum context a dedicated `pipewire` instance needs to
-            // host a filter-chain. The clock block locks the standalone
-            // graph at 48 kHz / 1024-frame quantum so neural inference
-            // sees stable buffer sizes; min/max bracket what the host
-            // can negotiate without re-allocating GTCRN buffers.
+            // host a filter-chain. We deliberately omit the
+            // `default.clock.*` block: the standalone daemon has no
+            // ALSA driver loaded, so its only clock comes from the
+            // peer it links to in the main PipeWire daemon (the
+            // user's hardware sink). Pinning `default.clock.quantum`
+            // here forced cross-process buffer sizes that the hw
+            // sink had no chance to negotiate, which surfaced as
+            // `spa.alsa: front:1p target:N thr:N, resync` log spam
+            // and audible micro-cuts during calls on consumer
+            // PCI/HDA hardware. Letting the standalone graph adopt
+            // the main daemon's negotiated quantum is portable
+            // across machines.
             out.push_str("context.properties = {\n");
             out.push_str("    log.level = 0\n");
-            out.push_str("    default.clock.rate          = 48000\n");
-            out.push_str("    default.clock.quantum       = 1024\n");
-            out.push_str("    default.clock.min-quantum   = 256\n");
-            out.push_str("    default.clock.max-quantum   = 8192\n");
             out.push_str("}\n\n");
             out.push_str("context.spa-libs = {\n");
             out.push_str("    audio.convert.* = audioconvert/libspa-audioconvert\n");

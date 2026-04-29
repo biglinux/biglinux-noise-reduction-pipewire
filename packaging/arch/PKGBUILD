@@ -168,14 +168,13 @@ package() {
     install -Dm644 usr/share/wireplumber/wireplumber.conf.d/60-biglinux-echo-cancel-routing.conf \
         "${pkgdir}/usr/share/wireplumber/wireplumber.conf.d/60-biglinux-echo-cancel-routing.conf"
 
-    # Per-device USB headroom rule (api.alsa.headroom = 1024 frames,
-    # ~21 ms at 48 kHz). Absorbs USB SOF jitter on consumer mics /
-    # headsets / DACs without forcing a global quantum/rate, which
-    # would break pro-audio interfaces and Bluetooth on diverse
-    # hardware. Built-in HDA, BT and pro-audio match nothing in this
-    # rule and stay on negotiated defaults.
-    install -Dm644 usr/share/wireplumber/wireplumber.conf.d/61-biglinux-usb-headroom.conf \
-        "${pkgdir}/usr/share/wireplumber/wireplumber.conf.d/61-biglinux-usb-headroom.conf"
+    # Broad ALSA headroom rule (api.alsa.headroom = 1024 frames,
+    # ~21 ms at 48 kHz) on USB / PCI-HDA / Bluetooth devices. Absorbs
+    # the cross-process scheduling jitter the standalone output
+    # filter daemon adds on top of native USB SOF jitter, without
+    # forcing a global quantum/rate (which broke other machines).
+    install -Dm644 usr/share/wireplumber/wireplumber.conf.d/61-biglinux-alsa-headroom.conf \
+        "${pkgdir}/usr/share/wireplumber/wireplumber.conf.d/61-biglinux-alsa-headroom.conf"
 
     # Pacman hook + helper (BigLinux bluetooth autoswitch)
     if [ -f usr/share/libalpm/hooks/pipewire-filter-bluetooth.hook ]; then
