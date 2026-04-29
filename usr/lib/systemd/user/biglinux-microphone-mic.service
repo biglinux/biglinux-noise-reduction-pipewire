@@ -2,13 +2,25 @@
 Description=BigLinux Microphone — mic-side filter chain (pwloader)
 Documentation=https://github.com/biglinux/biglinux-noise-reduction-pipewire
 PartOf=pipewire.service
-# AEC source must already exist when the mic chain resolves
-# `target.object = "echo-cancel-source"`; ordering against the AEC
-# unit covers the AEC-on case without making it mandatory (the chain
-# falls back to the hw mic when AEC is off, via WirePlumber's
-# follow-default policy).
+# `After=` orders the mic loader behind the AEC loader *when both are
+# being started*: the AEC source must already exist by the time the
+# mic chain resolves `target.object = "echo-cancel-source"`. We
+# deliberately do NOT list the AEC unit under `Wants=` though — that
+# would make systemd auto-start AEC every time the mic loader starts,
+# even if the user has the AEC toggle off. The mic chain only pins
+# `echo-cancel-source` when the user explicitly enables AEC; when AEC
+# is off it falls back to the hardware mic via WirePlumber's
+# follow-default policy and the AEC loader must stay down.
+#
+# Pre-fix symptom: toggling AEC off while leaving mic on caused the
+# state machine to (a) stop AEC, (b) restart the mic unit to drop the
+# stale `target.object`, and (c) systemd silently re-pulled AEC up
+# through `Wants=` — leaving the AEC pwloader running with a deleted
+# args file (and looping under `Restart=on-failure` until any toggle
+# briefly recreated the file, after which it stuck around with a
+# stale module loaded inside the daemon's context).
 After=pipewire.service wireplumber.service biglinux-microphone-aec.service
-Wants=pipewire.service wireplumber.service biglinux-microphone-aec.service
+Wants=pipewire.service wireplumber.service
 Requisite=pipewire.service
 
 [Service]

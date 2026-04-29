@@ -544,8 +544,8 @@ mod tests {
             "mic-biglinux must not promote itself as the visible default",
         );
         assert!(
-            conf.contains("node.latency = \"960/48000\""),
-            "when AEC is upstream, the mic chain must not force WebRTC back to a 1024-frame quantum",
+            conf.contains("node.latency = \"1920/48000\""),
+            "when AEC is upstream, the mic chain must follow AEC's 40 ms (4× WebRTC frame) quantum",
         );
     }
 

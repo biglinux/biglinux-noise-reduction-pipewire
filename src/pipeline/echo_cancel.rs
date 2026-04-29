@@ -45,11 +45,29 @@
 //! PipeWire's config stays generic, and WirePlumber follows microphone
 //! changes live without ever hard-coding `alsa_input.*` names.
 //!
-//! `node.latency = 960/48000` (= 20 ms) gives WebRTC exactly two 10 ms
+//! `node.latency = 1920/48000` (= 40 ms) gives WebRTC exactly four 10 ms
 //! frames per processing block. `libspa-aec-webrtc` rejects buffers
 //! that are not an integer multiple of 10 ms; using the mic chain's
 //! regular 1024-frame quantum here causes ERR counters on
 //! `echo-cancel-source` under load.
+//!
+//! 40 ms picked over the previous 20 ms because the AEC, mic and
+//! output filter chains all join the *same* PipeWire daemon and the
+//! mic chain pins `node.lock-quantum = true`. With the AEC loaded,
+//! that lock pulls the **graph-wide** quantum down to whatever the
+//! AEC declares, so 20 ms forced every active node — including the
+//! always-on `output-biglinux` smart filter chain (mixer + HPF +
+//! GTCRN + gate + compressor + EQ) — to wake up at 50 Hz instead of
+//! the distro default's 24 Hz. With AEC off, the mic chain drops to
+//! the 1024-frame default and the output chain processes only when
+//! apps play. The CPU asymmetry users report ("turning on EC almost
+//! doubles audio CPU") is exactly that wakeup-rate change. Doubling
+//! the AEC block from 20 ms to 40 ms halves the wakeup count
+//! everywhere downstream and stays well inside WebRTC's adaptive
+//! filter convergence window — the canceller still operates on
+//! 10 ms sub-frames internally; only the dispatch cadence changes.
+//! 40 ms total round-trip latency is also imperceptible for voice
+//! and video calls (humans tolerate ~100-150 ms before noticing).
 //!
 //! WebRTC AEC tunables:
 //!
@@ -77,10 +95,12 @@ pub const EC_SOURCE_NAME: &str = "echo-cancel-source";
 /// Capture stream owned by the EC module. A WirePlumber Lua hook
 /// targets this stream to the selected physical source at runtime.
 pub const EC_CAPTURE_NODE_NAME: &str = "echo-cancel-capture";
-/// WebRTC AEC processes 10 ms frames. At 48 kHz, 960 samples is two
-/// frames and still leaves enough headroom for the downstream GTCRN
-/// filter-chain when AEC feeds it.
-pub(crate) const AEC_NODE_LATENCY: &str = "960/48000";
+/// WebRTC AEC processes 10 ms frames. At 48 kHz, 1920 samples is four
+/// frames — chosen to halve the graph-wide wakeup rate that the
+/// `node.lock-quantum = true` flag on the mic chain otherwise
+/// imposes on every active node when AEC is loaded. See the
+/// module docstring for the cost analysis.
+pub(crate) const AEC_NODE_LATENCY: &str = "1920/48000";
 /// File name of the AEC args body, consumed by
 /// `biglinux-microphone-pwloader` (started by
 /// `biglinux-microphone-aec.service`). The unit is started before
@@ -103,8 +123,8 @@ pub fn echo_cancel_wanted(settings: &AppSettings) -> bool {
 /// wrapper, no comment header. The pwloader passes it straight to
 /// `pw_context_load_module(libpipewire-module-echo-cancel, …)`. The
 /// AEC module pins its own latency via `node.latency = {AEC_NODE_LATENCY}`
-/// (= 20 ms), which is what `libspa-aec-webrtc` requires regardless of
-/// the daemon's quantum.
+/// (= 40 ms — four WebRTC frames), which is what `libspa-aec-webrtc`
+/// requires regardless of the daemon's quantum.
 ///
 /// The capture stream intentionally has no static `target.object`: a
 /// WirePlumber Lua policy hook chooses the selected physical source
@@ -205,9 +225,15 @@ mod tests {
 
     #[test]
     fn conf_uses_webrtc_frame_compatible_mono_format() {
-        // WebRTC AEC processes 10 ms frames. 960/48000 is exactly two
+        // WebRTC AEC processes 10 ms frames. 1920/48000 is exactly four
         // frames; 1024/48000 would make libspa-aec-webrtc return errors
         // under load.
+        //
+        // We pick four frames over two so the graph-wide quantum that
+        // the mic chain pins (`node.lock-quantum = true`) lands at
+        // 40 ms instead of 20 ms, halving wakeups for every active
+        // node — most importantly the always-on `output-biglinux`
+        // smart filter chain whose GTCRN node is permanently wired.
         //
         // `audio.channels = 1` + `audio.position = [ MONO ]` keep the
         // AEC mono. The mic is mono and `libspa-aec-webrtc` expects
@@ -217,7 +243,7 @@ mod tests {
         // sink monitor (FL+FR) to this mono input — both channels
         // reach the canceller, just averaged.
         let conf = build_echo_cancel_conf(&enabled());
-        assert!(conf.contains("node.latency = 960/48000"));
+        assert!(conf.contains("node.latency = 1920/48000"));
         assert!(conf.contains("audio.rate = 48000"));
         assert!(conf.contains("audio.channels = 1"));
         assert!(conf.contains("audio.position = [ MONO ]"));

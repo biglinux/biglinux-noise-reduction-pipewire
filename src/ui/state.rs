@@ -313,21 +313,25 @@ fn capture_external_default_sink() -> Option<String> {
 /// args body is fixed (only the `enabled` flag toggles its existence),
 /// so any rewrite is purely "exists or not" — no in-process restart
 /// needed when the toggle stays true.
+///
+/// The "not wanted" branch always issues a `stop`, even when the
+/// previous snapshot also had AEC off. `systemctl stop` on an already
+/// inactive unit is a cheap no-op; the redundancy is what guarantees
+/// we collect any orphaned AEC pwloader that an older build (or an
+/// out-of-process actor) left running. Without it, an AEC loader
+/// inadvertently started via the mic unit's old `Wants=` chain would
+/// keep consuming CPU even after the user disabled the toggle.
 fn reconcile_aec_service(prev: Option<&AppSettings>, now: &AppSettings) {
     let was_on = prev.is_some_and(pipeline::echo_cancel_wanted);
     let is_on = pipeline::echo_cancel_wanted(now);
-    match (was_on, is_on) {
-        (false, true) => {
+    if is_on {
+        if !was_on {
             if let Err(e) = start_aec_service() {
                 error!("state: AEC service start failed: {e}");
             }
         }
-        (true, false) => {
-            if let Err(e) = stop_aec_service() {
-                error!("state: AEC service stop failed: {e}");
-            }
-        }
-        (true, true) | (false, false) => {}
+    } else if let Err(e) = stop_aec_service() {
+        error!("state: AEC service stop failed: {e}");
     }
 }
 
