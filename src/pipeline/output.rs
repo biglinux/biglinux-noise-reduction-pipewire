@@ -40,8 +40,8 @@
 use std::fmt::Write as _;
 
 use crate::config::{
-    deepfilter_attenuation_db, eq_preset_bands, AppSettings, CompressorDerived, GateDerived,
-    EQ_BANDS_HZ, EQ_BAND_COUNT,
+    deepfilter_attenuation_db, eq_preset_bands, gtcrn_speech_strength, AppSettings,
+    CompressorDerived, GateDerived, EQ_BANDS_HZ, EQ_BAND_COUNT,
 };
 
 use super::graph::{Graph, Link, RenderMode};
@@ -131,14 +131,27 @@ fn output_nodes(settings: &AppSettings) -> Vec<Node> {
             .with_ports("Audio In", "Audio Out")
             .with_controls([("Attenuation Limit (dB)", atten_db)])
     } else {
+        // GTCRN ships with an integrated noise gate fused into `run()`
+        // (port `Threshold (dB)`, default `-60`). On the mic chain that
+        // integrated gate is the user-facing one; on the output chain
+        // the user-facing gate is a separate SWH `gate_1410` node and
+        // GTCRN's internal gate must stay permanently off — otherwise
+        // quiet playback gets cut every time the signal dips below
+        // -60 dBFS, even with the UI gate toggle disabled.
+        //
+        // `-80 dB` is the sentinel the rest of the codebase uses to
+        // park the integrated gate below the noise floor (the port's
+        // valid range is `-80..0`, so -80 is the lowest threshold that
+        // never triggers).
         Node::ladspa("ai", LADSPA_GTCRN, LABEL_GTCRN_MONO).with_controls([
             ("Enable", if ai_processing { 1.0 } else { 0.0 }),
             ("Strength", f64::from(nr.strength)),
             ("Model", f64::from(nr.model.ladspa_control())),
-            ("SpeechStrength", f64::from(nr.strength)),
+            ("SpeechStrength", gtcrn_speech_strength(nr.strength)),
             ("LookaheadMs", f64::from(nr.lookahead_ms)),
             ("ModelBlend", f64::from(nr.model_blending)),
             ("VoiceRecovery", f64::from(nr.voice_recovery)),
+            ("Threshold (dB)", -80.0),
         ])
     };
 
@@ -219,14 +232,17 @@ fn output_nodes(settings: &AppSettings) -> Vec<Node> {
 fn param_eq_node(settings: &AppSettings) -> Node {
     let of = &settings.output_filter;
     let eq = &of.equalizer;
-    // Master-off forces a flat EQ regardless of the preset/bands the
-    // user last touched.
-    let bands: Vec<f32> = if of.enabled && eq.enabled && eq.bands.len() == EQ_BAND_COUNT {
-        eq.bands.clone()
-    } else if of.enabled {
-        eq_preset_bands(&eq.preset).map_or_else(|| vec![0.0; EQ_BAND_COUNT], |a| a.to_vec())
-    } else {
+    // The `param_eq` node stays in the topology even when EQ is off so
+    // the smart-filter sink doesn't drop and Chromium-based browsers
+    // don't pause playback. Render flat (0 dB on every band) whenever
+    // either the master switch or the EQ sub-toggle is off — the preset
+    // must not bleed through in either case.
+    let bands: Vec<f32> = if !of.enabled || !eq.enabled {
         vec![0.0; EQ_BAND_COUNT]
+    } else if eq.bands.len() == EQ_BAND_COUNT {
+        eq.bands.clone()
+    } else {
+        eq_preset_bands(&eq.preset).map_or_else(|| vec![0.0; EQ_BAND_COUNT], |a| a.to_vec())
     };
 
     let mut cfg = String::from("config = {\n    filters = [\n");
@@ -582,6 +598,45 @@ mod tests {
         assert!(conf.contains("\"Enable\" = 0.0"));
         assert!(conf.contains(r#"{ output = "hpf:Out" input = "ai:Input" }"#));
         assert!(conf.contains(r#"{ output = "ai:Output" input = "gate:Input" }"#));
+    }
+
+    #[test]
+    fn master_on_eq_off_renders_flat_regardless_of_preset() {
+        // The EQ sub-toggle is off but the user previously selected a
+        // non-flat preset. The `param_eq` node must render flat — the
+        // preset shaping must not leak through while EQ is disabled.
+        let s = AppSettings {
+            output_filter: crate::config::OutputFilterSettings {
+                enabled: true,
+                equalizer: crate::config::EqualizerConfig {
+                    enabled: false,
+                    preset: "vocal-boost".to_owned(),
+                    bands: vec![6.0; EQ_BAND_COUNT],
+                },
+                ..crate::config::OutputFilterSettings::default()
+            },
+            ..AppSettings::default()
+        };
+        let conf = build_output_conf(&s);
+        assert!(
+            conf.matches("gain = 0.00").count() >= EQ_BAND_COUNT,
+            "every EQ band should be flat at 0 dB while EQ sub-toggle is off"
+        );
+    }
+
+    #[test]
+    fn output_gtcrn_keeps_integrated_gate_parked_below_noise_floor() {
+        // GTCRN's `Threshold (dB)` port (default `-60`) drives an
+        // integrated noise gate. On the output chain the user-facing
+        // gate is a separate SWH node, so the integrated one must
+        // always render at the `-80 dB` sentinel — otherwise quiet
+        // playback gets cut even when the UI gate toggle is off.
+        let s = enabled_settings();
+        let conf = build_output_conf(&s);
+        assert!(
+            conf.contains(r#""Threshold (dB)" = -80.0"#),
+            "GTCRN integrated gate must be parked at -80 dB on the output chain"
+        );
     }
 
     #[test]

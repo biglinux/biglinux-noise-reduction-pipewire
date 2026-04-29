@@ -85,9 +85,35 @@ pub const STRENGTH_DEFAULT: f32 = 1.0;
 // across speech onsets, avoiding clipped first syllables after silence.
 pub const LOOKAHEAD_MS_DEFAULT: u32 = 60;
 pub const MODEL_BLENDING_DEFAULT: f32 = 0.0;
-// 0.85 reconstructs more high-frequency content (consonants, sibilance)
-// than 0.75 while still cutting noise above 8 kHz.
-pub const VOICE_RECOVERY_DEFAULT: f32 = 0.85;
+// 1.0 — restore the full HF tail from the dry signal above the model's
+// 8 kHz internal cutoff. Paired with `gtcrn_speech_strength` softening
+// the NR during voice frames, full HF recovery preserves consonants
+// and sibilance without leaking measurable extra HF noise (verified on
+// the BigLinux teste.m4a benchmark — 0 dB delta vs 0.85).
+pub const VOICE_RECOVERY_DEFAULT: f32 = 1.0;
+
+/// Ratio applied to the user `strength` slider before it is sent to the
+/// GTCRN `SpeechStrength` LADSPA port. The plugin's `effective_strength`
+/// linearly interpolates between `Strength` (used during silence) and
+/// `SpeechStrength` (used during voice) by the VAD gate. Wiring both
+/// ports to the same value made the model denoise at full power during
+/// speech and audibly cut voice harmonics (≈3.4 dB voice attenuation
+/// vs ≈1.9 dB for DFN3 on the BigLinux teste.m4a benchmark). Halving
+/// the SpeechStrength keeps full denoise during silence (where Strength
+/// is the only thing the plugin sees) but softens it during voice,
+/// matching DFN3's voice preservation while keeping GTCRN's CPU cost.
+pub const GTCRN_SPEECH_STRENGTH_RATIO: f32 = 0.5;
+
+/// Compute the GTCRN `SpeechStrength` port value from the unified
+/// `strength` slider. Centralised so every code path that drives the
+/// LADSPA chain (filter-chain conf renderer, live `Object/PARAM` push,
+/// reconciler) ends up with the same number — drift between them
+/// caused the v4 regression where the conf had one value and the live
+/// path another.
+#[must_use]
+pub fn gtcrn_speech_strength(strength: f32) -> f64 {
+    f64::from(strength.clamp(0.0, 1.0) * GTCRN_SPEECH_STRENGTH_RATIO)
+}
 
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 #[serde(default)]

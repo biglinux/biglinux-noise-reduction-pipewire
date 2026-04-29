@@ -50,8 +50,8 @@
 use std::fmt::Write as _;
 
 use crate::config::{
-    deepfilter_attenuation_db, eq_preset_bands, AppSettings, CompressorDerived, StereoMode,
-    EQ_BANDS_HZ, EQ_BAND_COUNT,
+    deepfilter_attenuation_db, eq_preset_bands, gtcrn_speech_strength, AppSettings,
+    CompressorDerived, StereoMode, EQ_BANDS_HZ, EQ_BAND_COUNT,
 };
 
 use super::graph::{Graph, Link, RenderMode};
@@ -227,7 +227,7 @@ fn gtcrn_node(settings: &AppSettings) -> Node {
         ("Enable", if nr.enabled { 1.0 } else { 0.0 }),
         ("Strength", f64::from(nr.strength)),
         ("Model", f64::from(nr.model.ladspa_control())),
-        ("SpeechStrength", f64::from(nr.strength)),
+        ("SpeechStrength", gtcrn_speech_strength(nr.strength)),
         ("LookaheadMs", f64::from(nr.lookahead_ms)),
         ("ModelBlend", f64::from(nr.model_blending)),
         ("VoiceRecovery", f64::from(nr.voice_recovery)),

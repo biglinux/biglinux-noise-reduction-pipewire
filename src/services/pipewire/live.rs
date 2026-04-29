@@ -28,8 +28,8 @@ use std::process::{Command, Stdio};
 use log::{debug, trace, warn};
 
 use crate::config::{
-    deepfilter_attenuation_db, AppSettings, CompressorDerived, GateDerived, EQ_BANDS_HZ,
-    EQ_BAND_COUNT,
+    deepfilter_attenuation_db, gtcrn_speech_strength, AppSettings, CompressorDerived, GateDerived,
+    EQ_BANDS_HZ, EQ_BAND_COUNT,
 };
 use crate::pipeline::{
     ai_node_in_mic_chain, output_ai_processing, MIC_CAPTURE_NODE_NAME, OUTPUT_NODE_NAME,
@@ -265,7 +265,10 @@ fn mic_params(s: &AppSettings) -> Vec<(String, f64)> {
                 ("ai:Enable".to_owned(), if nr.enabled { 1.0 } else { 0.0 }),
                 ("ai:Strength".to_owned(), f64::from(nr.strength)),
                 ("ai:Model".to_owned(), f64::from(nr.model.ladspa_control())),
-                ("ai:SpeechStrength".to_owned(), f64::from(nr.strength)),
+                (
+                    "ai:SpeechStrength".to_owned(),
+                    gtcrn_speech_strength(nr.strength),
+                ),
                 ("ai:LookaheadMs".to_owned(), f64::from(nr.lookahead_ms)),
                 ("ai:ModelBlend".to_owned(), f64::from(nr.model_blending)),
                 ("ai:VoiceRecovery".to_owned(), f64::from(nr.voice_recovery)),
@@ -337,6 +340,12 @@ fn output_params(s: &AppSettings) -> Vec<(String, f64)> {
             ("ai:LookaheadMs".to_owned(), f64::from(nr.lookahead_ms)),
             ("ai:ModelBlend".to_owned(), f64::from(nr.model_blending)),
             ("ai:VoiceRecovery".to_owned(), f64::from(nr.voice_recovery)),
+            // Park GTCRN's integrated gate below the noise floor. The
+            // user-facing gate on the output chain is the separate SWH
+            // `gate_1410` node; the integrated one must never fire on
+            // playback, otherwise quiet audio dips trigger it even with
+            // the UI gate toggle off (default port value is -60 dB).
+            ("ai:Threshold (dB)".to_owned(), -80.0),
         ]);
     }
 

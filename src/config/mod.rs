@@ -27,9 +27,9 @@ use log::{debug, error, info};
 use serde::{Deserialize, Serialize};
 
 pub use audio::{
-    deepfilter_attenuation_db, GateConfig, HpfConfig, MonitorConfig, NoiseModel,
-    NoiseReductionConfig, StereoConfig, StereoMode, GATE_INTENSITY_DEFAULT, GATE_INTENSITY_MAX,
-    HPF_FREQUENCY_DEFAULT,
+    deepfilter_attenuation_db, gtcrn_speech_strength, GateConfig, HpfConfig, MonitorConfig,
+    NoiseModel, NoiseReductionConfig, StereoConfig, StereoMode, GATE_INTENSITY_DEFAULT,
+    GATE_INTENSITY_MAX, HPF_FREQUENCY_DEFAULT,
 };
 pub use echo_cancel::EchoCancelConfig;
 pub use equalizer::{
