@@ -33,7 +33,7 @@ use crate::services::audio_monitor::{AudioMonitor, Event as MonitorEvent};
 
 use super::i18n::i18n;
 use super::state::AppState;
-use super::views::{mic, output, simple, Mode};
+use super::views::{advanced, mic, output, simple, Mode};
 use super::widgets::spectrum::Spectrum;
 
 pub fn build(
@@ -194,6 +194,12 @@ fn populate_body(
                 &i18n("Output filter"),
                 "audio-headphones-symbolic",
             );
+            stack.add_titled_with_icon(
+                &advanced::build(),
+                Some("tuning"),
+                &i18n("Tuning"),
+                "applications-system-symbolic",
+            );
             stack.set_vexpand(true);
 
             let switcher = adw::ViewSwitcher::builder()
@@ -220,9 +226,10 @@ fn populate_body(
 /// page). Centralised here so both the initial render and the
 /// `notify::visible-child-name` handler agree on the rule.
 fn sync_spectrum_visibility(spectrum_container: &gtk::Box, stack: &adw::ViewStack) {
-    let visible = stack
-        .visible_child_name()
-        .is_none_or(|name| name.as_str() != "output");
+    let visible = stack.visible_child_name().is_none_or(|name| {
+        let n = name.as_str();
+        n != "output" && n != "tuning"
+    });
     spectrum_container.set_visible(visible);
 }
 

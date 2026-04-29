@@ -21,6 +21,15 @@ path = "src/bin/gui.rs"
 name = "biglinux-microphone-cli"
 path = "src/bin/cli.rs"
 
+# Long-running PipeWire client that loads a module (typically
+# `libpipewire-module-filter-chain`) into its own context and stays
+# alive until SIGTERM. Replaces the old `pipewire -c filter-chain.conf`
+# standalone daemons so the filter graph runs as a peer of the main
+# daemon — same clock, no cross-process drift.
+[[bin]]
+name = "biglinux-microphone-pwloader"
+path = "src/bin/pwloader.rs"
+
 [profile.release]
 codegen-units = 1
 lto = true

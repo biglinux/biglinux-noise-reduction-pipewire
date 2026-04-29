@@ -2,6 +2,7 @@
 # Keep this list in sync with `grep -rln 'i18n(' src/`.
 
 src/ui/window.rs
+src/ui/views/advanced.rs
 src/ui/views/mic.rs
 src/ui/views/output.rs
 src/ui/views/simple.rs

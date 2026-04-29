@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 80">
+  <!-- Bluetooth glyph -->
+  <path d="M28,20 L28,60 L44,46 L36,40 L44,34 L28,20 M28,40 L44,54 L44,26 L28,40"
+        fill="none" stroke="#3584e4" stroke-width="2.5" stroke-linejoin="round"/>
+  <!-- Phone handset icon -->
+  <path d="M68,30 C66,30 65,31 65,33 L65,38 C65,52 78,65 92,65 L97,65 C99,65 100,64 100,62 L100,55 C100,53 99,52 97,52 L92,52 C90,52 89,53 89,55 L89,57 C82,55 75,48 73,41 L75,41 C77,41 78,40 78,38 L78,33 C78,31 77,30 75,30 Z"
+        fill="#1c5fb4"/>
+  <!-- Sound waves emerging from handset -->
+  <path d="M58,32 Q54,40 58,48" fill="none" stroke="#3584e4" stroke-width="2" stroke-linecap="round" opacity="0.7"/>
+  <path d="M52,28 Q46,40 52,52" fill="none" stroke="#3584e4" stroke-width="2" stroke-linecap="round" opacity="0.45"/>
+</svg>

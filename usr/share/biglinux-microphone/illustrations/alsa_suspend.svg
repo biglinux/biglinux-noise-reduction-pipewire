@@ -1,0 +1,12 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 80">
+  <!-- Speaker body -->
+  <path d="M30,30 L42,30 L56,20 L56,60 L42,50 L30,50 Z"
+        fill="#3584e4" stroke="#1c5fb4" stroke-width="2" stroke-linejoin="round"/>
+  <!-- Sound waves (steady — no clipping) -->
+  <path d="M64,30 Q70,40 64,50" fill="none" stroke="#3584e4" stroke-width="2.5" stroke-linecap="round" opacity="0.85"/>
+  <path d="M72,24 Q82,40 72,56" fill="none" stroke="#3584e4" stroke-width="2.5" stroke-linecap="round" opacity="0.65"/>
+  <path d="M80,18 Q94,40 80,62" fill="none" stroke="#3584e4" stroke-width="2.5" stroke-linecap="round" opacity="0.45"/>
+  <!-- "Always on" indicator dot -->
+  <circle cx="98" cy="20" r="6" fill="#26a269"/>
+  <circle cx="98" cy="20" r="2.5" fill="#ffffff"/>
+</svg>

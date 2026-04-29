@@ -21,8 +21,8 @@ use tempfile::tempdir;
 
 fn dirs(t: &tempfile::TempDir) -> (PathBuf, PathBuf, PathBuf) {
     (
+        t.path().join("bigmic-args"),
         t.path().join("pw-dropin"),
-        t.path().join("pw-standalone"),
         t.path().join("wp"),
     )
 }
@@ -61,7 +61,7 @@ fn fully_off() -> AppSettings {
 #[test]
 fn enabling_only_noise_reduction_writes_mic_conf_with_smart_filter() {
     let dir = tempdir().unwrap();
-    let (pw, std_dir, wp) = dirs(&dir);
+    let (args, pw_dropin, wp) = dirs(&dir);
 
     let mut s = fully_off();
     s.noise_reduction.enabled = true;
@@ -74,9 +74,9 @@ fn enabling_only_noise_reduction_writes_mic_conf_with_smart_filter() {
     s.echo_cancel.enabled = false;
     assert!(mic_chain_wanted(&s));
 
-    apply_to_dirs(&s, &pw, &std_dir, &wp).unwrap();
+    apply_to_dirs(&s, &args, &pw_dropin, &wp).unwrap();
 
-    let conf = fs::read_to_string(pw.join(MIC_CONF_FILE)).unwrap();
+    let conf = fs::read_to_string(args.join(MIC_CONF_FILE)).unwrap();
     assert!(conf.contains(&format!("node.name = \"{MIC_NODE_NAME}\"")));
     assert!(conf.contains("filter.smart = true"));
     assert!(conf.contains("filter.smart.name = \"big.filter-microphone\""));
@@ -94,30 +94,30 @@ fn enabling_only_noise_reduction_writes_mic_conf_with_smart_filter() {
 #[test]
 fn switching_models_only_changes_the_model_control() {
     let dir = tempdir().unwrap();
-    let (pw, std_dir, wp) = dirs(&dir);
+    let (args, pw_dropin, wp) = dirs(&dir);
 
     let mut s = fully_off();
     s.noise_reduction.enabled = true;
-    apply_to_dirs(&s, &pw, &std_dir, &wp).unwrap();
-    let dns3 = fs::read_to_string(pw.join(MIC_CONF_FILE)).unwrap();
+    apply_to_dirs(&s, &args, &pw_dropin, &wp).unwrap();
+    let dns3 = fs::read_to_string(args.join(MIC_CONF_FILE)).unwrap();
     assert!(dns3.contains("\"Model\" = 0.0"));
 
     s.noise_reduction.model = NoiseModel::GtcrnVctk;
-    apply_to_dirs(&s, &pw, &std_dir, &wp).unwrap();
-    let vctk = fs::read_to_string(pw.join(MIC_CONF_FILE)).unwrap();
+    apply_to_dirs(&s, &args, &pw_dropin, &wp).unwrap();
+    let vctk = fs::read_to_string(args.join(MIC_CONF_FILE)).unwrap();
     assert!(vctk.contains("\"Model\" = 1.0"));
 }
 
 #[test]
 fn output_chain_renders_smart_filter_in_bypass_when_master_off() {
     let dir = tempdir().unwrap();
-    let (pw, std_dir, wp) = dirs(&dir);
+    let (args, pw_dropin, wp) = dirs(&dir);
 
     let s = AppSettings::default();
     assert!(!s.output_filter.enabled);
-    apply_to_dirs(&s, &pw, &std_dir, &wp).unwrap();
+    apply_to_dirs(&s, &args, &pw_dropin, &wp).unwrap();
 
-    let conf = fs::read_to_string(std_dir.join(OUTPUT_CONF_FILE)).unwrap();
+    let conf = fs::read_to_string(args.join(OUTPUT_CONF_FILE)).unwrap();
     // Smart-filter sink stays attached so streams don't get yanked when
     // the user toggles the master off — the chain just goes to bypass.
     assert!(conf.contains(&format!("node.name = \"{OUTPUT_NODE_NAME}\"")));
@@ -133,17 +133,17 @@ fn output_chain_renders_smart_filter_in_bypass_when_master_off() {
 #[test]
 fn enabling_master_then_disabling_keeps_conf_present() {
     let dir = tempdir().unwrap();
-    let (pw, std_dir, wp) = dirs(&dir);
+    let (args, pw_dropin, wp) = dirs(&dir);
 
     let mut s = AppSettings::default();
     s.output_filter.enabled = true;
-    apply_to_dirs(&s, &pw, &std_dir, &wp).unwrap();
-    assert!(std_dir.join(OUTPUT_CONF_FILE).exists());
+    apply_to_dirs(&s, &args, &pw_dropin, &wp).unwrap();
+    assert!(args.join(OUTPUT_CONF_FILE).exists());
 
     s.output_filter.enabled = false;
-    apply_to_dirs(&s, &pw, &std_dir, &wp).unwrap();
+    apply_to_dirs(&s, &args, &pw_dropin, &wp).unwrap();
     assert!(
-        std_dir.join(OUTPUT_CONF_FILE).exists(),
+        args.join(OUTPUT_CONF_FILE).exists(),
         "conf must remain so the unit can keep running in bypass"
     );
 }
@@ -151,65 +151,68 @@ fn enabling_master_then_disabling_keeps_conf_present() {
 #[test]
 fn legacy_per_app_routing_drop_in_is_scrubbed() {
     let dir = tempdir().unwrap();
-    let (pw, std_dir, wp) = dirs(&dir);
+    let (args, pw_dropin, wp) = dirs(&dir);
     fs::create_dir_all(&wp).unwrap();
     let legacy = wp.join("50-biglinux-output-routing.conf");
     fs::write(&legacy, b"# stale\n").unwrap();
 
-    apply_to_dirs(&AppSettings::default(), &pw, &std_dir, &wp).unwrap();
+    apply_to_dirs(&AppSettings::default(), &args, &pw_dropin, &wp).unwrap();
     assert!(!legacy.exists());
 }
 
 #[test]
-fn echo_cancel_conf_is_written_into_filter_chain_dropin_dir_and_removed_when_disabled() {
-    // Earlier revisions hosted the AEC config as a standalone
-    // `pipewire -c` worker with its own systemd unit. The drop-in
-    // consolidation puts it next to the mic chain so a single
-    // `filter-chain.service` worker hosts both — one fewer pipewire
-    // process. This test pins the path and the toggle behaviour.
+fn echo_cancel_conf_is_written_into_args_dir_and_removed_when_disabled() {
+    // The AEC chain now runs in its own `biglinux-microphone-pwloader`
+    // process driven by `biglinux-microphone-aec.service`, with the
+    // module args body living alongside the mic + output ones in the
+    // pwloader args dir.
     let dir = tempdir().unwrap();
-    let (pw, std_dir, wp) = dirs(&dir);
+    let (args, pw_dropin, wp) = dirs(&dir);
 
     let on = AppSettings {
         echo_cancel: EchoCancelConfig { enabled: true },
         ..AppSettings::default()
     };
-    apply_to_dirs(&on, &pw, &std_dir, &wp).unwrap();
+    apply_to_dirs(&on, &args, &pw_dropin, &wp).unwrap();
 
-    let dropin_path = pw.join(ECHO_CANCEL_CONF_FILE);
+    let aec_path = args.join(ECHO_CANCEL_CONF_FILE);
     assert!(
-        dropin_path.exists(),
-        "AEC drop-in must live in filter-chain.conf.d, not the standalone dir"
+        aec_path.exists(),
+        "AEC args body must live in the pwloader args dir"
     );
-    assert!(!std_dir.join(ECHO_CANCEL_CONF_FILE).exists());
-    let body = fs::read_to_string(&dropin_path).unwrap();
-    assert!(body.contains("libpipewire-module-echo-cancel"));
-    // Drop-in must NOT redefine bootstrap modules / context properties:
-    // those are owned by the host filter-chain.conf and would conflict.
+    let body = fs::read_to_string(&aec_path).unwrap();
+    // Bare module-args body — pwloader hands it straight to
+    // `pw_context_load_module(libpipewire-module-echo-cancel, …)`, so
+    // the body itself must not redeclare the module name, bootstrap
+    // modules, or context-wide properties.
+    assert!(body.trim_start().starts_with('{'));
+    assert!(body.trim_end().ends_with('}'));
+    assert!(!body.contains("libpipewire-module-echo-cancel"));
     assert!(!body.contains("libpipewire-module-rt"));
     assert!(!body.contains("context.properties"));
+    assert!(body.contains("aec/libspa-aec-webrtc"));
 
     let off = AppSettings {
         echo_cancel: EchoCancelConfig { enabled: false },
         ..AppSettings::default()
     };
-    apply_to_dirs(&off, &pw, &std_dir, &wp).unwrap();
+    apply_to_dirs(&off, &args, &pw_dropin, &wp).unwrap();
     assert!(
-        !dropin_path.exists(),
-        "AEC drop-in must be removed when the toggle goes off"
+        !aec_path.exists(),
+        "AEC args body must be removed when the toggle goes off"
     );
 }
 
 #[test]
 fn round_trip_through_disk_produces_identical_conf() {
     let dir = tempdir().unwrap();
-    let (pw, std_dir, wp) = dirs(&dir);
+    let (args, pw_dropin, wp) = dirs(&dir);
 
     let s = AppSettings::default();
-    apply_to_dirs(&s, &pw, &std_dir, &wp).unwrap();
-    let first = fs::read_to_string(pw.join(MIC_CONF_FILE)).unwrap();
+    apply_to_dirs(&s, &args, &pw_dropin, &wp).unwrap();
+    let first = fs::read_to_string(args.join(MIC_CONF_FILE)).unwrap();
 
-    apply_to_dirs(&s, &pw, &std_dir, &wp).unwrap();
-    let second = fs::read_to_string(pw.join(MIC_CONF_FILE)).unwrap();
+    apply_to_dirs(&s, &args, &pw_dropin, &wp).unwrap();
+    let second = fs::read_to_string(args.join(MIC_CONF_FILE)).unwrap();
     assert_eq!(first, second);
 }

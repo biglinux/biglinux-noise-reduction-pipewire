@@ -36,7 +36,10 @@ _clean_python_legacy() {
             "${home}/.config/pipewire/filter-chain.conf" \
             "${home}/.config/pipewire/pipewire.conf.d/50-biglinux-microphone-realtime.conf" \
             "${home}/.config/wireplumber/wireplumber.conf.d/50-biglinux-output-routing.conf" \
-            "${home}/.config/wireplumber/wireplumber.conf.d/50-biglinux-microphone-routing.conf"; do
+            "${home}/.config/wireplumber/wireplumber.conf.d/50-biglinux-microphone-routing.conf" \
+            "${home}/.config/pipewire/filter-chain.conf.d/05-biglinux-echocancel.conf" \
+            "${home}/.config/pipewire/filter-chain.conf.d/10-biglinux-microphone.conf" \
+            "${home}/.config/pipewire/biglinux-microphone-output.conf"; do
             rm -f "${stale}" 2>/dev/null || true
         done
 
@@ -75,7 +78,11 @@ post_upgrade() {
 
 pre_remove() {
     systemctl --global disable biglinux-microphone.service 2>/dev/null || true
+    systemctl --global disable biglinux-microphone-mic.service 2>/dev/null || true
+    systemctl --global disable biglinux-microphone-aec.service 2>/dev/null || true
     systemctl --global disable biglinux-microphone-output.service 2>/dev/null || true
+    # Older revisions shipped these as separate units; disable them
+    # too so leftover symlinks don't keep the names referenced.
     systemctl --global disable biglinux-microphone-echocancel.service 2>/dev/null || true
 }
 

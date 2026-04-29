@@ -1,29 +1,27 @@
 [Unit]
-Description=BigLinux Microphone — output-side noise-reduction filter (pwloader)
+Description=BigLinux Microphone — mic-side filter chain (pwloader)
 Documentation=https://github.com/biglinux/biglinux-noise-reduction-pipewire
 PartOf=pipewire.service
-After=pipewire.service wireplumber.service
+# AEC source must already exist when the mic chain resolves
+# `target.object = "echo-cancel-source"`; ordering against the AEC
+# unit covers the AEC-on case without making it mandatory (the chain
+# falls back to the hw mic when AEC is off, via WirePlumber's
+# follow-default policy).
+After=pipewire.service wireplumber.service biglinux-microphone-aec.service
+Wants=pipewire.service wireplumber.service biglinux-microphone-aec.service
 Requisite=pipewire.service
-Wants=pipewire.service wireplumber.service
 
 [Service]
 Type=simple
-# `biglinux-microphone-pwloader` connects to the running PipeWire
-# daemon as a regular client and asks it to instantiate
-# libpipewire-module-filter-chain inside this process. The daemon
-# drives every node, so the output filter shares the system clock
-# with the rest of the audio graph — no cross-process drift.
-ExecStart=/usr/bin/biglinux-microphone-pwloader libpipewire-module-filter-chain %h/.config/biglinux-microphone/output.args
+# Loads libpipewire-module-filter-chain inside this client process,
+# sharing the daemon's clock with every other node in the graph.
+ExecStart=/usr/bin/biglinux-microphone-pwloader libpipewire-module-filter-chain %h/.config/biglinux-microphone/mic.args
 Restart=on-failure
 RestartSec=2s
 StandardOutput=journal
 StandardError=journal
 
 # ── Realtime budget ──────────────────────────────────────────────────
-# The graph nodes hosted in this process request RT scheduling via
-# libpipewire-module-rt (loaded automatically by the daemon's
-# `client.conf`). rtkit grants the priority; the rlimits below let
-# the process honour it.
 LimitRTPRIO=95
 LimitNICE=-19
 LimitMEMLOCK=infinity

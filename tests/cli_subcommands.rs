@@ -98,15 +98,21 @@ fn status_prints_single_line_json_with_two_booleans() {
 }
 
 #[test]
-fn mic_conf_prints_pipewire_filter_chain_block() {
-    // Default settings have AEC on, so the rendered conf must register
-    // mic-biglinux as the public WirePlumber smart filter while pinning
-    // its capture stream to the private echo-cancel source.
+fn mic_conf_prints_module_args_body() {
+    // The mic conf is now a bare `{ ... }` module args body fed to
+    // `libpipewire-module-filter-chain` by `biglinux-microphone-pwloader`
+    // — no `context.modules` wrapper, no comment header. Default
+    // settings have AEC on, so the body must still pin the capture
+    // stream to the private echo-cancel source and expose mic-biglinux
+    // as the public smart filter.
     let dir = tempdir().unwrap();
     let out = run(&["mic-conf"], dir.path());
     assert!(out.status.success());
     let text = String::from_utf8_lossy(&out.stdout);
-    assert!(text.contains("libpipewire-module-filter-chain"));
+    assert!(text.trim_start().starts_with('{'));
+    assert!(text.trim_end().ends_with('}'));
+    assert!(!text.contains("context.modules"));
+    assert!(!text.contains("libpipewire-module-filter-chain"));
     assert!(text.contains("filter.smart.name = \"big.filter-microphone\""));
     assert!(text.contains("target.object = \"echo-cancel-source\""));
     assert!(!text.contains("filter.smart.before = [ \"big.aec\" ]"));
@@ -114,12 +120,17 @@ fn mic_conf_prints_pipewire_filter_chain_block() {
 }
 
 #[test]
-fn output_conf_prints_standalone_pipewire_wrapper() {
+fn output_conf_prints_module_args_body() {
+    // Output conf is now also a bare module-args body — the standalone
+    // `pipewire -c` wrapper is gone; the same pwloader binary loads
+    // libpipewire-module-filter-chain inside its own client context.
     let dir = tempdir().unwrap();
     let out = run(&["output-conf"], dir.path());
     assert!(out.status.success());
     let text = String::from_utf8_lossy(&out.stdout);
-    assert!(text.contains("context.properties"));
-    assert!(text.contains("libpipewire-module-protocol-native"));
+    assert!(text.trim_start().starts_with('{'));
+    assert!(text.trim_end().ends_with('}'));
+    assert!(!text.contains("context.properties"));
+    assert!(!text.contains("libpipewire-module-protocol-native"));
     assert!(text.contains("output-biglinux"));
 }

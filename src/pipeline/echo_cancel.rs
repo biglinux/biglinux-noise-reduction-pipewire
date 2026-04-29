@@ -7,16 +7,14 @@
 //! denoiser doesn't waste capacity attenuating audio it later has to
 //! restore.
 //!
-//! Hosted as a drop-in inside `~/.config/pipewire/filter-chain.conf.d/`,
-//! the AEC module loads inside the same `pipewire -c filter-chain.conf`
-//! process that hosts the mic filter chain. Sharing the worker keeps
-//! the process count down to "main daemon + filter-chain + output" with
-//! everything enabled; the output chain stays in its own process
-//! because GTCRN keeps a per-process singleton (ONNX state) and mic
-//! plus output cannot coexist there. AEC has no GTCRN, so co-locating
-//! it with the mic chain is safe — and the in-process linking between
-//! `echo-cancel-source` and the mic chain's capture side avoids an
-//! extra inter-process hop.
+//! Hosted by `biglinux-microphone-pwloader` (started via
+//! `biglinux-microphone-aec.service`), the AEC module loads inside its
+//! own client process that connects to the main PipeWire daemon. The
+//! daemon drives every node, so AEC, mic, and output filter graphs all
+//! share one clock — the original cross-process drift that motivated
+//! co-locating modules in `filter-chain.service` is gone. Independent
+//! lifecycles win over one-process-saved: toggling AEC on/off no
+//! longer reloads the mic chain.
 //!
 //! Topology:
 //!
@@ -83,12 +81,13 @@ pub const EC_CAPTURE_NODE_NAME: &str = "echo-cancel-capture";
 /// frames and still leaves enough headroom for the downstream GTCRN
 /// filter-chain when AEC feeds it.
 pub(crate) const AEC_NODE_LATENCY: &str = "960/48000";
-/// File name of the AEC drop-in inside `filter-chain.conf.d/`. The `05-`
-/// prefix orders it before the mic drop-in (`10-…`); pipewire merges
-/// drop-ins alphabetically into `context.modules`, so loading AEC first
-/// means `echo-cancel-source` already exists when the mic filter chain
-/// resolves its `target.object`.
-pub const ECHO_CANCEL_CONF_FILE: &str = "05-biglinux-echocancel.conf";
+/// File name of the AEC args body, consumed by
+/// `biglinux-microphone-pwloader` (started by
+/// `biglinux-microphone-aec.service`). The unit is started before
+/// `biglinux-microphone-mic.service` (`After=`) so `echo-cancel-source`
+/// already exists when the mic filter chain resolves its
+/// `target.object`.
+pub const ECHO_CANCEL_CONF_FILE: &str = "aec.args";
 
 /// True when the EC chain is wanted by the current settings. Centralised
 /// so [`super::apply_to_dirs`] and [`super::mic`] read the same flag.
@@ -97,17 +96,15 @@ pub fn echo_cancel_wanted(settings: &AppSettings) -> bool {
     settings.echo_cancel.enabled
 }
 
-/// Render the AEC drop-in fragment loaded by `filter-chain.service`.
+/// Render the AEC `args` body for `libpipewire-module-echo-cancel`,
+/// consumed verbatim by `biglinux-microphone-pwloader`.
 ///
-/// The fragment only adds a single `libpipewire-module-echo-cancel`
-/// entry to `context.modules`; bootstrap modules (`module-rt`,
-/// `module-protocol-native`, `module-client-node`, `module-adapter`)
-/// are already provided by the host `filter-chain.conf`, and the
-/// process-wide clock settings stay untouched so the mic chain
-/// running in the same daemon is not affected. The AEC module pins
-/// its own latency via `node.latency = {AEC_NODE_LATENCY}` (= 20 ms),
-/// which is what `libspa-aec-webrtc` requires regardless of the
-/// driver's quantum.
+/// The output is just the `{ … }` block — no `context.modules`
+/// wrapper, no comment header. The pwloader passes it straight to
+/// `pw_context_load_module(libpipewire-module-echo-cancel, …)`. The
+/// AEC module pins its own latency via `node.latency = {AEC_NODE_LATENCY}`
+/// (= 20 ms), which is what `libspa-aec-webrtc` requires regardless of
+/// the daemon's quantum.
 ///
 /// The capture stream intentionally has no static `target.object`: a
 /// WirePlumber Lua policy hook chooses the selected physical source
@@ -119,38 +116,30 @@ pub fn echo_cancel_wanted(settings: &AppSettings) -> bool {
 #[must_use]
 pub fn build_echo_cancel_conf(_settings: &AppSettings) -> String {
     format!(
-        "# BigLinux Microphone — auto-generated AEC drop-in\n\
-         # DO NOT EDIT: this file is rebuilt every time settings change.\n\
-         \n\
-         context.modules = [\n\
-         \x20   {{ name = libpipewire-module-echo-cancel\n\
-         \x20       args = {{\n\
-         \x20           library.name = aec/libspa-aec-webrtc\n\
-         \x20           node.latency = {AEC_NODE_LATENCY}\n\
-         \x20           monitor.mode = true\n\
-         \x20           audio.rate = 48000\n\
-         \x20           audio.channels = 1\n\
-         \x20           audio.position = [ MONO ]\n\
-         \x20           buffer.max_size = 250\n\
-         \x20           capture.props = {{\n\
-         \x20               node.name    = \"{EC_CAPTURE_NODE_NAME}\"\n\
-         \x20           }}\n\
-         \x20           source.props = {{\n\
-         \x20               node.name        = \"{EC_SOURCE_NAME}\"\n\
-         \x20               node.description = \"BigLinux Echo-Cancelled Mic\"\n\
-         \x20               media.class      = Audio/Source\n\
-         \x20               volume           = 1.0\n\
-         \x20           }}\n\
-         \x20           aec.args = {{\n\
-         \x20               webrtc.gain_control       = true\n\
-         \x20               webrtc.noise_suppression  = false\n\
-         \x20               webrtc.high_pass_filter   = false\n\
-         \x20               webrtc.voice_detection    = true\n\
-         \x20           }}\n\
-         \x20       }}\n\
-         \x20       flags = [ ifexists nofail ]\n\
+        "{{\n\
+         \x20   library.name = aec/libspa-aec-webrtc\n\
+         \x20   node.latency = {AEC_NODE_LATENCY}\n\
+         \x20   monitor.mode = true\n\
+         \x20   audio.rate = 48000\n\
+         \x20   audio.channels = 1\n\
+         \x20   audio.position = [ MONO ]\n\
+         \x20   buffer.max_size = 250\n\
+         \x20   capture.props = {{\n\
+         \x20       node.name    = \"{EC_CAPTURE_NODE_NAME}\"\n\
          \x20   }}\n\
-         ]\n",
+         \x20   source.props = {{\n\
+         \x20       node.name        = \"{EC_SOURCE_NAME}\"\n\
+         \x20       node.description = \"BigLinux Echo-Cancelled Mic\"\n\
+         \x20       media.class      = Audio/Source\n\
+         \x20       volume           = 1.0\n\
+         \x20   }}\n\
+         \x20   aec.args = {{\n\
+         \x20       webrtc.gain_control       = true\n\
+         \x20       webrtc.noise_suppression  = false\n\
+         \x20       webrtc.high_pass_filter   = false\n\
+         \x20       webrtc.voice_detection    = true\n\
+         \x20   }}\n\
+         }}\n",
     )
 }
 
@@ -180,9 +169,16 @@ mod tests {
     }
 
     #[test]
-    fn conf_loads_webrtc_aec_module() {
+    fn conf_is_a_bare_module_args_body() {
+        // The pwloader hands the file contents straight to
+        // `pw_context_load_module(libpipewire-module-echo-cancel, …)`
+        // — no `context.modules` wrapper, no comment header. The module
+        // name itself comes from the systemd unit, not from the args.
         let conf = build_echo_cancel_conf(&enabled());
-        assert!(conf.contains("libpipewire-module-echo-cancel"));
+        assert!(conf.starts_with('{'));
+        assert!(conf.trim_end().ends_with('}'));
+        assert!(!conf.contains("context.modules"));
+        assert!(!conf.contains("libpipewire-module-echo-cancel"));
         assert!(conf.contains("aec/libspa-aec-webrtc"));
     }
 
@@ -240,22 +236,16 @@ mod tests {
     }
 
     #[test]
-    fn conf_is_a_drop_in_with_only_the_aec_module() {
-        // The drop-in must not redeclare bootstrap modules (rt,
-        // protocol-native, client-node, adapter) — those are loaded by
-        // the host `filter-chain.conf`. Re-declaring them inside a
-        // drop-in either no-ops (ifexists/nofail) or, worse,
-        // double-loads adapters and confuses linking.
+    fn conf_drops_bootstrap_modules_and_global_clock() {
+        // Bootstrap modules (rt, protocol-native, client-node, adapter)
+        // come from the daemon `client.conf` we connect to. The args
+        // body must not re-declare them, and must never redefine
+        // process-wide clock or context properties.
         let conf = build_echo_cancel_conf(&enabled());
-        assert!(conf.contains("libpipewire-module-echo-cancel"));
         assert!(!conf.contains("libpipewire-module-rt"));
         assert!(!conf.contains("libpipewire-module-protocol-native"));
         assert!(!conf.contains("libpipewire-module-client-node"));
         assert!(!conf.contains("libpipewire-module-adapter"));
-        // Drop-ins also must not redefine process-wide context
-        // properties: that would override the host filter-chain's
-        // clock/log settings for every module in the same process,
-        // including the mic chain.
         assert!(!conf.contains("context.properties"));
         assert!(!conf.contains("default.clock"));
     }

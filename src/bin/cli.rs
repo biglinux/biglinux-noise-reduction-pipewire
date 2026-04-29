@@ -11,7 +11,7 @@
 //! | `remove`       | Delete every file previously written by `apply` |
 //! | `list-apps`    | Scan the PipeWire graph for routable audio streams |
 //! | `autostart`    | Reconcile graph with saved settings (login hook) |
-//! | `reload`       | Restart filter-chain.service + output unit |
+//! | `reload`       | Restart mic + AEC + output pwloader units |
 //! | `live-update`  | Push current settings into the running chain |
 //! | `toggle-mic`   | Flip the master noise-reduction toggle and re-apply |
 //! | `toggle-output`| Flip the output filter master and re-apply |
@@ -124,7 +124,7 @@ COMMANDS:
     list-apps       Scan the PipeWire graph for routable audio streams
     autostart       Reconcile the PipeWire graph with the saved settings
                     (runs at login via the systemd user unit)
-    reload          Explicitly restart filter-chain.service + output unit
+    reload          Explicitly restart mic + AEC + output pwloader units
                     (needed after a graph-topology change)
     live-update     Push current settings into the running filter chain
                     without restarting any service
@@ -180,6 +180,7 @@ fn apply_configs() -> ExitCode {
         );
     }
 
+    reconcile_aec_service(&s);
     reconcile_mic_chain(&s);
     reconcile_output_service(&s);
     ExitCode::SUCCESS
@@ -216,6 +217,7 @@ fn autostart() -> ExitCode {
         return exit_with_error(&format!("autostart apply: {e}"));
     }
 
+    reconcile_aec_service(&settings);
     reconcile_mic_chain(&settings);
     reconcile_output_service(&settings);
 
@@ -223,7 +225,7 @@ fn autostart() -> ExitCode {
     ExitCode::SUCCESS
 }
 
-/// Force-reload both filter-chains from scratch. Useful after a
+/// Force-reload every pwloader unit from scratch. Useful after a
 /// topology change the live path can't handle (e.g. a new LADSPA
 /// plugin, or manual config editing). Does **not** touch WirePlumber.
 fn reload_services() -> ExitCode {
@@ -231,10 +233,9 @@ fn reload_services() -> ExitCode {
     if let Err(e) = pipeline::apply(&settings) {
         return exit_with_error(&format!("reload apply: {e}"));
     }
-    // AEC and mic both live inside `filter-chain.service` as
-    // drop-ins, so a single restart covers both. The `05-` prefix on
-    // the AEC drop-in ensures `echo-cancel-source` is loaded before
-    // the mic filter chain resolves `target.object`.
+    // AEC first so `echo-cancel-source` exists by the time the mic
+    // loader resolves `target.object`.
+    reconcile_aec_service(&settings);
     reconcile_mic_chain(&settings);
     // Output unit only runs when its master is on — restart it from
     // scratch when wanted (covers fresh start + topology pickup),
@@ -247,25 +248,38 @@ fn reload_services() -> ExitCode {
         eprintln!("warning: output service stop failed: {e}");
     }
     println!(
-        "reload: filter-chain (mic + AEC drop-ins) + output unit reconciled \
+        "reload: mic + AEC + output pwloader units reconciled \
          (wireplumber untouched)"
     );
     ExitCode::SUCCESS
 }
 
-/// Reconcile the system-level `filter-chain.service` with the
-/// user-visible master switches. The unit hosts both the mic chain
-/// drop-in and the AEC drop-in, so it must be running whenever either
-/// is wanted; stop it only when both are off so no `mic-biglinux` /
-/// `echo-cancel-source` virtual nodes remain hanging in the graph.
+/// Reconcile the mic loader unit with the master mic-side switches.
+/// The unit must be running whenever any mic filter is wanted; stop
+/// it otherwise so `mic-biglinux` doesn't hang around as a dead node.
 fn reconcile_mic_chain(settings: &AppSettings) {
-    use biglinux_microphone::services::pipewire::{reload_mic_chain, stop_filter_chain_service};
-    if pipeline::mic_chain_wanted(settings) || pipeline::echo_cancel_wanted(settings) {
+    use biglinux_microphone::services::pipewire::{reload_mic_chain, stop_mic_service};
+    if pipeline::mic_chain_wanted(settings) {
         if let Err(e) = reload_mic_chain() {
-            eprintln!("warning: filter-chain reload failed: {e}");
+            eprintln!("warning: mic loader reload failed: {e}");
         }
-    } else if let Err(e) = stop_filter_chain_service() {
-        eprintln!("warning: filter-chain.service stop failed: {e}");
+    } else if let Err(e) = stop_mic_service() {
+        eprintln!("warning: mic loader stop failed: {e}");
+    }
+}
+
+/// Reconcile the AEC loader unit. Independent lifecycle from the mic
+/// loader: when AEC is wanted the EC source must exist before the mic
+/// chain resolves its capture target, so callers run this *before*
+/// reconciling the mic unit.
+fn reconcile_aec_service(settings: &AppSettings) {
+    use biglinux_microphone::services::pipewire::{restart_aec_service, stop_aec_service};
+    if pipeline::echo_cancel_wanted(settings) {
+        if let Err(e) = restart_aec_service() {
+            eprintln!("warning: AEC loader reload failed: {e}");
+        }
+    } else if let Err(e) = stop_aec_service() {
+        eprintln!("warning: AEC loader stop failed: {e}");
     }
 }
 
@@ -334,6 +348,7 @@ fn toggle_mic() -> ExitCode {
     if let Err(e) = biglinux_microphone::services::pipewire::apply_live(&settings) {
         eprintln!("warning: live update failed: {e}");
     }
+    reconcile_aec_service(&settings);
     reconcile_mic_chain(&settings);
 
     println!(
@@ -471,9 +486,11 @@ fn repair() -> ExitCode {
             .stderr(Stdio::null())
             .status();
     };
-    reset("filter-chain.service");
+    reset("biglinux-microphone-mic.service");
+    reset("biglinux-microphone-aec.service");
     reset("biglinux-microphone-output.service");
 
+    reconcile_aec_service(&settings);
     reconcile_mic_chain(&settings);
     reconcile_output_service(&settings);
 

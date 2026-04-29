@@ -1,0 +1,18 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 80">
+  <!-- Motherboard slot / chip silhouette on the left -->
+  <rect x="6" y="30" width="34" height="20" rx="1" fill="#1c5fb4"/>
+  <rect x="10" y="34" width="4" height="4" fill="#3584e4" opacity="0.6"/>
+  <rect x="16" y="34" width="4" height="4" fill="#3584e4" opacity="0.6"/>
+  <rect x="22" y="34" width="4" height="4" fill="#3584e4" opacity="0.6"/>
+  <rect x="10" y="42" width="4" height="4" fill="#3584e4" opacity="0.6"/>
+  <rect x="16" y="42" width="4" height="4" fill="#3584e4" opacity="0.6"/>
+  <rect x="22" y="42" width="4" height="4" fill="#3584e4" opacity="0.6"/>
+  <line x1="40" y1="40" x2="50" y2="40" stroke="#1c5fb4" stroke-width="2"/>
+  <!-- Ring buffer (cylinder/torus look) -->
+  <ellipse cx="80" cy="40" rx="26" ry="14" fill="none" stroke="#3584e4" stroke-width="2"/>
+  <ellipse cx="80" cy="40" rx="26" ry="14" fill="#3584e4" opacity="0.15"/>
+  <ellipse cx="80" cy="40" rx="12" ry="7" fill="none" stroke="#3584e4" stroke-width="1.5" opacity="0.7"/>
+  <!-- Headroom slack indicator -->
+  <path d="M80,26 A26,14 0 0,1 106,40" stroke="#1c5fb4" stroke-width="3" fill="none"/>
+  <text x="94" y="22" font-family="sans-serif" font-size="9" fill="#1c5fb4" font-weight="bold">+</text>
+</svg>

@@ -21,7 +21,8 @@ const SWH_GATE_PLUGIN: &str = "/usr/lib/ladspa/gate_1410.so";
 const MIC_NODE_TAG: &str = "\"mic-biglinux\"";
 const OUTPUT_NODE_TAG: &str = "\"output-biglinux\"";
 const EC_NODE_TAG: &str = "\"echo-cancel-source\"";
-const FILTER_CHAIN_UNIT: &str = "filter-chain.service";
+const MIC_UNIT: &str = "biglinux-microphone-mic.service";
+const AEC_UNIT: &str = "biglinux-microphone-aec.service";
 const OUTPUT_UNIT: &str = "biglinux-microphone-output.service";
 const WP_PACKAGED_LUA: &str = "/usr/share/wireplumber/scripts/biglinux/echo-cancel-routing.lua";
 const WP_USER_LUA_RELATIVE: &str =
@@ -121,9 +122,14 @@ fn check_runtime_daemons(report: &mut Report) {
 
 fn check_systemd_units(report: &mut Report) {
     report.check(
-        "filter-chain.service unit",
-        unit_known(FILTER_CHAIN_UNIT),
-        "systemctl --user cat filter-chain.service",
+        "biglinux-microphone-mic.service unit",
+        unit_known(MIC_UNIT),
+        "systemctl --user cat biglinux-microphone-mic.service",
+    );
+    report.check(
+        "biglinux-microphone-aec.service unit",
+        unit_known(AEC_UNIT),
+        "systemctl --user cat biglinux-microphone-aec.service",
     );
     report.check(
         "biglinux-microphone-output.service unit",
@@ -268,13 +274,19 @@ fn check_graph_nodes(report: &mut Report) {
 
 fn print_unit_state() {
     println!();
-    let mic_state = unit_active_state(FILTER_CHAIN_UNIT);
+    let mic_state = unit_active_state(MIC_UNIT);
+    let aec_state = unit_active_state(AEC_UNIT);
     let out_state = unit_active_state(OUTPUT_UNIT);
-    println!("filter-chain.service ................. {mic_state}");
+    println!("biglinux-microphone-mic.service ...... {mic_state}");
+    println!("biglinux-microphone-aec.service ...... {aec_state}");
     println!("biglinux-microphone-output.service ... {out_state}");
 
+    let aec_wanted = crate::config::AppSettings::load().echo_cancel.enabled;
     if mic_state != "active" {
-        dump_journal(FILTER_CHAIN_UNIT);
+        dump_journal(MIC_UNIT);
+    }
+    if aec_wanted && aec_state != "active" {
+        dump_journal(AEC_UNIT);
     }
     if out_state != "active" {
         dump_journal(OUTPUT_UNIT);

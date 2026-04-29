@@ -10,3 +10,4 @@
 pub mod audio_monitor;
 pub mod loopback;
 pub mod pipewire;
+pub mod system_audio;

@@ -8,12 +8,14 @@
 //! and the user's current default sink, so enabling the toggle does
 //! not require changing the default audio device or per-app routing.
 //!
-//! The GTCRN LADSPA plugin keeps a per-process singleton (ONNX Runtime
-//! state), so mic and output cannot share the `filter-chain.service`
-//! process. The output chain therefore runs as a *standalone*
-//! `pipewire -c` instance managed by its own systemd user unit
-//! (`biglinux-microphone-output.service`). Each process owns one GTCRN
-//! instance — which is exactly what the Python legacy did.
+//! The output chain runs in its own `biglinux-microphone-pwloader`
+//! process (managed by `biglinux-microphone-output.service`) — but
+//! that loader connects as a *client* of the main PipeWire daemon, so
+//! every filter graph in the package shares the daemon's clock. No
+//! cross-process drift, no `spa.alsa: front:1p ... resync` events.
+//! Keeping mic and output in separate loaders is still cheap and it
+//! lets each unit have an independent lifecycle (toggling the output
+//! filter on/off does not touch the mic chain).
 //!
 //! Because GTCRN is mono, the incoming stereo is first summed via the
 //! `mixer` builtin, processed through a single mono chain, and then
@@ -52,11 +54,10 @@ use super::nodes::{
 /// Stem used as the `node.name` of the output virtual sink.
 pub const OUTPUT_NODE_NAME: &str = "output-biglinux";
 pub const OUTPUT_DESCRIPTION: &str = "BigLinux Output Filter";
-/// File name of the standalone pipewire config (no directory prefix).
-/// The final path is placed directly under `~/.config/pipewire/` rather
-/// than `filter-chain.conf.d/` so it's loaded by its own dedicated
-/// `pipewire -c` instance.
-pub const OUTPUT_CONF_FILE: &str = "biglinux-microphone-output.conf";
+/// File name of the output args body, consumed by
+/// `biglinux-microphone-pwloader` (started by
+/// `biglinux-microphone-output.service`).
+pub const OUTPUT_CONF_FILE: &str = "output.args";
 
 /// Render the output filter-chain config text for the current settings.
 #[must_use]
@@ -76,7 +77,7 @@ pub fn build_output_conf(settings: &AppSettings) -> String {
         playback_props: playback_props(),
     };
 
-    graph.render(RenderMode::Standalone)
+    graph.render(RenderMode::ModuleArgs)
 }
 
 /// True when GTCRN should *process* (Enable=1.0) inside the output
@@ -281,30 +282,23 @@ fn capture_props(target_sink_name: Option<&str>) -> String {
     // filter inserts unambiguously between apps and that exact sink.
     // The user's chosen default device stays the visible default in
     // every volume control — only the routing changes.
-    // The output filter runs in its own standalone PipeWire daemon
-    // and connects to the main daemon's hardware sink across the
-    // protocol-native socket — the two processes have independent
-    // clocks. Without explicit handling, samples cross the IPC
-    // boundary at one rate and the hw sink consumes them at a
-    // slightly different rate, drift accumulates, and the alsa
-    // driver emits `spa.alsa: front:1p ... resync` events
-    // (= audible micro-cuts) every few seconds.
-    //
-    // `node.async = true` is the documented PipeWire knob for this
-    // exact case: it tells the graph that this node can deliver
-    // samples at a slightly different rate than the consumer, and
-    // PipeWire inserts an adaptive resampler / timing converter to
-    // align the two without periodic ALSA resyncs. Combined with
-    // the `api.alsa.headroom = 1024` WirePlumber rule on the hw
-    // sink, this gives the cross-process pipeline enough slack to
-    // ride scheduling jitter without dropping frames.
+    // The output filter runs inside `biglinux-microphone-pwloader`,
+    // which connects as a regular client of the main PipeWire daemon.
+    // The filter graph's nodes are exported to the daemon and driven
+    // by the daemon's data-loop — single clock, no cross-process
+    // drift. We still pass `node.async = true` as belt-and-braces:
+    // it lets PipeWire insert an adaptive resampler if a downstream
+    // sink ends up with a slightly different negotiated rate (Bluetooth
+    // links and some USB mics renegotiate when codecs switch), without
+    // any cost in the common case where rates agree.
     //
     // No explicit `node.latency` / `node.lock-quantum` — pinning a
     // quantum here forces a buffer size the hw sink may not have
     // negotiated. Letting both nodes negotiate freely is the
     // portable answer across diverse hardware. `pause-on-idle =
     // false` is kept so the chain rides brief unlink/relink cycles
-    // during a call without churning the standalone daemon.
+    // during a call without the loader exiting on idle and forcing a
+    // unit restart.
     let mut props = vec![
         format!("node.name = \"{OUTPUT_NODE_NAME}\""),
         format!("node.description = \"{OUTPUT_DESCRIPTION}\""),
@@ -348,12 +342,12 @@ fn playback_props() -> String {
     // hardware sink). `node.passive = true` keeps the chain idle when
     // no app is producing audio so it doesn't hold the hw sink awake.
     // Same rationale as the capture side: no explicit latency / no
-    // lock-quantum, plus `node.async = true` so PipeWire can insert
-    // an adaptive resampler between this cross-process stream and
-    // the hw sink it feeds. Without async, the hw sink alternates
-    // between starving and overflowing as the two daemons' clocks
-    // drift, and the kernel emits `front:1p ... resync` events
-    // (= audible cuts).
+    // lock-quantum, plus `node.async = true` as belt-and-braces in
+    // case a downstream sink negotiates a slightly different rate
+    // (Bluetooth codec switches, USB renegotiation). Cross-process
+    // drift is no longer a concern — every filter graph in the
+    // package now runs as a client of the main PipeWire daemon, all
+    // sharing one clock.
     [
         format!("node.name = \"{OUTPUT_NODE_NAME}-out\""),
         "node.passive = true".to_owned(),
@@ -469,9 +463,12 @@ mod tests {
     }
 
     #[test]
-    fn output_conf_is_standalone_process_wrapper() {
-        // Default settings have noise reduction enabled, so GTCRN
-        // should be present in the rendered conf.
+    fn output_conf_is_a_bare_module_args_body() {
+        // The pwloader passes the file contents straight to
+        // `pw_context_load_module(libpipewire-module-filter-chain, …)`
+        // — bootstrap modules come from the daemon `client.conf`, never
+        // from our args. Verifying the absence keeps a regression that
+        // would re-introduce cross-process clock duplication visible.
         let s = AppSettings {
             output_filter: crate::config::OutputFilterSettings {
                 enabled: true,
@@ -484,13 +481,16 @@ mod tests {
             ..AppSettings::default()
         };
         let conf = build_output_conf(&s);
-        // Standalone mode ships its own protocol + adapter modules so
-        // the dedicated `pipewire -c` instance can stand up a graph
-        // without the system daemon.
-        assert!(conf.contains("context.properties"));
-        assert!(conf.contains("libpipewire-module-protocol-native"));
-        assert!(conf.contains("libpipewire-module-adapter"));
+        assert!(conf.starts_with('{'));
+        assert!(conf.trim_end().ends_with('}'));
+        assert!(!conf.contains("context.properties"));
+        assert!(!conf.contains("context.modules"));
+        assert!(!conf.contains("libpipewire-module-protocol-native"));
+        assert!(!conf.contains("libpipewire-module-adapter"));
+        assert!(!conf.contains("libpipewire-module-filter-chain"));
+        // Filter graph itself is still rendered.
         assert!(conf.contains("gtcrn_mono"));
+        assert!(conf.contains("filter.graph = {"));
     }
 
     #[test]

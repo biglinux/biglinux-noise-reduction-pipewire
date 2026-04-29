@@ -1,0 +1,18 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 80">
+  <!-- Audio buffer represented as a chain of frame blocks. Wider blocks
+       on the right hint that a larger quantum = larger buffer windows. -->
+  <rect x="8" y="32" width="6" height="16" rx="1" fill="#3584e4" opacity="0.4"/>
+  <rect x="18" y="30" width="8" height="20" rx="1" fill="#3584e4" opacity="0.55"/>
+  <rect x="30" y="28" width="10" height="24" rx="1" fill="#3584e4" opacity="0.7"/>
+  <rect x="44" y="26" width="14" height="28" rx="1" fill="#3584e4" opacity="0.85"/>
+  <rect x="62" y="22" width="20" height="36" rx="2" fill="#3584e4"/>
+  <rect x="86" y="18" width="26" height="44" rx="2" fill="#1c5fb4"/>
+  <!-- Clock tick marker on top -->
+  <line x1="8" y1="14" x2="112" y2="14" stroke="#3584e4" stroke-width="1" opacity="0.5"/>
+  <circle cx="8" cy="14" r="2" fill="#3584e4"/>
+  <circle cx="40" cy="14" r="2" fill="#3584e4"/>
+  <circle cx="72" cy="14" r="2" fill="#3584e4"/>
+  <circle cx="112" cy="14" r="2" fill="#1c5fb4"/>
+  <!-- Bottom timeline -->
+  <line x1="8" y1="68" x2="112" y2="68" stroke="#3584e4" stroke-width="1" opacity="0.4"/>
+</svg>

@@ -17,6 +17,7 @@ mod live;
 mod module;
 mod sources;
 mod types;
+pub mod user_tweaks;
 mod worker;
 
 use std::io;
@@ -29,8 +30,9 @@ use pipewire as pw;
 pub use default_sink::default_sink_name;
 pub use live::{apply_live, LiveOutcome};
 pub use module::{
-    reload_mic_chain, restart_filter_chain_service, restart_output_service, start_output_service,
-    stop_filter_chain_service, stop_output_service,
+    reload_mic_chain, restart_aec_service, restart_mic_service, restart_output_service,
+    start_aec_service, start_mic_service, start_output_service, stop_aec_service, stop_mic_service,
+    stop_output_service,
 };
 pub use sources::{
     set_default_source, set_source_volume, snapshot as snapshot_sources, source_volume, Source,

@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 80">
+  <!-- Bluetooth glyph -->
+  <path d="M44,20 L44,60 L60,46 L52,40 L60,34 L44,20 M44,40 L60,54 L60,26 L44,40"
+        fill="none" stroke="#3584e4" stroke-width="2.5" stroke-linejoin="round"/>
+  <!-- Audio packets travelling rightward, spaced widely (latency) -->
+  <rect x="72" y="36" width="8" height="8" rx="1" fill="#3584e4"/>
+  <rect x="86" y="36" width="8" height="8" rx="1" fill="#3584e4" opacity="0.7"/>
+  <rect x="100" y="36" width="8" height="8" rx="1" fill="#3584e4" opacity="0.4"/>
+  <!-- Wave hint above to suggest "delay window" -->
+  <path d="M70,28 Q90,20 112,28" stroke="#1c5fb4" stroke-width="1.5" fill="none" opacity="0.6"/>
+</svg>

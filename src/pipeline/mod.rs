@@ -5,20 +5,22 @@
 //!
 //! | File | Role |
 //! |------|------|
-//! | `~/.config/pipewire/filter-chain.conf.d/05-biglinux-echocancel.conf` | AEC drop-in (loads inside `filter-chain.service`) |
-//! | `~/.config/pipewire/filter-chain.conf.d/10-biglinux-microphone.conf` | Mic filter-chain drop-in |
-//! | `~/.config/pipewire/biglinux-microphone-output.conf`                  | Output filter-chain (standalone) |
+//! | `~/.config/biglinux-microphone/aec.args`    | AEC module args body  |
+//! | `~/.config/biglinux-microphone/mic.args`    | Mic filter-chain args body |
+//! | `~/.config/biglinux-microphone/output.args` | Output filter-chain args body |
 //!
 //! Each file is written via the atomic write helper so a partial write
-//! cannot leave PipeWire reading a truncated config.
+//! cannot leave the loader reading a truncated args body.
 //!
-//! Process layout: `filter-chain.service` hosts the AEC + mic chain
-//! drop-ins (no GTCRN coexistence issue between them); the output
-//! chain runs in its own `pipewire -c` process because GTCRN keeps a
-//! per-process singleton that forbids two instances in the same
-//! daemon. With every filter on, the user therefore sees three
-//! pipewire workers: the system daemon, `filter-chain.service`, and
-//! `biglinux-microphone-output.service`.
+//! Process layout: each filter graph runs in its own
+//! `biglinux-microphone-pwloader` process — `biglinux-microphone-aec.service`,
+//! `biglinux-microphone-mic.service`, `biglinux-microphone-output.service`.
+//! The loader connects as a regular client of the main PipeWire daemon
+//! and asks the daemon to instantiate the module inside its local
+//! context; the audio nodes are exported to the daemon and driven by
+//! the daemon's data-loop. All three loaders therefore share one clock,
+//! eliminating the cross-process drift that the previous standalone
+//! `pipewire -c` worker produced.
 //!
 //! Disabled chains are removed from disk entirely so the corresponding
 //! virtual node disappears from the PipeWire graph.
@@ -60,16 +62,26 @@ fn xdg_config_root() -> PathBuf {
     })
 }
 
-/// XDG base dir for PipeWire drop-in configs (loaded by
-/// `filter-chain.service`).
+/// XDG base dir that holds the per-loader args bodies consumed by
+/// `biglinux-microphone-pwloader`. Each filter graph ships a single
+/// `<name>.args` file here; the systemd unit reads that path and passes
+/// the contents verbatim to `pw_context_load_module()`.
+#[must_use]
+pub fn pwloader_args_dir() -> PathBuf {
+    xdg_config_root().join("biglinux-microphone")
+}
+
+/// Legacy XDG base dir for PipeWire drop-in configs (loaded by the
+/// old `filter-chain.service` topology). Kept around so [`apply`] can
+/// scrub stale files from earlier installs.
 #[must_use]
 pub fn pipewire_drop_in_dir() -> PathBuf {
     xdg_config_root().join("pipewire/filter-chain.conf.d")
 }
 
-/// XDG base dir that holds **standalone** PipeWire config files — i.e.
-/// the ones consumed directly by `pipewire -c <path>` from dedicated
-/// systemd units (not drop-ins). Lives at `~/.config/pipewire/`.
+/// Legacy XDG base dir that previously held the standalone output
+/// filter `pipewire -c` config. Same role as [`pipewire_drop_in_dir`]:
+/// retained only so legacy cleanup can remove leftovers.
 #[must_use]
 pub fn pipewire_standalone_dir() -> PathBuf {
     xdg_config_root().join("pipewire")
@@ -83,28 +95,27 @@ pub fn wireplumber_drop_in_dir() -> PathBuf {
     xdg_config_root().join("wireplumber/wireplumber.conf.d")
 }
 
-/// Absolute path of the mic filter-chain drop-in file.
+/// Absolute path of the mic args file consumed by
+/// `biglinux-microphone-mic.service`.
 #[must_use]
 pub fn mic_conf_path() -> PathBuf {
-    pipewire_drop_in_dir().join(MIC_CONF_FILE)
+    pwloader_args_dir().join(MIC_CONF_FILE)
 }
 
-/// Absolute path of the output filter-chain config. The output chain
-/// runs in its own `pipewire -c` process (see
-/// `biglinux-microphone-output.service`) so the file lives outside
-/// `filter-chain.conf.d/`.
+/// Absolute path of the output args file consumed by
+/// `biglinux-microphone-output.service`.
 #[must_use]
 pub fn output_conf_path() -> PathBuf {
-    pipewire_standalone_dir().join(OUTPUT_CONF_FILE)
+    pwloader_args_dir().join(OUTPUT_CONF_FILE)
 }
 
-/// Absolute path of the echo-cancel drop-in. Loaded inside
-/// `filter-chain.service` alongside the mic chain; only materialised
-/// when the user toggles AEC on, so the module is absent from the
-/// graph when the feature is off.
+/// Absolute path of the AEC args file consumed by
+/// `biglinux-microphone-aec.service`. Only materialised when the user
+/// toggles AEC on, so the module is absent from the graph when the
+/// feature is off.
 #[must_use]
 pub fn echo_cancel_conf_path() -> PathBuf {
-    pipewire_drop_in_dir().join(ECHO_CANCEL_CONF_FILE)
+    pwloader_args_dir().join(ECHO_CANCEL_CONF_FILE)
 }
 
 /// File name of the WirePlumber drop-in shipped by the per-app routing
@@ -138,6 +149,12 @@ const LEGACY_FILES: &[&str] = &[
     // file; the unit is gone but installed copies of the conf would
     // still be picked up by old user-enabled symlinks.
     "pipewire/biglinux-microphone-echocancel.conf",
+    // filter-chain.service drop-in era — superseded by
+    // dedicated `biglinux-microphone-{aec,mic,output}.service`
+    // units that each load a single module via pwloader.
+    "pipewire/filter-chain.conf.d/05-biglinux-echocancel.conf",
+    "pipewire/filter-chain.conf.d/10-biglinux-microphone.conf",
+    "pipewire/biglinux-microphone-output.conf",
 ];
 
 /// Best-effort migration step: deletes every config file written by a
@@ -167,11 +184,12 @@ pub fn purge_legacy_files() {
 }
 
 /// Stop and disable user-level systemd units shipped by older versions
-/// that have since been folded into other workers. Specifically: the
-/// standalone `biglinux-microphone-echocancel.service` is gone now
-/// that AEC ships as a drop-in inside `filter-chain.service`. Without
-/// this step, an upgrading user keeps the old worker running until
-/// next logout because the `[Install]` symlink in
+/// whose roles have moved. Specifically: the standalone
+/// `biglinux-microphone-echocancel.service` was folded into the
+/// previous `filter-chain.service` drop-in topology, and that drop-in
+/// topology has since been replaced by per-loader units. Without this
+/// step, an upgrading user keeps the old worker running until next
+/// logout because the `[Install]` symlink in
 /// `~/.config/systemd/user/default.target.wants/` outlives the unit
 /// file removed by the package upgrade.
 fn purge_legacy_services() {
@@ -199,8 +217,8 @@ fn purge_legacy_services() {
 pub fn apply(settings: &AppSettings) -> io::Result<()> {
     apply_to_dirs(
         settings,
+        &pwloader_args_dir(),
         &pipewire_drop_in_dir(),
-        &pipewire_standalone_dir(),
         &wireplumber_drop_in_dir(),
     )
 }
@@ -208,71 +226,69 @@ pub fn apply(settings: &AppSettings) -> io::Result<()> {
 /// Write the generated files under explicit directories. This is the
 /// variant tests use to avoid touching the user's real config.
 ///
-/// `pipewire_dropin_dir` hosts the mic drop-in; `pipewire_standalone_dir`
-/// hosts the standalone output config consumed by the dedicated output
-/// systemd unit; `wireplumber_dir` is scanned for the legacy per-app
-/// routing rules file (deleted on every call).
+/// `args_dir` hosts the three pwloader args bodies (mic, output, AEC).
+/// `pipewire_dropin_dir` and `wireplumber_dir` are scanned for legacy
+/// drop-ins from previous topologies, all deleted on every call.
 pub fn apply_to_dirs(
     settings: &AppSettings,
+    args_dir: &Path,
     pipewire_dropin_dir: &Path,
-    pipewire_standalone_dir: &Path,
     wireplumber_dir: &Path,
 ) -> io::Result<()> {
-    fs::create_dir_all(pipewire_dropin_dir)?;
-    fs::create_dir_all(pipewire_standalone_dir)?;
+    fs::create_dir_all(args_dir)?;
 
     // Mic chain: only materialise it when the user wants *any* mic
     // processing. Otherwise we'd leave a "BigLinux Microphone" virtual
     // source hanging in the PipeWire graph even with every toggle off.
-    let mic_path = pipewire_dropin_dir.join(MIC_CONF_FILE);
+    let mic_path = args_dir.join(MIC_CONF_FILE);
     if mic::mic_chain_wanted(settings) {
         atomic_write(&mic_path, mic::build_mic_conf(settings).as_bytes())?;
-        info!("pipeline: wrote mic config to {}", mic_path.display());
+        info!("pipeline: wrote mic args to {}", mic_path.display());
     } else {
         remove_if_exists(&mic_path)?;
         info!("pipeline: mic chain idle, {} cleared", mic_path.display());
     }
 
-    // Output chain lives in its own `pipewire` process (see
-    // `biglinux-microphone-output.service`) because GTCRN keeps a
-    // per-process singleton — two instances in the same daemon crash.
-    //
-    // The conf is written unconditionally so the standalone unit can
-    // come up in **bypass mode** even when `output_filter.enabled` is
-    // false. Stopping the unit would tear down the smart-filter sink,
-    // and browsers (Chromium especially) pause HTMLMediaElement when
-    // their output sink disappears mid-playback. Bypassing inside the
-    // graph (GTCRN Enable=0, gate floor, compressor unity, HPF
-    // pass-through) keeps the sink present and the streams attached.
-    let out_path = pipewire_standalone_dir.join(OUTPUT_CONF_FILE);
+    // Output chain runs in its own pwloader process (see
+    // `biglinux-microphone-output.service`). The args body is written
+    // unconditionally so the unit can come up in **bypass mode** even
+    // when `output_filter.enabled` is false. Stopping the unit would
+    // tear down the smart-filter sink, and browsers (Chromium
+    // especially) pause HTMLMediaElement when their output sink
+    // disappears mid-playback. Bypassing inside the graph (GTCRN
+    // Enable=0, gate floor, compressor unity, HPF pass-through) keeps
+    // the sink present and the streams attached.
+    let out_path = args_dir.join(OUTPUT_CONF_FILE);
     atomic_write(&out_path, output::build_output_conf(settings).as_bytes())?;
-    info!("pipeline: wrote output config to {}", out_path.display());
+    info!("pipeline: wrote output args to {}", out_path.display());
 
-    // Echo-cancel drop-in: materialised only when the user wants AEC.
-    // The drop-in lives next to the mic drop-in, so toggling AEC on /
-    // off works through `filter-chain.service` reload — no dedicated
-    // systemd unit and no extra `pipewire -c` worker.
-    let ec_path = pipewire_dropin_dir.join(ECHO_CANCEL_CONF_FILE);
+    // Echo-cancel: materialised only when the user wants AEC. The
+    // dedicated `biglinux-microphone-aec.service` consumes it; the mic
+    // unit `After=` orders against it so `echo-cancel-source` exists
+    // before the mic chain resolves its `target.object`.
+    let ec_path = args_dir.join(ECHO_CANCEL_CONF_FILE);
     if echo_cancel::echo_cancel_wanted(settings) {
         atomic_write(
             &ec_path,
             echo_cancel::build_echo_cancel_conf(settings).as_bytes(),
         )?;
-        info!(
-            "pipeline: wrote echo-cancel config to {}",
-            ec_path.display()
-        );
+        info!("pipeline: wrote echo-cancel args to {}", ec_path.display());
     } else {
         remove_if_exists(&ec_path)?;
         info!("pipeline: echo-cancel idle, {} cleared", ec_path.display());
     }
 
-    // Legacy cleanup: earlier versions wrote the output chain into the
-    // filter-chain drop-in directory alongside the mic, and shipped a
-    // WirePlumber rule for per-app routing. Both must be deleted so an
-    // upgraded install doesn't load a phantom second GTCRN or pin
-    // streams to a non-existent target.
+    // Legacy cleanup: previous topologies wrote the mic + AEC inside
+    // `filter-chain.conf.d/` and the output chain at the root of
+    // `~/.config/pipewire/`. All three must go so an upgraded install
+    // doesn't load a phantom second GTCRN inside `filter-chain.service`
+    // or keep the orphaned standalone output `pipewire -c` config
+    // around. The WirePlumber per-app routing rule from the very
+    // first Rust port is similarly stripped. Standalone-dir leftovers
+    // are handled by [`purge_legacy_files`] at app startup.
     remove_if_exists(&pipewire_dropin_dir.join("20-biglinux-output.conf"))?;
+    remove_if_exists(&pipewire_dropin_dir.join("10-biglinux-microphone.conf"))?;
+    remove_if_exists(&pipewire_dropin_dir.join("05-biglinux-echocancel.conf"))?;
     remove_if_exists(&wireplumber_dir.join(LEGACY_ROUTING_CONF_FILE))?;
 
     Ok(())
@@ -291,11 +307,16 @@ fn remove_if_exists(path: &Path) -> io::Result<()> {
 /// error.
 pub fn remove_all() -> io::Result<()> {
     let legacy_routing = wireplumber_drop_in_dir().join(LEGACY_ROUTING_CONF_FILE);
+    let legacy_dropin_root = pipewire_drop_in_dir();
+    let legacy_standalone_root = pipewire_standalone_dir();
     for path in [
         mic_conf_path(),
         output_conf_path(),
         echo_cancel_conf_path(),
         legacy_routing,
+        legacy_dropin_root.join("10-biglinux-microphone.conf"),
+        legacy_dropin_root.join("05-biglinux-echocancel.conf"),
+        legacy_standalone_root.join("biglinux-microphone-output.conf"),
     ] {
         match fs::remove_file(&path) {
             Ok(()) => debug!("pipeline: removed {}", path.display()),
@@ -328,8 +349,8 @@ mod tests {
 
     fn dirs(t: &tempfile::TempDir) -> (PathBuf, PathBuf, PathBuf) {
         (
+            t.path().join("bigmic-args"),
             t.path().join("pw-dropin"),
-            t.path().join("pw-standalone"),
             t.path().join("wp"),
         )
     }
@@ -337,7 +358,7 @@ mod tests {
     #[test]
     fn apply_writes_mic_and_output_when_enabled() {
         let dir = tempdir().unwrap();
-        let (pw_dropin, pw_standalone, wp) = dirs(&dir);
+        let (args, pw_dropin, wp) = dirs(&dir);
 
         let settings = AppSettings {
             output_filter: crate::config::OutputFilterSettings {
@@ -347,24 +368,21 @@ mod tests {
             ..AppSettings::default()
         };
 
-        apply_to_dirs(&settings, &pw_dropin, &pw_standalone, &wp).unwrap();
+        apply_to_dirs(&settings, &args, &pw_dropin, &wp).unwrap();
 
-        assert!(pw_dropin.join(MIC_CONF_FILE).exists());
-        assert!(pw_standalone.join(OUTPUT_CONF_FILE).exists());
+        assert!(args.join(MIC_CONF_FILE).exists());
+        assert!(args.join(OUTPUT_CONF_FILE).exists());
     }
 
     #[test]
     fn apply_uses_atomic_temp_files() {
         let dir = tempdir().unwrap();
-        let (pw_dropin, pw_standalone, wp) = dirs(&dir);
+        let (args, pw_dropin, wp) = dirs(&dir);
 
-        apply_to_dirs(&AppSettings::default(), &pw_dropin, &pw_standalone, &wp).unwrap();
+        apply_to_dirs(&AppSettings::default(), &args, &pw_dropin, &wp).unwrap();
 
-        for scan in [&pw_dropin, &pw_standalone] {
-            if !scan.exists() {
-                continue;
-            }
-            for entry in fs::read_dir(scan).unwrap() {
+        if args.exists() {
+            for entry in fs::read_dir(&args).unwrap() {
                 let p = entry.unwrap().path();
                 assert_ne!(p.extension().and_then(|s| s.to_str()), Some("tmp"));
             }
@@ -374,44 +392,45 @@ mod tests {
     #[test]
     fn apply_is_idempotent_across_runs() {
         let dir = tempdir().unwrap();
-        let (pw_dropin, pw_standalone, wp) = dirs(&dir);
+        let (args, pw_dropin, wp) = dirs(&dir);
 
         let settings = AppSettings::default();
-        apply_to_dirs(&settings, &pw_dropin, &pw_standalone, &wp).unwrap();
-        let first = fs::read_to_string(pw_dropin.join(MIC_CONF_FILE)).unwrap();
+        apply_to_dirs(&settings, &args, &pw_dropin, &wp).unwrap();
+        let first = fs::read_to_string(args.join(MIC_CONF_FILE)).unwrap();
 
-        apply_to_dirs(&settings, &pw_dropin, &pw_standalone, &wp).unwrap();
-        let second = fs::read_to_string(pw_dropin.join(MIC_CONF_FILE)).unwrap();
+        apply_to_dirs(&settings, &args, &pw_dropin, &wp).unwrap();
+        let second = fs::read_to_string(args.join(MIC_CONF_FILE)).unwrap();
 
         assert_eq!(first, second);
     }
 
     #[test]
     fn apply_writes_output_conf_even_when_master_off() {
-        // The conf is written unconditionally so the standalone unit
-        // can come up in bypass mode without ever needing a stop/start
+        // The conf is written unconditionally so the output unit can
+        // come up in bypass mode without ever needing a stop/start
         // round trip while audio is playing.
         let dir = tempdir().unwrap();
-        let (pw_dropin, pw_standalone, wp) = dirs(&dir);
+        let (args, pw_dropin, wp) = dirs(&dir);
 
         let settings = AppSettings::default();
         assert!(!settings.output_filter.enabled);
-        apply_to_dirs(&settings, &pw_dropin, &pw_standalone, &wp).unwrap();
+        apply_to_dirs(&settings, &args, &pw_dropin, &wp).unwrap();
 
-        assert!(pw_dropin.join(MIC_CONF_FILE).exists());
+        assert!(args.join(MIC_CONF_FILE).exists());
         assert!(
-            pw_standalone.join(OUTPUT_CONF_FILE).exists(),
-            "output conf must always be present so the unit can run in bypass"
+            args.join(OUTPUT_CONF_FILE).exists(),
+            "output args must always be present so the unit can run in bypass"
         );
     }
 
     #[test]
     fn apply_keeps_output_conf_after_disable() {
         // Going from enabled → disabled inside a session must not
-        // remove the conf — see `apply_writes_output_conf_even_when_master_off`
-        // for the rationale.
+        // remove the args file — see
+        // `apply_writes_output_conf_even_when_master_off` for the
+        // rationale.
         let dir = tempdir().unwrap();
-        let (pw_dropin, pw_standalone, wp) = dirs(&dir);
+        let (args, pw_dropin, wp) = dirs(&dir);
 
         let enabled = AppSettings {
             output_filter: crate::config::OutputFilterSettings {
@@ -420,27 +439,48 @@ mod tests {
             },
             ..AppSettings::default()
         };
-        apply_to_dirs(&enabled, &pw_dropin, &pw_standalone, &wp).unwrap();
-        assert!(pw_standalone.join(OUTPUT_CONF_FILE).exists());
+        apply_to_dirs(&enabled, &args, &pw_dropin, &wp).unwrap();
+        assert!(args.join(OUTPUT_CONF_FILE).exists());
 
-        apply_to_dirs(&AppSettings::default(), &pw_dropin, &pw_standalone, &wp).unwrap();
-        assert!(pw_standalone.join(OUTPUT_CONF_FILE).exists());
+        apply_to_dirs(&AppSettings::default(), &args, &pw_dropin, &wp).unwrap();
+        assert!(args.join(OUTPUT_CONF_FILE).exists());
     }
 
     #[test]
     fn apply_removes_legacy_routing_drop_in() {
         let dir = tempdir().unwrap();
-        let (pw_dropin, pw_standalone, wp) = dirs(&dir);
+        let (args, pw_dropin, wp) = dirs(&dir);
         fs::create_dir_all(&wp).unwrap();
         let legacy = wp.join(LEGACY_ROUTING_CONF_FILE);
         fs::write(&legacy, b"# stale per-app rule\n").unwrap();
 
-        apply_to_dirs(&AppSettings::default(), &pw_dropin, &pw_standalone, &wp).unwrap();
+        apply_to_dirs(&AppSettings::default(), &args, &pw_dropin, &wp).unwrap();
 
         assert!(
             !legacy.exists(),
             "legacy WirePlumber routing rule must be deleted on apply"
         );
+    }
+
+    #[test]
+    fn apply_removes_legacy_filter_chain_dropins() {
+        // Stale `05-biglinux-echocancel.conf` / `10-biglinux-microphone.conf`
+        // from the previous filter-chain.service drop-in topology must
+        // be scrubbed on every apply so the upstream filter-chain
+        // daemon does not double-load our modules alongside the new
+        // pwloader instances.
+        let dir = tempdir().unwrap();
+        let (args, pw_dropin, wp) = dirs(&dir);
+        fs::create_dir_all(&pw_dropin).unwrap();
+        let stale_aec = pw_dropin.join("05-biglinux-echocancel.conf");
+        let stale_mic = pw_dropin.join("10-biglinux-microphone.conf");
+        fs::write(&stale_aec, b"# stale aec drop-in\n").unwrap();
+        fs::write(&stale_mic, b"# stale mic drop-in\n").unwrap();
+
+        apply_to_dirs(&AppSettings::default(), &args, &pw_dropin, &wp).unwrap();
+
+        assert!(!stale_aec.exists());
+        assert!(!stale_mic.exists());
     }
 
     #[test]
@@ -450,10 +490,10 @@ mod tests {
             NoiseReductionConfig, StereoConfig,
         };
         let dir = tempdir().unwrap();
-        let (pw_dropin, pw_standalone, wp) = dirs(&dir);
+        let (args, pw_dropin, wp) = dirs(&dir);
 
-        apply_to_dirs(&AppSettings::default(), &pw_dropin, &pw_standalone, &wp).unwrap();
-        assert!(pw_dropin.join(MIC_CONF_FILE).exists());
+        apply_to_dirs(&AppSettings::default(), &args, &pw_dropin, &wp).unwrap();
+        assert!(args.join(MIC_CONF_FILE).exists());
 
         let off = AppSettings {
             noise_reduction: NoiseReductionConfig {
@@ -485,9 +525,9 @@ mod tests {
             echo_cancel: EchoCancelConfig { enabled: false },
             ..AppSettings::default()
         };
-        apply_to_dirs(&off, &pw_dropin, &pw_standalone, &wp).unwrap();
+        apply_to_dirs(&off, &args, &pw_dropin, &wp).unwrap();
         assert!(
-            !pw_dropin.join(MIC_CONF_FILE).exists(),
+            !args.join(MIC_CONF_FILE).exists(),
             "mic virtual source must disappear once every filter is off"
         );
     }

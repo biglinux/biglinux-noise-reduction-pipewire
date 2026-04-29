@@ -3,7 +3,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: biglinux-noise-reduction-pipewire\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-04-28 13:29\n"
+"POT-Creation-Date: 2026-04-29 05:33+0000\n"
 "PO-Revision-Date: 2026-04-28 13:29\n"
 "Last-Translator: Translation Automator <auto@translator.ai>\n"
 "Language-Team: Portuguese (Brazil) <pt_BR@li.org>\n"
@@ -12,7 +12,7 @@ msgstr ""
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 
-#: src/ui/window.rs:46 src/ui/window.rs:374
+#: src/ui/window.rs:46 src/ui/window.rs:381
 #, fuzzy
 msgid "Filter noise"
 msgstr "Filter noise"
@@ -27,39 +27,43 @@ msgstr "Microphone"
 msgid "Output filter"
 msgstr "Output filter"
 
-#: src/ui/window.rs:241
+#: src/ui/window.rs:198
+msgid "Tuning"
+msgstr ""
+
+#: src/ui/window.rs:248
 #, fuzzy
 msgid "Advanced"
 msgstr "Advanced"
 
-#: src/ui/window.rs:244
+#: src/ui/window.rs:251
 #, fuzzy
 msgid "Show every control individually"
 msgstr "Show every control individually"
 
-#: src/ui/window.rs:263
+#: src/ui/window.rs:270
 #, fuzzy
 msgid "Restore default settings"
 msgstr "Restore default settings"
 
-#: src/ui/window.rs:266
+#: src/ui/window.rs:273
 #, fuzzy
 msgid "About Filter noise"
 msgstr "About Filter noise"
 
 #. Icon-only control needs an explicit accessible label; tooltips
 #. alone are not surfaced as accessible names by every reader.
-#: src/ui/window.rs:271 src/ui/window.rs:276
+#: src/ui/window.rs:278 src/ui/window.rs:283
 #, fuzzy
 msgid "Main menu"
 msgstr "Main menu"
 
-#: src/ui/window.rs:327
+#: src/ui/window.rs:334
 #, fuzzy
 msgid "Restore default settings?"
 msgstr "Restore default settings?"
 
-#: src/ui/window.rs:329
+#: src/ui/window.rs:336
 #, fuzzy
 msgid ""
 "All audio processing settings will return to their factory values. Your "
@@ -68,17 +72,18 @@ msgstr ""
 "All audio processing settings will return to their factory values. Your "
 "window size and view preferences are kept."
 
-#: src/ui/window.rs:333
+#: src/ui/window.rs:340 src/ui/views/advanced.rs:477
 #, fuzzy
 msgid "Cancel"
 msgstr "Cancel"
 
-#: src/ui/window.rs:334
+#: src/ui/window.rs:341 src/ui/views/advanced.rs:160
+#: src/ui/views/advanced.rs:478
 #, fuzzy
 msgid "Restore defaults"
 msgstr "Restore defaults"
 
-#: src/ui/window.rs:383
+#: src/ui/window.rs:390
 #, fuzzy
 msgid ""
 "Real-time noise filter for microphone capture and system audio playback. "
@@ -91,10 +96,220 @@ msgstr ""
 "PipeWire — every filter is driven by a WirePlumber smart-filter so the "
 "default source and sink stay clean even after device changes."
 
-#: src/ui/window.rs:390
+#: src/ui/window.rs:397
 #, fuzzy
 msgid "Built on"
 msgstr "Built on"
+
+#: src/ui/views/advanced.rs:108 src/ui/views/advanced.rs:180
+msgid "Distro defaults are in effect."
+msgstr ""
+
+#: src/ui/views/advanced.rs:165 src/ui/views/advanced.rs:453
+msgid "Apply and restart audio"
+msgstr ""
+
+#: src/ui/views/advanced.rs:178
+msgid "Custom values are active. Apply to make them live."
+msgstr ""
+
+#: src/ui/views/advanced.rs:190
+msgid "Audio block size"
+msgstr ""
+
+#: src/ui/views/advanced.rs:192
+msgid ""
+"Smaller blocks = lower latency but more CPU. Larger blocks = steadier "
+"playback over Bluetooth and busy systems. The distro default of 2048 frames "
+"(~42 ms at 48 kHz) suits voice and video calls."
+msgstr ""
+
+#: src/ui/views/advanced.rs:201
+msgid "256 frames (~5 ms — very low latency)"
+msgstr ""
+
+#: src/ui/views/advanced.rs:202
+msgid "512 frames (~11 ms — low latency)"
+msgstr ""
+
+#: src/ui/views/advanced.rs:203
+msgid "1024 frames (~21 ms — upstream default)"
+msgstr ""
+
+#: src/ui/views/advanced.rs:204 src/ui/views/advanced.rs:283
+msgid "2048 frames (~42 ms — distro tuned)"
+msgstr ""
+
+#: src/ui/views/advanced.rs:205
+msgid "4096 frames (~85 ms — most stable)"
+msgstr ""
+
+#: src/ui/views/advanced.rs:215
+msgid "Block size"
+msgstr ""
+
+#: src/ui/views/advanced.rs:222
+msgid "USB audio headroom"
+msgstr ""
+
+#: src/ui/views/advanced.rs:224
+msgid ""
+"Extra slack the USB ring buffer keeps to ride out short scheduling stalls "
+"(browser repaints, kernel hiccups). Raise only if you hear small cuts on USB "
+"headsets / DACs."
+msgstr ""
+
+#: src/ui/views/advanced.rs:239 src/ui/views/advanced.rs:263
+msgid "Slack"
+msgstr ""
+
+#: src/ui/views/advanced.rs:246
+msgid "PCI / built-in audio headroom"
+msgstr ""
+
+#: src/ui/views/advanced.rs:248
+msgid ""
+"Extra slack on motherboard / laptop analog outputs and inputs. Most users "
+"keep the distro default; bump only when the speaker or built-in mic glitches "
+"under load."
+msgstr ""
+
+#: src/ui/views/advanced.rs:270
+msgid "Bluetooth graph latency"
+msgstr ""
+
+#: src/ui/views/advanced.rs:272
+msgid ""
+"Bigger windows absorb the bursty L2CAP traffic Bluetooth stacks produce, at "
+"the cost of audible delay between video and sound. The distro default suits "
+"voice and music; lower only on wired-quality headsets."
+msgstr ""
+
+#: src/ui/views/advanced.rs:281
+msgid "512 frames (~11 ms — wired feel)"
+msgstr ""
+
+#: src/ui/views/advanced.rs:282
+msgid "1024 frames (~21 ms)"
+msgstr ""
+
+#: src/ui/views/advanced.rs:284
+msgid "4096 frames (~85 ms — bumpy stacks)"
+msgstr ""
+
+#: src/ui/views/advanced.rs:294
+msgid "Window"
+msgstr ""
+
+#: src/ui/views/advanced.rs:301
+msgid "Sample rates"
+msgstr ""
+
+#: src/ui/views/advanced.rs:303
+msgid ""
+"Which sample rates the graph is allowed to switch to. Audiophile DACs "
+"deliver natural rates without resampling, but every switch briefly reloads "
+"filter chains — keep the distro default unless you have a hi-res DAC."
+msgstr ""
+
+#: src/ui/views/advanced.rs:312
+msgid "48 kHz only (distro tuned)"
+msgstr ""
+
+#: src/ui/views/advanced.rs:313
+msgid "44.1 + 48 kHz (CDs / streaming)"
+msgstr ""
+
+#: src/ui/views/advanced.rs:315
+msgid "Hi-res family (44.1 / 48 / 88.2 / 96 / 176.4 / 192 kHz)"
+msgstr ""
+
+#: src/ui/views/advanced.rs:327
+msgid "Allowed rates"
+msgstr ""
+
+#: src/ui/views/advanced.rs:334
+msgid "Bluetooth SBC-XQ codec"
+msgstr ""
+
+#: src/ui/views/advanced.rs:336
+msgid ""
+"Pin the high-quality SBC-XQ profile. The distro default already enables it "
+"on every BlueZ codec auto-negotiation; override only when troubleshooting a "
+"headset that picks the wrong profile."
+msgstr ""
+
+#: src/ui/views/advanced.rs:345
+msgid "Force on (high quality)"
+msgstr ""
+
+#: src/ui/views/advanced.rs:346
+msgid "Force off (compatibility)"
+msgstr ""
+
+#: src/ui/views/advanced.rs:356
+msgid "SBC-XQ"
+msgstr ""
+
+#: src/ui/views/advanced.rs:372
+#, fuzzy
+msgid "Distro default"
+msgstr "Restore defaults"
+
+#: src/ui/views/advanced.rs:388
+msgid "0 frames (none)"
+msgstr ""
+
+#: src/ui/views/advanced.rs:389
+msgid "256 frames (~5 ms)"
+msgstr ""
+
+#: src/ui/views/advanced.rs:390
+msgid "512 frames (~11 ms)"
+msgstr ""
+
+#: src/ui/views/advanced.rs:391
+msgid "1024 frames (~21 ms — distro tuned)"
+msgstr ""
+
+#: src/ui/views/advanced.rs:392
+msgid "2048 frames (~42 ms — virtual machines)"
+msgstr ""
+
+#: src/ui/views/advanced.rs:393
+msgid "4096 frames (~85 ms — last resort)"
+msgstr ""
+
+#: src/ui/views/advanced.rs:432
+msgid "Failed to write configuration"
+msgstr ""
+
+#: src/ui/views/advanced.rs:439
+msgid "Restarting audio…"
+msgstr ""
+
+#: src/ui/views/advanced.rs:462
+msgid "Audio service restart failed"
+msgstr ""
+
+#: src/ui/views/advanced.rs:471
+#, fuzzy
+msgid "Restore distro defaults?"
+msgstr "Restore defaults"
+
+#: src/ui/views/advanced.rs:473
+msgid ""
+"All custom audio tuning will be removed and the audio services will restart "
+"with the BigLinux defaults."
+msgstr ""
+
+#: src/ui/views/advanced.rs:491
+msgid "Failed to remove configuration"
+msgstr ""
+
+#: src/ui/views/advanced.rs:509
+msgid "OK"
+msgstr ""
 
 #: src/ui/views/mic.rs:46
 #, fuzzy
@@ -436,12 +651,12 @@ msgstr "GTCRN – VCTK (16 kHz, gentle)"
 #, fuzzy
 msgid ""
 "DNS3 removes more noise but can smudge consonants. VCTK is gentler and "
-"lighter on CPU. DeepFilterNet3 is a full-band 48 kHz model with the cleanest"
-" output and the highest CPU cost."
+"lighter on CPU. DeepFilterNet3 is a full-band 48 kHz model with the cleanest "
+"output and the highest CPU cost."
 msgstr ""
 "DNS3 removes more noise but can smudge consonants. VCTK is gentler and "
-"lighter on CPU. DeepFilterNet3 is a full-band 48 kHz model with the cleanest"
-" output and the highest CPU cost."
+"lighter on CPU. DeepFilterNet3 is a full-band 48 kHz model with the cleanest "
+"output and the highest CPU cost."
 
 #: src/ui/widgets/model_picker.rs:118
 #, fuzzy
@@ -480,10 +695,12 @@ msgstr "Não avisar de novo"
 #: src/ui/widgets/wp_override_warning.rs:133
 #, fuzzy
 msgid ""
-"The file <tt>{path}</tt> is masking the packaged AEC routing script. Package updates won't take effect while this local copy exists.\n"
+"The file <tt>{path}</tt> is masking the packaged AEC routing script. Package "
+"updates won't take effect while this local copy exists.\n"
 "\n"
 "Recommended: remove the override and restart WirePlumber."
 msgstr ""
-"The file <tt>{path}</tt> is masking the packaged AEC routing script. Package updates won't take effect while this local copy exists.\n"
+"The file <tt>{path}</tt> is masking the packaged AEC routing script. Package "
+"updates won't take effect while this local copy exists.\n"
 "\n"
 "Recommended: remove the override and restart WirePlumber."

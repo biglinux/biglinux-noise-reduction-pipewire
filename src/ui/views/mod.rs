@@ -8,6 +8,7 @@
 //! * [`Mode::Advanced`] → an `adw::ViewStack` with [`mic::build`] and
 //!   [`output::build`] as titled children.
 
+pub mod advanced;
 pub mod mic;
 pub mod output;
 pub mod simple;

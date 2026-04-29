@@ -19,9 +19,12 @@
 //! | 3. Push live Props | sliders, toggles on existing nodes | **zero audio interruption** |
 //! | 4. Restart mic unit | first-time load, EQ topology change | brief (~400 ms) drop of `mic-biglinux` virtual source only |
 //!
-//! The output filter and its standalone `pipewire -c` unit follow the
-//! same tier order: enable/disable toggles tier 4 on `biglinux-microphone-output.service`, which affects only the
-//! `output-biglinux` virtual sink. WirePlumber is **never restarted**.
+//! Each chain runs in its own `biglinux-microphone-pwloader` process,
+//! so the lifecycles are independent: mic-chain topology change restarts
+//! `biglinux-microphone-mic.service` only, AEC toggle restarts
+//! `biglinux-microphone-aec.service` only, and master output toggle
+//! restarts `biglinux-microphone-output.service` only. WirePlumber is
+//! **never restarted**.
 
 use std::cell::{Cell, RefCell};
 use std::rc::Rc;
@@ -35,8 +38,9 @@ use crate::pipeline;
 use crate::pipeline::OUTPUT_NODE_NAME;
 use crate::services::loopback::{Loopback, LoopbackOptions};
 use crate::services::pipewire::{
-    apply_live, default_sink_name, reload_mic_chain, restart_output_service, start_output_service,
-    stop_filter_chain_service, stop_output_service,
+    apply_live, default_sink_name, reload_mic_chain, restart_output_service, start_aec_service,
+    start_mic_service, start_output_service, stop_aec_service, stop_mic_service,
+    stop_output_service,
 };
 
 /// Delay between the last edit and the apply phase. 150 ms merges slider
@@ -182,19 +186,29 @@ impl AppState {
             }
         };
 
-        // Tier 4 — restart `filter-chain.service` when the mic chain
-        // topology changed *or* the AEC drop-in was just written /
-        // removed. Both modules live in the same `pipewire -c` process
-        // (filter-chain.conf.d/), so a single restart picks up both.
-        let need_chain_reload = needs_mic_reload(prev.as_ref(), &snapshot) || !outcome.mic_pushed;
-        if need_chain_reload {
-            if filter_chain_wanted(&snapshot) {
-                info!("state: filter-chain drop-ins changed — restarting filter-chain.service");
-                if let Err(e) = reload_mic_chain() {
-                    error!("state: failed to reload filter-chain: {e}");
+        // Tier 4 — drive each pwloader unit independently. AEC first
+        // because the mic chain pins `target.object = "echo-cancel-source"`
+        // when AEC is on, so the EC source must already exist by the time
+        // the mic loader resolves its capture target.
+        reconcile_aec_service(prev.as_ref(), &snapshot);
+
+        let need_mic_reload = needs_mic_reload(prev.as_ref(), &snapshot) || !outcome.mic_pushed;
+        if need_mic_reload {
+            if pipeline::mic_chain_wanted(&snapshot) {
+                let was_running = prev.as_ref().is_some_and(pipeline::mic_chain_wanted);
+                if was_running {
+                    info!("state: mic args changed — restarting mic loader");
+                    if let Err(e) = reload_mic_chain() {
+                        error!("state: failed to reload mic loader: {e}");
+                    }
+                } else {
+                    info!("state: mic chain wanted — starting mic loader");
+                    if let Err(e) = start_mic_service() {
+                        error!("state: failed to start mic loader: {e}");
+                    }
                 }
-            } else if let Err(e) = stop_filter_chain_service() {
-                error!("state: failed to stop filter-chain: {e}");
+            } else if let Err(e) = stop_mic_service() {
+                error!("state: failed to stop mic loader: {e}");
             }
         } else {
             debug!("state: mic controls pushed live, no reload");
@@ -293,12 +307,28 @@ fn capture_external_default_sink() -> Option<String> {
     Some(name)
 }
 
-/// True when `filter-chain.service` should be running: any time the
-/// mic chain or the AEC drop-in is wanted. Both share the same
-/// `pipewire -c filter-chain.conf` process, so the unit lifecycle is
-/// the union of the two.
-fn filter_chain_wanted(settings: &AppSettings) -> bool {
-    pipeline::mic_chain_wanted(settings) || pipeline::echo_cancel_wanted(settings)
+/// Drive `biglinux-microphone-aec.service`. The EC source is the
+/// upstream of the mic chain when enabled, so we start/restart it
+/// before the caller touches the mic loader. Topology of the AEC
+/// args body is fixed (only the `enabled` flag toggles its existence),
+/// so any rewrite is purely "exists or not" — no in-process restart
+/// needed when the toggle stays true.
+fn reconcile_aec_service(prev: Option<&AppSettings>, now: &AppSettings) {
+    let was_on = prev.is_some_and(pipeline::echo_cancel_wanted);
+    let is_on = pipeline::echo_cancel_wanted(now);
+    match (was_on, is_on) {
+        (false, true) => {
+            if let Err(e) = start_aec_service() {
+                error!("state: AEC service start failed: {e}");
+            }
+        }
+        (true, false) => {
+            if let Err(e) = stop_aec_service() {
+                error!("state: AEC service stop failed: {e}");
+            }
+        }
+        (true, true) | (false, false) => {}
+    }
 }
 
 fn needs_mic_reload(prev: Option<&AppSettings>, now: &AppSettings) -> bool {

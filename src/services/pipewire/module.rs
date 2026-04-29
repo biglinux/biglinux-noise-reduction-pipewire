@@ -1,4 +1,4 @@
-//! systemd unit helpers for the mic + output filter-chains.
+//! systemd unit helpers for the per-loader mic / AEC / output chains.
 //!
 //! The rewrite deliberately avoids restarting the system audio stack
 //! for routine setting changes — that would interrupt every live
@@ -13,14 +13,21 @@
 //!   the metadata change in place — no `wireplumber.service` restart.
 //! - **Mic chain topology changes** (a filter added or removed, the
 //!   user enabling processing for the first time) reach the running
-//!   filter-chain module only if we reload
-//!   `filter-chain.service`. That's the one case this module handles
-//!   and it affects exclusively our `mic-biglinux` virtual source —
-//!   the rest of the system keeps playing.
-//! - **Output chain lifecycle** toggles our dedicated `pipewire -c`
-//!   instance (`biglinux-microphone-output.service`). Only streams
-//!   routed through the output filter see a brief interruption; the
-//!   rest of the audio graph is untouched.
+//!   loader only if we restart `biglinux-microphone-mic.service`. The
+//!   restart affects exclusively our `mic-biglinux` virtual source.
+//! - **AEC lifecycle** toggles `biglinux-microphone-aec.service`. The
+//!   mic unit `Wants/After`s it, so starting AEC after the mic chain
+//!   is up triggers a brief mic restart so the EC source is wired
+//!   into the chain.
+//! - **Output chain lifecycle** toggles
+//!   `biglinux-microphone-output.service`. Only streams routed through
+//!   the output filter see a brief interruption; the rest of the audio
+//!   graph is untouched.
+//!
+//! Every unit runs the same `biglinux-microphone-pwloader` binary,
+//! which connects as a regular client of the main PipeWire daemon.
+//! That gives all three loaders one shared clock — no cross-process
+//! drift, no `spa.alsa: front:1p ... resync` events.
 //!
 //! We never restart `wireplumber.service` any more. A stale drop-in in
 //! `~/.config/wireplumber/wireplumber.conf.d/` is fine: WirePlumber
@@ -32,75 +39,97 @@ use std::process::{Command, Stdio};
 
 use log::debug;
 
-/// Restart the user-level `filter-chain.service` so it picks up changes
-/// in `filter-chain.conf.d/`. Only the **mic** virtual source briefly
-/// disappears from the graph; recorders reconnect to the hardware
-/// default automatically thanks to WirePlumber's follow-default policy.
-///
-/// `reset-failed` is issued first so a unit that was crash-looping on a
-/// previous version's stale config (e.g. the `zeroramp` builtin missing
-/// on older PipeWire) can come back without a manual `systemctl
-/// reset-failed`. systemd otherwise rejects the restart with "Start
-/// request repeated too quickly".
-pub fn restart_filter_chain_service() -> io::Result<()> {
-    let _ = run_systemctl(["--user", "reset-failed", "filter-chain.service"]);
-    run_systemctl(["--user", "restart", "filter-chain.service"])?;
-    debug!("pipewire: filter-chain.service restarted");
+const MIC_UNIT: &str = "biglinux-microphone-mic.service";
+const AEC_UNIT: &str = "biglinux-microphone-aec.service";
+const OUTPUT_UNIT: &str = "biglinux-microphone-output.service";
+
+/// Restart the AEC loader. Only the `echo-cancel-source` virtual
+/// source briefly disappears from the graph; the mic loader picks it
+/// up again as soon as it's back. Clears `failed` state first to ride
+/// out crash-loops left behind by previous packaged versions.
+pub fn restart_aec_service() -> io::Result<()> {
+    let _ = run_systemctl(["--user", "reset-failed", AEC_UNIT]);
+    run_systemctl(["--user", "restart", AEC_UNIT])?;
+    debug!("pipewire: {AEC_UNIT} restarted");
     Ok(())
 }
 
-/// Stop `filter-chain.service`. Used when the user disables every mic
-/// filter: without it, the daemon keeps the now-dangling module loaded
-/// even after we delete the drop-in on disk.
-pub fn stop_filter_chain_service() -> io::Result<()> {
-    run_systemctl(["--user", "stop", "filter-chain.service"])?;
-    debug!("pipewire: filter-chain.service stopped");
+/// Start the AEC loader if it isn't already running.
+pub fn start_aec_service() -> io::Result<()> {
+    let _ = run_systemctl(["--user", "reset-failed", AEC_UNIT]);
+    run_systemctl(["--user", "start", AEC_UNIT])?;
+    debug!("pipewire: {AEC_UNIT} started");
     Ok(())
 }
 
-/// Restart just the **mic** filter chain. Higher-level helper used by
-/// the UI whenever the mic topology changes (filter added/removed,
-/// master enable toggle). Wraps [`restart_filter_chain_service`] so
-/// call sites don't have to know about the underlying unit.
+/// Stop the AEC loader. The `echo-cancel-source` virtual source
+/// disappears from the graph; the mic loader gracefully falls back to
+/// linking against the hardware mic via WirePlumber's
+/// follow-default policy.
+pub fn stop_aec_service() -> io::Result<()> {
+    run_systemctl(["--user", "stop", AEC_UNIT])?;
+    debug!("pipewire: {AEC_UNIT} stopped");
+    Ok(())
+}
+
+/// Restart the mic loader so it picks up topology changes in
+/// `~/.config/biglinux-microphone/mic.args`. Recorders reconnect to
+/// the hardware default automatically thanks to WirePlumber's
+/// follow-default policy while the loader is briefly absent.
+pub fn restart_mic_service() -> io::Result<()> {
+    let _ = run_systemctl(["--user", "reset-failed", MIC_UNIT]);
+    run_systemctl(["--user", "restart", MIC_UNIT])?;
+    debug!("pipewire: {MIC_UNIT} restarted");
+    Ok(())
+}
+
+/// Start the mic loader. Idempotent — systemd treats a `start` on a
+/// running unit as a no-op.
+pub fn start_mic_service() -> io::Result<()> {
+    let _ = run_systemctl(["--user", "reset-failed", MIC_UNIT]);
+    run_systemctl(["--user", "start", MIC_UNIT])?;
+    debug!("pipewire: {MIC_UNIT} started");
+    Ok(())
+}
+
+/// Stop the mic loader. Used when the user disables every mic filter:
+/// without it the loader keeps the dangling module loaded even after
+/// we delete the args file on disk.
+pub fn stop_mic_service() -> io::Result<()> {
+    run_systemctl(["--user", "stop", MIC_UNIT])?;
+    debug!("pipewire: {MIC_UNIT} stopped");
+    Ok(())
+}
+
+/// Restart just the mic chain — alias kept so legacy call sites do not
+/// have to know about the underlying unit name.
 pub fn reload_mic_chain() -> io::Result<()> {
-    restart_filter_chain_service()
+    restart_mic_service()
 }
 
-/// Start the standalone `biglinux-microphone-output.service` that
-/// hosts the dedicated `pipewire -c` instance for the output chain.
-/// Idempotent. Clears `failed` state first — see
-/// [`restart_filter_chain_service`] for the rationale.
+/// Start the output loader. Idempotent. Clears `failed` state first.
 pub fn start_output_service() -> io::Result<()> {
-    let _ = run_systemctl([
-        "--user",
-        "reset-failed",
-        "biglinux-microphone-output.service",
-    ]);
-    run_systemctl(["--user", "start", "biglinux-microphone-output.service"])?;
-    debug!("pipewire: biglinux-microphone-output.service started");
+    let _ = run_systemctl(["--user", "reset-failed", OUTPUT_UNIT]);
+    run_systemctl(["--user", "start", OUTPUT_UNIT])?;
+    debug!("pipewire: {OUTPUT_UNIT} started");
     Ok(())
 }
 
-/// Restart the output service — used whenever the on-disk
-/// `biglinux-microphone-output.conf` has changed and the running
-/// instance must pick it up.
+/// Restart the output loader — used whenever the on-disk
+/// `output.args` has changed and the running instance must pick it up.
 pub fn restart_output_service() -> io::Result<()> {
-    let _ = run_systemctl([
-        "--user",
-        "reset-failed",
-        "biglinux-microphone-output.service",
-    ]);
-    run_systemctl(["--user", "restart", "biglinux-microphone-output.service"])?;
-    debug!("pipewire: biglinux-microphone-output.service restarted");
+    let _ = run_systemctl(["--user", "reset-failed", OUTPUT_UNIT]);
+    run_systemctl(["--user", "restart", OUTPUT_UNIT])?;
+    debug!("pipewire: {OUTPUT_UNIT} restarted");
     Ok(())
 }
 
-/// Stop the output service so its virtual sink disappears from the
+/// Stop the output loader so its virtual sink disappears from the
 /// graph. Apps previously routed through it fall back to the default
 /// sink via WirePlumber's automatic follow-default.
 pub fn stop_output_service() -> io::Result<()> {
-    run_systemctl(["--user", "stop", "biglinux-microphone-output.service"])?;
-    debug!("pipewire: biglinux-microphone-output.service stopped");
+    run_systemctl(["--user", "stop", OUTPUT_UNIT])?;
+    debug!("pipewire: {OUTPUT_UNIT} stopped");
     Ok(())
 }
 

@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: biglinux-noise-reduction-pipewire\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-04-28 15:42+0000\n"
+"POT-Creation-Date: 2026-04-29 05:33+0000\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: \n"
@@ -16,13 +16,13 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "X-Generator: attranslate\n"
 
-#: src/ui/window.rs:46 src/ui/window.rs:374
+#: src/ui/window.rs:46 src/ui/window.rs:381
 msgid "Filter noise"
 msgstr "노이즈 필터링"
 
 # #-#-#-#-#  biglinux-noise-reduction-pipewire.pot (biglinux-noise-reduction-
 # pipewire)  #-#-#-#-#
-# 
+#
 # File: biglinux-noise-reduction-
 # pipewire/src/biglinux_microphone/ui/main_view.py, line: 88
 # File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/config.py,
@@ -35,21 +35,25 @@ msgstr "마이크"
 msgid "Output filter"
 msgstr "출력 필터"
 
-#: src/ui/window.rs:241
+#: src/ui/window.rs:198
+msgid "Tuning"
+msgstr ""
+
+#: src/ui/window.rs:248
 msgid "Advanced"
 msgstr "고급"
 
-#: src/ui/window.rs:244
+#: src/ui/window.rs:251
 msgid "Show every control individually"
 msgstr "모든 컨트롤 개별 표시"
 
 # File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/window.py,
 # line: 172
-#: src/ui/window.rs:263
+#: src/ui/window.rs:270
 msgid "Restore default settings"
 msgstr "기본 설정 복원"
 
-#: src/ui/window.rs:266
+#: src/ui/window.rs:273
 msgid "About Filter noise"
 msgstr "노이즈 필터링 정보"
 
@@ -57,48 +61,269 @@ msgstr "노이즈 필터링 정보"
 # line: 202
 #. Icon-only control needs an explicit accessible label; tooltips
 #. alone are not surfaced as accessible names by every reader.
-#: src/ui/window.rs:271 src/ui/window.rs:276
+#: src/ui/window.rs:278 src/ui/window.rs:283
 msgid "Main menu"
 msgstr "메인 메뉴"
 
 # File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/window.py,
 # line: 172
-#: src/ui/window.rs:327
+#: src/ui/window.rs:334
 msgid "Restore default settings?"
 msgstr "기본 설정을 복원하시겠습니까?"
 
-#: src/ui/window.rs:329
+#: src/ui/window.rs:336
 msgid ""
 "All audio processing settings will return to their factory values. Your "
 "window size and view preferences are kept."
-msgstr "모든 오디오 처리 설정이 공장 초기값으로 복원됩니다. 창 크기와 보기 설정은 유지됩니다."
+msgstr ""
+"모든 오디오 처리 설정이 공장 초기값으로 복원됩니다. 창 크기와 보기 설정은 유"
+"지됩니다."
 
 # File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/window.py,
 # line: 175
-#: src/ui/window.rs:333
+#: src/ui/window.rs:340 src/ui/views/advanced.rs:477
 msgid "Cancel"
 msgstr "취소"
 
 # File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/window.py,
 # line: 193
-#: src/ui/window.rs:334
+#: src/ui/window.rs:341 src/ui/views/advanced.rs:160
+#: src/ui/views/advanced.rs:478
 msgid "Restore defaults"
 msgstr "기본값 복원"
 
-#: src/ui/window.rs:383
+#: src/ui/window.rs:390
 msgid ""
 "Real-time noise filter for microphone capture and system audio playback. "
 "Powered by the GTCRN neural network running as a LADSPA plugin on top of "
 "PipeWire — every filter is driven by a WirePlumber smart-filter so the "
 "default source and sink stay clean even after device changes."
 msgstr ""
-"마이크 캡처와 시스템 오디오 재생을 위한 실시간 노이즈 필터입니다. PipeWire 위에서 LADSPA 플러그인으로 실행되는 GTCRN "
-"신경망으로 구동되며 — 각 필터는 WirePlumber의 smart-filter로 제어되므로 장치를 변경한 후에도 기본 입력과 출력이 "
-"깨끗하게 유지됩니다."
+"마이크 캡처와 시스템 오디오 재생을 위한 실시간 노이즈 필터입니다. PipeWire 위"
+"에서 LADSPA 플러그인으로 실행되는 GTCRN 신경망으로 구동되며 — 각 필터는 "
+"WirePlumber의 smart-filter로 제어되므로 장치를 변경한 후에도 기본 입력과 출력"
+"이 깨끗하게 유지됩니다."
 
-#: src/ui/window.rs:390
+#: src/ui/window.rs:397
 msgid "Built on"
 msgstr "사용 기술"
+
+#: src/ui/views/advanced.rs:108 src/ui/views/advanced.rs:180
+msgid "Distro defaults are in effect."
+msgstr ""
+
+#: src/ui/views/advanced.rs:165 src/ui/views/advanced.rs:453
+msgid "Apply and restart audio"
+msgstr ""
+
+#: src/ui/views/advanced.rs:178
+msgid "Custom values are active. Apply to make them live."
+msgstr ""
+
+#: src/ui/views/advanced.rs:190
+msgid "Audio block size"
+msgstr ""
+
+#: src/ui/views/advanced.rs:192
+msgid ""
+"Smaller blocks = lower latency but more CPU. Larger blocks = steadier "
+"playback over Bluetooth and busy systems. The distro default of 2048 frames "
+"(~42 ms at 48 kHz) suits voice and video calls."
+msgstr ""
+
+#: src/ui/views/advanced.rs:201
+msgid "256 frames (~5 ms — very low latency)"
+msgstr ""
+
+#: src/ui/views/advanced.rs:202
+msgid "512 frames (~11 ms — low latency)"
+msgstr ""
+
+#: src/ui/views/advanced.rs:203
+msgid "1024 frames (~21 ms — upstream default)"
+msgstr ""
+
+#: src/ui/views/advanced.rs:204 src/ui/views/advanced.rs:283
+msgid "2048 frames (~42 ms — distro tuned)"
+msgstr ""
+
+#: src/ui/views/advanced.rs:205
+msgid "4096 frames (~85 ms — most stable)"
+msgstr ""
+
+#: src/ui/views/advanced.rs:215
+msgid "Block size"
+msgstr ""
+
+#: src/ui/views/advanced.rs:222
+msgid "USB audio headroom"
+msgstr ""
+
+#: src/ui/views/advanced.rs:224
+msgid ""
+"Extra slack the USB ring buffer keeps to ride out short scheduling stalls "
+"(browser repaints, kernel hiccups). Raise only if you hear small cuts on USB "
+"headsets / DACs."
+msgstr ""
+
+#: src/ui/views/advanced.rs:239 src/ui/views/advanced.rs:263
+msgid "Slack"
+msgstr ""
+
+#: src/ui/views/advanced.rs:246
+msgid "PCI / built-in audio headroom"
+msgstr ""
+
+#: src/ui/views/advanced.rs:248
+msgid ""
+"Extra slack on motherboard / laptop analog outputs and inputs. Most users "
+"keep the distro default; bump only when the speaker or built-in mic glitches "
+"under load."
+msgstr ""
+
+#: src/ui/views/advanced.rs:270
+msgid "Bluetooth graph latency"
+msgstr ""
+
+#: src/ui/views/advanced.rs:272
+msgid ""
+"Bigger windows absorb the bursty L2CAP traffic Bluetooth stacks produce, at "
+"the cost of audible delay between video and sound. The distro default suits "
+"voice and music; lower only on wired-quality headsets."
+msgstr ""
+
+#: src/ui/views/advanced.rs:281
+msgid "512 frames (~11 ms — wired feel)"
+msgstr ""
+
+#: src/ui/views/advanced.rs:282
+msgid "1024 frames (~21 ms)"
+msgstr ""
+
+#: src/ui/views/advanced.rs:284
+msgid "4096 frames (~85 ms — bumpy stacks)"
+msgstr ""
+
+#: src/ui/views/advanced.rs:294
+msgid "Window"
+msgstr ""
+
+#: src/ui/views/advanced.rs:301
+msgid "Sample rates"
+msgstr ""
+
+#: src/ui/views/advanced.rs:303
+msgid ""
+"Which sample rates the graph is allowed to switch to. Audiophile DACs "
+"deliver natural rates without resampling, but every switch briefly reloads "
+"filter chains — keep the distro default unless you have a hi-res DAC."
+msgstr ""
+
+#: src/ui/views/advanced.rs:312
+msgid "48 kHz only (distro tuned)"
+msgstr ""
+
+#: src/ui/views/advanced.rs:313
+msgid "44.1 + 48 kHz (CDs / streaming)"
+msgstr ""
+
+#: src/ui/views/advanced.rs:315
+msgid "Hi-res family (44.1 / 48 / 88.2 / 96 / 176.4 / 192 kHz)"
+msgstr ""
+
+#: src/ui/views/advanced.rs:327
+msgid "Allowed rates"
+msgstr ""
+
+# File: biglinux-noise-reduction-
+# pipewire/src/biglinux_microphone/ui/main_view.py, line: 533
+#: src/ui/views/advanced.rs:334
+#, fuzzy
+msgid "Bluetooth SBC-XQ codec"
+msgstr "블루투스 헤드셋 모드"
+
+#: src/ui/views/advanced.rs:336
+msgid ""
+"Pin the high-quality SBC-XQ profile. The distro default already enables it "
+"on every BlueZ codec auto-negotiation; override only when troubleshooting a "
+"headset that picks the wrong profile."
+msgstr ""
+
+#: src/ui/views/advanced.rs:345
+msgid "Force on (high quality)"
+msgstr ""
+
+#: src/ui/views/advanced.rs:346
+msgid "Force off (compatibility)"
+msgstr ""
+
+#: src/ui/views/advanced.rs:356
+msgid "SBC-XQ"
+msgstr ""
+
+# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/window.py,
+# line: 193
+#: src/ui/views/advanced.rs:372
+#, fuzzy
+msgid "Distro default"
+msgstr "기본값 복원"
+
+#: src/ui/views/advanced.rs:388
+msgid "0 frames (none)"
+msgstr ""
+
+#: src/ui/views/advanced.rs:389
+msgid "256 frames (~5 ms)"
+msgstr ""
+
+#: src/ui/views/advanced.rs:390
+msgid "512 frames (~11 ms)"
+msgstr ""
+
+#: src/ui/views/advanced.rs:391
+msgid "1024 frames (~21 ms — distro tuned)"
+msgstr ""
+
+#: src/ui/views/advanced.rs:392
+msgid "2048 frames (~42 ms — virtual machines)"
+msgstr ""
+
+#: src/ui/views/advanced.rs:393
+msgid "4096 frames (~85 ms — last resort)"
+msgstr ""
+
+#: src/ui/views/advanced.rs:432
+msgid "Failed to write configuration"
+msgstr ""
+
+#: src/ui/views/advanced.rs:439
+msgid "Restarting audio…"
+msgstr ""
+
+#: src/ui/views/advanced.rs:462
+msgid "Audio service restart failed"
+msgstr ""
+
+# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/window.py,
+# line: 193
+#: src/ui/views/advanced.rs:471
+#, fuzzy
+msgid "Restore distro defaults?"
+msgstr "기본값 복원"
+
+#: src/ui/views/advanced.rs:473
+msgid ""
+"All custom audio tuning will be removed and the audio services will restart "
+"with the BigLinux defaults."
+msgstr ""
+
+#: src/ui/views/advanced.rs:491
+msgid "Failed to remove configuration"
+msgstr ""
+
+#: src/ui/views/advanced.rs:509
+msgid "OK"
+msgstr ""
 
 #: src/ui/views/mic.rs:46
 msgid "Noise filter — fine-tune"
@@ -150,7 +375,9 @@ msgstr "노이즈 필터"
 msgid ""
 "Removes background noise from your voice with the GTCRN neural network. "
 "Higher intensity = stronger cleanup."
-msgstr "GTCRN 신경망으로 음성 배경 노이즈를 제거합니다. 강도가 높을수록 더 강력한 정리가 이루어집니다."
+msgstr ""
+"GTCRN 신경망으로 음성 배경 노이즈를 제거합니다. 강도가 높을수록 더 강력한 정"
+"리가 이루어집니다."
 
 # File: biglinux-noise-reduction-
 # pipewire/src/biglinux_microphone/ui/main_view.py, line: 326
@@ -174,7 +401,9 @@ msgstr "음성 존재감"
 msgid ""
 "Restores high-frequency clarity (sibilants like \"s\", \"sh\") after "
 "suppression. Lower only if your voice already sounds harsh."
-msgstr "억제 후 고주파 명료도(예: \"s\", \"sh\" 같은 치찰음)를 복원합니다. 음성이 이미 거칠게 들린다면 낮추세요."
+msgstr ""
+"억제 후 고주파 명료도(예: \"s\", \"sh\" 같은 치찰음)를 복원합니다. 음성이 이"
+"미 거칠게 들린다면 낮추세요."
 
 # File: biglinux-noise-reduction-
 # pipewire/src/biglinux_microphone/ui/main_view.py, line: 392
@@ -202,7 +431,9 @@ msgstr "무음 게이트"
 msgid ""
 "Mutes the mic during pauses so listeners hear silence instead of hiss. "
 "Higher = more aggressive."
-msgstr "말이 멈출 때 마이크를 음소거하여 청취자가 쉿 소리 대신 침묵을 듣게 합니다. 값이 높을수록 더 강력합니다."
+msgstr ""
+"말이 멈출 때 마이크를 음소거하여 청취자가 쉿 소리 대신 침묵을 듣게 합니다. 값"
+"이 높을수록 더 강력합니다."
 
 # File: biglinux-noise-reduction-
 # pipewire/src/biglinux_microphone/ui/main_view.py, line: 477
@@ -214,13 +445,17 @@ msgstr "이퀄라이저"
 msgid ""
 "10-band parametric EQ. Pick a preset or drag each band between -40 dB and "
 "+40 dB."
-msgstr "10밴드 파라메트릭 EQ. 프리셋을 선택하거나 각 밴드를 -40 dB에서 +40 dB 사이로 조절하세요."
+msgstr ""
+"10밴드 파라메트릭 EQ. 프리셋을 선택하거나 각 밴드를 -40 dB에서 +40 dB 사이로 "
+"조절하세요."
 
 #: src/ui/views/mic.rs:319
 msgid ""
 "Shifts the pitch of your voice without retiming. Left = deeper, right = "
 "higher. Center keeps your natural voice."
-msgstr "음성의 피치를 시간 변경 없이 조절합니다. 왼쪽은 낮게, 오른쪽은 높게, 가운데는 자연스러운 음성을 유지합니다."
+msgstr ""
+"음성의 피치를 시간 변경 없이 조절합니다. 왼쪽은 낮게, 오른쪽은 높게, 가운데"
+"는 자연스러운 음성을 유지합니다."
 
 # File: biglinux-noise-reduction-
 # pipewire/src/biglinux_microphone/ui/main_view.py, line: 1147
@@ -300,7 +535,8 @@ msgid ""
 "10-band parametric EQ on what you hear. Pick a preset or drag each band "
 "between -40 dB and +40 dB."
 msgstr ""
-"들리는 소리에 적용되는 10밴드 파라메트릭 EQ입니다. 프리셋을 선택하거나 각 밴드를 -40 dB에서 +40 dB 사이로 조절하세요."
+"들리는 소리에 적용되는 10밴드 파라메트릭 EQ입니다. 프리셋을 선택하거나 각 밴"
+"드를 -40 dB에서 +40 dB 사이로 조절하세요."
 
 #: src/ui/views/output.rs:95 src/ui/views/simple.rs:179
 msgid "System sound"
@@ -316,7 +552,9 @@ msgstr "스피커에 도달하기 전에 들리는 모든 소리에서 배경 �
 msgid ""
 "Restores high-frequency clarity after suppression. Lower only if the source "
 "already sounds harsh."
-msgstr "억제 후 고주파 명료도를 복원합니다. 원본이 이미 거칠게 들릴 경우에만 낮추세요."
+msgstr ""
+"억제 후 고주파 명료도를 복원합니다. 원본이 이미 거칠게 들릴 경우에만 낮추세"
+"요."
 
 #: src/ui/views/output.rs:162
 msgid "Cuts low-frequency rumble from playback — wind, AC noise."
@@ -325,13 +563,16 @@ msgstr "재생 중 저주파 잡음을 제거합니다 — 바람, 에어컨 소
 #: src/ui/views/output.rs:181
 msgid ""
 "Mutes playback during silent moments so you don't hear hiss between words."
-msgstr "무음 구간에서 재생을 음소거하여 단어 사이에 들리는 쉬익 소리를 차단합니다."
+msgstr ""
+"무음 구간에서 재생을 음소거하여 단어 사이에 들리는 쉬익 소리를 차단합니다."
 
 #: src/ui/views/output.rs:211
 msgid ""
 "Evens out volume across loud and quiet speakers — useful for meetings with "
 "mixed mic levels."
-msgstr "크고 작은 스피커 볼륨을 고르게 조절합니다 — 다양한 마이크 레벨이 섞인 회의에 유용합니다."
+msgstr ""
+"크고 작은 스피커 볼륨을 고르게 조절합니다 — 다양한 마이크 레벨이 섞인 회의에 "
+"유용합니다."
 
 # File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/config.py,
 # line: 711
@@ -411,17 +652,19 @@ msgstr "GTCRN – VCTK (부드러움)"
 #, fuzzy
 msgid ""
 "DNS3 removes more noise but can smudge consonants. VCTK is gentler and "
-"lighter on CPU. DeepFilterNet3 is a full-band 48 kHz model with the cleanest"
-" output and the highest CPU cost."
+"lighter on CPU. DeepFilterNet3 is a full-band 48 kHz model with the cleanest "
+"output and the highest CPU cost."
 msgstr ""
-"DNS3는 더 많은 노이즈를 제거하지만 자음이 뭉개질 수 있습니다. VCTK는 더 부드럽고 CPU 사용량이 적어 팟캐스트에 적합합니다."
+"DNS3는 더 많은 노이즈를 제거하지만 자음이 뭉개질 수 있습니다. VCTK는 더 부드"
+"럽고 CPU 사용량이 적어 팟캐스트에 적합합니다."
 
 #: src/ui/widgets/model_picker.rs:118
 msgid ""
 "DNS3 removes more noise but can smudge consonants. VCTK is gentler and "
 "lighter on CPU — good for podcasts."
 msgstr ""
-"DNS3는 더 많은 노이즈를 제거하지만 자음이 뭉개질 수 있습니다. VCTK는 더 부드럽고 CPU 사용량이 적어 팟캐스트에 적합합니다."
+"DNS3는 더 많은 노이즈를 제거하지만 자음이 뭉개질 수 있습니다. VCTK는 더 부드"
+"럽고 CPU 사용량이 적어 팟캐스트에 적합합니다."
 
 # File: biglinux-noise-reduction-
 # pipewire/src/biglinux_microphone/ui/main_view.py, line: 753
@@ -452,11 +695,13 @@ msgstr "Não avisar de novo"
 #: src/ui/widgets/wp_override_warning.rs:133
 #, fuzzy
 msgid ""
-"The file <tt>{path}</tt> is masking the packaged AEC routing script. Package updates won't take effect while this local copy exists.\n"
+"The file <tt>{path}</tt> is masking the packaged AEC routing script. Package "
+"updates won't take effect while this local copy exists.\n"
 "\n"
 "Recommended: remove the override and restart WirePlumber."
 msgstr ""
-"The file <tt>{path}</tt> is masking the packaged AEC routing script. Package updates won't take effect while this local copy exists.\n"
+"The file <tt>{path}</tt> is masking the packaged AEC routing script. Package "
+"updates won't take effect while this local copy exists.\n"
 "\n"
 "Recommended: remove the override and restart WirePlumber."
 
@@ -471,7 +716,8 @@ msgstr ""
 #~ msgid ""
 #~ "AI-powered microphone noise reduction with GTK4/libadwaita interface for "
 #~ "PipeWire."
-#~ msgstr "PipeWire용 GTK4/libadwaita 인터페이스를 갖춘 AI 기반 마이크 노이즈 감소"
+#~ msgstr ""
+#~ "PipeWire용 GTK4/libadwaita 인터페이스를 갖춘 AI 기반 마이크 노이즈 감소"
 
 #~ msgid ""
 #~ "Removes the speaker's echo from your microphone — useful on calls without "
@@ -484,9 +730,11 @@ msgstr ""
 #~ msgstr "AI 노이즈 필터"
 
 #~ msgid ""
-#~ "GTCRN neural filter on your microphone. Off bypasses every fine-tune control"
-#~ " below."
-#~ msgstr "마이크에 적용되는 GTCRN 신경망 필터입니다. 끄면 아래의 모든 세밀 조정 컨트롤이 우회됩니다."
+#~ "GTCRN neural filter on your microphone. Off bypasses every fine-tune "
+#~ "control below."
+#~ msgstr ""
+#~ "마이크에 적용되는 GTCRN 신경망 필터입니다. 끄면 아래의 모든 세밀 조정 컨트"
+#~ "롤이 우회됩니다."
 
 #~ msgid "Noise strength (no voice)"
 #~ msgstr "노이즈 강도 (음성 없음)"
@@ -494,7 +742,9 @@ msgstr ""
 #~ msgid ""
 #~ "How hard the filter works in the gaps between words. 100% mutes anything "
 #~ "that isn't voice."
-#~ msgstr "단어 사이의 공백에서 필터가 작동하는 강도입니다. 100%는 음성이 아닌 모든 소리를 음소거합니다."
+#~ msgstr ""
+#~ "단어 사이의 공백에서 필터가 작동하는 강도입니다. 100%는 음성이 아닌 모든 "
+#~ "소리를 음소거합니다."
 
 #~ msgid "Strength"
 #~ msgstr "강도"
@@ -505,7 +755,9 @@ msgstr ""
 #~ msgid ""
 #~ "How hard the filter works while you talk. Lower if your voice sounds "
 #~ "robotic; raise if noise still bleeds through."
-#~ msgstr "말할 때 필터가 작동하는 강도입니다. 음성이 로봇처럼 들리면 낮추고, 잡음이 여전히 들리면 높이세요."
+#~ msgstr ""
+#~ "말할 때 필터가 작동하는 강도입니다. 음성이 로봇처럼 들리면 낮추고, 잡음이 "
+#~ "여전히 들리면 높이세요."
 
 #~ msgid "Enable output filter"
 #~ msgstr "출력 필터 활성화"
@@ -513,22 +765,30 @@ msgstr ""
 #~ msgid ""
 #~ "Filters audio reaching your speakers in real time. Stays attached after "
 #~ "toggling, so playback and calls keep running."
-#~ msgstr "스피커로 전달되는 오디오를 실시간으로 필터링합니다. 토글 후에도 유지되어 재생과 통화가 계속됩니다."
+#~ msgstr ""
+#~ "스피커로 전달되는 오디오를 실시간으로 필터링합니다. 토글 후에도 유지되어 "
+#~ "재생과 통화가 계속됩니다."
 
 #~ msgid ""
-#~ "DNS3 strips more noise (good for harsh streams); VCTK is gentler (good for "
-#~ "music or clean voice)."
-#~ msgstr "DNS3는 더 많은 노이즈를 제거합니다(거친 스트림에 적합); VCTK는 더 부드럽습니다(음악이나 깨끗한 음성에 적합)."
+#~ "DNS3 strips more noise (good for harsh streams); VCTK is gentler (good "
+#~ "for music or clean voice)."
+#~ msgstr ""
+#~ "DNS3는 더 많은 노이즈를 제거합니다(거친 스트림에 적합); VCTK는 더 부드럽습"
+#~ "니다(음악이나 깨끗한 음성에 적합)."
 
 #~ msgid ""
 #~ "How hard the filter works during silent moments in playback. Higher = "
 #~ "quieter background between sentences."
-#~ msgstr "재생 중 무음 구간에서 필터가 작동하는 강도입니다. 값이 높을수록 문장 사이 배경 소음이 더 조용해집니다."
+#~ msgstr ""
+#~ "재생 중 무음 구간에서 필터가 작동하는 강도입니다. 값이 높을수록 문장 사이 "
+#~ "배경 소음이 더 조용해집니다."
 
 #~ msgid ""
 #~ "How hard the filter works while voices play. Lower if they sound robotic; "
 #~ "raise if noise still bleeds through."
-#~ msgstr "음성이 재생될 때 필터가 작동하는 강도입니다. 음성이 로봇처럼 들리면 낮추고, 노이즈가 여전히 들리면 올리세요."
+#~ msgstr ""
+#~ "음성이 재생될 때 필터가 작동하는 강도입니다. 음성이 로봇처럼 들리면 낮추"
+#~ "고, 노이즈가 여전히 들리면 올리세요."
 
 #~ msgid "Configure..."
 #~ msgstr "구성..."
@@ -744,11 +1004,6 @@ msgstr ""
 #~ msgstr "볼륨 조정 속도 — 높을수록 빠름"
 
 # File: biglinux-noise-reduction-
-# pipewire/src/biglinux_microphone/ui/main_view.py, line: 533
-#~ msgid "Bluetooth Headset Mode"
-#~ msgstr "블루투스 헤드셋 모드"
-
-# File: biglinux-noise-reduction-
 # pipewire/src/biglinux_microphone/ui/main_view.py, line: 540
 #~ msgid "Automatically switch between headset listening and call modes."
 #~ msgstr "헤드셋 청취 모드와 통화 모드 간 자동 전환."
@@ -935,7 +1190,8 @@ msgstr ""
 #~ msgstr ""
 #~ "마이크에서 원치 않는 배경 소음을 줄입니다.\n"
 #~ "\n"
-#~ "팬, 에어컨, 키보드 타이핑과 같은 소리 및 기타 주변 소음을 제거하고, 오직 당신의 목소리만 선명하게 유지합니다."
+#~ "팬, 에어컨, 키보드 타이핑과 같은 소리 및 기타 주변 소음을 제거하고, 오직 "
+#~ "당신의 목소리만 선명하게 유지합니다."
 
 # File: biglinux-noise-reduction-
 # pipewire/src/biglinux_microphone/utils/tooltip_helper.py, line: 47
@@ -954,7 +1210,8 @@ msgstr ""
 #~ "\n"
 #~ "• 최대 청소 (DNS3): 가능한 가장 많은 소음을 제거합니다. \n"
 #~ "  소음이 많은 환경에 가장 적합합니다. 목소리가 약간 변경될 수 있습니다.\n"
-#~ "• 자연스러운 목소리 (VCTK): 목소리를 더 자연스럽게 유지하는 부드러운 청소입니다. \n"
+#~ "• 자연스러운 목소리 (VCTK): 목소리를 더 자연스럽게 유지하는 부드러운 청소"
+#~ "입니다. \n"
 #~ "  조용한 환경에 이상적입니다.\n"
 #~ "• 스마트 (두 가지 결합): 침묵 중에는 DNS3를 사용하고, \n"
 #~ "  말할 때는 VCTK를 사용합니다. \n"
@@ -993,7 +1250,8 @@ msgstr ""
 #~ msgstr ""
 #~ "말하는 동안 필터링을 활성 상태로 유지할지 여부입니다.\n"
 #~ "\n"
-#~ "• 끔: 말하는 동안 필터가 일시 중지됨 — 목소리가 완전히 자연스럽지만 소음이 새어 나올 수 있음\n"
+#~ "• 끔: 말하는 동안 필터가 일시 중지됨 — 목소리가 완전히 자연스럽지만 소음"
+#~ "이 새어 나올 수 있음\n"
 #~ "• 3: 말하는 동안 부분 필터링 적용\n"
 #~ "• 5: 항상 전체 필터링, 가장 깨끗한 결과\n"
 #~ "\n"
@@ -1014,7 +1272,8 @@ msgstr ""
 #~ msgstr ""
 #~ "단어의 시작 부분이 잘리는 것을 방지합니다.\n"
 #~ "\n"
-#~ "필터가 사용자가 말하기 시작하기 전에 반응할 수 있도록 작은 오디오 버퍼를 유지합니다.\n"
+#~ "필터가 사용자가 말하기 시작하기 전에 반응할 수 있도록 작은 오디오 버퍼를 "
+#~ "유지합니다.\n"
 #~ "• 끔: 지연 없음, 그러나 첫 음절이 잘릴 수 있음\n"
 #~ "• 50ms: 대부분의 사람에게 권장됨\n"
 #~ "• 200ms: 빠른 화자를 위한 가장 안전한 설정\n"
@@ -1098,7 +1357,8 @@ msgstr ""
 #~ msgstr ""
 #~ "말하지 않을 때 마이크를 음소거하는 침묵 필터입니다.\n"
 #~ "\n"
-#~ "소음 감소 후에 작동합니다. 필터가 완전히 제거하지 못한 잔여 소리를 제거합니다.\n"
+#~ "소음 감소 후에 작동합니다. 필터가 완전히 제거하지 못한 잔여 소리를 제거합"
+#~ "니다.\n"
 #~ "\n"
 #~ "말을 멈추면 완전한 침묵이 있습니다."
 
@@ -1131,7 +1391,8 @@ msgstr ""
 #~ msgstr ""
 #~ "음성 효과 및 스테레오 처리.\n"
 #~ "\n"
-#~ "모노 마이크를 스테레오로 변환하거나 스트리밍 및 팟캐스트를 위한 전문 효과를 적용합니다."
+#~ "모노 마이크를 스테레오로 변환하거나 스트리밍 및 팟캐스트를 위한 전문 효과"
+#~ "를 적용합니다."
 
 # File: biglinux-noise-reduction-
 # pipewire/src/biglinux_microphone/utils/tooltip_helper.py, line: 137
@@ -1168,7 +1429,8 @@ msgstr ""
 #~ msgstr ""
 #~ "저주파를 제거하는 하이패스 필터입니다.\n"
 #~ "\n"
-#~ "선택한 주파수 이하의 덜컹거림, 허밍 및 기타 저주파 소음을 제거합니다. 음성의 선명도를 유지하면서 음성 품질에 영향을 주지 않습니다."
+#~ "선택한 주파수 이하의 덜컹거림, 허밍 및 기타 저주파 소음을 제거합니다. 음성"
+#~ "의 선명도를 유지하면서 음성 품질에 영향을 주지 않습니다."
 
 # File: biglinux-noise-reduction-
 # pipewire/src/biglinux_microphone/utils/tooltip_helper.py, line: 153
@@ -1201,7 +1463,8 @@ msgstr ""
 #~ msgstr ""
 #~ "음성을 조정하는 이퀄라이저.\n"
 #~ "\n"
-#~ "음성을 더 명확하거나 따뜻하게 만들기 위해 특정 주파수를 증가시키거나 감소시킵니다."
+#~ "음성을 더 명확하거나 따뜻하게 만들기 위해 특정 주파수를 증가시키거나 감소"
+#~ "시킵니다."
 
 # File: biglinux-noise-reduction-
 # pipewire/src/biglinux_microphone/utils/tooltip_helper.py, line: 115
@@ -1259,11 +1522,13 @@ msgstr ""
 #~ msgid ""
 #~ "Add an extra delay to the monitor return.\n"
 #~ "\n"
-#~ "Useful for checking audio/video sync in recordings or to avoid mental confusion when speaking and hearing yourself immediately."
+#~ "Useful for checking audio/video sync in recordings or to avoid mental "
+#~ "confusion when speaking and hearing yourself immediately."
 #~ msgstr ""
 #~ "모니터 반환에 추가 지연을 추가합니다.\n"
 #~ "\n"
-#~ "녹음에서 오디오/비디오 동기화를 확인하거나 말하고 자신을 즉시 듣는 것에 대한 정신적 혼란을 피하는 데 유용합니다."
+#~ "녹음에서 오디오/비디오 동기화를 확인하거나 말하고 자신을 즉시 듣는 것에 대"
+#~ "한 정신적 혼란을 피하는 데 유용합니다."
 
 # File: biglinux-noise-reduction-
 # pipewire/src/biglinux_microphone/utils/tooltip_helper.py, line: 147
@@ -1272,19 +1537,22 @@ msgstr ""
 #~ "when you use the microphone. Note: Using the headset microphone generally "
 #~ "reduces both headphone and microphone quality."
 #~ msgstr ""
-#~ "마이크를 사용할 때 헤드셋을 자동으로 청취 모드와 통화 모드 간에 전환합니다. 참고: 헤드셋 마이크를 사용하면 일반적으로 헤드폰과 마이크"
-#~ " 품질이 모두 저하됩니다."
+#~ "마이크를 사용할 때 헤드셋을 자동으로 청취 모드와 통화 모드 간에 전환합니"
+#~ "다. 참고: 헤드셋 마이크를 사용하면 일반적으로 헤드폰과 마이크 품질이 모두 "
+#~ "저하됩니다."
 
 # File: biglinux-noise-reduction-
 # pipewire/src/biglinux_microphone/utils/tooltip_helper.py, line: 199
 #~ msgid ""
 #~ "Enables acoustic echo cancellation using WebRTC AEC.\n"
 #~ "\n"
-#~ "Reduces echo and feedback when using speakers instead of headphones. Captures the speaker output and removes it from the microphone signal."
+#~ "Reduces echo and feedback when using speakers instead of headphones. "
+#~ "Captures the speaker output and removes it from the microphone signal."
 #~ msgstr ""
 #~ "WebRTC AEC를 사용하여 음향 에코 취소를 활성화합니다.\n"
 #~ "\n"
-#~ "헤드폰 대신 스피커를 사용할 때 에코와 피드백을 줄입니다. 스피커 출력을 캡처하고 마이크 신호에서 제거합니다."
+#~ "헤드폰 대신 스피커를 사용할 때 에코와 피드백을 줄입니다. 스피커 출력을 캡"
+#~ "처하고 마이크 신호에서 제거합니다."
 
 # File: biglinux-noise-reduction-
 # pipewire/src/biglinux_microphone/utils/tooltip_helper.py, line: 204
@@ -1297,7 +1565,8 @@ msgstr ""
 #~ msgstr ""
 #~ "에코 취소기를 위한 자동 이득 제어.\n"
 #~ "\n"
-#~ "신호 레벨을 일관되게 유지하기 위해 마이크 볼륨을 자동으로 조정합니다. 목소리가 비정상적으로 증폭되거나 압축된 것처럼 들리면 비활성화하십시오."
+#~ "신호 레벨을 일관되게 유지하기 위해 마이크 볼륨을 자동으로 조정합니다. 목소"
+#~ "리가 비정상적으로 증폭되거나 압축된 것처럼 들리면 비활성화하십시오."
 
 # File: biglinux-noise-reduction-
 # pipewire/src/biglinux_microphone/utils/tooltip_helper.py, line: 210
@@ -1324,7 +1593,8 @@ msgstr ""
 #~ "에코 제거기를 위한 음성 활동 감지.\n"
 #~ "\n"
 #~ "AEC가 음성을 소음과 구별하는 데 도움을 줍니다.\n"
-#~ "에코 제거 정확도를 향상시킬 수 있지만 주요 소음 감소에 간섭할 수 있습니다. 기본적으로 비활성화되어 있습니다."
+#~ "에코 제거 정확도를 향상시킬 수 있지만 주요 소음 감소에 간섭할 수 있습니"
+#~ "다. 기본적으로 비활성화되어 있습니다."
 
 # File: biglinux-noise-reduction-
 # pipewire/src/biglinux_microphone/utils/tooltip_helper.py, line: 213
@@ -1474,7 +1744,8 @@ msgstr ""
 #~ "The GPL-3.0 license applies to this configuration interface. The projects "
 #~ "used to apply the filters have their own licenses."
 #~ msgstr ""
-#~ "이 구성 인터페이스에는 GPL-3.0 라이선스가 적용됩니다. 필터를 적용하는 데 사용되는 프로젝트에는 각자의 라이선스가 있습니다."
+#~ "이 구성 인터페이스에는 GPL-3.0 라이선스가 적용됩니다. 필터를 적용하는 데 "
+#~ "사용되는 프로젝트에는 각자의 라이선스가 있습니다."
 
 # File: biglinux-noise-reduction-
 # pipewire/src/biglinux_microphone/application.py, line: 227

@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 80">
+  <!-- Three stacked waveforms at different densities = different rates -->
+  <path d="M8,22 Q14,14 20,22 T32,22 T44,22 T56,22 T68,22 T80,22 T92,22 T104,22 T116,22"
+        stroke="#3584e4" stroke-width="1.5" fill="none" opacity="0.5"/>
+  <path d="M8,40 Q12,32 16,40 T24,40 T32,40 T40,40 T48,40 T56,40 T64,40 T72,40 T80,40 T88,40 T96,40 T104,40 T112,40"
+        stroke="#3584e4" stroke-width="1.8" fill="none"/>
+  <path d="M8,60 Q10,52 12,60 T16,60 T20,60 T24,60 T28,60 T32,60 T36,60 T40,60 T44,60 T48,60 T52,60 T56,60 T60,60 T64,60 T68,60 T72,60 T76,60 T80,60 T84,60 T88,60 T92,60 T96,60 T100,60 T104,60 T108,60 T112,60"
+        stroke="#1c5fb4" stroke-width="1.5" fill="none" opacity="0.7"/>
+  <!-- Frequency labels as marks -->
+  <line x1="6" y1="14" x2="6" y2="68" stroke="#1c5fb4" stroke-width="1" opacity="0.4"/>
+</svg>

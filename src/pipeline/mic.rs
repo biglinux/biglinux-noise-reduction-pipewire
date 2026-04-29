@@ -1,8 +1,14 @@
 //! Microphone filter chain generator.
 //!
-//! Produces a single `.conf` file dropped into
-//! `~/.config/pipewire/filter-chain.conf.d/` that WirePlumber's smart-filter
-//! policy attaches to the user's default audio source. Every application
+//! Produces a single `.args` file consumed by
+//! `biglinux-microphone-pwloader` (started via
+//! `biglinux-microphone-mic.service`). The loader is a regular client
+//! of the main PipeWire daemon and instantiates
+//! `libpipewire-module-filter-chain` with this args body inside its
+//! local context. The filter graph's audio nodes are exported to the
+//! daemon and driven by the daemon's data-loop — single clock, no
+//! cross-process drift. WirePlumber's smart-filter policy then attaches
+//! `mic-biglinux` to the user's default audio source. Every application
 //! that records from the default microphone reads the processed signal
 //! transparently — the original hardware node stays reachable but
 //! deprioritised.
@@ -65,8 +71,8 @@ pub const MIC_NODE_NAME: &str = "mic-biglinux";
 /// to target *this* name instead.
 pub const MIC_CAPTURE_NODE_NAME: &str = "mic-biglinux-capture";
 pub const MIC_DESCRIPTION: &str = "BigLinux Microphone";
-/// File name inside `filter-chain.conf.d/`.
-pub const MIC_CONF_FILE: &str = "10-biglinux-microphone.conf";
+/// File name of the mic args body inside the bigmic state dir.
+pub const MIC_CONF_FILE: &str = "mic.args";
 
 /// Render the complete mic filter-chain config file text.
 #[must_use]
@@ -85,7 +91,7 @@ pub fn build_mic_conf(settings: &AppSettings) -> String {
         playback_props: playback_props(settings),
     };
 
-    graph.render(RenderMode::DropIn)
+    graph.render(RenderMode::ModuleArgs)
 }
 
 /// Tear down every mic-side flag in one go. Called by the simple-view
@@ -457,7 +463,7 @@ mod tests {
         // Defaults leave noise_reduction, echo_cancel and stereo on.
         // mic_chain_wanted ORs over all flags, so cascading must clear
         // every one of them — otherwise the simple-view master toggle
-        // off leaves filter-chain.service running on the surviving
+        // off leaves the mic loader running on the surviving
         // default-on flags and the user sees no process drop.
         let mut s = AppSettings::default();
         assert!(mic_chain_wanted(&s));
@@ -475,10 +481,17 @@ mod tests {
     }
 
     #[test]
-    fn conf_starts_with_comment_and_module_block() {
+    fn conf_is_a_bare_module_args_body() {
+        // The pwloader hands the file contents straight to
+        // `pw_context_load_module()` as the `args` C-string. No comment
+        // header, no `context.modules` wrapper — just the SPA-JSON
+        // `{ … }` block the filter-chain module knows how to parse.
         let conf = build_mic_conf(&default_settings());
-        assert!(conf.starts_with("# BigLinux"));
-        assert!(conf.contains("libpipewire-module-filter-chain"));
+        assert!(conf.starts_with('{'));
+        assert!(conf.trim_end().ends_with('}'));
+        assert!(!conf.contains("context.modules"));
+        assert!(!conf.contains("libpipewire-module-filter-chain"));
+        assert!(conf.contains("filter.graph = {"));
     }
 
     #[test]

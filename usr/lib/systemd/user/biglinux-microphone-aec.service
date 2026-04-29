@@ -1,29 +1,23 @@
 [Unit]
-Description=BigLinux Microphone — output-side noise-reduction filter (pwloader)
+Description=BigLinux Microphone — WebRTC echo-cancellation (pwloader)
 Documentation=https://github.com/biglinux/biglinux-noise-reduction-pipewire
 PartOf=pipewire.service
 After=pipewire.service wireplumber.service
-Requisite=pipewire.service
 Wants=pipewire.service wireplumber.service
+Requisite=pipewire.service
 
 [Service]
 Type=simple
-# `biglinux-microphone-pwloader` connects to the running PipeWire
-# daemon as a regular client and asks it to instantiate
-# libpipewire-module-filter-chain inside this process. The daemon
-# drives every node, so the output filter shares the system clock
-# with the rest of the audio graph — no cross-process drift.
-ExecStart=/usr/bin/biglinux-microphone-pwloader libpipewire-module-filter-chain %h/.config/biglinux-microphone/output.args
+# Hosts libpipewire-module-echo-cancel inside the loader's client
+# context. The cleaned `echo-cancel-source` is exported to the daemon
+# and is what the mic chain pins as its capture target when AEC is on.
+ExecStart=/usr/bin/biglinux-microphone-pwloader libpipewire-module-echo-cancel %h/.config/biglinux-microphone/aec.args
 Restart=on-failure
 RestartSec=2s
 StandardOutput=journal
 StandardError=journal
 
 # ── Realtime budget ──────────────────────────────────────────────────
-# The graph nodes hosted in this process request RT scheduling via
-# libpipewire-module-rt (loaded automatically by the daemon's
-# `client.conf`). rtkit grants the priority; the rlimits below let
-# the process honour it.
 LimitRTPRIO=95
 LimitNICE=-19
 LimitMEMLOCK=infinity
