@@ -281,25 +281,36 @@ fn capture_props(target_sink_name: Option<&str>) -> String {
     // filter inserts unambiguously between apps and that exact sink.
     // The user's chosen default device stays the visible default in
     // every volume control — only the routing changes.
-    // No `node.latency` and no `node.lock-quantum` here. The output
-    // filter runs in its own standalone PipeWire daemon and connects
-    // to the main daemon's hardware sink across the protocol-native
-    // socket — the two processes have independent clocks, so pinning
-    // a quantum on this node forces the cross-process IPC to a
-    // buffer size the hw sink may not have negotiated. That mismatch
-    // showed up as `spa.alsa: front:1p target:N thr:N, resync` log
-    // spam and audible micro-cuts during calls. Letting both nodes
-    // negotiate freely (and absorbing residual jitter via the
-    // `api.alsa.headroom` WirePlumber rule we ship in
-    // `61-biglinux-alsa-headroom.conf`) is the portable answer
-    // across diverse hardware. `pause-on-idle = false` is kept so
-    // the chain rides brief unlink/relink cycles during a call
-    // without churning the standalone daemon.
+    // The output filter runs in its own standalone PipeWire daemon
+    // and connects to the main daemon's hardware sink across the
+    // protocol-native socket — the two processes have independent
+    // clocks. Without explicit handling, samples cross the IPC
+    // boundary at one rate and the hw sink consumes them at a
+    // slightly different rate, drift accumulates, and the alsa
+    // driver emits `spa.alsa: front:1p ... resync` events
+    // (= audible micro-cuts) every few seconds.
+    //
+    // `node.async = true` is the documented PipeWire knob for this
+    // exact case: it tells the graph that this node can deliver
+    // samples at a slightly different rate than the consumer, and
+    // PipeWire inserts an adaptive resampler / timing converter to
+    // align the two without periodic ALSA resyncs. Combined with
+    // the `api.alsa.headroom = 1024` WirePlumber rule on the hw
+    // sink, this gives the cross-process pipeline enough slack to
+    // ride scheduling jitter without dropping frames.
+    //
+    // No explicit `node.latency` / `node.lock-quantum` — pinning a
+    // quantum here forces a buffer size the hw sink may not have
+    // negotiated. Letting both nodes negotiate freely is the
+    // portable answer across diverse hardware. `pause-on-idle =
+    // false` is kept so the chain rides brief unlink/relink cycles
+    // during a call without churning the standalone daemon.
     let mut props = vec![
         format!("node.name = \"{OUTPUT_NODE_NAME}\""),
         format!("node.description = \"{OUTPUT_DESCRIPTION}\""),
         "media.class = Audio/Sink".to_owned(),
         "node.pause-on-idle = false".to_owned(),
+        "node.async = true".to_owned(),
         "audio.rate = 48000".to_owned(),
         "audio.channels = 2".to_owned(),
         "audio.position = [ FL FR ]".to_owned(),
@@ -337,16 +348,17 @@ fn playback_props() -> String {
     // hardware sink). `node.passive = true` keeps the chain idle when
     // no app is producing audio so it doesn't hold the hw sink awake.
     // Same rationale as the capture side: no explicit latency / no
-    // lock-quantum. This node feeds into the main daemon's hw sink
-    // across the protocol-native socket, and the hw sink's
-    // negotiated period (commonly 512 frames on PCI/HDA) must drive
-    // the rate of consumption — pinning 1024/48000 here forces a
-    // 2:1 mismatch and the kernel emits resync events whenever the
-    // standalone daemon is preempted.
+    // lock-quantum, plus `node.async = true` so PipeWire can insert
+    // an adaptive resampler between this cross-process stream and
+    // the hw sink it feeds. Without async, the hw sink alternates
+    // between starving and overflowing as the two daemons' clocks
+    // drift, and the kernel emits `front:1p ... resync` events
+    // (= audible cuts).
     [
         format!("node.name = \"{OUTPUT_NODE_NAME}-out\""),
         "node.passive = true".to_owned(),
         "node.pause-on-idle = false".to_owned(),
+        "node.async = true".to_owned(),
         "audio.rate = 48000".to_owned(),
         "audio.channels = 2".to_owned(),
         "audio.position = [ FL FR ]".to_owned(),
