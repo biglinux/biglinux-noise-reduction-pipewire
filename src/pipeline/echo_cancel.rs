@@ -110,7 +110,7 @@ pub(crate) const AEC_NODE_LATENCY: &str = "1920/48000";
 pub const ECHO_CANCEL_CONF_FILE: &str = "aec.args";
 
 /// True when the EC chain is wanted by the current settings. Centralised
-/// so [`super::apply_to_dirs`] and [`super::mic`] read the same flag.
+/// so `super::apply_to_dirs` and `super::mic` read the same flag.
 #[must_use]
 pub fn echo_cancel_wanted(settings: &AppSettings) -> bool {
     settings.echo_cancel.enabled

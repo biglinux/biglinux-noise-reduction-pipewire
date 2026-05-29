@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: biglinux-noise-reduction-pipewire\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-04-29 05:33+0000\n"
+"POT-Creation-Date: 2026-05-29 09:32+0000\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: \n"
@@ -81,14 +81,13 @@ msgstr ""
 
 # File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/window.py,
 # line: 175
-#: src/ui/window.rs:340 src/ui/views/advanced.rs:477
+#: src/ui/window.rs:340 src/ui/views/advanced.rs:603
 msgid "Cancel"
 msgstr "Zrušiť"
 
 # File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/window.py,
 # line: 193
-#: src/ui/window.rs:341 src/ui/views/advanced.rs:160
-#: src/ui/views/advanced.rs:478
+#: src/ui/window.rs:341 src/ui/views/advanced.rs:200
 msgid "Restore defaults"
 msgstr "Obnoviť predvolené hodnoty"
 
@@ -108,220 +107,305 @@ msgstr ""
 msgid "Built on"
 msgstr "Postavené na"
 
-#: src/ui/views/advanced.rs:108 src/ui/views/advanced.rs:180
-msgid "Distro defaults are in effect."
+#: src/ui/views/advanced.rs:123 src/ui/views/advanced.rs:220
+msgid "The standard audio settings are in use."
 msgstr ""
 
-#: src/ui/views/advanced.rs:165 src/ui/views/advanced.rs:453
+#: src/ui/views/advanced.rs:130
+msgid ""
+"Adjust how the system drives your audio hardware. Each card starts on the "
+"default we tested across a wide range of machines — change a value only if "
+"you have a specific reason to."
+msgstr ""
+
+#. ── Bluetooth ────────────────────────────────────────────────────
+#: src/ui/views/advanced.rs:147
+msgid "Bluetooth"
+msgstr ""
+
+#. ── Estabilidade e desempenho ────────────────────────────────────
+#: src/ui/views/advanced.rs:153
+msgid "Stability and performance"
+msgstr ""
+
+#. ── Qualidade de som ─────────────────────────────────────────────
+#: src/ui/views/advanced.rs:160
+msgid "Sound quality"
+msgstr ""
+
+#: src/ui/views/advanced.rs:205 src/ui/views/advanced.rs:579
 msgid "Apply and restart audio"
 msgstr ""
 
-#: src/ui/views/advanced.rs:178
-msgid "Custom values are active. Apply to make them live."
-msgstr ""
-
-#: src/ui/views/advanced.rs:190
-msgid "Audio block size"
-msgstr ""
-
-#: src/ui/views/advanced.rs:192
-msgid ""
-"Smaller blocks = lower latency but more CPU. Larger blocks = steadier "
-"playback over Bluetooth and busy systems. The distro default of 2048 frames "
-"(~42 ms at 48 kHz) suits voice and video calls."
-msgstr ""
-
-#: src/ui/views/advanced.rs:201
-msgid "256 frames (~5 ms — very low latency)"
-msgstr ""
-
-#: src/ui/views/advanced.rs:202
-msgid "512 frames (~11 ms — low latency)"
-msgstr ""
-
-#: src/ui/views/advanced.rs:203
-msgid "1024 frames (~21 ms — upstream default)"
-msgstr ""
-
-#: src/ui/views/advanced.rs:204 src/ui/views/advanced.rs:283
-msgid "2048 frames (~42 ms — distro tuned)"
-msgstr ""
-
-#: src/ui/views/advanced.rs:205
-msgid "4096 frames (~85 ms — most stable)"
-msgstr ""
-
-#: src/ui/views/advanced.rs:215
-msgid "Block size"
-msgstr ""
-
-#: src/ui/views/advanced.rs:222
-msgid "USB audio headroom"
-msgstr ""
-
-#: src/ui/views/advanced.rs:224
-msgid ""
-"Extra slack the USB ring buffer keeps to ride out short scheduling stalls "
-"(browser repaints, kernel hiccups). Raise only if you hear small cuts on USB "
-"headsets / DACs."
-msgstr ""
-
-#: src/ui/views/advanced.rs:239 src/ui/views/advanced.rs:263
-msgid "Slack"
-msgstr ""
-
-#: src/ui/views/advanced.rs:246
-msgid "PCI / built-in audio headroom"
-msgstr ""
-
-#: src/ui/views/advanced.rs:248
-msgid ""
-"Extra slack on motherboard / laptop analog outputs and inputs. Most users "
-"keep the distro default; bump only when the speaker or built-in mic glitches "
-"under load."
-msgstr ""
-
-#: src/ui/views/advanced.rs:270
-msgid "Bluetooth graph latency"
-msgstr ""
-
-#: src/ui/views/advanced.rs:272
-msgid ""
-"Bigger windows absorb the bursty L2CAP traffic Bluetooth stacks produce, at "
-"the cost of audible delay between video and sound. The distro default suits "
-"voice and music; lower only on wired-quality headsets."
-msgstr ""
-
-#: src/ui/views/advanced.rs:281
-msgid "512 frames (~11 ms — wired feel)"
-msgstr ""
-
-#: src/ui/views/advanced.rs:282
-msgid "1024 frames (~21 ms)"
-msgstr ""
-
-#: src/ui/views/advanced.rs:284
-msgid "4096 frames (~85 ms — bumpy stacks)"
-msgstr ""
-
-#: src/ui/views/advanced.rs:294
-msgid "Window"
-msgstr ""
-
-#: src/ui/views/advanced.rs:301
-msgid "Sample rates"
-msgstr ""
-
-#: src/ui/views/advanced.rs:303
-msgid ""
-"Which sample rates the graph is allowed to switch to. Audiophile DACs "
-"deliver natural rates without resampling, but every switch briefly reloads "
-"filter chains — keep the distro default unless you have a hi-res DAC."
-msgstr ""
-
-#: src/ui/views/advanced.rs:312
-msgid "48 kHz only (distro tuned)"
-msgstr ""
-
-#: src/ui/views/advanced.rs:313
-msgid "44.1 + 48 kHz (CDs / streaming)"
-msgstr ""
-
-#: src/ui/views/advanced.rs:315
-msgid "Hi-res family (44.1 / 48 / 88.2 / 96 / 176.4 / 192 kHz)"
-msgstr ""
-
-#: src/ui/views/advanced.rs:327
-msgid "Allowed rates"
+#: src/ui/views/advanced.rs:218
+msgid "Custom settings active. Click Apply to enable them."
 msgstr ""
 
 # File: biglinux-noise-reduction-
 # pipewire/src/biglinux_microphone/ui/main_view.py, line: 533
-#: src/ui/views/advanced.rs:334
+#: src/ui/views/advanced.rs:230
 #, fuzzy
-msgid "Bluetooth SBC-XQ codec"
+msgid "Bluetooth call mode"
 msgstr "Režim Bluetooth slúchadiel"
 
-#: src/ui/views/advanced.rs:336
+#: src/ui/views/advanced.rs:232
 msgid ""
-"Pin the high-quality SBC-XQ profile. The distro default already enables it "
-"on every BlueZ codec auto-negotiation; override only when troubleshooting a "
-"headset that picks the wrong profile."
+"When you start a video or voice call, your Bluetooth headset can switch to a "
+"special call mode that turns on the microphone — but the sound becomes mono "
+"and lower quality, like an old phone. This is off by default so music and "
+"movies stay in full quality even when an app asks for the microphone. Turn "
+"it on if you rely on the headset's microphone for calls."
 msgstr ""
 
-#: src/ui/views/advanced.rs:345
+#: src/ui/views/advanced.rs:244
+msgid "On — switch to call mode automatically"
+msgstr ""
+
+#: src/ui/views/advanced.rs:245
+msgid "Off — always keep stereo sound (default)"
+msgstr ""
+
+#: src/ui/views/advanced.rs:255
+msgid "Behaviour"
+msgstr ""
+
+#: src/ui/views/advanced.rs:262
+msgid "Bluetooth audio buffer"
+msgstr ""
+
+#: src/ui/views/advanced.rs:264
+msgid ""
+"Bluetooth needs a small audio reserve so the sound plays smoothly even when "
+"the wireless connection has tiny stutters. A bigger reserve hides hiccups "
+"but adds delay between picture and sound — keep the default unless your "
+"headset stutters or you need quicker audio."
+msgstr ""
+
+#: src/ui/views/advanced.rs:275
+msgid "Small (low delay — needs a stable headset, ~11 ms)"
+msgstr ""
+
+#: src/ui/views/advanced.rs:278
+msgid "Medium (~21 ms)"
+msgstr ""
+
+#: src/ui/views/advanced.rs:279
+msgid "Standard (default, ~42 ms)"
+msgstr ""
+
+#: src/ui/views/advanced.rs:280
+msgid "Large (steadiest, ~85 ms)"
+msgstr ""
+
+#: src/ui/views/advanced.rs:290
+msgid "Buffer size"
+msgstr ""
+
+#: src/ui/views/advanced.rs:297
+msgid "High-quality Bluetooth audio (SBC-XQ)"
+msgstr ""
+
+#: src/ui/views/advanced.rs:299
+msgid ""
+"Your Bluetooth devices already use the best sound mode they support. Force "
+"this on if a headset stubbornly chooses lower quality, or off if you have a "
+"very old device that breaks with the high-quality mode."
+msgstr ""
+
+#: src/ui/views/advanced.rs:308
 msgid "Force on (high quality)"
 msgstr ""
 
-#: src/ui/views/advanced.rs:346
-msgid "Force off (compatibility)"
+#: src/ui/views/advanced.rs:309
+msgid "Force off (maximum compatibility)"
 msgstr ""
 
-#: src/ui/views/advanced.rs:356
+#: src/ui/views/advanced.rs:319
 msgid "SBC-XQ"
 msgstr ""
 
-# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/window.py,
-# line: 193
-#: src/ui/views/advanced.rs:372
-#, fuzzy
-msgid "Distro default"
-msgstr "Obnoviť predvolené hodnoty"
-
-#: src/ui/views/advanced.rs:388
-msgid "0 frames (none)"
+#: src/ui/views/advanced.rs:328
+msgid "Audio responsiveness"
 msgstr ""
 
-#: src/ui/views/advanced.rs:389
-msgid "256 frames (~5 ms)"
+#: src/ui/views/advanced.rs:330
+msgid ""
+"How fast the system reacts to sound changes. Faster reaction is great for "
+"music production but uses more CPU; slower reaction makes playback steadier "
+"on weaker machines. The default works well for video calls, music and games "
+"on most computers."
 msgstr ""
 
-#: src/ui/views/advanced.rs:390
-msgid "512 frames (~11 ms)"
+#: src/ui/views/advanced.rs:340
+msgid "Very fast (music production, ~5 ms)"
+msgstr ""
+
+#: src/ui/views/advanced.rs:341
+msgid "Fast (low delay, ~11 ms)"
+msgstr ""
+
+#: src/ui/views/advanced.rs:343
+msgid "Balanced (upstream PipeWire default, ~21 ms)"
+msgstr ""
+
+#: src/ui/views/advanced.rs:346
+msgid "Steady (default, ~42 ms)"
+msgstr ""
+
+#: src/ui/views/advanced.rs:348
+msgid "Most stable (older or busy machines, ~85 ms)"
+msgstr ""
+
+#: src/ui/views/advanced.rs:360
+msgid "Reaction speed"
+msgstr ""
+
+#: src/ui/views/advanced.rs:367
+msgid "USB audio safety margin"
+msgstr ""
+
+#: src/ui/views/advanced.rs:369
+msgid ""
+"A small extra reserve for USB headsets, microphones and external audio "
+"interfaces. Increase only if you hear tiny cuts or pops on a USB device when "
+"the computer is busy."
+msgstr ""
+
+#: src/ui/views/advanced.rs:384 src/ui/views/advanced.rs:409
+msgid "Margin"
 msgstr ""
 
 #: src/ui/views/advanced.rs:391
-msgid "1024 frames (~21 ms — distro tuned)"
-msgstr ""
-
-#: src/ui/views/advanced.rs:392
-msgid "2048 frames (~42 ms — virtual machines)"
+msgid "Built-in audio safety margin"
 msgstr ""
 
 #: src/ui/views/advanced.rs:393
-msgid "4096 frames (~85 ms — last resort)"
+msgid ""
+"Same idea as the USB margin, but for the speakers and microphone built into "
+"your laptop or motherboard. Most people never need to change this — try it "
+"only if the internal speaker glitches when the computer is under load."
 msgstr ""
 
-#: src/ui/views/advanced.rs:432
+#: src/ui/views/advanced.rs:416
+msgid "Avoid the click at the start of sounds"
+msgstr ""
+
+#: src/ui/views/advanced.rs:418
+msgid ""
+"Some laptops and motherboards put the speakers to sleep after a few seconds "
+"of silence to save power. When the next sound arrives — a notification, a "
+"video starting — you may hear a small click or miss the very first part of "
+"the audio. Turn this on to keep the speakers always ready. The extra battery "
+"use is tiny."
+msgstr ""
+
+#: src/ui/views/advanced.rs:430
+msgid "Always keep the speakers ready (recommended on desktops)"
+msgstr ""
+
+#: src/ui/views/advanced.rs:433
+msgid "Let the speakers sleep when idle (default)"
+msgstr ""
+
+#: src/ui/views/advanced.rs:443
+msgid "Speaker sleep"
+msgstr ""
+
+#: src/ui/views/advanced.rs:452
+msgid "Sound quality range"
+msgstr ""
+
+#: src/ui/views/advanced.rs:454
+msgid ""
+"All audio runs at studio quality (48 kHz) by default. Hi-res music players "
+"and high-end USB DACs can play higher quality if you allow it here, but "
+"every change between qualities causes a brief audio reload. Keep the default "
+"unless you actually own hi-res equipment."
+msgstr ""
+
+#: src/ui/views/advanced.rs:465
+msgid "Studio quality only (default, 48 kHz)"
+msgstr ""
+
+#: src/ui/views/advanced.rs:468
+msgid "CD + studio quality (44.1 + 48 kHz)"
+msgstr ""
+
+#: src/ui/views/advanced.rs:470
+msgid "Allow hi-res audio (44.1 / 48 / 88.2 / 96 / 176.4 / 192 kHz)"
+msgstr ""
+
+#: src/ui/views/advanced.rs:482
+msgid "Allowed quality"
+msgstr ""
+
+# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/config.py,
+# line: 711
+#: src/ui/views/advanced.rs:498
+#, fuzzy
+msgid "Default"
+msgstr "Predvolený hlas"
+
+#: src/ui/views/advanced.rs:514
+msgid "None"
+msgstr ""
+
+#: src/ui/views/advanced.rs:515
+msgid "Small (~5 ms)"
+msgstr ""
+
+#: src/ui/views/advanced.rs:516
+msgid "Medium (~11 ms)"
+msgstr ""
+
+#: src/ui/views/advanced.rs:517
+msgid "Standard (default, ~21 ms)"
+msgstr ""
+
+#: src/ui/views/advanced.rs:518
+msgid "Large (virtual machines, ~42 ms)"
+msgstr ""
+
+#: src/ui/views/advanced.rs:519
+msgid "Maximum (last resort, ~85 ms)"
+msgstr ""
+
+#: src/ui/views/advanced.rs:558
 msgid "Failed to write configuration"
 msgstr ""
 
-#: src/ui/views/advanced.rs:439
+#: src/ui/views/advanced.rs:565
 msgid "Restarting audio…"
 msgstr ""
 
-#: src/ui/views/advanced.rs:462
+#: src/ui/views/advanced.rs:588
 msgid "Audio service restart failed"
 msgstr ""
 
 # File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/window.py,
-# line: 193
-#: src/ui/views/advanced.rs:471
+# line: 172
+#: src/ui/views/advanced.rs:597
 #, fuzzy
-msgid "Restore distro defaults?"
-msgstr "Obnoviť predvolené hodnoty"
+msgid "Restore default audio settings?"
+msgstr "Obnoviť predvolené nastavenia?"
 
-#: src/ui/views/advanced.rs:473
+#: src/ui/views/advanced.rs:599
 msgid ""
-"All custom audio tuning will be removed and the audio services will restart "
-"with the BigLinux defaults."
+"All your custom audio settings will be removed and the audio service will "
+"restart with the defaults."
 msgstr ""
 
-#: src/ui/views/advanced.rs:491
+# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/window.py,
+# line: 176
+#: src/ui/views/advanced.rs:604
+msgid "Restore"
+msgstr "Obnoviť"
+
+#: src/ui/views/advanced.rs:617
 msgid "Failed to remove configuration"
 msgstr ""
 
-#: src/ui/views/advanced.rs:509
+#: src/ui/views/advanced.rs:635
 msgid "OK"
 msgstr ""
 
@@ -680,24 +764,20 @@ msgid "Volume"
 msgstr "Hlasitosť"
 
 #: src/ui/widgets/wp_override_warning.rs:51
-#, fuzzy
-msgid "Configuração do WirePlumber sobreposta"
-msgstr "Configuração do WirePlumber sobreposta"
+msgid "WirePlumber configuration overridden"
+msgstr ""
 
 #: src/ui/widgets/wp_override_warning.rs:58
-#, fuzzy
-msgid "Manter"
-msgstr "Manter"
+msgid "Keep"
+msgstr ""
 
 #: src/ui/widgets/wp_override_warning.rs:59
-#, fuzzy
-msgid "Remover sobreposição"
-msgstr "Remover sobreposição"
+msgid "Remove override"
+msgstr ""
 
 #: src/ui/widgets/wp_override_warning.rs:63
-#, fuzzy
-msgid "Não avisar de novo"
-msgstr "Não avisar de novo"
+msgid "Don't warn again"
+msgstr ""
 
 #: src/ui/widgets/wp_override_warning.rs:133
 #, fuzzy
@@ -711,6 +791,34 @@ msgstr ""
 "updates won't take effect while this local copy exists.\n"
 "\n"
 "Recommended: remove the override and restart WirePlumber."
+
+# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/window.py,
+# line: 193
+#, fuzzy
+#~ msgid "Distro default"
+#~ msgstr "Obnoviť predvolené hodnoty"
+
+# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/window.py,
+# line: 193
+#, fuzzy
+#~ msgid "Restore distro defaults?"
+#~ msgstr "Obnoviť predvolené hodnoty"
+
+#, fuzzy
+#~ msgid "Configuração do WirePlumber sobreposta"
+#~ msgstr "Configuração do WirePlumber sobreposta"
+
+#, fuzzy
+#~ msgid "Manter"
+#~ msgstr "Manter"
+
+#, fuzzy
+#~ msgid "Remover sobreposição"
+#~ msgstr "Remover sobreposição"
+
+#, fuzzy
+#~ msgid "Não avisar de novo"
+#~ msgstr "Não avisar de novo"
 
 # File: biglinux-noise-reduction-
 # pipewire/src/biglinux_microphone/audio/filter_chain.py
@@ -1740,11 +1848,6 @@ msgstr ""
 # line: 173
 #~ msgid "This will return all adjustments to their original defaults."
 #~ msgstr "Toto vráti všetky úpravy na ich pôvodné predvolené hodnoty."
-
-# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/window.py,
-# line: 176
-#~ msgid "Restore"
-#~ msgstr "Obnoviť"
 
 # File: biglinux-noise-reduction-
 # pipewire/usr/share/bigbashview/apps/microphone/noise_reducer.py, line: 276

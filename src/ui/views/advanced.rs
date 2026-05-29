@@ -3,7 +3,7 @@
 //! Lets the user override the BigLinux distro defaults for PipeWire and
 //! WirePlumber on a per-control basis without leaving the GUI. Every
 //! card hosts a single dropdown whose first entry is the sentinel
-//! `Padrão da distribuição` — that selection wipes the corresponding
+//! `Distribution default` — that selection wipes the corresponding
 //! line from the user drop-in so the layered defaults shipped by
 //! `pipewire-biglinux-config` (and the package's own
 //! `61-biglinux-alsa-headroom.conf`) take over again.
@@ -46,7 +46,7 @@ use super::super::widgets::didactic::{labelled_row, section_header, DidacticCard
 
 /// Per-control selection, decoupled from the on-disk shape so the UI
 /// can offer a richer set of curated defaults than what raw integers
-/// allow. The sentinel `None` always maps to "Padrão da distribuição".
+/// allow. The sentinel `None` always maps to "Distribution default".
 #[derive(Debug, Default, Clone, Copy, PartialEq, Eq)]
 struct Selection {
     quantum: Option<u32>,
@@ -486,7 +486,7 @@ fn sample_rates_card(selection: &Rc<RefCell<Selection>>, banner: &adw::Banner) -
 // ── Dropdown helper ──────────────────────────────────────────────────
 
 /// One row in the dropdown. `value = None` is the sentinel meaning
-/// "Padrão da distribuição".
+/// "Distribution default".
 struct TweakOption<T: Copy + 'static> {
     label: String,
     value: Option<T>,

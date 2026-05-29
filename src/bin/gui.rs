@@ -1,6 +1,6 @@
 //! GUI entry point (`biglinux-microphone`).
 //!
-//! Delegates the whole lifecycle to [`MicrophoneApplication`] which owns
+//! Delegates the whole lifecycle to `MicrophoneApplication` which owns
 //! the GTK app, the PipeWire service and the audio monitor.
 
 use biglinux_microphone::ui::{init_gettext, MicrophoneApplication};

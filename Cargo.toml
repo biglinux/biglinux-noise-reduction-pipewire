@@ -57,6 +57,10 @@ dirs = "6"
 # parameter updates lands in a later stage.
 pipewire = "0.9"
 
+# Direct libc syscalls for the pwloader binary's real-time setup
+# (sched_setaffinity, sched_setscheduler SCHED_FIFO, mlockall, errno).
+libc = "0.2"
+
 # Cross-thread channel between the PipeWire main-loop thread and the UI
 # (or CLI) consumer.
 async-channel = "2"

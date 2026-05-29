@@ -17,7 +17,7 @@
 //! distro defaults shipped by `pipewire-biglinux-config` (and by this
 //! package's own `61-biglinux-alsa-headroom.conf`) win unchanged. This
 //! keeps the user file *additive*: no surprise overrides to undo when
-//! the user toggles a single control back to "Padrão da distribuição".
+//! the user toggles a single control back to "Distribution default".
 //!
 //! ## Atomic writes
 //!

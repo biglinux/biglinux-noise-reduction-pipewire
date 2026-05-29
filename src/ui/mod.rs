@@ -2,11 +2,11 @@
 //!
 //! Structure:
 //!
-//! * [`MicrophoneApplication`] — top-level `adw::Application`. Owns the
+//! * `MicrophoneApplication` — top-level `adw::Application`. Owns the
 //!   background services for the app's lifetime.
-//! * [`window::build`] — composes the main [`adw::ApplicationWindow`]
+//! * `window::build` — composes the main [`adw::ApplicationWindow`]
 //!   out of three views (Mic, Output, Spectrum).
-//! * [`state::AppState`] — shared settings snapshot + debounced
+//! * `state::AppState` — shared settings snapshot + debounced
 //!   persistence / reload.
 
 mod app;

@@ -48,19 +48,19 @@ pub fn maybe_show(parent: &impl IsA<gtk::Widget>, state: Rc<AppState>) {
 
 fn show(parent: &impl IsA<gtk::Widget>, state: Rc<AppState>, override_path: PathBuf) {
     let dialog = adw::AlertDialog::builder()
-        .heading(i18n("Configuração do WirePlumber sobreposta"))
+        .heading(i18n("WirePlumber configuration overridden"))
         .body(format_body(&override_path))
         .body_use_markup(true)
         .default_response(RESPONSE_REMOVE)
         .close_response(RESPONSE_KEEP)
         .build();
 
-    dialog.add_response(RESPONSE_KEEP, &i18n("Manter"));
-    dialog.add_response(RESPONSE_REMOVE, &i18n("Remover sobreposição"));
+    dialog.add_response(RESPONSE_KEEP, &i18n("Keep"));
+    dialog.add_response(RESPONSE_REMOVE, &i18n("Remove override"));
     dialog.set_response_appearance(RESPONSE_REMOVE, adw::ResponseAppearance::Destructive);
 
     let dismiss_check = gtk::CheckButton::builder()
-        .label(i18n("Não avisar de novo"))
+        .label(i18n("Don't warn again"))
         .margin_top(8)
         .build();
     dialog.set_extra_child(Some(&dismiss_check));
@@ -107,10 +107,8 @@ fn handle_response(response: &str, path: &Path, dismiss: bool, state: Rc<AppStat
                 persist_dismiss(&state);
             }
         }
-        RESPONSE_KEEP => {
-            if dismiss {
-                persist_dismiss(&state);
-            }
+        RESPONSE_KEEP if dismiss => {
+            persist_dismiss(&state);
         }
         _ => {}
     }

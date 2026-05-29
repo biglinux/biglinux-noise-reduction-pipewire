@@ -63,6 +63,7 @@ dependencies = [
  "glib",
  "gtk4",
  "libadwaita",
+ "libc",
  "log",
  "pipewire",
  "pretty_env_logger",

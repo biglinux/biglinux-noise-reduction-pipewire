@@ -103,7 +103,7 @@ impl AudioMonitor {
     /// Pause / resume the FFT loop. When paused the worker stops pumping
     /// pw-cat and emitting frames so the pipe back-pressures pw-cat into
     /// blocking on its write — both processes drop to ~0 CPU until the
-    /// next [`set_active(true)`] call. Used to silence the monitor while
+    /// next `set_active(true)` call. Used to silence the monitor while
     /// the spectrum widget is hidden.
     pub fn set_active(&self, on: bool) {
         self.active.store(on, Ordering::Release);

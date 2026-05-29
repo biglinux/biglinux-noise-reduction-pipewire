@@ -1,6 +1,6 @@
 //! End-to-end diagnostic for the noise-reduction stack.
 //!
-//! [`doctor`] probes every layer the GUI toggle relies on (LADSPA
+//! `doctor` probes every layer the GUI toggle relies on (LADSPA
 //! plugins on disk, PipeWire daemon, WirePlumber, systemd user units,
 //! generated configs, live graph nodes) and prints a numbered report.
 //! Exit code = number of failed checks (0 = all green) so scripts can

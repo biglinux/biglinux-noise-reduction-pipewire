@@ -1,6 +1,6 @@
 //! Filter-chain configuration pipeline.
 //!
-//! [`apply`] is the single entry point used by the service layer to
+//! `apply` is the single entry point used by the service layer to
 //! materialise three files on disk:
 //!
 //! | File | Role |
@@ -72,7 +72,7 @@ pub fn pwloader_args_dir() -> PathBuf {
 }
 
 /// Legacy XDG base dir for PipeWire drop-in configs (loaded by the
-/// old `filter-chain.service` topology). Kept around so [`apply`] can
+/// old `filter-chain.service` topology). Kept around so `apply` can
 /// scrub stale files from earlier installs.
 #[must_use]
 pub fn pipewire_drop_in_dir() -> PathBuf {
@@ -88,7 +88,7 @@ pub fn pipewire_standalone_dir() -> PathBuf {
 }
 
 /// XDG base dir that previously held WirePlumber drop-in configs for
-/// per-app routing. Kept around so [`apply`] can scrub legacy files
+/// per-app routing. Kept around so `apply` can scrub legacy files
 /// from earlier installs.
 #[must_use]
 pub fn wireplumber_drop_in_dir() -> PathBuf {
@@ -119,7 +119,7 @@ pub fn echo_cancel_conf_path() -> PathBuf {
 }
 
 /// File name of the WirePlumber drop-in shipped by the per-app routing
-/// implementation. Removed on every [`apply`] so a stale rule cannot
+/// implementation. Removed on every `apply` so a stale rule cannot
 /// keep redirecting streams after an upgrade.
 pub const LEGACY_ROUTING_CONF_FILE: &str = "50-biglinux-output-routing.conf";
 
@@ -302,7 +302,7 @@ fn remove_if_exists(path: &Path) -> io::Result<()> {
     }
 }
 
-/// Remove every file [`apply`] would have written. Used on uninstall and
+/// Remove every file `apply` would have written. Used on uninstall and
 /// from the UI's "reset to defaults" action. Missing files are not an
 /// error.
 pub fn remove_all() -> io::Result<()> {
