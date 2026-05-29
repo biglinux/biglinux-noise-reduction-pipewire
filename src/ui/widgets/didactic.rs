@@ -96,6 +96,9 @@ impl DidacticCard {
             // screen readers announce a bare "switch on/off" with no
             // context.
             title_label.set_mnemonic_widget(Some(w));
+            // Direct accessible label: the mnemonic relation alone does not
+            // surface as the AT-SPI name for screen readers.
+            w.update_property(&[gtk::accessible::Property::Label(title)]);
             header.append(w);
         }
 
@@ -149,12 +152,14 @@ pub fn slider_row(label: &str, scale: &gtk::Scale, spin: &gtk::SpinButton) -> Gt
     scale.set_valign(Align::Center);
     scale.set_draw_value(false);
     title.set_mnemonic_widget(Some(scale));
+    scale.update_property(&[gtk::accessible::Property::Label(label)]);
     row.append(scale);
 
     spin.set_valign(Align::Center);
     spin.set_numeric(true);
     spin.set_width_chars(5);
     spin.add_css_class("numeric");
+    spin.update_property(&[gtk::accessible::Property::Label(label)]);
     row.append(spin);
 
     row
@@ -179,6 +184,7 @@ pub fn switch_row(label: &str, switch: &gtk::Switch) -> GtkBox {
         .use_underline(true)
         .build();
     title.set_mnemonic_widget(Some(switch));
+    switch.update_property(&[gtk::accessible::Property::Label(label)]);
     row.append(&title);
 
     let filler = GtkBox::builder()
@@ -211,6 +217,9 @@ pub fn labelled_row(label: &str, control: &impl IsA<gtk::Widget>) -> GtkBox {
         .use_underline(true)
         .build();
     title.set_mnemonic_widget(Some(control));
+    control
+        .upcast_ref::<gtk::Widget>()
+        .update_property(&[gtk::accessible::Property::Label(label)]);
     row.append(&title);
 
     control.set_hexpand(true);

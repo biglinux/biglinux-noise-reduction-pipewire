@@ -82,6 +82,7 @@ fn noise_filter_header(state: &Rc<AppState>) -> GtkBox {
         .valign(Align::Center)
         .active(state.settings().noise_reduction.enabled)
         .build();
+    switch.update_property(&[gtk::accessible::Property::Label(&i18n("Noise filter"))]);
     {
         let state = Rc::clone(state);
         switch.connect_active_notify(move |sw| {
