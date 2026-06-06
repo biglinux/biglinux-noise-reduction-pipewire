@@ -46,7 +46,11 @@ def _discover_models(cache: Path) -> list[ModelEntry]:
     may override the list through `--model name=path` flags."""
     out: list[ModelEntry] = []
 
-    gtcrn_root = Path("/home/bruno/codigo-pacotes/multimidia/gtcrn-ladspa/stream/onnx_models")
+    # Sibling gtcrn-ladspa checkout. Override with $GTCRN_LADSPA_ROOT;
+    # defaults to a checkout adjacent to this repo.
+    gtcrn_root = Path(
+        os.environ.get("GTCRN_LADSPA_ROOT", "../gtcrn-ladspa")
+    ) / "stream/onnx_models"
     for variant in ("gtcrn_simple.onnx", "gtcrn.onnx", "gtcrn_vctk.onnx"):
         p = gtcrn_root / variant
         if p.exists():

@@ -34,19 +34,3 @@ description = "VoiceBank+DEMAND — noisy test WAVs (~150 MB)"
 url = "https://datashare.ed.ac.uk/bitstream/handle/10283/2791/noisy_testset_wav.zip"
 target = "datasets/voicebank_demand/noisy_testset_wav.zip"
 extract = "datasets/voicebank_demand/"
-
-# Local samples already in the workspace — no download, just discovered.
-[local_samples]
-description = "Real recordings already in /home/bruno/codigo-pacotes/multimidia"
-search_root = "/home/bruno/codigo-pacotes/multimidia"
-patterns = [
-    "audio-com-ruido-de-carro.ogg",
-    "ruido-embrulho-de-doce.wav",
-    "ruido-ate-10-minut-e-5-segundos-e-apos-isso-tem-fala.wav",
-    "ruidos.wav",
-    "fala-sobre-arcade-audio-limpo-mas-com-outros-sons-em-algumas-partes.m4a",
-    "assim-teste.wav",
-    "mic_aec.wav",
-    "testando.wav",
-    "esta.wav",
-]

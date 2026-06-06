@@ -19,6 +19,7 @@ from __future__ import annotations
 
 import argparse
 import csv
+import os
 import sys
 from dataclasses import dataclass
 from pathlib import Path
@@ -39,9 +40,11 @@ class ModelEntry:
 
 def _discover(cache: Path) -> list[ModelEntry]:
     out: list[ModelEntry] = []
+    # Sibling gtcrn-ladspa checkout. Override with $GTCRN_LADSPA_ROOT;
+    # defaults to a checkout adjacent to this repo.
     gtcrn_root = Path(
-        "/home/bruno/codigo-pacotes/multimidia/gtcrn-ladspa/stream/onnx_models"
-    )
+        os.environ.get("GTCRN_LADSPA_ROOT", "../gtcrn-ladspa")
+    ) / "stream/onnx_models"
     for variant in ("gtcrn_simple.onnx", "gtcrn_vctk.onnx"):
         p = gtcrn_root / variant
         if p.exists():

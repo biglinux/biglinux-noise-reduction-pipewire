@@ -8,9 +8,12 @@
 //! running audio pipeline in real time — no `filter-chain.service`
 //! restart, no pop, no drop-out.
 //!
-//! The helper intentionally stays shell-based:
+//! The helper intentionally stays argv-based: it invokes `pw-cli`
+//! directly via `std::process::Command` with an argument array, never
+//! through a shell (`sh -c`), so there is no shell-quoting or injection
+//! surface. Rationale:
 //!
-//! - Transparent to debug (`sh -x` or `strace`).
+//! - Transparent to debug (`strace` the spawned process).
 //! - Uses the same parser PipeWire itself ships, so property-name typos
 //!   surface with a clear error message instead of silently corrupt POD.
 //! - Zero-cost to replace later with a native `libspa` POD builder when

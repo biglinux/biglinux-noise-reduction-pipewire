@@ -16,7 +16,7 @@
         "Description[pt_BR]": "Filtra ruídos do microfone e do som do sistema",
         "EnabledByDefault": true,
         "Icon": "big-noise-reduction-on",
-        "Id": "org.biglinux.micnoise",
+        "Id": "br.com.biglinux.micnoise",
         "License": "GPL-2.0+",
         "Name": "Noise filter",
         "Name[bg]": "Филтър на шум",
@@ -57,7 +57,7 @@
     "X-Plasma-NotificationArea": "true",
     "X-Plasma-NotificationAreaCategory": "Multimedia",
     "X-Plasma-Provides": [
-        "org.biglinux.micnoise"
+        "br.com.biglinux.micnoise"
     ],
     "X-Plasma-OptionalExtensions": "LaunchApp",
     "X-Plasma-ConfigPluginId": ""

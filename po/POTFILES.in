@@ -10,4 +10,4 @@ src/ui/widgets/eq_card.rs
 src/ui/widgets/model_picker.rs
 src/ui/widgets/source_picker.rs
 src/ui/widgets/wp_override_warning.rs
-usr/share/plasma/plasmoids/org.biglinux.micnoise/contents/ui/main.qml
+usr/share/plasma/plasmoids/br.com.biglinux.micnoise/contents/ui/main.qml

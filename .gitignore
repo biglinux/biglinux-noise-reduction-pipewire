@@ -12,8 +12,12 @@ Cargo.lock.orig
 /packaging/arch/*.pkg.tar.*
 /packaging/arch/*.log
 
-# Compiled translations (built during makepkg from po/*.po)
+# Compiled translations (built during makepkg from po/*.po).
+# `po/` is the only translation source of truth. A compiled dev tree
+# (locale/<lang>/LC_MESSAGES/<textdomain>.mo) is generated, not committed
+# — i18n.rs's dev_locale_dir() probes it as an installed-catalog fallback.
 build-locale/
+/locale/
 *.mo
 
 # IDE / editor

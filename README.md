@@ -60,6 +60,52 @@ sync.
 - Rust **>= 1.82** (`rustup` recommended)
 - `pkg-config`, `clang`, `pipewire-devel`, `gtk4-devel`, `libadwaita-devel`
 
+## Build & Run
+
+```bash
+cargo build --release        # builds all three binaries into target/release/
+```
+
+Resulting binaries:
+
+| Binary | Role |
+|---|---|
+| `biglinux-microphone`          | GTK4/libadwaita configuration window (`src/bin/gui.rs`) |
+| `biglinux-microphone-cli`      | Headless control + diagnostics (`src/bin/cli.rs`) |
+| `biglinux-microphone-pwloader` | PipeWire module loader / RT host (`src/bin/pwloader.rs`) |
+
+```bash
+cargo run --release --bin biglinux-microphone          # launch the GUI
+cargo run --release --bin biglinux-microphone-cli doctor   # environment diagnostics
+```
+
+Packaging (Arch/BigLinux): `packaging/arch/PKGBUILD` builds with
+`--locked`, compiles `po/*.po` into `build-locale/`, and installs the
+systemd user units, plasmoid, and PipeWire/WirePlumber drop-ins.
+
+## Contributing
+
+- Run the quality gate before sending a change: `./scripts/quality-check.sh`
+  (`--ci` mirrors the exact CI gate; `--fix` applies `cargo fmt`).
+- Source language is English. Translatable UI strings flow through
+  gettext: `po/` is the only translation source of truth. Refresh the
+  catalog with `./scripts/refresh-pot.sh` after touching user-facing text.
+- Tuning research and PipeWire/WirePlumber config rationale live in
+  [TIPS.md](TIPS.md). The offline calibration harness lives in
+  `scripts/calibrate/` (see its README).
+
+## Architecture
+
+`src/` is split by concern (each module carries a top-level doc-comment):
+
+| Module | Responsibility |
+|---|---|
+| `config/`   | Settings model + atomic JSON persistence (`~/.config/biglinux-microphone/settings.json`) |
+| `pipeline/` | Filter-chain `.conf` generation + systemd unit orchestration |
+| `services/` | PipeWire / subprocess integration (`pw-cli`, `wpctl`), live param updates, audio monitor |
+| `ui/`       | GTK4/libadwaita views, widgets, and gettext i18n |
+| `bin/`      | The three entrypoints (`gui`, `cli`, `pwloader`) |
+
 ## License for our configuration interface
 
 GNU General Public License v3.0 - see [LICENSE](LICENSE) for details.

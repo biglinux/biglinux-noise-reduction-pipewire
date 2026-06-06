@@ -40,10 +40,10 @@ What `setup.sh` fetches:
 | DNSMOS P.808 ONNX     | ~220 KB  | `<cache>/models/dnsmos/model_v8.onnx` |
 | VoiceBank+DEMAND test | ~250 MB  | `<cache>/datasets/voicebank_demand/{clean,noisy}_testset_wav/` |
 
-GTCRN ONNX is not fetched: the sibling project at
-`/home/bruno/codigo-pacotes/multimidia/gtcrn-ladspa/ladspa/models/`
-already ships `gtcrn_dns3_simple.onnx` and `gtcrn_vctk_simple.onnx`.
-Pass one with `--gtcrn-model` to enable the denoiser stage.
+GTCRN ONNX is not fetched: the sibling `gtcrn-ladspa` checkout already
+ships `gtcrn_dns3_simple.onnx` and `gtcrn_vctk_simple.onnx` under its
+`ladspa/models/` directory. Pass one with `--gtcrn-model` to enable the
+denoiser stage.
 
 ## Common workflows
 
@@ -67,7 +67,7 @@ python scripts/calibrate/score_pair.py --processed <cache>/calibration/signals/l
 
 ```bash
 python scripts/calibrate/run_sweep.py \
-    --gtcrn-model /home/bruno/codigo-pacotes/multimidia/gtcrn-ladspa/ladspa/models/gtcrn_dns3_simple.onnx
+    --gtcrn-model path/to/gtcrn-ladspa/ladspa/models/gtcrn_dns3_simple.onnx
 ```
 
 Output: `<cache>/calibration/reports/report.{csv,md}`. Report ranks

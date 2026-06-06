@@ -62,10 +62,10 @@ rustPlatform.buildRustPackage {
     install -m644 usr/share/biglinux-microphone/illustrations/*.svg \
       "$out/share/biglinux-microphone/illustrations/"
 
-    install -Dm644 usr/share/plasma/plasmoids/org.biglinux.micnoise/metadata.json \
-      "$out/share/plasma/plasmoids/org.biglinux.micnoise/metadata.json"
-    install -Dm644 usr/share/plasma/plasmoids/org.biglinux.micnoise/contents/ui/main.qml \
-      "$out/share/plasma/plasmoids/org.biglinux.micnoise/contents/ui/main.qml"
+    install -Dm644 usr/share/plasma/plasmoids/br.com.biglinux.micnoise/metadata.json \
+      "$out/share/plasma/plasmoids/br.com.biglinux.micnoise/metadata.json"
+    install -Dm644 usr/share/plasma/plasmoids/br.com.biglinux.micnoise/contents/ui/main.qml \
+      "$out/share/plasma/plasmoids/br.com.biglinux.micnoise/contents/ui/main.qml"
 
     for mo in build-locale/*/LC_MESSAGES/*.mo; do
       install -Dm644 "$mo" "$out/share/''${mo#build-}"

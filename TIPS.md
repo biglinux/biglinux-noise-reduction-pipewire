@@ -1,12 +1,12 @@
 # PipeWire / WirePlumber — distro tuning research notes
 
-Pesquisa para validar config padrão do BigLinux. Fontes: PipeWire
+Research validating the BigLinux default config. Sources: PipeWire
 upstream docs, WirePlumber 0.5 docs, Gentoo wiki, ArchWiki (via cache),
-upstream `pipewire.conf.in`. Datado 2026-04-29.
+upstream `pipewire.conf.in`. Dated 2026-04-29.
 
-## 1 — Defaults oficiais upstream (pipewire.conf.in)
+## 1 — Official upstream defaults (pipewire.conf.in)
 
-Todos COMENTADOS no template — PipeWire usa internos quando ausentes:
+All COMMENTED OUT in the template — PipeWire uses internal values when absent:
 
 ```
 #default.clock.rate          = 48000
@@ -18,16 +18,16 @@ Todos COMENTADOS no template — PipeWire usa internos quando ausentes:
 #default.clock.quantum-floor = 4
 ```
 
-**Implicações:**
+**Implications:**
 - `quantum` default = 1024 (~21ms @ 48k)
-- `max-quantum` = 2048 (teto driver)
-- `quantum-limit` = 8192 (buffer pool absoluto, separado de max-quantum)
-- `allowed-rates` = só 48000 (sem rate-switching)
-- `quantum-floor` = 4 (mínimo absoluto pra pro-audio extremo)
+- `max-quantum` = 2048 (driver ceiling)
+- `quantum-limit` = 8192 (absolute buffer pool, separate from max-quantum)
+- `allowed-rates` = 48000 only (no rate-switching)
+- `quantum-floor` = 4 (absolute minimum for extreme pro-audio)
 
 Source: `https://github.com/PipeWire/pipewire/blob/master/src/daemon/pipewire.conf.in`
 
-## 2 — `api.alsa.headroom` — guidance oficial vs empírico
+## 2 — `api.alsa.headroom` — official vs empirical guidance
 
 **Upstream WirePlumber 0.5 docs**: `"In most cases this can be set
 to 0. For very bad devices or emulated devices (like in a VM) it might
@@ -35,99 +35,99 @@ be necessary to increase the headroom value."`
 
 Default = 0.
 
-**ArchWiki / fórum / blog reports observados:**
-- VM com stutter: `headroom = 8192`
-- USB Audio com problema: `headroom = 8704` (caso extremo)
-- Pro-audio USB: `headroom = 0` (sem slack)
+**ArchWiki / forum / blog reports observed:**
+- VM with stutter: `headroom = 8192`
+- USB Audio with issues: `headroom = 8704` (extreme case)
+- Pro-audio USB: `headroom = 0` (no slack)
 
-**Empírico BigLinux (Task #29, sessão anterior):**
-- Single-clock pwloader + headroom 1024 = zero resync sob 4 streams Chrome + AEC ativo
-- Sem headroom = resync intermitente
-- 1024 funcionou tanto USB quanto PCI/HDA quanto BT
+**BigLinux empirical (Task #29, previous session):**
+- Single-clock pwloader + headroom 1024 = zero resync under 4 Chrome streams + AEC active
+- Without headroom = intermittent resync
+- 1024 worked on USB as well as PCI/HDA and BT
 
-**Conclusão:**
-- Upstream subestima necessidade real em consumer hardware multi-stream
-- Mas headroom = 1024 para PCI/HDA pode ser overkill (PCI tem IRQ estável)
-- Strategy: split por classe — PCI menor que USB
+**Conclusion:**
+- Upstream underestimates real-world need on multi-stream consumer hardware
+- But headroom = 1024 for PCI/HDA may be overkill (PCI has stable IRQ)
+- Strategy: split by class — PCI lower than USB
 
 Source: `https://pipewire.pages.freedesktop.org/wireplumber/daemon/configuration/alsa.html`
 
-## 3 — Bluetooth defaults oficiais
+## 3 — Bluetooth official defaults
 
-WirePlumber 0.5 já liga por padrão:
+WirePlumber 0.5 already enables by default:
 - `bluez5.enable-msbc = true` (HFP wideband)
 - `bluez5.enable-sbc-xq = true` (A2DP high quality)
 - `bluez5.enable-hw-volume = true`
-- `bluez5.hfphsp-backend = native` (moderno, vs ofono legado)
+- `bluez5.hfphsp-backend = native` (modern, vs legacy ofono)
 - Roles: `[ a2dp_sink a2dp_source bap_sink bap_source hfp_hf hfp_ag ]`
 
-**Compatibilidade:** alguns headsets (Sony WH-1000XM3) quebram com HSP+HFP simultâneo. Por isso default só HFP.
+**Compatibility:** some headsets (Sony WH-1000XM3) break with simultaneous HSP+HFP. That is why the default is HFP only.
 
-**Não existe `api.bluez5.headroom` documentado.** Lever real para
-absorver jitter BT é `node.latency` direto no node BT, ou
-`node.latency-offset-msec` (este último específico MIDI).
+**No documented `api.bluez5.headroom`.** The real lever to absorb
+BT jitter is `node.latency` directly on the BT node, or
+`node.latency-offset-msec` (the latter is MIDI-specific).
 
-**Implicação:**
-- Não redeclarar `enable-msbc`/`enable-sbc-xq` — redundante
-- Lever certo = `node.latency = "2048/48000"` em `~bluez_*` nodes
-- `session.suspend-timeout-seconds = 0` em BT evita reconnect-delay (custo: BT controller fica acordado)
+**Implication:**
+- Do not redeclare `enable-msbc`/`enable-sbc-xq` — redundant
+- Correct lever = `node.latency = "2048/48000"` on `~bluez_*` nodes
+- `session.suspend-timeout-seconds = 0` on BT avoids reconnect-delay (cost: BT controller stays awake)
 
 Source: `https://pipewire.pages.freedesktop.org/wireplumber/daemon/configuration/bluetooth.html`
 
-## 4 — `default.clock.allowed-rates` — armadilha
+## 4 — `default.clock.allowed-rates` — the trap
 
-Docs oficiais: `"It is possible to specify up to 32 alternative
+Official docs: `"It is possible to specify up to 32 alternative
 sample rates. The graph sample rate will be switched when devices
 are idle."`
 
 **Trade-off:**
-- `[ 48000 ]` (default) = sem switch, resampler em fontes 44.1k = +CPU
-- `[ 44100 48000 ]` = switch quando idle, custo de reconfigurar todos os
-  filtros + drivers cada vez que streams mudam dominância
-- `[ 192000 48000 44100 ]` (Gentoo wiki) = audiophile, requer kernel ≥5.16
-  por bugs de driver, em consumer pode disparar bugs HDA
+- `[ 48000 ]` (default) = no switch, resampler on 44.1k sources = +CPU
+- `[ 44100 48000 ]` = switch when idle, cost of reconfiguring all
+  filters + drivers every time the dominant stream changes
+- `[ 192000 48000 44100 ]` (Gentoo wiki) = audiophile, requires kernel ≥5.16
+  due to driver bugs; on consumer hardware can trigger HDA bugs
 
-**Implicação BigLinux:**
-- Distro com milhares de máquinas heterogêneas
-- Filter chain (denoiser ONNX) processa em 48k — switching p/ 44.1k força
-  resampler antes do GTCRN, custo CPU + qualidade
-- Manter `[ 48000 ]` (upstream default) é mais seguro
-- 44.1k music streams resamplam (custo trivial em CPU moderna, ~1% overhead)
+**BigLinux implication:**
+- Distro spanning thousands of heterogeneous machines
+- Filter chain (ONNX denoiser) processes at 48k — switching to 44.1k forces
+  a resampler before GTCRN, costing CPU + quality
+- Keeping `[ 48000 ]` (upstream default) is safer
+- 44.1k music streams resample (trivial CPU cost, ~1% overhead)
 
-## 5 — Quantum effects — síntese cross-source
+## 5 — Quantum effects — cross-source synthesis
 
-| Quantum | Latência @48k | Bom para | Ruim para |
-|---------|---------------|----------|-----------|
-| 64-256  | 1.3-5.3 ms    | DAW, jogo, pro-audio | Voice, BT, instabilidade |
-| 512     | 10.6 ms       | Jogo, USB mic capture | BT |
-| 1024    | 21.3 ms       | Voice (default upstream) | BT pesado |
-| 2048    | 42.6 ms       | BT, output filter | Game, sync lip-vídeo limítrofe |
-| 4096+   | 85+ ms        | Render batch  | Tudo interativo |
+| Quantum | Latency @48k | Good for | Bad for |
+|---------|--------------|----------|---------|
+| 64-256  | 1.3-5.3 ms   | DAW, gaming, pro-audio | Voice, BT, instability |
+| 512     | 10.6 ms      | Gaming, USB mic capture | BT |
+| 1024    | 21.3 ms      | Voice (upstream default) | Heavy BT |
+| 2048    | 42.6 ms      | BT, output filter | Gaming, borderline lip-sync video |
+| 4096+   | 85+ ms       | Batch render | Everything interactive |
 
-**Negociação:**
-- Apps especificam `node.latency = "N/SR"` ou `PIPEWIRE_QUANTUM=N`
-- Daemon escolhe maior entre clientes do graph (nó mais lento dita)
-- Default só importa quando NENHUM cliente especifica
+**Negotiation:**
+- Apps specify `node.latency = "N/SR"` or `PIPEWIRE_QUANTUM=N`
+- Daemon picks the largest among graph clients (slowest node dictates)
+- The default only matters when NO client specifies one
 
 **Field reports (Gentoo wiki):**
-- `default.clock.min-quantum = 2048` para casos crackling extremos
+- `default.clock.min-quantum = 2048` for extreme crackling cases
 - "keep increasing the quantum value until you get no crackles"
 
 ## 6 — RT scheduling
 
-- Grupo `pipewire` → permissão RT (preferido)
+- `pipewire` group → RT permission (preferred)
 - Fallback: RTKit (`/etc/security/limits.d/`)
-- `LimitMEMLOCK=infinity` em service crítico (JACK clients, filter-chain)
-- Sem MEMLOCK → page faults provocam xrun (page fault em 21ms quantum =
-  metade do budget perdido em kernel time)
+- `LimitMEMLOCK=infinity` on critical services (JACK clients, filter-chain)
+- Without MEMLOCK → page faults cause xruns (a page fault in a 21ms quantum =
+  half the budget lost to kernel time)
 
 ## 7 — Stream-role tuning (`media.role`)
 
-WirePlumber 0.5 reconhece roles padrão:
+WirePlumber 0.5 recognizes the standard roles:
 - `Movie`, `Music`, `Game`, `Communication`, `Notification`, `Production`
 
-Stream rules podem aplicar `node.latency` por role. Apps modernos setam
-`media.role` corretamente (Chromium, Discord, Firefox, GStreamer).
+Stream rules can apply `node.latency` per role. Modern apps set
+`media.role` correctly (Chromium, Discord, Firefox, GStreamer).
 
 ## 8 — `monitor.*.rules` syntax (WirePlumber 0.5)
 
@@ -148,33 +148,33 @@ monitor.alsa.rules = [
 ```
 
 - Tilde `~` = regex
-- Múltiplos matches no mesmo bloco = OR
-- Múltiplos blocos = aplicam independente
-- `priority.session` em rule permite override (não pesquisei detalhes)
+- Multiple matches in the same block = OR
+- Multiple blocks = apply independently
+- `priority.session` in a rule allows override (details not researched)
 
 ## 9 — Pro-audio profile
 
-WirePlumber 0.5 detecta automaticamente perfil "Pro Audio" do device e
-aplica config diferente (sem ACP, period-size baixo, headroom 0). Manual
-override pode conflitar — **deixar upstream gerenciar**.
+WirePlumber 0.5 automatically detects a device's "Pro Audio" profile and
+applies a different config (no ACP, low period-size, headroom 0). A manual
+override may conflict — **let upstream manage it**.
 
-## 10 — Pitfalls observados
+## 10 — Observed pitfalls
 
-1. **Rate switching breaks plugins**: filter-chain/echo-cancel reload em
-   cada switch. Manter rate fixo se houver chain ativo.
-2. **`allowed-rates` com 192k em HDA bugado** = stutter perpétuo.
-3. **Headroom alto em pro-audio** = quebra sincronização externa (JACK).
-4. **`bluez5.headroom` não existe** — confundir com node.latency é erro.
-5. **Múltiplos drop-ins com mesma key** = último vence (ordem alfabética).
-6. **Memlock missing** = xruns invisíveis a olho cru, só em pw-top ERR.
+1. **Rate switching breaks plugins**: filter-chain/echo-cancel reload on
+   every switch. Keep the rate fixed if a chain is active.
+2. **`allowed-rates` with 192k on a buggy HDA** = perpetual stutter.
+3. **High headroom on pro-audio** = breaks external sync (JACK).
+4. **`bluez5.headroom` does not exist** — confusing it with node.latency is an error.
+5. **Multiple drop-ins with the same key** = last one wins (alphabetical order).
+6. **Missing memlock** = xruns invisible to the naked eye, only in pw-top ERR.
 
 ---
 
-# Validação da config proposta
+# Validation of the proposed config
 
 ## Tier 1 — Daemon defaults
 
-Original proposto:
+Originally proposed:
 ```
 default.clock.quantum       = 2048
 default.clock.min-quantum   = 32
@@ -183,48 +183,48 @@ default.clock.quantum-limit = 8192
 default.clock.allowed-rates = [ 44100 48000 ]
 ```
 
-**Verificação:**
+**Verification:**
 
-| Setting | Proposto | Upstream | Veredicto |
-|---------|----------|----------|-----------|
-| `quantum` | 2048 | 1024 | OK — bump justificado por field reports BT |
-| `min-quantum` | 32 | 32 | OK — explicit é melhor que implícito |
-| `max-quantum` | 8192 | 2048 | **REJEITAR** — pesquisa anterior já mostrou WebRTC AEC quebra >2048; manter 2048 |
-| `quantum-limit` | 8192 | 8192 | OK — buffer pool, sem efeito visível |
-| `allowed-rates` | `[44100 48000]` | `[48000]` | **REJEITAR** — switching reconfigura filter chain, custo > ganho |
+| Setting | Proposed | Upstream | Verdict |
+|---------|----------|----------|---------|
+| `quantum` | 2048 | 1024 | OK — bump justified by BT field reports |
+| `min-quantum` | 32 | 32 | OK — explicit is better than implicit |
+| `max-quantum` | 8192 | 2048 | **REJECT** — prior research already showed WebRTC AEC breaks >2048; keep 2048 |
+| `quantum-limit` | 8192 | 8192 | OK — buffer pool, no visible effect |
+| `allowed-rates` | `[44100 48000]` | `[48000]` | **REJECT** — switching reconfigures the filter chain, cost > gain |
 
-**Revisão Tier 1:**
+**Tier 1 revision:**
 ```
 default.clock.quantum       = 2048
 default.clock.min-quantum   = 32
 default.clock.max-quantum   = 2048
 default.clock.quantum-limit = 8192
-# allowed-rates NÃO redefinido — manter upstream [ 48000 ]
+# allowed-rates NOT redefined — keep upstream [ 48000 ]
 ```
 
 ## Tier 2 — ALSA headroom
 
-Original proposto:
+Originally proposed:
 - PCI/HDA: 256
 - USB: 1024
-- BT: removido
+- BT: removed
 
-**Verificação:**
-- Upstream guidance = 0 default. Override só com justificativa.
-- Empírico BigLinux = 1024 funcionou bem em todas classes (anterior).
-- ArchWiki = casos USB precisaram 8704 (extremos).
-- PCI/HDA com IRQ estável → 256 plausível, mas não testado vs 0.
+**Verification:**
+- Upstream guidance = 0 default. Override only with justification.
+- BigLinux empirical = 1024 worked well across all classes (previous).
+- ArchWiki = some USB cases needed 8704 (extremes).
+- PCI/HDA with stable IRQ → 256 plausible, but not tested vs 0.
 
-**Veredicto:** proposta razoável, MAS sem teste empírico do 256 em PCI.
-Conservador: manter atual (1024 para todos USB+PCI+BT, já validado por
-field test) ATÉ ter dados específicos de regressão em PCI com 1024.
+**Verdict:** reasonable proposal, BUT no empirical test of 256 on PCI.
+Conservative: keep current (1024 for all USB+PCI+BT, already validated by
+field test) UNTIL there is specific regression data for PCI with 1024.
 
-**Revisão Tier 2:** manter `61-biglinux-alsa-headroom.conf` como está
-(1024 generalizado), mas remover BT do match (BT usa lever diferente).
+**Tier 2 revision:** keep `61-biglinux-alsa-headroom.conf` as is
+(1024 generalized), but remove BT from the match (BT uses a different lever).
 
 ## Tier 3 — Bluetooth
 
-Original proposto:
+Originally proposed:
 ```
 bluez5.enable-msbc      = true
 bluez5.enable-sbc-xq    = true
@@ -233,13 +233,13 @@ api.bluez5.headroom     = 8
 node.latency            = "2048/48000"
 ```
 
-**Verificação:**
-- `enable-msbc`, `enable-sbc-xq`, `enable-hw-volume` = todos true por
-  default em WirePlumber 0.5. **Redundante.**
-- `api.bluez5.headroom` = não existe na documentação. **Inválido.**
-- `node.latency = "2048/48000"` = válido, lever correto.
+**Verification:**
+- `enable-msbc`, `enable-sbc-xq`, `enable-hw-volume` = all true by
+  default in WirePlumber 0.5. **Redundant.**
+- `api.bluez5.headroom` = not in the documentation. **Invalid.**
+- `node.latency = "2048/48000"` = valid, correct lever.
 
-**Revisão Tier 3:** simplificar drasticamente.
+**Tier 3 revision:** simplify drastically.
 ```
 node.rules = [
   {
@@ -257,113 +257,113 @@ node.rules = [
 
 ## Tier 4 — Pro-audio
 
-Original proposto: rule manual com `headroom=0`, `period-size=256`.
+Originally proposed: a manual rule with `headroom=0`, `period-size=256`.
 
-**Veredicto:** **DROP.** WirePlumber 0.5 detecta perfil pro-audio e
-aplica config diferente automaticamente. Override manual = conflito
-potencial sem benefício comprovado.
+**Verdict:** **DROP.** WirePlumber 0.5 detects the pro-audio profile and
+applies a different config automatically. Manual override = potential
+conflict with no proven benefit.
 
 ## Tier 5 — Stream roles
 
-Original proposto:
+Originally proposed:
 - Communication → 1024
 - Game → 512
 
-**Verificação:** sintaxe `stream.rules` + `media.role` matching válida em
-WirePlumber 0.5. Apps modernos (Chromium, Discord, jogos via SDL_mixer)
-setam role corretamente.
+**Verification:** `stream.rules` + `media.role` matching syntax valid in
+WirePlumber 0.5. Modern apps (Chromium, Discord, games via SDL_mixer)
+set the role correctly.
 
-**Veredicto:** OK, manter.
+**Verdict:** OK, keep.
 
 ---
 
-# Config final validada
+# Final validated config
 
-## Arquivos a shippar
+## Files to ship
 
 1. `usr/share/pipewire/pipewire.conf.d/50-biglinux-defaults.conf`
    - quantum=2048, min=32, max=2048, limit=8192
-   - SEM allowed-rates override
+   - NO allowed-rates override
 
 2. `usr/share/wireplumber/wireplumber.conf.d/61-biglinux-alsa-headroom.conf`
-   - Manter atual (USB+PCI 1024)
-   - REMOVER match `~bluez_*` (BT vai pra arquivo dedicado)
+   - Keep current (USB+PCI 1024)
+   - REMOVE the `~bluez_*` match (BT goes to a dedicated file)
 
-3. `usr/share/wireplumber/wireplumber.conf.d/62-biglinux-bluetooth.conf` (NOVO)
-   - `node.latency = "2048/48000"` em bluez_input/output
+3. `usr/share/wireplumber/wireplumber.conf.d/62-biglinux-bluetooth.conf` (NEW)
+   - `node.latency = "2048/48000"` on bluez_input/output
    - `session.suspend-timeout-seconds = 0`
 
-4. `usr/share/wireplumber/wireplumber.conf.d/64-biglinux-stream-roles.conf` (NOVO)
+4. `usr/share/wireplumber/wireplumber.conf.d/64-biglinux-stream-roles.conf` (NEW)
    - Communication → 1024
    - Game → 512
 
-## Drop do plano original
+## Dropped from the original plan
 
-- Tier 4 (pro-audio) — sem evidence, deixar upstream
-- `allowed-rates` change — risco > benefício
-- `max-quantum = 8192` — quebra AEC
-- `enable-msbc/sbc-xq/hw-volume` — já default
-- `api.bluez5.headroom` — não existe
+- Tier 4 (pro-audio) — no evidence, leave to upstream
+- `allowed-rates` change — risk > benefit
+- `max-quantum = 8192` — breaks AEC
+- `enable-msbc/sbc-xq/hw-volume` — already default
+- `api.bluez5.headroom` — does not exist
 
 ---
 
 # Sources
 
-- PipeWire upstream conf template (autoritativo): `https://github.com/PipeWire/pipewire/blob/master/src/daemon/pipewire.conf.in`
+- PipeWire upstream conf template (authoritative): `https://github.com/PipeWire/pipewire/blob/master/src/daemon/pipewire.conf.in`
 - pipewire.conf(5): `https://docs.pipewire.org/page_man_pipewire_conf_5.html`
 - WirePlumber ALSA: `https://pipewire.pages.freedesktop.org/wireplumber/daemon/configuration/alsa.html`
 - WirePlumber Bluetooth: `https://pipewire.pages.freedesktop.org/wireplumber/daemon/configuration/bluetooth.html`
 - Gentoo PipeWire: `https://wiki.gentoo.org/wiki/PipeWire/en`
 - Gentoo WirePlumber: `https://wiki.gentoo.org/wiki/WirePlumber`
-- Arch fórum (issues debugging quantum): `https://bbs.archlinux.org/viewtopic.php?id=277949`
+- Arch forum (quantum debugging issues): `https://bbs.archlinux.org/viewtopic.php?id=277949`
 
-ArchWiki principal bloqueado por WebFetch (Anubis anti-bot), porém
-acessível via curl direto com User-Agent de browser real.
+The main ArchWiki is blocked by WebFetch (Anubis anti-bot), but
+accessible via a direct curl with a real browser User-Agent.
 
 ---
 
-# Apêndice — ArchWiki PipeWire/WirePlumber findings (acesso via curl)
+# Appendix — ArchWiki PipeWire/WirePlumber findings (accessed via curl)
 
-## A1 — `default.clock.rate` change DESACONSELHADA
+## A1 — `default.clock.rate` change DISCOURAGED
 
 ArchWiki: `"This, however, isn't recommended as this will affect
 latencies as the quantum values aren't re-calculated automatically. You
 will have to change these yourself if you want to preserve the same
 ratio."`
 
-Implicação: mexer em rate força usuário a recalcular quantums manualmente.
-Manter 48000 default.
+Implication: changing the rate forces the user to recompute quantums manually.
+Keep 48000 default.
 
-## A2 — `default.clock.allowed-rates` — recomendação ArchWiki
+## A2 — `default.clock.allowed-rates` — ArchWiki recommendation
 
 ```
 default.clock.allowed-rates = [ 44100 88200 176400 48000 96000 192000 ]
 ```
 
-Atende família CD (44.1k múltiplos) + DVD (48k múltiplos). Lossless quando
-DAC suporta + única stream playing.
+Covers the CD family (44.1k multiples) + DVD (48k multiples). Lossless when
+the DAC supports it + a single stream is playing.
 
 **Caveats:**
 - "Ensure that your player is the only stream playing or resampling may
   occur as everything else is resampled to match the sample rate of the
   main graph"
-- DAC precisa anunciar rates corretamente; HDA bugados não relatam
-- Switch de rate força reconfigurar TODAS as nodes/filtros do graph
-- **Para BigLinux com filter-chain ativo (denoiser):** switch quebra
-  pipeline brevemente. Trade-off: lossless audiophile vs estabilidade
-  voz/call. Voz vence (caso de uso primário do pacote).
+- The DAC must advertise rates correctly; buggy HDA does not report them
+- A rate switch forces reconfiguring ALL nodes/filters in the graph
+- **For BigLinux with an active filter-chain (denoiser):** a switch briefly
+  breaks the pipeline. Trade-off: audiophile lossless vs voice/call
+  stability. Voice wins (the package's primary use case).
 
-**Decisão:** manter `[ 48000 ]` (upstream default). Audiophile pode override
-em `~/.config/pipewire/pipewire.conf.d/`.
+**Decision:** keep `[ 48000 ]` (upstream default). Audiophiles can override
+in `~/.config/pipewire/pipewire.conf.d/`.
 
-## A3 — Multi-stream cutout fix (ArchWiki autoritativo)
+## A3 — Multi-stream cutout fix (authoritative ArchWiki)
 
 `"Audio cutting out when multiple streams start playing"` → log signature:
 ```
 pulse-server: UNDERFLOW channel:0 offset:N underrun:M
 ```
 
-Fix oficial ArchWiki:
+Official ArchWiki fix:
 ```
 monitor.alsa.rules = [
   {
@@ -376,20 +376,20 @@ monitor.alsa.rules = [
 ]
 ```
 
-**Comparação com nossa config atual:**
-- Nós: `headroom = 1024` (USB+PCI+BT, sem `period-size` override)
-- ArchWiki: `headroom = 8192` + `period-size = 1024` (só output)
+**Comparison with our current config:**
+- Us: `headroom = 1024` (USB+PCI+BT, no `period-size` override)
+- ArchWiki: `headroom = 8192` + `period-size = 1024` (output only)
 
-ArchWiki é mais agressivo (170ms slack vs nossos 21ms). Justificativa
-provável: cobre casos extremos sem perfil de hardware.
+ArchWiki is more aggressive (170ms slack vs our 21ms). Likely
+justification: covers extreme cases without a hardware profile.
 
-**Decisão BigLinux:**
-- Manter 1024 (validado empiricamente Task #29 sem cutouts em PCI+USB)
-- 8192 introduziria 170ms latência audível em voz — inaceitável pro caso
-  de uso primário (denoiser pra calls)
-- Documentar override pra usuário com hardware ruim
+**BigLinux decision:**
+- Keep 1024 (validated empirically in Task #29 with no cutouts on PCI+USB)
+- 8192 would introduce 170ms of audible latency on voice — unacceptable for
+  the primary use case (denoiser for calls)
+- Document an override for users with bad hardware
 
-## A4 — Bluetooth — config oficial ArchWiki
+## A4 — Bluetooth — official ArchWiki config
 
 ```
 /etc/wireplumber/wireplumber.conf.d/bluez-config.conf
@@ -401,10 +401,10 @@ monitor.bluez.properties = {
 }
 ```
 
-**Importante:** ArchWiki usa `monitor.bluez.properties` (global), não
-`monitor.bluez.rules` (per-device). Para enables globais isso é correto.
+**Important:** ArchWiki uses `monitor.bluez.properties` (global), not
+`monitor.bluez.rules` (per-device). For global enables this is correct.
 
-Rules para per-device (suspension, latency):
+Rules for per-device (suspension, latency):
 ```
 monitor.bluez.rules = [
   {
@@ -419,11 +419,11 @@ monitor.bluez.rules = [
 ]
 ```
 
-## A5 — Pop/crack ao iniciar playback — node suspension
+## A5 — Pop/crack at playback start — node suspension
 
 ArchWiki: `"This is caused by node suspension when inactive."`
 
-Fix recomendado (ArchWiki direto):
+Recommended fix (ArchWiki directly):
 ```
 monitor.alsa.rules = [
   {
@@ -438,16 +438,16 @@ monitor.alsa.rules = [
 ]
 ```
 
-Mesmo bloco aplicado a `~bluez_*` nodes.
+Same block applied to `~bluez_*` nodes.
 
-**Observação avançada:** alguns devices fazem detecção própria de silêncio
-e suspendem mesmo com `suspend-timeout-seconds = 0`. Workaround:
+**Advanced note:** some devices do their own silence detection and
+suspend even with `suspend-timeout-seconds = 0`. Workaround:
 ```
 dither.method = "wannamaker3"
 dither.noise  = 2
 ```
 
-## A6 — RT/memlock — fix ArchWiki
+## A6 — RT/memlock — ArchWiki fix
 
 ```
 /etc/security/limits.d/<user>.conf
@@ -456,16 +456,16 @@ dither.noise  = 2
 <user>   hard   memlock   128
 ```
 
-Fix para `RTKit error: org.freedesktop.DBus.Error.AccessDenied`. Distros
-geralmente entregam via grupo `realtime` (BigLinux já tem `realtime-privileges`
-no base).
+Fix for `RTKit error: org.freedesktop.DBus.Error.AccessDenied`. Distros
+usually deliver this via the `realtime` group (BigLinux already has
+`realtime-privileges` in base).
 
-## A7 — Suspend bug rtkit (crackling após resume)
+## A7 — rtkit suspend bug (crackling after resume)
 
 ArchWiki: `"Due to a bug from 2011 in rtkit, suspend events cause
 PipeWire's realtime priority to be revoked and not restored."`
 
-Fix oficial:
+Official fix:
 ```
 /etc/systemd/system/rtkit-daemon.service.d/override.conf
 
@@ -474,10 +474,10 @@ ExecStart=
 ExecStart=/usr/lib/rtkit-daemon --no-canary
 ```
 
-**Decisão BigLinux:** considerar shippar este drop-in no metapacote base
-(fora do escopo deste pacote).
+**BigLinux decision:** consider shipping this drop-in in the base
+metapackage (out of scope for this package).
 
-## A8 — Min quantum 700+ pra Discord notifications
+## A8 — Min quantum 700+ for Discord notifications
 
 ```
 pulse.rules = [
@@ -490,7 +490,7 @@ pulse.rules = [
 ]
 ```
 
-Específico Discord. Não generalizar — só se usuário relatar.
+Discord-specific. Do not generalize — only if a user reports it.
 
 ## A9 — Bluetooth log signature (ArchWiki)
 
@@ -498,7 +498,7 @@ Específico Discord. Não generalizar — só se usuário relatar.
 (bluez_input.X.a2dp-sink-Y) client too slow! rate:512/48000 pos:N status:triggered
 ```
 
-Sintoma: stuttering BT. Fix: trocar codec ou habilitar SBC-XQ/mSBC.
+Symptom: BT stuttering. Fix: switch codec or enable SBC-XQ/mSBC.
 
 ## A10 — Sony WH-1000XM3 quirk
 
@@ -506,24 +506,24 @@ Sintoma: stuttering BT. Fix: trocar codec ou habilitar SBC-XQ/mSBC.
 than SBC/SBC-XQ if 'Sound Quality Mode' is set to 'Priority On Stable
 Connection' instead of 'Prioritize Sound Quality' in the companion app."`
 
-Setting de hardware, não de software. Documentar em FAQ se relevante.
+A hardware setting, not software. Document in an FAQ if relevant.
 
 ---
 
-# Revisão final pós-ArchWiki
+# Final revision post-ArchWiki
 
-Mudanças vs config validada anterior:
+Changes vs the previously validated config:
 
-| Item | Antes | Pós-ArchWiki | Razão |
-|------|-------|--------------|-------|
-| `enable-msbc/sbc-xq` | Skip (já default) | **Set explicit** | ArchWiki autoritativo seta explícito; defesa em profundidade pra versões antigas WP |
-| Suspension fix | Só BT | **ALSA + BT** | ArchWiki documenta pop/crack em ALSA também |
-| Allowed-rates | Manter `[48000]` | Manter `[48000]` | ArchWiki sugere lossless, mas conflita com filter-chain ativo |
-| Headroom value | 1024 (USB+PCI) | 1024 (manter) | ArchWiki sugere 8192 mas latência inaceitável; nosso 1024 já validado |
-| `period-size` | Não setar | Não setar | ArchWiki seta junto, mas só pra output cutout extremo; not needed |
-| `monitor.bluez.properties` | Não usado | **Usar pra codec enables globais** | ArchWiki canônico — properties global vs rules per-device |
+| Item | Before | Post-ArchWiki | Reason |
+|------|--------|---------------|--------|
+| `enable-msbc/sbc-xq` | Skip (already default) | **Set explicit** | Authoritative ArchWiki sets it explicit; defense in depth for old WP versions |
+| Suspension fix | BT only | **ALSA + BT** | ArchWiki documents pop/crack on ALSA too |
+| Allowed-rates | Keep `[48000]` | Keep `[48000]` | ArchWiki suggests lossless, but it conflicts with an active filter-chain |
+| Headroom value | 1024 (USB+PCI) | 1024 (keep) | ArchWiki suggests 8192 but latency unacceptable; our 1024 already validated |
+| `period-size` | Do not set | Do not set | ArchWiki sets it alongside, but only for extreme output cutout; not needed |
+| `monitor.bluez.properties` | Not used | **Use for global codec enables** | Canonical ArchWiki — properties global vs rules per-device |
 
-## Config final pós-ArchWiki
+## Final config post-ArchWiki
 
 ### `50-biglinux-defaults.conf` (PipeWire daemon)
 
@@ -539,7 +539,7 @@ context.properties = {
 }
 ```
 
-### `61-biglinux-alsa-headroom.conf` (manter atual, refatorar match)
+### `61-biglinux-alsa-headroom.conf` (keep current, refactor match)
 
 ```
 monitor.alsa.rules = [
@@ -549,27 +549,27 @@ monitor.alsa.rules = [
       { node.name = "~alsa_output.usb-.*" }
       { node.name = "~alsa_input.pci-.*" }
       { node.name = "~alsa_output.pci-.*" }
-      # bluez removido — gerenciado em 62-biglinux-bluetooth.conf
+      # bluez removed — managed in 62-biglinux-bluetooth.conf
     ]
     actions = update-props = {
       api.alsa.headroom = 1024
-      session.suspend-timeout-seconds = 0   # NOVO — ArchWiki fix pop/crack
+      session.suspend-timeout-seconds = 0   # NEW — ArchWiki pop/crack fix
     }
   }
 ]
 ```
 
-### `62-biglinux-bluetooth.conf` (NOVO)
+### `62-biglinux-bluetooth.conf` (NEW)
 
 ```
-# Codec enables globais — sintaxe ArchWiki autoritativa.
+# Global codec enables — authoritative ArchWiki syntax.
 monitor.bluez.properties = {
     bluez5.enable-sbc-xq = true
     bluez5.enable-msbc   = true
 }
 
-# Per-node tuning — latência maior absorve burst BT, suspend off
-# evita reconnect-delay.
+# Per-node tuning — higher latency absorbs BT bursts, suspend off
+# avoids reconnect-delay.
 monitor.bluez.rules = [
   {
     matches = [
@@ -584,7 +584,7 @@ monitor.bluez.rules = [
 ]
 ```
 
-### `64-biglinux-stream-roles.conf` (NOVO, opcional)
+### `64-biglinux-stream-roles.conf` (NEW, optional)
 
 ```
 stream.rules = [
@@ -599,72 +599,72 @@ stream.rules = [
 ]
 ```
 
-### Drop-ins NÃO incluídos (mas documentados)
+### Drop-ins NOT included (but documented)
 
-- `default.clock.allowed-rates` audiophile — só se demanda concreta
-- Suspension dither workaround — só pra HDA específico problemático
-- rtkit `--no-canary` — pertence a metapacote base, não a este
-- Discord min.quantum override — específico app
-- `monitor.bluez.seat-monitoring = disabled` — risco multi-user, skip
+- `default.clock.allowed-rates` audiophile — only on concrete demand
+- Suspension dither workaround — only for specific problematic HDA
+- rtkit `--no-canary` — belongs to the base metapackage, not this one
+- Discord min.quantum override — app-specific
+- `monitor.bluez.seat-monitoring = disabled` — multi-user risk, skip
 
 ---
 
-# Apêndice — Conflitos com config existente no sistema
+# Appendix — Conflicts with existing system config
 
-Inspeção feita em 2026-04-29 numa estação BigLinux dev (não-VM):
+Inspection done 2026-04-29 on a BigLinux dev workstation (non-VM):
 
-## Drop-ins WirePlumber observados
+## WirePlumber drop-ins observed
 
-| Path | Owner | Efeito |
+| Path | Owner | Effect |
 |------|-------|--------|
-| `/usr/share/wireplumber/wireplumber.conf.d/alsa-vm.conf` | `wireplumber 0.5.13-2` | VM-only via `cpu.vm.name` match. Generic VM: headroom=2048. VMware/Oracle: headroom=8192. **Sem conflito em hardware bare metal.** |
-| `/usr/share/wireplumber/wireplumber.conf.d/disable-suspension.conf` | **órfão** (sem owner pacman) | `suspend-timeout=0` em todos `~alsa_*` + `~bluez_*`. Provavelmente residual de pacote antigo. |
-| `/etc/wireplumber/wireplumber.conf.d/51-bluez-config.conf` | `pipewire-biglinux-config 26.03.29-1627` | BT roles completos (a2dp+bap+hsp+hfp), `hfphsp-backend=native`, `auto-connect`, `hw-volume`, `ldac.quality=auto`, `aac.bitratemode=0`, `pause-on-idle=false`, **`suspend-timeout=5`** |
+| `/usr/share/wireplumber/wireplumber.conf.d/alsa-vm.conf` | `wireplumber 0.5.13-2` | VM-only via `cpu.vm.name` match. Generic VM: headroom=2048. VMware/Oracle: headroom=8192. **No conflict on bare metal hardware.** |
+| `/usr/share/wireplumber/wireplumber.conf.d/disable-suspension.conf` | **orphan** (no pacman owner) | `suspend-timeout=0` on all `~alsa_*` + `~bluez_*`. Probably residual from an old package. |
+| `/etc/wireplumber/wireplumber.conf.d/51-bluez-config.conf` | `pipewire-biglinux-config 26.03.29-1627` | Full BT roles (a2dp+bap+hsp+hfp), `hfphsp-backend=native`, `auto-connect`, `hw-volume`, `ldac.quality=auto`, `aac.bitratemode=0`, `pause-on-idle=false`, **`suspend-timeout=5`** |
 
-## Drop-ins PipeWire observados
+## PipeWire drop-ins observed
 
-`/etc/pipewire/pipewire.conf.d/` e `/usr/share/pipewire/pipewire.conf.d/`:
-**vazios**. Sem conflito ao shippar `50-biglinux-defaults.conf`.
+`/etc/pipewire/pipewire.conf.d/` and `/usr/share/pipewire/pipewire.conf.d/`:
+**empty**. No conflict shipping `50-biglinux-defaults.conf`.
 
-## Precedência WirePlumber 0.5
+## WirePlumber 0.5 precedence
 
-1. `/etc/wireplumber/wireplumber.conf.d/` (admin override) — mais alta
-2. `/usr/share/wireplumber/wireplumber.conf.d/` (distro/pacote)
-3. Dentro do mesmo dir: ordem alfabética (último carrega → vence em props duplicadas)
-4. `~/.config/wireplumber/wireplumber.conf.d/` (user) — mais alta de todas
+1. `/etc/wireplumber/wireplumber.conf.d/` (admin override) — highest
+2. `/usr/share/wireplumber/wireplumber.conf.d/` (distro/package)
+3. Within the same dir: alphabetical order (last loaded → wins on duplicate props)
+4. `~/.config/wireplumber/wireplumber.conf.d/` (user) — highest of all
 
-## Conflitos materiais
+## Material conflicts
 
-### Conflito real existente no sistema (não causado por nós)
+### Real conflict already present on the system (not caused by us)
 
-Hoje em sistema BigLinux:
-- `/usr/share/disable-suspension.conf` quer BT `suspend-timeout=0`
-- `/etc/51-bluez-config.conf` quer BT `suspend-timeout=5`
-- `/etc/` vence → **BT efetivo = 5s**
+Today on a BigLinux system:
+- `/usr/share/disable-suspension.conf` wants BT `suspend-timeout=0`
+- `/etc/51-bluez-config.conf` wants BT `suspend-timeout=5`
+- `/etc/` wins → **effective BT = 5s**
 
-ALSA `suspend-timeout=0` aplica (nada em /etc redefine).
+ALSA `suspend-timeout=0` applies (nothing in /etc redefines it).
 
-### Implicação para nossa proposta original
+### Implication for our original proposal
 
-Tier 3 (`62-biglinux-bluetooth.conf` com `suspend-timeout=0`) shippado em
-`/usr/share/` **não surte efeito** — `/etc/51-bluez-config.conf` continua
-vencendo com 5s.
+Tier 3 (`62-biglinux-bluetooth.conf` with `suspend-timeout=0`) shipped in
+`/usr/share/` **has no effect** — `/etc/51-bluez-config.conf` keeps
+winning with 5s.
 
-Tier 3 com `bluez5.enable-msbc/sbc-xq` é **redundante** (defaults WP 0.5
-+ não anulado por /etc/51).
+Tier 3 with `bluez5.enable-msbc/sbc-xq` is **redundant** (WP 0.5 defaults
++ not overridden by /etc/51).
 
-Único valor genuinamente novo: `node.latency = "2048/48000"` em BT nodes.
+The only genuinely new value: `node.latency = "2048/48000"` on BT nodes.
 
-## Decisão final pós-inspeção
+## Final decision post-inspection
 
-### Tier 3 — drop-in BT mínimo
+### Tier 3 — minimal BT drop-in
 
 ```
 # 62-biglinux-microphone-bluetooth.conf
-# Apenas node.latency. Restante dos defaults BT vem de:
+# Only node.latency. The rest of the BT defaults come from:
 #   /etc/wireplumber/wireplumber.conf.d/51-bluez-config.conf
-#     (do pacote pipewire-biglinux-config)
-#   defaults built-in WirePlumber 0.5 (msbc, sbc-xq)
+#     (from the pipewire-biglinux-config package)
+#   built-in WirePlumber 0.5 defaults (msbc, sbc-xq)
 monitor.bluez.rules = [
   {
     matches = [
@@ -678,17 +678,17 @@ monitor.bluez.rules = [
 ]
 ```
 
-### Tier 2 — ALSA headroom (manter atual)
+### Tier 2 — ALSA headroom (keep current)
 
 ```
 # 61-biglinux-alsa-headroom.conf
-# Coexiste com:
+# Coexists with:
 #   /usr/share/disable-suspension.conf (suspend-timeout=0 ALSA — match)
-#   /usr/share/alsa-vm.conf (VM-only override pra headroom maior)
+#   /usr/share/alsa-vm.conf (VM-only override for higher headroom)
 #
-# Em hardware bare metal: nosso headroom=1024 vence (alfabético, último
-# entre arquivos numerados < disable-suspension).
-# Em VM: alsa-vm.conf vence (alfabético, headroom=2048+).
+# On bare metal hardware: our headroom=1024 wins (alphabetical, last
+# among numbered files < disable-suspension).
+# In a VM: alsa-vm.conf wins (alphabetical, headroom=2048+).
 monitor.alsa.rules = [
   {
     matches = [
@@ -704,29 +704,28 @@ monitor.alsa.rules = [
 ]
 ```
 
-(NÃO setar `suspend-timeout=0` aqui — `disable-suspension.conf` já faz
-isso globalmente e tem ordem alfabética maior.)
+(Do NOT set `suspend-timeout=0` here — `disable-suspension.conf` already
+does it globally and has a higher alphabetical order.)
 
 ### Tier 1 — PipeWire daemon defaults
 
-`/etc/pipewire/pipewire.conf.d/` e `/usr/share/pipewire/pipewire.conf.d/`
-vazios. Shippar `50-biglinux-defaults.conf` em `/usr/share/` sem
-risco de conflito.
+`/etc/pipewire/pipewire.conf.d/` and `/usr/share/pipewire/pipewire.conf.d/`
+are empty. Ship `50-biglinux-defaults.conf` in `/usr/share/` with no
+risk of conflict.
 
-### Pendências fora deste pacote
+### Pending items outside this package
 
-1. **`disable-suspension.conf` órfão** — investigar quem criou, decidir
-   se manter ou remover. Não é nosso problema.
-2. **Coordenar com `pipewire-biglinux-config`** — se quiser BT
-   suspend=0, mudar lá em vez de aqui. Discutir com mantenedor.
-3. **Remover Tier 5 (stream roles)** — nada bloqueia, mas é benefício
-   marginal e expande surface area de manutenção. Adiar.
+1. **orphan `disable-suspension.conf`** — investigate who created it, decide
+   whether to keep or remove. Not our problem.
+2. **Coordinate with `pipewire-biglinux-config`** — if BT
+   suspend=0 is wanted, change it there instead of here. Discuss with the maintainer.
+3. **Remove Tier 5 (stream roles)** — nothing blocks it, but it is a
+   marginal benefit and expands the maintenance surface. Defer.
 
-## Decisão final consolidada — 3 arquivos novos
+## Final consolidated decision — 3 new files
 
 1. `usr/share/pipewire/pipewire.conf.d/50-biglinux-defaults.conf`
-2. `usr/share/wireplumber/wireplumber.conf.d/61-biglinux-alsa-headroom.conf` (refatorar do existente)
-3. `usr/share/wireplumber/wireplumber.conf.d/62-biglinux-microphone-bluetooth.conf` (NOVO, mínimo)
+2. `usr/share/wireplumber/wireplumber.conf.d/61-biglinux-alsa-headroom.conf` (refactor from existing)
+3. `usr/share/wireplumber/wireplumber.conf.d/62-biglinux-microphone-bluetooth.conf` (NEW, minimal)
 
-Tier 5 (stream roles) e Tier 4 (pro-audio) descartados.
-
+Tier 5 (stream roles) and Tier 4 (pro-audio) discarded.

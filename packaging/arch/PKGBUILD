@@ -200,10 +200,10 @@ package() {
         "${pkgdir}/usr/share/icons/hicolor/scalable/status/big-noise-reduction-off.svg"
 
     # Plasma 6 system-tray applet
-    install -Dm644 usr/share/plasma/plasmoids/org.biglinux.micnoise/metadata.json \
-        "${pkgdir}/usr/share/plasma/plasmoids/org.biglinux.micnoise/metadata.json"
-    install -Dm644 usr/share/plasma/plasmoids/org.biglinux.micnoise/contents/ui/main.qml \
-        "${pkgdir}/usr/share/plasma/plasmoids/org.biglinux.micnoise/contents/ui/main.qml"
+    install -Dm644 usr/share/plasma/plasmoids/br.com.biglinux.micnoise/metadata.json \
+        "${pkgdir}/usr/share/plasma/plasmoids/br.com.biglinux.micnoise/metadata.json"
+    install -Dm644 usr/share/plasma/plasmoids/br.com.biglinux.micnoise/contents/ui/main.qml \
+        "${pkgdir}/usr/share/plasma/plasmoids/br.com.biglinux.micnoise/contents/ui/main.qml"
 
     # SVG illustrations rendered inside the GTK didactic cards
     install -d "${pkgdir}/usr/share/biglinux-microphone/illustrations"
