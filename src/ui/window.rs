@@ -109,12 +109,22 @@ pub fn build(
     // Rebuild body + header title whenever the mode flips.
     {
         let state = Rc::clone(&state);
-        let header = header.clone();
-        let body = body.clone();
-        let spectrum_container = spectrum_container.clone();
+        // Weak: this closure lives on the switch, itself a descendant of
+        // `header` — strong captures here are a widget⇄closure cycle that
+        // keeps the header/body/spectrum subtrees alive past window close.
+        let header_weak = header.downgrade();
+        let body_weak = body.downgrade();
+        let spectrum_weak = spectrum_container.downgrade();
         mode_picker.switch.connect_active_notify(move |sw| {
             let advanced = sw.is_active();
             state.mutate(|s| s.ui.show_advanced = advanced);
+            let (Some(header), Some(body), Some(spectrum_container)) = (
+                header_weak.upgrade(),
+                body_weak.upgrade(),
+                spectrum_weak.upgrade(),
+            ) else {
+                return;
+            };
             populate_body(
                 &state,
                 &header,
@@ -301,8 +311,21 @@ fn install_window_actions(
     {
         let state = Rc::clone(&state);
         let window_weak = window.downgrade();
+        // Weak widget captures: the exported window action outlives the
+        // widget tree teardown, so strong refs here leak the header/body/
+        // spectrum subtrees after close (found via host embed census).
+        let header_weak = header.downgrade();
+        let body_weak = body.downgrade();
+        let spectrum_weak = spectrum_container.downgrade();
         reset_action.connect_activate(move |_, _| {
             let Some(window) = window_weak.upgrade() else {
+                return;
+            };
+            let (Some(header), Some(body), Some(spectrum_container)) = (
+                header_weak.upgrade(),
+                body_weak.upgrade(),
+                spectrum_weak.upgrade(),
+            ) else {
                 return;
             };
             present_reset_confirmation(&window, &state, &header, &body, &spectrum_container);
@@ -475,9 +498,17 @@ fn install_external_settings_watch(
 /// the GTK main context so every update stays on the UI thread.
 fn bind_spectrum_to_monitor(spectrum: &Rc<Spectrum>, monitor: &Rc<AudioMonitor>) {
     let events = monitor.events();
-    let spectrum = Rc::clone(spectrum);
+    // Weak: a strong capture here is a teardown deadlock — the loop keeps
+    // the spectrum alive until the channel closes, the channel only closes
+    // when the monitor drops, and the monitor is held by closures on the
+    // spectrum's own widget. Embedded (window-close) teardown never breaks
+    // that cycle; standalone never noticed because it exits the process.
+    let spectrum = Rc::downgrade(spectrum);
     MainContext::default().spawn_local(async move {
         while let Ok(evt) = events.recv().await {
+            let Some(spectrum) = spectrum.upgrade() else {
+                break;
+            };
             match evt {
                 MonitorEvent::Frame(frame) => spectrum.push_frame(&frame),
                 MonitorEvent::Fatal(_) => break,
@@ -494,10 +525,20 @@ fn bind_spectrum_to_monitor(spectrum: &Rc<Spectrum>, monitor: &Rc<AudioMonitor>)
 /// invisible toplevel.
 fn bind_monitor_to_spectrum_visibility(spectrum: &Rc<Spectrum>, monitor: &Rc<AudioMonitor>) {
     let widget = spectrum.widget().clone();
-    let monitor_for_map = Rc::clone(monitor);
-    widget.connect_map(move |_| monitor_for_map.set_active(true));
-    let monitor_for_unmap = Rc::clone(monitor);
-    widget.connect_unmap(move |_| monitor_for_unmap.set_active(false));
+    // Weak: these closures live on the spectrum's widget — strong monitor
+    // refs here prevent the embed guard's `Rc::try_unwrap` teardown.
+    let monitor_for_map = Rc::downgrade(monitor);
+    widget.connect_map(move |_| {
+        if let Some(monitor) = monitor_for_map.upgrade() {
+            monitor.set_active(true);
+        }
+    });
+    let monitor_for_unmap = Rc::downgrade(monitor);
+    widget.connect_unmap(move |_| {
+        if let Some(monitor) = monitor_for_unmap.upgrade() {
+            monitor.set_active(false);
+        }
+    });
     // Initial state: a freshly built widget is not yet mapped, so the
     // worker stays active until GTK realises the strip — at which point
     // the `map` signal fires. Pause now so the brief startup window

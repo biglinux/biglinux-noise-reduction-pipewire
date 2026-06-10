@@ -10,6 +10,7 @@
 //!   persistence / reload.
 
 mod app;
+mod embed;
 mod i18n;
 mod state;
 mod views;
@@ -17,4 +18,5 @@ mod widgets;
 mod window;
 
 pub use app::MicrophoneApplication;
+pub use embed::{build_embedded_window, MicrophoneWindowGuard};
 pub use i18n::init_gettext;

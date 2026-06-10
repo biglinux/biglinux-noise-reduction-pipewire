@@ -5,14 +5,15 @@
 //! needs to be translated — the call site doubles as a marker that the
 //! string must appear in `po/POTFILES.in`.
 
-use gettextrs::{gettext, setlocale, LocaleCategory};
+use gettextrs::{dgettext, setlocale, LocaleCategory};
 
 use crate::config::GETTEXT_PACKAGE;
 
-/// Translate a string via gettext.
+/// Translate a string via gettext (domain-explicit, so translation works
+/// both standalone and embedded in a host that owns the default domain).
 #[must_use]
 pub fn i18n(s: &str) -> String {
-    gettext(s)
+    dgettext(GETTEXT_PACKAGE, s)
 }
 
 /// Initialise the gettext locale and text domain.
@@ -23,9 +24,21 @@ pub fn i18n(s: &str) -> String {
 /// installing the crate.
 pub fn init_gettext() {
     setlocale(LocaleCategory::LcAll, "");
+    bind_domain();
+    gettextrs::textdomain(GETTEXT_PACKAGE).expect("textdomain");
+}
+
+/// Embedded boot (multicall host): bind our domain WITHOUT touching the
+/// process-global locale or default text domain — another embedded app may
+/// pin `LC_NUMERIC=C` (ffmpeg float parsing) and own `textdomain()`.
+/// [`i18n`] is domain-explicit, so neither is needed.
+pub fn init_gettext_embedded() {
+    bind_domain();
+}
+
+fn bind_domain() {
     let locale_dir = resolve_locale_dir();
     gettextrs::bindtextdomain(GETTEXT_PACKAGE, locale_dir).expect("bindtextdomain");
-    gettextrs::textdomain(GETTEXT_PACKAGE).expect("textdomain");
 }
 
 /// Prefer the installed catalog; fall back to `<repo>/locale` if the

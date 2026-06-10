@@ -136,10 +136,16 @@ impl Spectrum {
     /// Install the 60 Hz interpolation timer. Called once from `new`.
     fn start_animation(self: &Rc<Self>) {
         let period = Duration::from_millis(u64::from(1000 / ANIMATION_FPS.max(1)));
-        let me = Rc::clone(self);
-        let id = glib::timeout_add_local(period, move || {
-            me.tick();
-            glib::ControlFlow::Continue
+        // Weak, NOT strong: a strong capture in a repeating glib timer keeps
+        // the widget alive forever — `Drop` (which removes the timer) can
+        // never run, so window close leaks the whole spectrum subtree.
+        let weak = Rc::downgrade(self);
+        let id = glib::timeout_add_local(period, move || match weak.upgrade() {
+            Some(me) => {
+                me.tick();
+                glib::ControlFlow::Continue
+            }
+            None => glib::ControlFlow::Break,
         });
         self.timer.set(Some(id));
     }
