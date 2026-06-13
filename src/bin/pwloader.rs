@@ -254,19 +254,17 @@ fn run() -> Result<(), String> {
     }
 
     let weak = main_loop.downgrade();
-    let _sig_int = main_loop.loop_().add_signal_local(Signal::SIGINT, move || {
+    let _sig_int = main_loop.loop_().add_signal_local(Signal::INT, move || {
         if let Some(m) = weak.upgrade() {
             m.quit();
         }
     });
     let weak = main_loop.downgrade();
-    let _sig_term = main_loop
-        .loop_()
-        .add_signal_local(Signal::SIGTERM, move || {
-            if let Some(m) = weak.upgrade() {
-                m.quit();
-            }
-        });
+    let _sig_term = main_loop.loop_().add_signal_local(Signal::TERM, move || {
+        if let Some(m) = weak.upgrade() {
+            m.quit();
+        }
+    });
 
     main_loop.run();
     Ok(())

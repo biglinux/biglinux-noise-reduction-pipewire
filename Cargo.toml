@@ -46,7 +46,7 @@ serde_json = "1"
 
 # Logging
 log = "0.4"
-pretty_env_logger = "0.5"
+env_logger = "0.11"
 
 # XDG directories for config/data/cache discovery
 dirs = "6"
@@ -55,7 +55,7 @@ dirs = "6"
 # parameter updates (Props). libspa is re-exported by `pipewire::spa`, so
 # we don't depend on it directly until the SPA POD builder for live
 # parameter updates lands in a later stage.
-pipewire = "0.9"
+pipewire = { version = "0.10", features = ["v1_2_0"] }
 
 # Direct libc syscalls for the pwloader binary's real-time setup
 # (sched_setaffinity, sched_setscheduler SCHED_FIFO, mlockall, errno).
@@ -82,6 +82,10 @@ gettext-rs = { version = "0.7", features = ["gettext-system"] }
 
 [dev-dependencies]
 tempfile = "3"
+
+[patch.crates-io]
+libspa = { path = "vendor/libspa-0.10.0" }
+pipewire = { path = "vendor/pipewire-0.10.0" }
 
 [package.metadata.cargo-machete]
 # gettext-rs exposes its API under the `gettextrs` crate name, which

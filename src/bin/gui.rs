@@ -6,7 +6,7 @@
 use biglinux_microphone::ui::{init_gettext, MicrophoneApplication};
 
 fn main() -> glib::ExitCode {
-    pretty_env_logger::init_custom_env("BIGLINUX_MICROPHONE_LOG");
+    env_logger::init_from_env(env_logger::Env::new().filter("BIGLINUX_MICROPHONE_LOG"));
     init_gettext();
 
     let app = MicrophoneApplication::new();
