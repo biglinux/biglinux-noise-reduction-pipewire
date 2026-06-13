@@ -130,6 +130,9 @@ fn noise_filter_header(state: &Rc<AppState>) -> GtkBox {
         .valign(Align::Center)
         .active(state.settings().noise_reduction.enabled)
         .build();
+    // The "Noise filter" title is a sibling label in the card header, not tied
+    // to the switch; give the master toggle its own accessible name.
+    switch.update_property(&[gtk::accessible::Property::Label(&i18n("Noise filter"))]);
     {
         let state = Rc::clone(state);
         switch.connect_active_notify(move |sw| {
@@ -366,6 +369,9 @@ fn self_listen_row(state: &Rc<AppState>) -> GtkBox {
         .tooltip_text(i18n("Headphones only — speakers cause feedback."))
         .active(state.settings().monitor.enabled)
         .build();
+    // The "Hear my voice" caption is a sibling label, not tied to the switch;
+    // give the switch its own accessible name for screen readers.
+    switch.update_property(&[gtk::accessible::Property::Label(&i18n("Hear my voice"))]);
     {
         let state = Rc::clone(state);
         switch.connect_active_notify(move |sw| {

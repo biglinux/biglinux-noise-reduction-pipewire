@@ -60,6 +60,7 @@ pub fn build_eq_card(
     let _ = read; // accessor was only needed for the initial snapshot
 
     let switch = gtk::Switch::builder().active(initial.enabled).build();
+    switch.update_property(&[gtk::accessible::Property::Label(&i18n("Equalizer enabled"))]);
     {
         let state = Rc::clone(state);
         let write = Rc::clone(&write);
@@ -231,6 +232,13 @@ fn bands_row(scales: &[Scale]) -> GtkBox {
         .build();
 
     for (scale, freq) in scales.iter().zip(EQ_BANDS_HZ.iter()) {
+        // The visible caption below the slider is not programmatically tied to
+        // it; stamp an explicit accessible name so a screen reader announces
+        // which frequency band each slider adjusts.
+        scale.update_property(&[gtk::accessible::Property::Label(&format!(
+            "{} {freq} Hz",
+            i18n("Equalizer band")
+        ))]);
         let column = GtkBox::builder()
             .orientation(Orientation::Vertical)
             .spacing(4)
