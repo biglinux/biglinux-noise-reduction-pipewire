@@ -13,23 +13,24 @@
 //! from the UI thread. Keeping it as a one-shot subprocess call avoids
 //! cross-thread synchronisation.
 
-use std::process::{Command, Stdio};
+use big_os_kit::subprocess::{BigSubprocessOutputMode, BigSubprocessSpec};
 
 /// `node.name` of the current default sink, or `None` when
 /// `pw-metadata` returns no value (fresh session, daemon down, or
 /// metadata never written).
 #[must_use]
 pub fn default_sink_name() -> Option<String> {
-    let output = Command::new("pw-metadata")
+    let output = BigSubprocessSpec::builder()
+        .program("pw-metadata")
         .args(["0", "default.audio.sink"])
-        .stdin(Stdio::null())
-        .stderr(Stdio::null())
-        .output()
+        .stderr(BigSubprocessOutputMode::Null)
+        .build()
+        .run()
         .ok()?;
     if !output.status.success() {
         return None;
     }
-    parse_default_sink(&String::from_utf8_lossy(&output.stdout))
+    parse_default_sink(&output.stdout_lossy())
 }
 
 fn parse_default_sink(stdout: &str) -> Option<String> {

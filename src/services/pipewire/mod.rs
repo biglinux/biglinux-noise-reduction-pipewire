@@ -21,8 +21,9 @@ pub mod user_tweaks;
 mod worker;
 
 use std::io;
-use std::process::Stdio;
 use std::thread::{self, JoinHandle};
+
+use big_os_kit::subprocess::{BigSubprocessOutputMode, BigSubprocessSpec};
 
 use log::{debug, warn};
 use pipewire as pw;
@@ -129,18 +130,20 @@ impl PwService {
 /// — it only emits an [`AppStream`] for entries that expose both a
 /// `media.class` we can route and a numeric id header.
 fn query_streams_via_pw_cli() -> io::Result<Vec<AppStream>> {
-    let output = std::process::Command::new("pw-cli")
+    let output = BigSubprocessSpec::builder()
+        .program("pw-cli")
         .args(["ls", "Node"])
-        .stdin(Stdio::null())
-        .stderr(Stdio::null())
-        .output()?;
+        .stderr(BigSubprocessOutputMode::Null)
+        .build()
+        .run()
+        .map_err(io::Error::other)?;
     if !output.status.success() {
         return Err(io::Error::other(format!(
-            "pw-cli ls Node exited with {}",
-            output.status,
+            "pw-cli ls Node exited with {:?}",
+            output.status.code(),
         )));
     }
-    Ok(parse_pw_cli_nodes(&String::from_utf8_lossy(&output.stdout)))
+    Ok(parse_pw_cli_nodes(&output.stdout_lossy()))
 }
 
 fn parse_pw_cli_nodes(stdout: &str) -> Vec<AppStream> {

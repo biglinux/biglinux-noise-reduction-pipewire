@@ -8,6 +8,9 @@ description = "AI-powered microphone noise reduction with GTK4/libadwaita interf
 homepage = "https://github.com/biglinux/biglinux-noise-reduction-pipewire"
 repository = "https://github.com/biglinux/biglinux-noise-reduction-pipewire"
 rust-version = "1.82"
+# Distro application, never published to crates.io — also lets cargo-deny's
+# `allow-wildcard-paths` cover the internal `big-os-kit` path dependency.
+publish = false
 
 [lib]
 name = "biglinux_microphone"
@@ -79,6 +82,12 @@ cairo = { version = "0.22", package = "cairo-rs" }
 
 # gettext bindings for translating user-facing strings.
 gettext-rs = { version = "0.7", features = ["gettext-system"] }
+
+# Shared subprocess runner: argv-only spawns with concurrent stdout/stderr
+# pipe draining (no >64 KiB deadlock on `pw-cli ls Node`), a kill timeout, and
+# zombie reaping. Replaces the raw `std::process::Command` calls in the
+# pipewire/system-audio service layer.
+big-os-kit = { path = "../big-rust-components/crates/big-os-kit" }
 
 [dev-dependencies]
 tempfile = "3"

@@ -35,7 +35,8 @@
 //! interactive case.
 
 use std::io;
-use std::process::{Command, Stdio};
+
+use big_os_kit::subprocess::{BigSubprocessOutputMode, BigSubprocessSpec};
 
 use log::debug;
 
@@ -134,17 +135,19 @@ pub fn stop_output_service() -> io::Result<()> {
 }
 
 fn run_systemctl<const N: usize>(args: [&str; N]) -> io::Result<()> {
-    let status = Command::new("systemctl")
+    let output = BigSubprocessSpec::builder()
+        .program("systemctl")
         .args(args)
-        .stdin(Stdio::null())
-        .stdout(Stdio::null())
-        .stderr(Stdio::piped())
-        .status()?;
-    if status.success() {
+        .stdout(BigSubprocessOutputMode::Null)
+        .build()
+        .run()
+        .map_err(io::Error::other)?;
+    if output.status.success() {
         Ok(())
     } else {
         Err(io::Error::other(format!(
-            "systemctl {args:?} exited with {status}"
+            "systemctl {args:?} exited with {:?}",
+            output.status.code()
         )))
     }
 }

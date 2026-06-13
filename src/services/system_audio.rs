@@ -14,7 +14,8 @@
 //! as the exit-status text from `systemctl` so the UI can surface it.
 
 use std::io;
-use std::process::{Command, Stdio};
+
+use big_os_kit::subprocess::{BigSubprocessOutputMode, BigSubprocessSpec};
 
 /// User units we restart on every Apply. Order is irrelevant —
 /// `systemctl --user` resolves dependencies internally.
@@ -24,22 +25,22 @@ const UNITS: &[&str] = &["pipewire", "wireplumber", "pipewire-pulse"];
 /// configuration files are picked up. Blocking; safe to dispatch onto
 /// `gio::spawn_blocking` from the UI thread.
 pub fn restart_pipewire_user_stack() -> io::Result<()> {
-    let mut cmd = Command::new("systemctl");
-    cmd.arg("--user")
+    let output = BigSubprocessSpec::builder()
+        .program("systemctl")
+        .arg("--user")
         .arg("restart")
         .args(UNITS)
-        .stdin(Stdio::null())
-        .stdout(Stdio::null())
-        .stderr(Stdio::piped());
-
-    let output = cmd.output()?;
+        .stdout(BigSubprocessOutputMode::Null)
+        .build()
+        .run()
+        .map_err(io::Error::other)?;
     if output.status.success() {
         return Ok(());
     }
-    let stderr = String::from_utf8_lossy(&output.stderr).trim().to_string();
+    let stderr = output.stderr_lossy().trim().to_string();
     Err(io::Error::other(format!(
-        "systemctl --user restart {} exited with {}: {stderr}",
+        "systemctl --user restart {} exited with {:?}: {stderr}",
         UNITS.join(" "),
-        output.status,
+        output.status.code(),
     )))
 }

@@ -11,8 +11,8 @@
 //! is choosing from.
 
 use std::io;
-use std::process::{Command, Stdio};
 
+use big_os_kit::subprocess::{BigSubprocessOutputMode, BigSubprocessSpec};
 use log::{debug, warn};
 
 use crate::pipeline::{EC_SOURCE_NAME, MIC_CAPTURE_NODE_NAME, MIC_NODE_NAME, OUTPUT_NODE_NAME};
@@ -40,31 +40,34 @@ pub fn list_sources() -> io::Result<Vec<Source>> {
 /// when `pw-metadata` returns no value (e.g. fresh session).
 #[must_use]
 pub fn default_source_name() -> Option<String> {
-    let output = Command::new("pw-metadata")
+    let output = BigSubprocessSpec::builder()
+        .program("pw-metadata")
         .args(["0", "default.audio.source"])
-        .stdin(Stdio::null())
-        .stderr(Stdio::null())
-        .output()
+        .stderr(BigSubprocessOutputMode::Null)
+        .build()
+        .run()
         .ok()?;
     if !output.status.success() {
         return None;
     }
-    parse_default_source(&String::from_utf8_lossy(&output.stdout))
+    parse_default_source(&output.stdout_lossy())
 }
 
 /// Promote `node_id` to the system default source. WirePlumber rules
 /// pick this up live — every app following `default.audio.source`
 /// switches over without restart.
 pub fn set_default_source(node_id: u32) -> io::Result<()> {
-    let status = Command::new("wpctl")
+    let output = BigSubprocessSpec::builder()
+        .program("wpctl")
         .args(["set-default", &node_id.to_string()])
-        .stdin(Stdio::null())
-        .stdout(Stdio::null())
-        .stderr(Stdio::piped())
-        .status()?;
-    if !status.success() {
+        .stdout(BigSubprocessOutputMode::Null)
+        .build()
+        .run()
+        .map_err(io::Error::other)?;
+    if !output.status.success() {
         return Err(io::Error::other(format!(
-            "wpctl set-default {node_id} exited with {status}"
+            "wpctl set-default {node_id} exited with {:?}",
+            output.status.code()
         )));
     }
     debug!("sources: set default → {node_id}");
@@ -75,16 +78,17 @@ pub fn set_default_source(node_id: u32) -> io::Result<()> {
 /// Returns `None` when `wpctl` fails (node gone, no audio session).
 #[must_use]
 pub fn source_volume(node_id: u32) -> Option<f32> {
-    let output = Command::new("wpctl")
+    let output = BigSubprocessSpec::builder()
+        .program("wpctl")
         .args(["get-volume", &node_id.to_string()])
-        .stdin(Stdio::null())
-        .stderr(Stdio::null())
-        .output()
+        .stderr(BigSubprocessOutputMode::Null)
+        .build()
+        .run()
         .ok()?;
     if !output.status.success() {
         return None;
     }
-    parse_volume(&String::from_utf8_lossy(&output.stdout))
+    parse_volume(&output.stdout_lossy())
 }
 
 /// Set `node_id`'s volume to `volume` (0.0..=1.5). `wpctl` clamps to
@@ -92,15 +96,17 @@ pub fn source_volume(node_id: u32) -> Option<f32> {
 /// silently capped — no error returned.
 pub fn set_source_volume(node_id: u32, volume: f32) -> io::Result<()> {
     let clamped = volume.clamp(0.0, 1.5);
-    let status = Command::new("wpctl")
+    let output = BigSubprocessSpec::builder()
+        .program("wpctl")
         .args(["set-volume", &node_id.to_string(), &format!("{clamped:.2}")])
-        .stdin(Stdio::null())
-        .stdout(Stdio::null())
-        .stderr(Stdio::piped())
-        .status()?;
-    if !status.success() {
+        .stdout(BigSubprocessOutputMode::Null)
+        .build()
+        .run()
+        .map_err(io::Error::other)?;
+    if !output.status.success() {
         return Err(io::Error::other(format!(
-            "wpctl set-volume {node_id} exited with {status}"
+            "wpctl set-volume {node_id} exited with {:?}",
+            output.status.code()
         )));
     }
     Ok(())
@@ -109,18 +115,22 @@ pub fn set_source_volume(node_id: u32, volume: f32) -> io::Result<()> {
 // ── Parsers ──────────────────────────────────────────────────────────
 
 fn pw_cli_ls_node() -> io::Result<String> {
-    let output = Command::new("pw-cli")
+    // `pw-cli ls Node` output can exceed 64 KiB on a busy graph — the shared
+    // spec drains stdout/stderr concurrently, avoiding the pipe-fill deadlock.
+    let output = BigSubprocessSpec::builder()
+        .program("pw-cli")
         .args(["ls", "Node"])
-        .stdin(Stdio::null())
-        .stderr(Stdio::null())
-        .output()?;
+        .stderr(BigSubprocessOutputMode::Null)
+        .build()
+        .run()
+        .map_err(io::Error::other)?;
     if !output.status.success() {
         return Err(io::Error::other(format!(
-            "pw-cli ls Node exited with {}",
-            output.status,
+            "pw-cli ls Node exited with {:?}",
+            output.status.code(),
         )));
     }
-    Ok(String::from_utf8_lossy(&output.stdout).into_owned())
+    Ok(output.stdout_lossy())
 }
 
 fn parse_sources(stdout: &str) -> Vec<Source> {

@@ -35,7 +35,8 @@ use std::fs;
 use std::io;
 use std::io::Write;
 use std::path::{Path, PathBuf};
-use std::process::{Command, Stdio};
+
+use big_os_kit::subprocess::{BigSubprocessOutputMode, BigSubprocessSpec};
 
 use log::{debug, info};
 
@@ -199,14 +200,15 @@ fn purge_legacy_services() {
         // and remove its [Install] symlinks in the same call. We let
         // failures fall through silently: the unit may simply not be
         // present, in which case there is nothing to clean up.
-        let status = Command::new("systemctl")
+        let result = BigSubprocessSpec::builder()
+            .program("systemctl")
             .args(["--user", "disable", "--now", unit])
-            .stdin(Stdio::null())
-            .stdout(Stdio::null())
-            .stderr(Stdio::null())
-            .status();
-        match status {
-            Ok(s) if s.success() => info!("pipeline: stopped legacy service {unit}"),
+            .stdout(BigSubprocessOutputMode::Null)
+            .stderr(BigSubprocessOutputMode::Null)
+            .build()
+            .run();
+        match result {
+            Ok(o) if o.status.success() => info!("pipeline: stopped legacy service {unit}"),
             Ok(_) => debug!("pipeline: legacy service {unit} not present"),
             Err(e) => debug!("pipeline: systemctl invocation failed for {unit}: {e}"),
         }

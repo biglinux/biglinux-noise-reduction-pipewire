@@ -26,8 +26,8 @@
 //! mode — because only the control values can be updated live.
 
 use std::io;
-use std::process::{Command, Stdio};
 
+use big_os_kit::subprocess::{BigSubprocessOutputMode, BigSubprocessSpec};
 use log::{debug, trace, warn};
 
 use crate::config::{
@@ -118,18 +118,20 @@ pub fn apply_live(settings: &AppSettings) -> io::Result<LiveOutcome> {
 /// The parser tracks the most recent id header so we can associate the
 /// `node.name` line that follows it with the right object.
 fn find_node_id(node_name: &str) -> io::Result<Option<u32>> {
-    let output = Command::new("pw-cli")
+    let output = BigSubprocessSpec::builder()
+        .program("pw-cli")
         .args(["ls", "Node"])
-        .stdin(Stdio::null())
-        .stderr(Stdio::null())
-        .output()?;
+        .stderr(BigSubprocessOutputMode::Null)
+        .build()
+        .run()
+        .map_err(io::Error::other)?;
     if !output.status.success() {
         return Err(io::Error::other(format!(
-            "pw-cli ls Node exited with {}",
-            output.status,
+            "pw-cli ls Node exited with {:?}",
+            output.status.code(),
         )));
     }
-    let stdout = String::from_utf8_lossy(&output.stdout);
+    let stdout = output.stdout_lossy();
     Ok(parse_node_id(&stdout, node_name))
 }
 
@@ -156,14 +158,18 @@ fn set_props(node_id: u32, controls: &[(String, f64)]) -> io::Result<()> {
     }
     let payload = format_params(controls);
     debug!("live: pw-cli s {node_id} Props {payload}");
-    let status = Command::new("pw-cli")
+    let output = BigSubprocessSpec::builder()
+        .program("pw-cli")
         .args(["s", &node_id.to_string(), "Props", &payload])
-        .stdin(Stdio::null())
-        .stdout(Stdio::null())
-        .stderr(Stdio::piped())
-        .status()?;
-    if !status.success() {
-        warn!("live: pw-cli set-param {node_id} failed with {status}");
+        .stdout(BigSubprocessOutputMode::Null)
+        .build()
+        .run()
+        .map_err(io::Error::other)?;
+    if !output.status.success() {
+        warn!(
+            "live: pw-cli set-param {node_id} failed with {:?}",
+            output.status.code()
+        );
     }
     Ok(())
 }

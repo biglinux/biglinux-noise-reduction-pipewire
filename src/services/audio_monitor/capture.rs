@@ -65,6 +65,10 @@ impl Capture {
     ) -> io::Result<Self> {
         assert!(hop_size > 0 && hop_size <= fft_size);
 
+        // bigagents: app-local-subprocess — `pw-cat --record -` is a streaming
+        // capture child: its stdout is piped and read continuously for the
+        // spectrum analyser, and the child is supervised/killed by this struct.
+        // The run()-to-completion shared spec cannot model a live stream.
         let mut child = Command::new("pw-cat")
             .args([
                 "--record",

@@ -11,7 +11,9 @@
 //! smoke checks) without depending on the binary target.
 
 use std::path::{Path, PathBuf};
-use std::process::{Command, ExitCode, Stdio};
+use std::process::ExitCode;
+
+use big_os_kit::subprocess::{BigSubprocessOutputMode, BigSubprocessSpec};
 
 use crate::config::gtcrn_plugin;
 use crate::pipeline;
@@ -169,12 +171,13 @@ fn check_echo_cancel(report: &mut Report) {
         ec_path.exists(),
         &ec_path.display().to_string(),
     );
-    let graph_dump = Command::new("pw-cli")
+    let graph_dump = BigSubprocessSpec::builder()
+        .program("pw-cli")
         .args(["ls", "Node"])
-        .stdin(Stdio::null())
-        .stderr(Stdio::null())
-        .output()
-        .map(|o| String::from_utf8_lossy(&o.stdout).into_owned())
+        .stderr(BigSubprocessOutputMode::Null)
+        .build()
+        .run()
+        .map(|o| o.stdout_lossy())
         .unwrap_or_default();
     report.check(
         "echo-cancel-source node visible",
@@ -182,12 +185,13 @@ fn check_echo_cancel(report: &mut Report) {
         "pw-cli ls Node | grep echo-cancel-source",
     );
 
-    let link_dump = Command::new("pw-link")
+    let link_dump = BigSubprocessSpec::builder()
+        .program("pw-link")
         .arg("-l")
-        .stdin(Stdio::null())
-        .stderr(Stdio::null())
-        .output()
-        .map(|o| String::from_utf8_lossy(&o.stdout).into_owned())
+        .stderr(BigSubprocessOutputMode::Null)
+        .build()
+        .run()
+        .map(|o| o.stdout_lossy())
         .unwrap_or_default();
     let aec_ref_to_alsa =
         link_dump.lines().any(|l| {
@@ -253,12 +257,13 @@ fn check_wireplumber_script(report: &mut Report) {
 }
 
 fn check_graph_nodes(report: &mut Report) {
-    let graph_dump = Command::new("pw-cli")
+    let graph_dump = BigSubprocessSpec::builder()
+        .program("pw-cli")
         .args(["ls", "Node"])
-        .stdin(Stdio::null())
-        .stderr(Stdio::null())
-        .output()
-        .map(|o| String::from_utf8_lossy(&o.stdout).into_owned())
+        .stderr(BigSubprocessOutputMode::Null)
+        .build()
+        .run()
+        .map(|o| o.stdout_lossy())
         .unwrap_or_default();
     report.check(
         "mic-biglinux node visible",
@@ -294,13 +299,14 @@ fn print_unit_state() {
 }
 
 fn command_succeeds(cmd: &str, args: &[&str]) -> bool {
-    Command::new(cmd)
-        .args(args)
-        .stdin(Stdio::null())
-        .stdout(Stdio::null())
-        .stderr(Stdio::null())
-        .status()
-        .is_ok_and(|s| s.success())
+    BigSubprocessSpec::builder()
+        .program(cmd)
+        .args(args.iter().copied())
+        .stdout(BigSubprocessOutputMode::Null)
+        .stderr(BigSubprocessOutputMode::Null)
+        .build()
+        .run()
+        .is_ok_and(|o| o.status.success())
 }
 
 fn unit_known(name: &str) -> bool {
@@ -308,15 +314,16 @@ fn unit_known(name: &str) -> bool {
 }
 
 fn unit_active_state(name: &str) -> String {
-    Command::new("systemctl")
+    BigSubprocessSpec::builder()
+        .program("systemctl")
         .args(["--user", "is-active", name])
-        .stdin(Stdio::null())
-        .stderr(Stdio::null())
-        .output()
+        .stderr(BigSubprocessOutputMode::Null)
+        .build()
+        .run()
         .map_or_else(
             |_| "unknown".to_owned(),
             |o| {
-                let state = String::from_utf8_lossy(&o.stdout).trim().to_owned();
+                let state = o.stdout_lossy().trim().to_owned();
                 if state.is_empty() {
                     "unknown".to_owned()
                 } else {
@@ -331,7 +338,8 @@ fn unit_active_state(name: &str) -> String {
 fn dump_journal(unit: &str) {
     println!();
     println!("--- last journal lines for {unit} ---");
-    let out = Command::new("journalctl")
+    let out = BigSubprocessSpec::builder()
+        .program("journalctl")
         .args([
             "--user",
             "-u",
@@ -342,12 +350,12 @@ fn dump_journal(unit: &str) {
             "--output",
             "short",
         ])
-        .stdin(Stdio::null())
-        .stderr(Stdio::null())
-        .output();
+        .stderr(BigSubprocessOutputMode::Null)
+        .build()
+        .run();
     match out {
         Ok(o) if o.status.success() => {
-            print!("{}", String::from_utf8_lossy(&o.stdout));
+            print!("{}", o.stdout_lossy());
         }
         Ok(_) => println!("(journalctl returned non-zero — not enough permissions?)"),
         Err(e) => println!("(journalctl unavailable: {e})"),

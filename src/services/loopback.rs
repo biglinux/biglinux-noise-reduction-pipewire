@@ -68,6 +68,10 @@ impl Loopback {
     /// the source — `pw-loopback` waits for it.
     pub fn start(opts: &LoopbackOptions) -> io::Result<Self> {
         let delay_seconds = f64::from(opts.delay_ms) / 1000.0;
+        // bigagents: app-local-subprocess — `pw-loopback` is a long-running
+        // daemon child held for its whole lifetime (PID tracked for
+        // `is_alive`/kill); the run()-to-completion shared spec does not fit a
+        // spawn-and-supervise process.
         let mut cmd = Command::new("pw-loopback");
         cmd.args([
             "--capture-props=media.class=Stream/Input/Audio",

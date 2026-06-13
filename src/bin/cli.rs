@@ -94,7 +94,7 @@ impl Cmd {
 }
 
 fn main() -> ExitCode {
-    pretty_env_logger::init_custom_env("BIGLINUX_MICROPHONE_LOG");
+    env_logger::init_from_env(env_logger::Env::new().filter("BIGLINUX_MICROPHONE_LOG"));
 
     let mut args = std::env::args().skip(1);
     let raw = args.next().unwrap_or_else(|| "settings".to_owned());
@@ -467,7 +467,7 @@ fn list_audio_apps() -> ExitCode {
 /// visible in the PipeWire graph — that's the same signal the GUI
 /// toggle would have to recover from.
 fn repair() -> ExitCode {
-    use std::process::{Command, Stdio};
+    use big_os_kit::subprocess::{BigSubprocessOutputMode, BigSubprocessSpec};
 
     pipeline::purge_legacy_files();
 
@@ -479,12 +479,13 @@ fn repair() -> ExitCode {
     println!("regenerated {}", pipeline::output_conf_path().display());
 
     let reset = |unit: &str| {
-        let _ = Command::new("systemctl")
+        let _ = BigSubprocessSpec::builder()
+            .program("systemctl")
             .args(["--user", "reset-failed", unit])
-            .stdin(Stdio::null())
-            .stdout(Stdio::null())
-            .stderr(Stdio::null())
-            .status();
+            .stdout(BigSubprocessOutputMode::Null)
+            .stderr(BigSubprocessOutputMode::Null)
+            .build()
+            .run();
     };
     reset("biglinux-microphone-mic.service");
     reset("biglinux-microphone-aec.service");

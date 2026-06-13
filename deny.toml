@@ -31,6 +31,7 @@ confidence-threshold = 0.8
 [bans]
 multiple-versions = "warn"
 wildcards = "deny"
+allow-wildcard-paths = true  # internal path-deps (big-os-kit) in the workspace; not published to crates.io
 highlight = "all"
 workspace-default-features = "allow"
 external-default-features = "allow"
