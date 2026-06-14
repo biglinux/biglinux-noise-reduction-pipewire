@@ -241,6 +241,9 @@ fn spawn_refresh_poller<F>(
     let dropdown_weak = dropdown.downgrade();
     let dropdown_row_weak = dropdown_row.downgrade();
     let vol_adj_weak = vol_adj.downgrade();
+    // Skip a tick while a snapshot is still in flight so a slow `pw-cli` can't
+    // stack overlapping refreshes (and clobber each other's dropdown writes).
+    let polling = Rc::new(Cell::new(false));
     glib::timeout_add_local(REFRESH_INTERVAL, move || {
         let (Some(dropdown), Some(row), Some(vol_adj)) = (
             dropdown_weak.upgrade(),
@@ -249,23 +252,47 @@ fn spawn_refresh_poller<F>(
         ) else {
             return glib::ControlFlow::Break;
         };
-        refresh(
-            &dropdown,
-            &row,
-            &vol_adj,
-            &sources_state,
-            &active,
-            volume_for.as_ref(),
-            &suppress,
-        );
+        if polling.get() {
+            return glib::ControlFlow::Continue;
+        }
+        polling.set(true);
+        let sources_state = Rc::clone(&sources_state);
+        let active = Rc::clone(&active);
+        let volume_for = Rc::clone(&volume_for);
+        let suppress = Rc::clone(&suppress);
+        let polling_done = Rc::clone(&polling);
+        // `snapshot_sources` shells out to `pw-cli`/`pw-metadata`; run it on a
+        // worker so the 2 s poll never blocks the GTK main loop, then apply the
+        // (Send) result back on the main thread.
+        glib::spawn_future_local(async move {
+            let snapshot = gio::spawn_blocking(snapshot_sources).await;
+            polling_done.set(false);
+            let Ok((new_sources, new_default)) = snapshot else {
+                return; // worker panicked — retry on the next tick
+            };
+            apply_refresh(
+                &dropdown,
+                &row,
+                &vol_adj,
+                new_sources,
+                new_default,
+                &sources_state,
+                &active,
+                volume_for.as_ref(),
+                &suppress,
+            );
+        });
         glib::ControlFlow::Continue
     });
 }
 
-fn refresh<F>(
+#[allow(clippy::too_many_arguments)]
+fn apply_refresh<F>(
     dropdown: &gtk::DropDown,
     dropdown_row: &GtkBox,
     vol_adj: &gtk::Adjustment,
+    new_sources: Vec<Source>,
+    new_default: Option<u32>,
     sources_state: &Rc<RefCell<Vec<Source>>>,
     active: &Rc<Cell<Option<u32>>>,
     volume_for: &F,
@@ -273,7 +300,6 @@ fn refresh<F>(
 ) where
     F: Fn(u32) -> Option<f32>,
 {
-    let (new_sources, new_default) = snapshot_sources();
     let mut current = sources_state.borrow_mut();
     let topology_changed = current.len() != new_sources.len()
         || current
