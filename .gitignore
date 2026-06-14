@@ -45,3 +45,6 @@ scripts/calibrate/reports/
 scripts/calibrate/signals/
 scripts/calibrate/models/
 scripts/calibrate/datasets/
+
+# cargo-mutants run artifacts
+/mutants.out*/
