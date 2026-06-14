@@ -659,4 +659,108 @@ mod tests {
         assert!(conf.contains(r#"inputs = [ "mixer:In 1" "mixer:In 2" ]"#));
         assert!(conf.contains(r#"outputs = [ "copy_l:Out" "copy_r:Out" ]"#));
     }
+
+    #[test]
+    fn ai_processing_on_renders_gtcrn_enable_one() {
+        // Master + NR on → GTCRN actually processes (Enable=1.0). Pins
+        // output_ai_processing's true path (the off paths are covered above).
+        let s = AppSettings {
+            output_filter: crate::config::OutputFilterSettings {
+                enabled: true,
+                noise_reduction: crate::config::NoiseReductionConfig {
+                    enabled: true,
+                    ..crate::config::NoiseReductionConfig::default()
+                },
+                ..crate::config::OutputFilterSettings::default()
+            },
+            ..AppSettings::default()
+        };
+        let conf = build_output_conf(&s);
+        assert!(
+            conf.contains("\"Enable\" = 1.0"),
+            "GTCRN must process (Enable=1) when master + NR are on: {conf}"
+        );
+    }
+
+    #[test]
+    fn both_integrated_and_swh_gate_thresholds_park_at_floor() {
+        // GTCRN's integrated gate is always parked at -80 dB; with the SWH gate
+        // sub-toggle off its threshold parks at -80 too. Assert BOTH are present
+        // (a count) so a sign flip on either threshold is caught and not masked
+        // by the other -80 still being there.
+        let mut s = enabled_settings();
+        s.output_filter.gate.enabled = false;
+        let conf = build_output_conf(&s);
+        assert_eq!(
+            conf.matches(r#""Threshold (dB)" = -80.0"#).count(),
+            2,
+            "GTCRN integrated gate + disabled SWH gate must both park at -80 dB: {conf}",
+        );
+    }
+
+    #[test]
+    fn output_eq_prefers_explicit_bands_over_preset() {
+        // Master + EQ on with a full explicit band set: the bands win over the
+        // named preset (the `==` length check), reaching the conf verbatim.
+        let mut bands = vec![0.0_f32; EQ_BAND_COUNT];
+        bands[2] = 7.0;
+        let s = AppSettings {
+            output_filter: crate::config::OutputFilterSettings {
+                enabled: true,
+                equalizer: crate::config::EqualizerConfig {
+                    enabled: true,
+                    preset: "voice_boost".to_owned(),
+                    bands,
+                },
+                ..crate::config::OutputFilterSettings::default()
+            },
+            ..AppSettings::default()
+        };
+        let conf = build_output_conf(&s);
+        assert!(
+            conf.contains("gain = 7.00"),
+            "explicit bands must render verbatim, not the preset: {conf}"
+        );
+        assert!(
+            !conf.contains("gain = 20.00"),
+            "voice_boost preset must be ignored"
+        );
+    }
+
+    #[test]
+    fn sanitize_rejects_target_with_forbidden_chars() {
+        // A target sink name with spaces / structure chars must be rejected so
+        // it cannot smuggle SPA-JSON into the embedding format! (defense in
+        // depth: the name originates from the user's settings.json).
+        let s = AppSettings {
+            output_filter: crate::config::OutputFilterSettings {
+                enabled: true,
+                target_sink_name: Some("bad name; node.name = evil".into()),
+                ..crate::config::OutputFilterSettings::default()
+            },
+            ..AppSettings::default()
+        };
+        let conf = build_output_conf(&s);
+        assert!(
+            !conf.contains("filter.smart.target ="),
+            "forbidden chars must reject the smart-filter target: {conf}",
+        );
+    }
+
+    #[test]
+    fn sanitize_rejects_empty_target() {
+        let s = AppSettings {
+            output_filter: crate::config::OutputFilterSettings {
+                enabled: true,
+                target_sink_name: Some(String::new()),
+                ..crate::config::OutputFilterSettings::default()
+            },
+            ..AppSettings::default()
+        };
+        let conf = build_output_conf(&s);
+        assert!(
+            !conf.contains("filter.smart.target ="),
+            "an empty target name must be rejected, not pinned"
+        );
+    }
 }
