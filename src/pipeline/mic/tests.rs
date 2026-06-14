@@ -396,3 +396,115 @@ fn conf_exposes_stereo_fanout_on_graph_outputs() {
     let conf = build_mic_conf(&default_settings());
     assert!(conf.contains(r#"outputs = [ "copy_l:Out" "copy_r:Out" ]"#));
 }
+
+#[test]
+fn each_filter_flag_alone_keeps_chain_wanted() {
+    // mic_chain_wanted ORs over every effect flag. Each flag ALONE (from an
+    // all-off baseline) must still want the chain — this pins every `||`
+    // operator (an `&&` would drop the chain when only one flag is enabled).
+    let setters: [(&str, fn(&mut AppSettings)); 7] = [
+        ("noise_reduction", |s| s.noise_reduction.enabled = true),
+        ("gate", |s| s.gate.enabled = true),
+        ("hpf", |s| s.hpf.enabled = true),
+        ("stereo", |s| s.stereo.enabled = true),
+        ("equalizer", |s| s.equalizer.enabled = true),
+        ("compressor", |s| s.compressor.enabled = true),
+        ("echo_cancel", |s| s.echo_cancel.enabled = true),
+    ];
+    for (name, enable) in setters {
+        let mut s = AppSettings::default();
+        cascade_mic_off(&mut s);
+        assert!(!mic_chain_wanted(&s), "baseline must be all-off");
+        enable(&mut s);
+        assert!(mic_chain_wanted(&s), "{name} alone must want the mic chain");
+    }
+}
+
+#[test]
+fn deepfilter_drops_standalone_gate_unless_gate_enabled() {
+    // DFN3 has no integrated gate, so a standalone SWH gate node is wired in
+    // ONLY when the model is DeepFilterNet3 AND the silence gate is on (the
+    // `&&` in mic_nodes).
+    let mut s = AppSettings::default();
+    s.noise_reduction.model = crate::config::NoiseModel::DeepFilterNet3;
+    s.noise_reduction.enabled = true;
+    s.gate.enabled = false;
+    let conf = build_mic_conf(&s);
+    assert!(
+        !conf.contains("name = \"gate\""),
+        "no standalone gate when the silence gate is off: {conf}",
+    );
+
+    s.gate.enabled = true;
+    let conf = build_mic_conf(&s);
+    assert!(
+        conf.contains("name = \"gate\""),
+        "DFN3 + gate on must add the standalone SWH gate",
+    );
+}
+
+#[test]
+fn param_eq_prefers_explicit_bands_over_preset() {
+    // EQ_BAND_COUNT explicit bands win over the named preset (the `==` length
+    // check in param_eq_node). A sentinel gain must reach the conf verbatim and
+    // the preset's distinctive band must not.
+    let mut bands = vec![0.0_f32; EQ_BAND_COUNT];
+    bands[2] = 7.0;
+    let s = AppSettings {
+        equalizer: crate::config::EqualizerConfig {
+            enabled: true,
+            bands,
+            preset: "voice_boost".to_string(),
+        },
+        ..AppSettings::default()
+    };
+    let conf = build_mic_conf(&s);
+    assert!(
+        conf.contains("gain = 7.00"),
+        "explicit bands must be used verbatim, not the preset: {conf}",
+    );
+    assert!(
+        !conf.contains("gain = 20.00"),
+        "voice_boost preset must be ignored"
+    );
+}
+
+#[test]
+fn param_eq_falls_back_to_named_preset_when_bands_wrong_length() {
+    // A wrong-length band vector resolves the named preset
+    // (resolve_preset_or_flat): voice_boost yields EQ_BAND_COUNT bands with a
+    // distinctive +20 dB and -10 dB band.
+    let s = AppSettings {
+        equalizer: crate::config::EqualizerConfig {
+            enabled: true,
+            bands: Vec::new(),
+            preset: "voice_boost".to_string(),
+        },
+        ..AppSettings::default()
+    };
+    let conf = build_mic_conf(&s);
+    assert_eq!(conf.matches("type = bq_peaking").count(), EQ_BAND_COUNT);
+    assert!(
+        conf.contains("gain = 20.00"),
+        "voice_boost +20 band: {conf}"
+    );
+    assert!(conf.contains("gain = -10.00"), "voice_boost -10 band");
+}
+
+#[test]
+fn voice_changer_unity_width_has_zero_gain_compensation() {
+    // width=0.5 → coeff exactly 1.0 → no gain compensation (the passthrough
+    // boundary, where both comparison branches in pitch_controls agree).
+    let s = AppSettings {
+        stereo: crate::config::StereoConfig {
+            enabled: true,
+            mode: crate::config::StereoMode::VoiceChanger,
+            width: 0.5,
+            ..crate::config::StereoConfig::default()
+        },
+        ..AppSettings::default()
+    };
+    let conf = build_mic_conf(&s);
+    assert!(conf.contains("\"Pitch co-efficient\" = 1.0"));
+    assert!(conf.contains("\"Amps gain (dB)\" = 0.0"));
+}
