@@ -43,6 +43,28 @@ use crate::services::pipewire::{
     stop_output_service,
 };
 
+/// What the main thread should do once an offloaded apply pass completes.
+enum ApplyStatus {
+    /// Full Tier 1–4 sequence ran — record the snapshot as last-applied.
+    Applied,
+    /// A Tier 1/2 disk write failed — leave `last_applied` and re-arm so the
+    /// pass retries (mirrors the old synchronous `dirty.set(true)`).
+    Retry,
+    /// Tier 3 (live control push) failed — Tier 4 was skipped and the snapshot
+    /// is *not* recorded, but we don't retry (mirrors the old early `return`).
+    Halted,
+}
+
+/// Result of an offloaded apply pass, carried back to the main thread.
+struct ApplyOutcome {
+    /// The processed snapshot (with any captured playback-target sink).
+    snapshot: AppSettings,
+    /// Self-listen loopback handle after reconciliation — possibly the same
+    /// one passed in, a freshly spawned one, or `None`.
+    loopback: Option<Loopback>,
+    status: ApplyStatus,
+}
+
 /// Delay between the last edit and the apply phase. 150 ms merges slider
 /// drags into a single pass without feeling sluggish.
 const DEBOUNCE_MS: u32 = 150;
@@ -52,6 +74,11 @@ pub struct AppState {
     settings: RefCell<AppSettings>,
     debounce_timer: RefCell<Option<SourceId>>,
     dirty: Cell<bool>,
+    /// True while an apply pass is running on a worker thread. Serialises
+    /// applies: a debounce that fires mid-pass just leaves `dirty` set, and the
+    /// completing pass re-arms so the latest edit lands without two passes
+    /// racing `systemctl` against each other.
+    applying: Cell<bool>,
     /// Last snapshot that was successfully applied. Used to decide
     /// whether the current change needs an expensive mic-chain reload
     /// or if the cheap live path is sufficient.
@@ -69,6 +96,7 @@ impl AppState {
             settings: RefCell::new(settings),
             debounce_timer: RefCell::new(None),
             dirty: Cell::new(false),
+            applying: Cell::new(false),
             last_applied: RefCell::new(None),
             loopback: RefCell::new(None),
         })
@@ -107,12 +135,36 @@ impl AppState {
         true
     }
 
-    /// Flush pending changes immediately (used on window close).
+    /// Flush pending changes immediately (used on window close). Runs the apply
+    /// pass **synchronously** — the process is about to exit, so an offloaded
+    /// pass might never complete; a brief block here is the right trade. (The
+    /// debounced mid-session path, by contrast, runs off the main loop.)
     pub fn flush(self: &Rc<Self>) {
         if let Some(id) = self.debounce_timer.borrow_mut().take() {
             id.remove();
         }
-        self.apply_now();
+        if !self.dirty.replace(false) {
+            return;
+        }
+        let prev = self.last_applied.borrow().clone();
+        let snapshot = self.settings.borrow().clone();
+        let was_enabled = prev.as_ref().is_some_and(|s| s.output_filter.enabled);
+        let needs_capture = snapshot.output_filter.enabled
+            && !was_enabled
+            && snapshot.output_filter.target_sink_name.is_none();
+        if self.applying.get() {
+            // A worker apply is still in flight and will finish on its thread;
+            // starting a second pass here would race it against `systemctl`.
+            // Just guarantee the latest edit is persisted so the next login
+            // reproduces it, and let the in-flight pass settle the services.
+            if let Err(e) = snapshot.save() {
+                error!("state: failed to save settings on close: {e}");
+            }
+            return;
+        }
+        let loopback_in = self.loopback.borrow_mut().take();
+        let outcome = run_apply(prev, snapshot, needs_capture, loopback_in);
+        self.reconcile_after_apply(outcome);
     }
 
     fn arm_debounce(self: &Rc<Self>) {
@@ -131,130 +183,217 @@ impl AppState {
         *self.debounce_timer.borrow_mut() = Some(id);
     }
 
-    fn apply_now(&self) {
-        if !self.dirty.replace(false) {
+    /// Kick off an apply pass. The expensive part — capturing the default sink,
+    /// pushing live controls, and restarting the pwloader units (all `systemctl`
+    /// / `pw-cli` subprocesses) — runs on a worker thread so dragging a slider
+    /// never freezes the UI. Only the cheap decision-gathering happens here.
+    fn apply_now(self: &Rc<Self>) {
+        if !self.dirty.get() {
             return;
         }
+        if self.applying.get() {
+            // A pass is already running on a worker; it re-arms on completion
+            // (`dirty` stays set), so we never race two passes' `systemctl`.
+            return;
+        }
+        self.dirty.set(false);
+
         let prev = self.last_applied.borrow().clone();
-
-        // Capture the current default sink as the output filter's
-        // playback target *before* the conf is rendered. Done only on
-        // the false→true transition: any later change reuses whatever
-        // we captured the first time, so toggling the master off and
-        // back on doesn't accidentally store `output-biglinux` (which
-        // would loop).
-        let was_enabled = prev.as_ref().is_some_and(|s| s.output_filter.enabled);
-        let is_enabled = self.settings.borrow().output_filter.enabled;
-        let needs_capture = is_enabled
-            && !was_enabled
-            && self
-                .settings
-                .borrow()
-                .output_filter
-                .target_sink_name
-                .is_none();
-        if needs_capture {
-            if let Some(target) = capture_external_default_sink() {
-                info!("state: captured playback target sink = {target}");
-                self.settings.borrow_mut().output_filter.target_sink_name = Some(target);
-            }
-        }
-
         let snapshot = self.settings.borrow().clone();
+        // Capture the default sink as the output filter's playback target
+        // *before* the conf is rendered — only on the false→true master
+        // transition, so toggling off/on doesn't overwrite it with
+        // `output-biglinux` (which would loop). The capture itself runs on the
+        // worker (it's a `pw-cli` call), keyed off this flag.
+        let was_enabled = prev.as_ref().is_some_and(|s| s.output_filter.enabled);
+        let needs_capture = snapshot.output_filter.enabled
+            && !was_enabled
+            && snapshot.output_filter.target_sink_name.is_none();
 
-        // Tier 1 — persist settings.
-        if let Err(e) = snapshot.save() {
-            error!("state: failed to save settings: {e}");
-            self.dirty.set(true);
-            return;
-        }
+        let loopback_in = self.loopback.borrow_mut().take();
+        self.applying.set(true);
 
-        // Tier 2 — rewrite on-disk drop-ins so the next login reproduces
-        // the current state.
-        if let Err(e) = pipeline::apply(&snapshot) {
-            error!("state: failed to write pipeline configs: {e}");
-            self.dirty.set(true);
-            return;
-        }
-
-        // Tier 3 — push live control values. No restart, no dropout.
-        let outcome = match apply_live(&snapshot) {
-            Ok(o) => o,
-            Err(e) => {
-                error!("state: live control update failed: {e}");
-                return;
+        let me_weak = Rc::downgrade(self);
+        glib::spawn_future_local(async move {
+            let outcome =
+                gio::spawn_blocking(move || run_apply(prev, snapshot, needs_capture, loopback_in))
+                    .await
+                    .unwrap_or_else(|_| ApplyOutcome {
+                        // Worker panicked — the moved-in loopback handle is gone
+                        // and the pass is abandoned (Halted skips last_applied).
+                        snapshot: AppSettings::default(),
+                        loopback: None,
+                        status: ApplyStatus::Halted,
+                    });
+            if let Some(me) = me_weak.upgrade() {
+                me.finish_apply(outcome);
             }
-        };
-
-        // Tier 4 — drive each pwloader unit independently. AEC first
-        // because the mic chain pins `target.object = "echo-cancel-source"`
-        // when AEC is on, so the EC source must already exist by the time
-        // the mic loader resolves its capture target.
-        reconcile_aec_service(prev.as_ref(), &snapshot);
-
-        let need_mic_reload = needs_mic_reload(prev.as_ref(), &snapshot) || !outcome.mic_pushed;
-        if need_mic_reload {
-            if pipeline::mic_chain_wanted(&snapshot) {
-                let was_running = prev.as_ref().is_some_and(pipeline::mic_chain_wanted);
-                if was_running {
-                    info!("state: mic args changed — restarting mic loader");
-                    if let Err(e) = reload_mic_chain() {
-                        error!("state: failed to reload mic loader: {e}");
-                    }
-                } else {
-                    info!("state: mic chain wanted — starting mic loader");
-                    if let Err(e) = start_mic_service() {
-                        error!("state: failed to start mic loader: {e}");
-                    }
-                }
-            } else if let Err(e) = stop_mic_service() {
-                error!("state: failed to stop mic loader: {e}");
-            }
-        } else {
-            debug!("state: mic controls pushed live, no reload");
-        }
-
-        reconcile_output_service(prev.as_ref(), &snapshot);
-        self.reconcile_self_listen(prev.as_ref(), &snapshot);
-
-        *self.last_applied.borrow_mut() = Some(snapshot);
+        });
     }
 
-    /// Spawn or kill the `pw-loopback` subprocess so the user can hear
-    /// their own microphone. Idempotent — only acts when the toggle
-    /// actually changed, or when an in-flight loopback died on its own
-    /// and the user still wants it on.
-    fn reconcile_self_listen(&self, prev: Option<&AppSettings>, now: &AppSettings) {
-        let was_on = prev.is_some_and(|s| s.monitor.enabled);
-        let is_on = now.monitor.enabled;
+    /// Main-thread continuation after an offloaded apply pass. Stores the new
+    /// loopback handle, records / retries per the pass status, and re-arms the
+    /// debounce if edits arrived while the worker ran.
+    fn finish_apply(self: &Rc<Self>, outcome: ApplyOutcome) {
+        self.applying.set(false);
+        self.reconcile_after_apply(outcome);
+        if self.dirty.get() {
+            self.arm_debounce();
+        }
+    }
 
-        if !is_on {
-            if let Some(handle) = self.loopback.borrow_mut().take() {
-                handle.stop();
-                debug!("state: stopped self-listen loopback");
+    /// Apply the worker's outcome to shared state. Shared by the async
+    /// (`finish_apply`) and synchronous-close (`flush`) paths.
+    fn reconcile_after_apply(&self, outcome: ApplyOutcome) {
+        *self.loopback.borrow_mut() = outcome.loopback;
+        match outcome.status {
+            ApplyStatus::Applied => {
+                // The worker may have captured the playback target sink; mirror
+                // it into the live settings so the next needs_capture check sees
+                // it (the main-thread settings predate the worker's capture).
+                if let Some(target) = outcome.snapshot.output_filter.target_sink_name.clone() {
+                    let mut settings = self.settings.borrow_mut();
+                    if settings.output_filter.target_sink_name.is_none() {
+                        settings.output_filter.target_sink_name = Some(target);
+                    }
+                }
+                *self.last_applied.borrow_mut() = Some(outcome.snapshot);
             }
-            return;
+            ApplyStatus::Retry => self.dirty.set(true),
+            ApplyStatus::Halted => {}
         }
+    }
+}
 
-        // is_on: bring the loopback up if it isn't already alive.
-        let mut slot = self.loopback.borrow_mut();
-        let alive = slot.as_mut().is_some_and(Loopback::is_alive);
-        if alive && was_on && prev.is_some_and(|p| p.monitor.delay_ms == now.monitor.delay_ms) {
-            return;
+/// Run the full apply sequence (Tiers 0.5–4) on a worker thread. Every step is
+/// a blocking subprocess (`pw-cli`, `systemctl`, `pw-loopback`); the ordering
+/// is identical to the old synchronous `apply_now`. `loopback_in` is the
+/// self-listen handle moved off the main thread so it can be stopped/respawned
+/// here; the (possibly new) handle is returned in the outcome.
+fn run_apply(
+    prev: Option<AppSettings>,
+    mut snapshot: AppSettings,
+    needs_capture: bool,
+    loopback_in: Option<Loopback>,
+) -> ApplyOutcome {
+    if needs_capture {
+        if let Some(target) = capture_external_default_sink() {
+            info!("state: captured playback target sink = {target}");
+            snapshot.output_filter.target_sink_name = Some(target);
         }
+    }
 
-        // Either fresh start, delay changed, or process died — recreate.
-        slot.take();
-        let opts = LoopbackOptions {
-            delay_ms: now.monitor.delay_ms,
-            ..LoopbackOptions::default()
+    // Tier 1 — persist settings.
+    if let Err(e) = snapshot.save() {
+        error!("state: failed to save settings: {e}");
+        return ApplyOutcome {
+            snapshot,
+            loopback: loopback_in,
+            status: ApplyStatus::Retry,
         };
-        match Loopback::start(&opts) {
-            Ok(handle) => {
-                *slot = Some(handle);
-                info!("state: self-listen loopback started");
+    }
+
+    // Tier 2 — rewrite on-disk drop-ins so the next login reproduces the state.
+    if let Err(e) = pipeline::apply(&snapshot) {
+        error!("state: failed to write pipeline configs: {e}");
+        return ApplyOutcome {
+            snapshot,
+            loopback: loopback_in,
+            status: ApplyStatus::Retry,
+        };
+    }
+
+    // Tier 3 — push live control values. No restart, no dropout.
+    let live = match apply_live(&snapshot) {
+        Ok(o) => o,
+        Err(e) => {
+            error!("state: live control update failed: {e}");
+            return ApplyOutcome {
+                snapshot,
+                loopback: loopback_in,
+                status: ApplyStatus::Halted,
+            };
+        }
+    };
+
+    // Tier 4 — drive each pwloader unit independently. AEC first because the
+    // mic chain pins `target.object = "echo-cancel-source"` when AEC is on, so
+    // the EC source must already exist by the time the mic loader resolves its
+    // capture target.
+    reconcile_aec_service(prev.as_ref(), &snapshot);
+
+    let need_mic_reload = needs_mic_reload(prev.as_ref(), &snapshot) || !live.mic_pushed;
+    if need_mic_reload {
+        if pipeline::mic_chain_wanted(&snapshot) {
+            let was_running = prev.as_ref().is_some_and(pipeline::mic_chain_wanted);
+            if was_running {
+                info!("state: mic args changed — restarting mic loader");
+                if let Err(e) = reload_mic_chain() {
+                    error!("state: failed to reload mic loader: {e}");
+                }
+            } else {
+                info!("state: mic chain wanted — starting mic loader");
+                if let Err(e) = start_mic_service() {
+                    error!("state: failed to start mic loader: {e}");
+                }
             }
-            Err(e) => error!("state: self-listen loopback failed: {e}"),
+        } else if let Err(e) = stop_mic_service() {
+            error!("state: failed to stop mic loader: {e}");
+        }
+    } else {
+        debug!("state: mic controls pushed live, no reload");
+    }
+
+    reconcile_output_service(prev.as_ref(), &snapshot);
+    let loopback = reconcile_self_listen(prev.as_ref(), &snapshot, loopback_in);
+
+    ApplyOutcome {
+        snapshot,
+        loopback,
+        status: ApplyStatus::Applied,
+    }
+}
+
+/// Spawn or kill the `pw-loopback` subprocess so the user can hear their own
+/// microphone. Idempotent — only acts when the toggle actually changed, or when
+/// the in-flight loopback died on its own and the user still wants it on. Takes
+/// the current handle and returns the reconciled one (runs on the worker).
+fn reconcile_self_listen(
+    prev: Option<&AppSettings>,
+    now: &AppSettings,
+    mut loopback: Option<Loopback>,
+) -> Option<Loopback> {
+    let was_on = prev.is_some_and(|s| s.monitor.enabled);
+    let is_on = now.monitor.enabled;
+
+    if !is_on {
+        if let Some(handle) = loopback.take() {
+            handle.stop();
+            debug!("state: stopped self-listen loopback");
+        }
+        return None;
+    }
+
+    // is_on: bring the loopback up if it isn't already alive.
+    let alive = loopback.as_mut().is_some_and(Loopback::is_alive);
+    if alive && was_on && prev.is_some_and(|p| p.monitor.delay_ms == now.monitor.delay_ms) {
+        return loopback;
+    }
+
+    // Either fresh start, delay changed, or process died — recreate.
+    drop(loopback.take());
+    let opts = LoopbackOptions {
+        delay_ms: now.monitor.delay_ms,
+        ..LoopbackOptions::default()
+    };
+    match Loopback::start(&opts) {
+        Ok(handle) => {
+            info!("state: self-listen loopback started");
+            Some(handle)
+        }
+        Err(e) => {
+            error!("state: self-listen loopback failed: {e}");
+            None
         }
     }
 }
