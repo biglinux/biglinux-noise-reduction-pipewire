@@ -15,7 +15,7 @@ use std::rc::Rc;
 use std::time::Duration;
 
 use gtk::prelude::*;
-use gtk::{glib, Box as GtkBox};
+use gtk::{gio, glib, Box as GtkBox};
 
 use crate::services::pipewire::{set_default_source, set_source_volume, snapshot_sources, Source};
 
@@ -25,6 +25,13 @@ use super::didactic::{labelled_row, slider_row};
 /// Re-snapshot interval. Short enough to feel live when plugging a USB
 /// mic, long enough to keep `pw-cli` overhead negligible.
 const REFRESH_INTERVAL: Duration = Duration::from_secs(2);
+
+/// Trailing-edge debounce for the volume slider. A drag fires
+/// `value_changed` dozens of times per second; coalescing to the last
+/// value keeps `wpctl set-volume` off the live drag path (one
+/// subprocess per settle, not per tick) and avoids out-of-order
+/// completions leaving a stale level.
+const VOLUME_DEBOUNCE: Duration = Duration::from_millis(150);
 
 /// Two stacked rows ready to drop into any card. The dropdown row is
 /// hidden when only a single source is visible — re-shown by the
@@ -52,6 +59,10 @@ pub fn build_rows(volume_for: impl Fn(u32) -> Option<f32> + 'static) -> PickerRo
     let (vol_row, vol_adj) = build_volume_row(initial_vol);
 
     let volume_for = Rc::new(volume_for);
+    // Shared trailing-debounce timer for the volume slider — also cancelled on
+    // a source switch so a half-finished drag of the OLD source never lands
+    // after the user picked a different one.
+    let vol_pending: Rc<Cell<Option<glib::SourceId>>> = Rc::new(Cell::new(None));
     wire_dropdown_change(
         &dropdown,
         &sources_state,
@@ -59,8 +70,9 @@ pub fn build_rows(volume_for: impl Fn(u32) -> Option<f32> + 'static) -> PickerRo
         &vol_adj,
         &volume_for,
         &suppress,
+        &vol_pending,
     );
-    wire_volume_change(&vol_adj, &active, &suppress);
+    wire_volume_change(&vol_adj, &active, &suppress, &vol_pending);
 
     let dropdown_row = labelled_row(&i18n("Microphone"), &dropdown);
     dropdown_row.set_visible(sources.len() > 1);
@@ -116,6 +128,7 @@ fn wire_dropdown_change<F>(
     vol_adj: &gtk::Adjustment,
     volume_for: &Rc<F>,
     suppress: &Rc<Cell<bool>>,
+    vol_pending: &Rc<Cell<Option<glib::SourceId>>>,
 ) where
     F: Fn(u32) -> Option<f32> + 'static,
 {
@@ -124,6 +137,7 @@ fn wire_dropdown_change<F>(
     let vol_adj = vol_adj.clone();
     let volume_for = Rc::clone(volume_for);
     let suppress = Rc::clone(suppress);
+    let vol_pending = Rc::clone(vol_pending);
     dropdown.connect_selected_notify(move |dd| {
         if suppress.get() {
             return;
@@ -136,15 +150,38 @@ fn wire_dropdown_change<F>(
         if active.get() == Some(picked_id) {
             return;
         }
-        if let Err(e) = set_default_source(picked_id) {
-            log::warn!("source picker: set-default failed: {e}");
-            return;
+        // Cancel a pending volume write for the source we're leaving — its
+        // value is about to be replaced by the new source's, and the
+        // suppressed set_value below would otherwise let the old timer fire.
+        if let Some(timer) = vol_pending.take() {
+            timer.remove();
         }
+        // Optimistically record the pick so a rapid second selection
+        // supersedes this one: the async continuation only applies its
+        // volume side-effect when `active` still points at `picked_id`.
         active.set(Some(picked_id));
-        let vol = (volume_for)(picked_id).unwrap_or(1.0);
-        suppress.set(true);
-        vol_adj.set_value((f64::from(vol) * 100.0).clamp(0.0, 150.0));
-        suppress.set(false);
+        let active = Rc::clone(&active);
+        let vol_adj = vol_adj.clone();
+        let volume_for = Rc::clone(&volume_for);
+        let suppress = Rc::clone(&suppress);
+        glib::spawn_future_local(async move {
+            let result = gio::spawn_blocking(move || set_default_source(picked_id))
+                .await
+                .unwrap_or_else(|_| Err(std::io::Error::other("worker thread panicked")));
+            if let Err(e) = result {
+                log::warn!("source picker: set-default failed: {e}");
+                return;
+            }
+            // A newer selection may have landed while the subprocess ran;
+            // don't clobber its volume with this stale one.
+            if active.get() != Some(picked_id) {
+                return;
+            }
+            let vol = (volume_for)(picked_id).unwrap_or(1.0);
+            suppress.set(true);
+            vol_adj.set_value((f64::from(vol) * 100.0).clamp(0.0, 150.0));
+            suppress.set(false);
+        });
     });
 }
 
@@ -152,9 +189,14 @@ fn wire_volume_change(
     vol_adj: &gtk::Adjustment,
     active: &Rc<Cell<Option<u32>>>,
     suppress: &Rc<Cell<bool>>,
+    pending: &Rc<Cell<Option<glib::SourceId>>>,
 ) {
     let active = Rc::clone(active);
     let suppress = Rc::clone(suppress);
+    // Pending trailing-debounce timer (shared with the dropdown so a source
+    // switch can cancel it); replaced on every tick so only the final value
+    // reaches `wpctl`.
+    let pending = Rc::clone(pending);
     vol_adj.connect_value_changed(move |a| {
         if suppress.get() {
             return;
@@ -163,9 +205,23 @@ fn wire_volume_change(
             return;
         };
         let v = (a.value() / 100.0).clamp(0.0, 1.5) as f32;
-        if let Err(e) = set_source_volume(id, v) {
-            log::warn!("source picker: set-volume failed: {e}");
+
+        if let Some(source) = pending.take() {
+            source.remove();
         }
+        let pending_inner = Rc::clone(&pending);
+        let source = glib::timeout_add_local_once(VOLUME_DEBOUNCE, move || {
+            pending_inner.set(None);
+            glib::spawn_future_local(async move {
+                let result = gio::spawn_blocking(move || set_source_volume(id, v))
+                    .await
+                    .unwrap_or_else(|_| Err(std::io::Error::other("worker thread panicked")));
+                if let Err(e) = result {
+                    log::warn!("source picker: set-volume failed: {e}");
+                }
+            });
+        });
+        pending.set(Some(source));
     });
 }
 

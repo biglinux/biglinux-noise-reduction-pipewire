@@ -9,7 +9,7 @@ use std::cell::RefCell;
 use std::rc::Rc;
 
 use adw::prelude::*;
-use gtk::gio;
+use gtk::{gio, glib};
 
 use crate::config::{app_id, AppSettings};
 use crate::pipeline;
@@ -66,17 +66,6 @@ impl MicrophoneApplication {
             return;
         }
 
-        // Self-heal on the first activation of the session: scrub any
-        // file the Python configurator (or an older Rust revision) left
-        // behind, then rewrite our own configs so the on-disk state
-        // matches the current binary. The user-level systemd unit does
-        // the same at login, but covering the GUI path catches users
-        // who upgrade the package mid-session.
-        pipeline::purge_legacy_files();
-        if let Err(e) = pipeline::apply(&self.state.settings()) {
-            log::warn!("app: self-heal apply failed: {e}");
-        }
-
         let monitor = self
             .monitor
             .borrow_mut()
@@ -87,6 +76,28 @@ impl MicrophoneApplication {
         window.present();
 
         wp_override_warning::maybe_show(&window, Rc::clone(&self.state));
+
+        // Self-heal on the first activation of the session: scrub any
+        // file the Python configurator (or an older Rust revision) left
+        // behind, then rewrite our own configs so the on-disk state
+        // matches the current binary. The user-level systemd unit does
+        // the same at login, but covering the GUI path catches users
+        // who upgrade the package mid-session. The purge (which disables
+        // a legacy systemd unit) and the config write are pure disk +
+        // subprocess work that would otherwise stall the very first
+        // frame, so they run on a worker thread after the window is up.
+        // The internal purge→apply order is preserved (one sequential
+        // task); no running unit depends on this write completing first.
+        let settings_snapshot = self.state.settings().clone();
+        glib::spawn_future_local(async move {
+            let _ = gio::spawn_blocking(move || {
+                pipeline::purge_legacy_files();
+                if let Err(e) = pipeline::apply(&settings_snapshot) {
+                    log::warn!("app: self-heal apply failed: {e}");
+                }
+            })
+            .await;
+        });
     }
 
     fn on_shutdown(&self) {

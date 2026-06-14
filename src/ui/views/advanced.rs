@@ -549,17 +549,17 @@ where
 
 // ── Apply / Reset ────────────────────────────────────────────────────
 
+/// Outcome of the apply worker, distinguishing a config-write failure
+/// from a service-restart failure so the UI can show the right message.
+enum ApplyOutcome {
+    Ok,
+    WriteFailed(String),
+    RestartFailed(String),
+}
+
 fn apply_clicked(button: &gtk::Button, selection: &Rc<RefCell<Selection>>, banner: &adw::Banner) {
     let snapshot = *selection.borrow();
     let tweaks = snapshot.into_tweaks();
-    if let Err(e) = tweaks.apply() {
-        present_error(
-            button,
-            &i18n("Failed to write configuration"),
-            &e.to_string(),
-        );
-        return;
-    }
 
     button.set_sensitive(false);
     button.set_label(&i18n("Restarting audio…"));
@@ -568,9 +568,21 @@ fn apply_clicked(button: &gtk::Button, selection: &Rc<RefCell<Selection>>, banne
     let banner_weak = banner.downgrade();
     let selection = Rc::clone(selection);
     glib::spawn_future_local(async move {
-        let result = gio::spawn_blocking(restart_pipewire_user_stack)
-            .await
-            .unwrap_or_else(|_| Err(std::io::Error::other("worker thread panicked")));
+        // Write the drop-ins and restart the stack on the same worker so
+        // the load-bearing order (fsync the config, *then* bounce the
+        // daemons that re-read it) is preserved off the main loop —
+        // offloading the write separately could race it past the restart.
+        let outcome = gio::spawn_blocking(move || {
+            if let Err(e) = tweaks.apply() {
+                return ApplyOutcome::WriteFailed(e.to_string());
+            }
+            match restart_pipewire_user_stack() {
+                Ok(()) => ApplyOutcome::Ok,
+                Err(e) => ApplyOutcome::RestartFailed(e.to_string()),
+            }
+        })
+        .await
+        .unwrap_or_else(|_| ApplyOutcome::RestartFailed("worker thread panicked".to_owned()));
 
         let Some(button) = button_weak.upgrade() else {
             return;
@@ -582,12 +594,14 @@ fn apply_clicked(button: &gtk::Button, selection: &Rc<RefCell<Selection>>, banne
             refresh_banner(&banner, &selection);
         }
 
-        if let Err(e) = result {
-            present_error(
-                &button,
-                &i18n("Audio service restart failed"),
-                &e.to_string(),
-            );
+        match outcome {
+            ApplyOutcome::Ok => {}
+            ApplyOutcome::WriteFailed(msg) => {
+                present_error(&button, &i18n("Failed to write configuration"), &msg);
+            }
+            ApplyOutcome::RestartFailed(msg) => {
+                present_error(&button, &i18n("Audio service restart failed"), &msg);
+            }
         }
     });
 }
@@ -612,14 +626,12 @@ fn reset_clicked(button: &gtk::Button, selection: &Rc<RefCell<Selection>>, banne
     dialog.connect_response(None, move |dlg, response| {
         if response == "reset" {
             *selection.borrow_mut() = Selection::default();
-            if let Err(e) = UserTweaks::clear() {
-                if let Some(b) = button_weak.upgrade() {
-                    present_error(&b, &i18n("Failed to remove configuration"), &e.to_string());
-                }
-                dlg.close();
-                return;
-            }
             refresh_banner(&banner, &selection);
+            // No separate synchronous `UserTweaks::clear()`: applying the
+            // now-default selection renders empty drop-ins, and
+            // `UserTweaks::apply` deletes them (same two files, same
+            // order) — but on the worker thread, with the restart, so the
+            // reset no longer fsyncs/removes on the main loop.
             if let Some(b) = button_weak.upgrade() {
                 apply_clicked(&b, &selection, &banner);
             }

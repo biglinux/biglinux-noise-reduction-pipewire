@@ -139,13 +139,6 @@ impl UserTweaks {
         write_or_remove(&wireplumber_drop_in(), &render_wireplumber(self))?;
         Ok(())
     }
-
-    /// Remove both drop-in files. No-op when they don't exist.
-    pub fn clear() -> io::Result<()> {
-        remove_if_exists(&pipewire_drop_in())?;
-        remove_if_exists(&wireplumber_drop_in())?;
-        Ok(())
-    }
 }
 
 // ── Path helpers ──────────────────────────────────────────────────────

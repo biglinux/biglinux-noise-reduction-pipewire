@@ -9,6 +9,7 @@
 use std::rc::Rc;
 
 use adw::prelude::*;
+use gtk::{gio, glib};
 
 use crate::config::AppSettings;
 use crate::pipeline;
@@ -44,11 +45,23 @@ impl Drop for MicrophoneWindowGuard {
 #[must_use]
 pub fn build_embedded_window(app: &adw::Application) -> (gtk::Window, MicrophoneWindowGuard) {
     i18n::init_gettext_embedded();
-    pipeline::purge_legacy_files();
     let state = AppState::new(AppSettings::load());
-    if let Err(e) = pipeline::apply(&state.settings()) {
-        log::warn!("embed: self-heal apply failed: {e}");
-    }
+
+    // Self-heal (legacy scrub + config rewrite) is pure disk + subprocess
+    // work — see `app::on_activate` for the rationale. Run it on a worker
+    // so mounting the embedded window inside the host stays non-blocking.
+    // The purge→apply order is preserved within the single task.
+    let settings_snapshot = state.settings().clone();
+    glib::spawn_future_local(async move {
+        let _ = gio::spawn_blocking(move || {
+            pipeline::purge_legacy_files();
+            if let Err(e) = pipeline::apply(&settings_snapshot) {
+                log::warn!("embed: self-heal apply failed: {e}");
+            }
+        })
+        .await;
+    });
+
     let monitor = Rc::new(AudioMonitor::start(MonitorConfig::default()));
     let window = window::build(app, Rc::clone(&state), Rc::clone(&monitor));
     wp_override_warning::maybe_show(&window, Rc::clone(&state));
