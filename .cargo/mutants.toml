@@ -1,0 +1,18 @@
+# cargo-mutants configuration.
+#
+# Listed mutants are PROVABLY equivalent — behaviorally identical to the
+# original code, so no test can ever distinguish them. Documenting them here
+# keeps `cargo mutants` reporting 0 missed (a trustworthy "every real gap is
+# covered" signal) instead of a perpetual, un-actionable false positive.
+# Anything NOT proven equivalent must be killed with a test, never excluded.
+exclude_re = [
+    # pitch_controls (pipeline/mic.rs): the voice-changer gain-compensation
+    # curve is continuous and crosses 0 dB at coeff == 1.0 (width 0.5). Each
+    # branch's expression carries a `(1.0 - coeff)` / `(coeff - 1.0)` factor
+    # that is exactly 0.0 at that point, so the branch CHOICE there is
+    # unobservable: `coeff < 1.0` and `coeff <= 1.0` produce identical output
+    # for every input. The behavior at the boundary is pinned by
+    # `voice_changer_unity_width_has_zero_gain_compensation` in
+    # pipeline/mic/tests.rs.
+    "replace < with <= in pitch_controls",
+]
