@@ -101,9 +101,6 @@ impl Selection {
 /// Build the Tuning page. Returns a scrollable container ready to be
 /// added to the [`adw::ViewStack`] in `views::window::populate_body`.
 pub fn build() -> gtk::Widget {
-    let initial = Selection::from_disk(&UserTweaks::load_from_disk());
-    let selection = Rc::new(RefCell::new(initial));
-
     let scroll = ScrolledWindow::builder()
         .hscrollbar_policy(gtk::PolicyType::Never)
         .vscrollbar_policy(gtk::PolicyType::Automatic)
@@ -118,6 +115,27 @@ pub fn build() -> gtk::Widget {
         .margin_start(24)
         .margin_end(24)
         .build();
+    scroll.set_child(Some(&content));
+
+    // Read the on-disk pipewire/wireplumber tweaks off the main loop so a hung
+    // or slow $HOME can't block the Tuning tab from opening; the cards fill in
+    // once the read lands (empty until then).
+    let content_weak = content.downgrade();
+    glib::spawn_future_local(async move {
+        let tweaks = gio::spawn_blocking(UserTweaks::load_from_disk)
+            .await
+            .unwrap_or_default();
+        if let Some(content) = content_weak.upgrade() {
+            populate_tuning_page(&content, Selection::from_disk(&tweaks));
+        }
+    });
+    scroll.upcast()
+}
+
+/// Build the Tuning page cards from the already-loaded on-disk selection. Split
+/// from [`build`] so the disk read can run off the main loop first.
+fn populate_tuning_page(content: &GtkBox, initial: Selection) {
+    let selection = Rc::new(RefCell::new(initial));
 
     let banner = adw::Banner::builder()
         .title(i18n("The standard audio settings are in use."))
@@ -176,9 +194,6 @@ pub fn build() -> gtk::Widget {
             reset_clicked(btn, &selection, &banner);
         });
     }
-
-    scroll.set_child(Some(&content));
-    scroll.upcast()
 }
 
 struct ActionToolbar {
