@@ -13,96 +13,83 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 
 #: src/ui/window.rs:46 src/ui/window.rs:381
-#, fuzzy
 msgid "Filter noise"
-msgstr "Filter noise"
+msgstr "Filtro de ruído"
 
 #: src/ui/window.rs:186 src/ui/widgets/source_picker.rs:65
-#, fuzzy
 msgid "Microphone"
-msgstr "Microphone"
+msgstr "Microfone"
 
 #: src/ui/window.rs:192
-#, fuzzy
 msgid "Output filter"
-msgstr "Output filter"
+msgstr "Filtro de saída"
 
 #: src/ui/window.rs:198
 msgid "Tuning"
-msgstr ""
+msgstr "Ajustes"
 
 #: src/ui/window.rs:248
-#, fuzzy
 msgid "Advanced"
-msgstr "Advanced"
+msgstr "Avançado"
 
 #: src/ui/window.rs:251
-#, fuzzy
 msgid "Show every control individually"
-msgstr "Show every control individually"
+msgstr "Mostrar cada controle individualmente"
 
 #: src/ui/window.rs:270
-#, fuzzy
 msgid "Restore default settings"
-msgstr "Restore default settings"
+msgstr "Restaurar configurações padrão"
 
 #: src/ui/window.rs:273
-#, fuzzy
 msgid "About Filter noise"
-msgstr "About Filter noise"
+msgstr "Sobre o Filtro de ruído"
 
 #. Icon-only control needs an explicit accessible label; tooltips
 #. alone are not surfaced as accessible names by every reader.
 #: src/ui/window.rs:278 src/ui/window.rs:283
-#, fuzzy
 msgid "Main menu"
-msgstr "Main menu"
+msgstr "Menu principal"
 
 #: src/ui/window.rs:334
-#, fuzzy
 msgid "Restore default settings?"
-msgstr "Restore default settings?"
+msgstr "Restaurar configurações padrão?"
 
 #: src/ui/window.rs:336
-#, fuzzy
 msgid ""
 "All audio processing settings will return to their factory values. Your "
 "window size and view preferences are kept."
 msgstr ""
-"All audio processing settings will return to their factory values. Your "
-"window size and view preferences are kept."
+"Todas as configurações de processamento de áudio voltarão aos valores de "
+"fábrica. O tamanho da janela e as preferências de exibição são mantidos."
 
 #: src/ui/window.rs:340 src/ui/views/advanced.rs:603
-#, fuzzy
 msgid "Cancel"
-msgstr "Cancel"
+msgstr "Cancelar"
 
 #: src/ui/window.rs:341 src/ui/views/advanced.rs:200
-#, fuzzy
 msgid "Restore defaults"
-msgstr "Restore defaults"
+msgstr "Restaurar padrões"
 
 #: src/ui/window.rs:390
-#, fuzzy
 msgid ""
 "Real-time noise filter for microphone capture and system audio playback. "
 "Powered by the GTCRN neural network running as a LADSPA plugin on top of "
 "PipeWire — every filter is driven by a WirePlumber smart-filter so the "
 "default source and sink stay clean even after device changes."
 msgstr ""
-"Real-time noise filter for microphone capture and system audio playback. "
-"Powered by the GTCRN neural network running as a LADSPA plugin on top of "
-"PipeWire — every filter is driven by a WirePlumber smart-filter so the "
-"default source and sink stay clean even after device changes."
+"Filtro de ruído em tempo real para a captura do microfone e a reprodução de "
+"áudio do sistema. Movido pela rede neural GTCRN executada como um plugin "
+"LADSPA sobre o PipeWire — cada filtro é controlado por um smart-filter do "
+"WirePlumber, de modo que a fonte e o destino padrão permaneçam limpos mesmo "
+"após trocas de dispositivo."
 
 #: src/ui/window.rs:397
-#, fuzzy
 msgid "Built on"
-msgstr "Built on"
+msgstr "Desenvolvido com"
 
 #: src/ui/views/advanced.rs:123 src/ui/views/advanced.rs:220
 msgid "The standard audio settings are in use."
-msgstr ""
+msgstr "As configurações de áudio padrão estão em uso."
 
 #: src/ui/views/advanced.rs:130
 msgid ""
@@ -110,33 +97,37 @@ msgid ""
 "default we tested across a wide range of machines — change a value only if "
 "you have a specific reason to."
 msgstr ""
+"Ajuste como o sistema controla o seu hardware de áudio. Cada cartão começa "
+"no padrão que testamos em uma ampla variedade de máquinas — altere um valor "
+"apenas se tiver um motivo específico."
 
 #. ── Bluetooth ────────────────────────────────────────────────────
 #: src/ui/views/advanced.rs:147
 msgid "Bluetooth"
-msgstr ""
+msgstr "Bluetooth"
 
 #. ── Estabilidade e desempenho ────────────────────────────────────
 #: src/ui/views/advanced.rs:153
 msgid "Stability and performance"
-msgstr ""
+msgstr "Estabilidade e desempenho"
 
 #. ── Qualidade de som ─────────────────────────────────────────────
 #: src/ui/views/advanced.rs:160
 msgid "Sound quality"
-msgstr ""
+msgstr "Qualidade do som"
 
 #: src/ui/views/advanced.rs:205 src/ui/views/advanced.rs:579
 msgid "Apply and restart audio"
-msgstr ""
+msgstr "Aplicar e reiniciar o áudio"
 
 #: src/ui/views/advanced.rs:218
 msgid "Custom settings active. Click Apply to enable them."
 msgstr ""
+"Configurações personalizadas ativas. Clique em Aplicar para habilitá-las."
 
 #: src/ui/views/advanced.rs:230
 msgid "Bluetooth call mode"
-msgstr ""
+msgstr "Modo de chamada Bluetooth"
 
 #: src/ui/views/advanced.rs:232
 msgid ""
@@ -146,22 +137,28 @@ msgid ""
 "movies stay in full quality even when an app asks for the microphone. Turn "
 "it on if you rely on the headset's microphone for calls."
 msgstr ""
+"Quando você inicia uma chamada de vídeo ou voz, o seu fone Bluetooth pode "
+"alternar para um modo de chamada especial que liga o microfone — mas o som "
+"fica mono e com qualidade menor, como em um telefone antigo. Isso vem "
+"desligado por padrão para que músicas e filmes permaneçam em qualidade total"
+" mesmo quando um aplicativo pede o microfone. Ligue se você depende do "
+"microfone do fone para chamadas."
 
 #: src/ui/views/advanced.rs:244
 msgid "On — switch to call mode automatically"
-msgstr ""
+msgstr "Ligado — alternar para o modo de chamada automaticamente"
 
 #: src/ui/views/advanced.rs:245
 msgid "Off — always keep stereo sound (default)"
-msgstr ""
+msgstr "Desligado — manter sempre o som estéreo (padrão)"
 
 #: src/ui/views/advanced.rs:255
 msgid "Behaviour"
-msgstr ""
+msgstr "Comportamento"
 
 #: src/ui/views/advanced.rs:262
 msgid "Bluetooth audio buffer"
-msgstr ""
+msgstr "Buffer de áudio do Bluetooth"
 
 #: src/ui/views/advanced.rs:264
 msgid ""
@@ -170,30 +167,35 @@ msgid ""
 "but adds delay between picture and sound — keep the default unless your "
 "headset stutters or you need quicker audio."
 msgstr ""
+"O Bluetooth precisa de uma pequena reserva de áudio para que o som toque de "
+"forma suave mesmo quando a conexão sem fio tem pequenas falhas. Uma reserva "
+"maior esconde as falhas, mas adiciona atraso entre a imagem e o som — "
+"mantenha o padrão a menos que o seu fone falhe ou você precise de áudio mais"
+" rápido."
 
 #: src/ui/views/advanced.rs:275
 msgid "Small (low delay — needs a stable headset, ~11 ms)"
-msgstr ""
+msgstr "Pequeno (baixo atraso — exige um fone estável, ~11 ms)"
 
 #: src/ui/views/advanced.rs:278
 msgid "Medium (~21 ms)"
-msgstr ""
+msgstr "Médio (~21 ms)"
 
 #: src/ui/views/advanced.rs:279
 msgid "Standard (default, ~42 ms)"
-msgstr ""
+msgstr "Normal (padrão, ~42 ms)"
 
 #: src/ui/views/advanced.rs:280
 msgid "Large (steadiest, ~85 ms)"
-msgstr ""
+msgstr "Grande (mais estável, ~85 ms)"
 
 #: src/ui/views/advanced.rs:290
 msgid "Buffer size"
-msgstr ""
+msgstr "Tamanho do buffer"
 
 #: src/ui/views/advanced.rs:297
 msgid "High-quality Bluetooth audio (SBC-XQ)"
-msgstr ""
+msgstr "Áudio Bluetooth de alta qualidade (SBC-XQ)"
 
 #: src/ui/views/advanced.rs:299
 msgid ""
@@ -201,22 +203,26 @@ msgid ""
 "this on if a headset stubbornly chooses lower quality, or off if you have a "
 "very old device that breaks with the high-quality mode."
 msgstr ""
+"Os seus dispositivos Bluetooth já usam o melhor modo de som que suportam. "
+"Force ligado se um fone insistir em escolher uma qualidade menor, ou "
+"desligado se você tiver um dispositivo muito antigo que não funciona com o "
+"modo de alta qualidade."
 
 #: src/ui/views/advanced.rs:308
 msgid "Force on (high quality)"
-msgstr ""
+msgstr "Forçar ligado (alta qualidade)"
 
 #: src/ui/views/advanced.rs:309
 msgid "Force off (maximum compatibility)"
-msgstr ""
+msgstr "Forçar desligado (compatibilidade máxima)"
 
 #: src/ui/views/advanced.rs:319
 msgid "SBC-XQ"
-msgstr ""
+msgstr "SBC-XQ"
 
 #: src/ui/views/advanced.rs:328
 msgid "Audio responsiveness"
-msgstr ""
+msgstr "Responsividade do áudio"
 
 #: src/ui/views/advanced.rs:330
 msgid ""
@@ -225,34 +231,38 @@ msgid ""
 "on weaker machines. The default works well for video calls, music and games "
 "on most computers."
 msgstr ""
+"A rapidez com que o sistema reage às mudanças de som. Uma reação mais rápida"
+" é ótima para produção musical, mas usa mais CPU; uma reação mais lenta "
+"deixa a reprodução mais estável em máquinas mais fracas. O padrão funciona "
+"bem para chamadas de vídeo, músicas e jogos na maioria dos computadores."
 
 #: src/ui/views/advanced.rs:340
 msgid "Very fast (music production, ~5 ms)"
-msgstr ""
+msgstr "Muito rápido (produção musical, ~5 ms)"
 
 #: src/ui/views/advanced.rs:341
 msgid "Fast (low delay, ~11 ms)"
-msgstr ""
+msgstr "Rápido (baixo atraso, ~11 ms)"
 
 #: src/ui/views/advanced.rs:343
 msgid "Balanced (upstream PipeWire default, ~21 ms)"
-msgstr ""
+msgstr "Equilibrado (padrão do PipeWire, ~21 ms)"
 
 #: src/ui/views/advanced.rs:346
 msgid "Steady (default, ~42 ms)"
-msgstr ""
+msgstr "Estável (padrão, ~42 ms)"
 
 #: src/ui/views/advanced.rs:348
 msgid "Most stable (older or busy machines, ~85 ms)"
-msgstr ""
+msgstr "Mais estável (máquinas antigas ou ocupadas, ~85 ms)"
 
 #: src/ui/views/advanced.rs:360
 msgid "Reaction speed"
-msgstr ""
+msgstr "Velocidade de reação"
 
 #: src/ui/views/advanced.rs:367
 msgid "USB audio safety margin"
-msgstr ""
+msgstr "Margem de segurança do áudio USB"
 
 #: src/ui/views/advanced.rs:369
 msgid ""
@@ -260,14 +270,17 @@ msgid ""
 "interfaces. Increase only if you hear tiny cuts or pops on a USB device when"
 " the computer is busy."
 msgstr ""
+"Uma pequena reserva extra para fones, microfones e interfaces de áudio USB. "
+"Aumente apenas se você ouvir pequenos cortes ou estalos em um dispositivo "
+"USB quando o computador está ocupado."
 
 #: src/ui/views/advanced.rs:384 src/ui/views/advanced.rs:409
 msgid "Margin"
-msgstr ""
+msgstr "Margem"
 
 #: src/ui/views/advanced.rs:391
 msgid "Built-in audio safety margin"
-msgstr ""
+msgstr "Margem de segurança do áudio integrado"
 
 #: src/ui/views/advanced.rs:393
 msgid ""
@@ -275,10 +288,14 @@ msgid ""
 "your laptop or motherboard. Most people never need to change this — try it "
 "only if the internal speaker glitches when the computer is under load."
 msgstr ""
+"Mesma ideia da margem USB, mas para os alto-falantes e o microfone "
+"integrados ao seu notebook ou placa-mãe. A maioria das pessoas nunca precisa"
+" mudar isso — experimente apenas se o alto-falante interno falhar quando o "
+"computador está sob carga."
 
 #: src/ui/views/advanced.rs:416
 msgid "Avoid the click at the start of sounds"
-msgstr ""
+msgstr "Evitar o clique no início dos sons"
 
 #: src/ui/views/advanced.rs:418
 msgid ""
@@ -288,22 +305,27 @@ msgid ""
 "the audio. Turn this on to keep the speakers always ready. The extra battery"
 " use is tiny."
 msgstr ""
+"Alguns notebooks e placas-mãe colocam os alto-falantes para dormir após "
+"alguns segundos de silêncio para economizar energia. Quando o próximo som "
+"chega — uma notificação, um vídeo começando — você pode ouvir um pequeno "
+"clique ou perder o início do áudio. Ligue isto para manter os alto-falantes "
+"sempre prontos. O consumo extra de bateria é mínimo."
 
 #: src/ui/views/advanced.rs:430
 msgid "Always keep the speakers ready (recommended on desktops)"
-msgstr ""
+msgstr "Manter os alto-falantes sempre prontos (recomendado em desktops)"
 
 #: src/ui/views/advanced.rs:433
 msgid "Let the speakers sleep when idle (default)"
-msgstr ""
+msgstr "Deixar os alto-falantes dormirem quando ociosos (padrão)"
 
 #: src/ui/views/advanced.rs:443
 msgid "Speaker sleep"
-msgstr ""
+msgstr "Suspensão dos alto-falantes"
 
 #: src/ui/views/advanced.rs:452
 msgid "Sound quality range"
-msgstr ""
+msgstr "Faixa de qualidade do som"
 
 #: src/ui/views/advanced.rs:454
 msgid ""
@@ -312,446 +334,397 @@ msgid ""
 "every change between qualities causes a brief audio reload. Keep the default"
 " unless you actually own hi-res equipment."
 msgstr ""
+"Todo o áudio funciona em qualidade de estúdio (48 kHz) por padrão. "
+"Reprodutores de música de alta resolução e DACs USB topo de linha podem "
+"reproduzir em qualidade maior se você permitir aqui, mas cada mudança entre "
+"qualidades causa uma breve recarga do áudio. Mantenha o padrão a menos que "
+"você realmente tenha equipamento de alta resolução."
 
 #: src/ui/views/advanced.rs:465
 msgid "Studio quality only (default, 48 kHz)"
-msgstr ""
+msgstr "Apenas qualidade de estúdio (padrão, 48 kHz)"
 
 #: src/ui/views/advanced.rs:468
 msgid "CD + studio quality (44.1 + 48 kHz)"
-msgstr ""
+msgstr "Qualidade de CD + estúdio (44.1 + 48 kHz)"
 
 #: src/ui/views/advanced.rs:470
 msgid "Allow hi-res audio (44.1 / 48 / 88.2 / 96 / 176.4 / 192 kHz)"
 msgstr ""
+"Permitir áudio de alta resolução (44.1 / 48 / 88.2 / 96 / 176.4 / 192 kHz)"
 
 #: src/ui/views/advanced.rs:482
 msgid "Allowed quality"
-msgstr ""
+msgstr "Qualidade permitida"
 
 #: src/ui/views/advanced.rs:498
-#, fuzzy
 msgid "Default"
-msgstr "Default voice"
+msgstr "Padrão"
 
 #: src/ui/views/advanced.rs:514
 msgid "None"
-msgstr ""
+msgstr "Nenhum"
 
 #: src/ui/views/advanced.rs:515
 msgid "Small (~5 ms)"
-msgstr ""
+msgstr "Pequeno (~5 ms)"
 
 #: src/ui/views/advanced.rs:516
 msgid "Medium (~11 ms)"
-msgstr ""
+msgstr "Médio (~11 ms)"
 
 #: src/ui/views/advanced.rs:517
 msgid "Standard (default, ~21 ms)"
-msgstr ""
+msgstr "Normal (padrão, ~21 ms)"
 
 #: src/ui/views/advanced.rs:518
 msgid "Large (virtual machines, ~42 ms)"
-msgstr ""
+msgstr "Grande (máquinas virtuais, ~42 ms)"
 
 #: src/ui/views/advanced.rs:519
 msgid "Maximum (last resort, ~85 ms)"
-msgstr ""
+msgstr "Máximo (último recurso, ~85 ms)"
 
 #: src/ui/views/advanced.rs:558
 msgid "Failed to write configuration"
-msgstr ""
+msgstr "Falha ao gravar a configuração"
 
 #: src/ui/views/advanced.rs:565
 msgid "Restarting audio…"
-msgstr ""
+msgstr "Reiniciando o áudio…"
 
 #: src/ui/views/advanced.rs:588
 msgid "Audio service restart failed"
-msgstr ""
+msgstr "Falha ao reiniciar o serviço de áudio"
 
 #: src/ui/views/advanced.rs:597
-#, fuzzy
 msgid "Restore default audio settings?"
-msgstr "Restore default settings?"
+msgstr "Restaurar as configurações de áudio padrão?"
 
 #: src/ui/views/advanced.rs:599
 msgid ""
 "All your custom audio settings will be removed and the audio service will "
 "restart with the defaults."
 msgstr ""
+"Todas as suas configurações de áudio personalizadas serão removidas e o "
+"serviço de áudio reiniciará com os padrões."
 
 #: src/ui/views/advanced.rs:604
-#, fuzzy
 msgid "Restore"
-msgstr "Restore defaults"
+msgstr "Restaurar"
 
 #: src/ui/views/advanced.rs:617
 msgid "Failed to remove configuration"
-msgstr ""
+msgstr "Falha ao remover a configuração"
 
 #: src/ui/views/advanced.rs:635
 msgid "OK"
-msgstr ""
+msgstr "OK"
 
 #: src/ui/views/mic.rs:46
-#, fuzzy
 msgid "Noise filter — fine-tune"
-msgstr "Noise filter — fine-tune"
+msgstr "Filtro de ruído — ajuste fino"
 
 #: src/ui/views/mic.rs:50
-#, fuzzy
 msgid "Voice enhancements"
-msgstr "Voice enhancements"
+msgstr "Aprimoramentos de voz"
 
 #: src/ui/views/mic.rs:56 src/ui/views/mic.rs:317
-#, fuzzy
 msgid "Voice changer"
-msgstr "Voice changer"
+msgstr "Modificador de voz"
 
 #: src/ui/views/mic.rs:89 src/ui/views/mic.rs:261 src/ui/views/mic.rs:419
 #: src/ui/views/output.rs:101 src/ui/views/output.rs:187
 #: src/ui/views/output.rs:217 src/ui/views/simple.rs:69
 #: src/ui/views/simple.rs:185
-#, fuzzy
 msgid "Intensity"
-msgstr "Intensity"
+msgstr "Intensidade"
 
 #: src/ui/views/mic.rs:115
-#, fuzzy
 msgid "Echo cancellation"
-msgstr "Echo cancellation"
+msgstr "Cancelamento de eco"
 
 #: src/ui/views/mic.rs:117
-#, fuzzy
 msgid ""
 "Removes speaker bleed from your microphone using the WebRTC AEC. Turn off "
 "when wearing headphones or when troubleshooting microphone routing."
 msgstr ""
-"Removes speaker bleed from your microphone using the WebRTC AEC. Turn off "
-"when wearing headphones or when troubleshooting microphone routing."
+"Remove o vazamento dos alto-falantes no seu microfone usando o AEC do "
+"WebRTC. Desligue ao usar fones de ouvido ou ao diagnosticar o roteamento do "
+"microfone."
 
 #: src/ui/views/mic.rs:162 src/ui/views/simple.rs:124
-#, fuzzy
 msgid "Noise filter"
-msgstr "Noise filter"
+msgstr "Filtro de ruído"
 
 #: src/ui/views/mic.rs:171 src/ui/views/simple.rs:133
-#, fuzzy
 msgid ""
 "Removes background noise from your voice with the GTCRN neural network. "
 "Higher intensity = stronger cleanup."
 msgstr ""
-"Removes background noise from your voice with the GTCRN neural network. "
-"Higher intensity = stronger cleanup."
+"Remove o ruído de fundo da sua voz com a rede neural GTCRN. Mais intensidade"
+" = limpeza mais forte."
 
 #: src/ui/views/mic.rs:188 src/ui/views/output.rs:111
-#, fuzzy
 msgid "Neural model"
-msgstr "Neural model"
+msgstr "Modelo neural"
 
 #: src/ui/views/mic.rs:197 src/ui/views/output.rs:122
-#, fuzzy
 msgid "Model"
-msgstr "Model"
+msgstr "Modelo"
 
 #: src/ui/views/mic.rs:204 src/ui/views/output.rs:129
-#, fuzzy
 msgid "Voice presence"
-msgstr "Voice presence"
+msgstr "Presença de voz"
 
 #: src/ui/views/mic.rs:206
-#, fuzzy
 msgid ""
 "Restores high-frequency clarity (sibilants like \"s\", \"sh\") after "
 "suppression. Lower only if your voice already sounds harsh."
 msgstr ""
-"Restores high-frequency clarity (sibilants like \"s\", \"sh\") after "
-"suppression. Lower only if your voice already sounds harsh."
+"Restaura a clareza das altas frequências (sibilantes como \"s\", \"ch\") "
+"após a supressão. Reduza apenas se a sua voz já soar áspera."
 
 #: src/ui/views/mic.rs:212 src/ui/views/output.rs:141
-#, fuzzy
 msgid "Recovery"
-msgstr "Recovery"
+msgstr "Recuperação"
 
 #: src/ui/views/mic.rs:232 src/ui/views/output.rs:161
-#, fuzzy
 msgid "High-pass filter"
-msgstr "High-pass filter"
+msgstr "Filtro passa-alta"
 
 #: src/ui/views/mic.rs:233
-#, fuzzy
 msgid "Cuts low-frequency rumble — AC, wind, mic-stand bumps."
-msgstr "Cuts low-frequency rumble — AC, wind, mic-stand bumps."
+msgstr ""
+"Corta os ruídos graves — ar-condicionado, vento, batidas no pedestal do "
+"microfone."
 
 #: src/ui/views/mic.rs:251 src/ui/views/output.rs:180
-#, fuzzy
 msgid "Silence gate"
-msgstr "Silence gate"
+msgstr "Portão de silêncio"
 
 #: src/ui/views/mic.rs:253
-#, fuzzy
 msgid ""
 "Mutes the mic during pauses so listeners hear silence instead of hiss. "
 "Higher = more aggressive."
 msgstr ""
-"Mutes the mic during pauses so listeners hear silence instead of hiss. "
-"Higher = more aggressive."
+"Silencia o microfone nas pausas para que os ouvintes ouçam silêncio em vez "
+"de chiado. Mais alto = mais agressivo."
 
 #: src/ui/views/mic.rs:273 src/ui/views/output.rs:57
-#, fuzzy
 msgid "Equalizer"
-msgstr "Equalizer"
+msgstr "Equalizador"
 
 #: src/ui/views/mic.rs:275
-#, fuzzy
 msgid ""
 "10-band parametric EQ. Pick a preset or drag each band between -40 dB and "
 "+40 dB."
 msgstr ""
-"10-band parametric EQ. Pick a preset or drag each band between -40 dB and "
-"+40 dB."
+"Equalizador paramétrico de 10 bandas. Escolha uma predefinição ou arraste "
+"cada banda entre -40 dB e +40 dB."
 
 #: src/ui/views/mic.rs:319
-#, fuzzy
 msgid ""
 "Shifts the pitch of your voice without retiming. Left = deeper, right = "
 "higher. Center keeps your natural voice."
 msgstr ""
-"Shifts the pitch of your voice without retiming. Left = deeper, right = "
-"higher. Center keeps your natural voice."
+"Altera o tom da sua voz sem mudar o ritmo. Esquerda = mais grave, direita = "
+"mais agudo. O centro mantém a sua voz natural."
 
 #: src/ui/views/mic.rs:339
-#, fuzzy
 msgid "Deep"
-msgstr "Deep"
+msgstr "Profundo"
 
 #: src/ui/views/mic.rs:340
-#, fuzzy
 msgid "Lower"
-msgstr "Lower"
+msgstr "Grave"
 
 #: src/ui/views/mic.rs:341
-#, fuzzy
 msgid "Natural"
 msgstr "Natural"
 
 #: src/ui/views/mic.rs:342
-#, fuzzy
 msgid "Higher"
-msgstr "Higher"
+msgstr "Agudo"
 
 #: src/ui/views/mic.rs:343
-#, fuzzy
 msgid "Chipmunk"
-msgstr "Chipmunk"
+msgstr "Agudíssimo"
 
 #: src/ui/views/mic.rs:354
-#, fuzzy
 msgid "Pitch"
-msgstr "Pitch"
+msgstr "Tom"
 
 #: src/ui/views/mic.rs:366 src/ui/views/simple.rs:153
-#, fuzzy
 msgid "Headphones only — speakers cause feedback."
-msgstr "Headphones only — speakers cause feedback."
+msgstr "Apenas com fones de ouvido — alto-falantes causam microfonia."
 
 #: src/ui/views/mic.rs:376 src/ui/views/simple.rs:163
-#, fuzzy
 msgid "Hear my voice"
-msgstr "Hear my voice"
+msgstr "Ouvir minha voz"
 
 #: src/ui/views/mic.rs:386
-#, fuzzy
 msgid "Self-listen delay"
-msgstr "Self-listen delay"
+msgstr "Atraso da auto-escuta"
 
 #: src/ui/views/mic.rs:388
-#, fuzzy
 msgid ""
 "Round-trip latency for the \"Hear my voice\" monitor. Raise only if the "
 "loopback sounds rushed or chops on your hardware."
 msgstr ""
-"Round-trip latency for the \"Hear my voice\" monitor. Raise only if the "
-"loopback sounds rushed or chops on your hardware."
+"Latência de ida e volta do monitor \"Ouvir minha voz\". Aumente apenas se o "
+"retorno soar acelerado ou cortado no seu hardware."
 
 #: src/ui/views/mic.rs:394
-#, fuzzy
 msgid "Delay (ms)"
-msgstr "Delay (ms)"
+msgstr "Atraso (ms)"
 
 #: src/ui/views/mic.rs:414 src/ui/views/output.rs:209
-#, fuzzy
 msgid "Compressor"
 msgstr "Compressor"
 
 #: src/ui/views/mic.rs:415
-#, fuzzy
 msgid ""
 "Evens out loud peaks and quiet parts so your voice stays at a steady volume."
 msgstr ""
-"Evens out loud peaks and quiet parts so your voice stays at a steady volume."
+"Equilibra os picos altos e as partes baixas para que a sua voz fique em um "
+"volume constante."
 
 #: src/ui/views/output.rs:40
-#, fuzzy
 msgid "AI noise reduction"
-msgstr "AI noise reduction"
+msgstr "Redução de ruído com IA"
 
 #: src/ui/views/output.rs:44
-#, fuzzy
 msgid "Audio enhancements"
-msgstr "Audio enhancements"
+msgstr "Aprimoramentos de áudio"
 
 #: src/ui/views/output.rs:59
-#, fuzzy
 msgid ""
 "10-band parametric EQ on what you hear. Pick a preset or drag each band "
 "between -40 dB and +40 dB."
 msgstr ""
-"10-band parametric EQ on what you hear. Pick a preset or drag each band "
-"between -40 dB and +40 dB."
+"Equalizador paramétrico de 10 bandas no que você ouve. Escolha uma "
+"predefinição ou arraste cada banda entre -40 dB e +40 dB."
 
 #: src/ui/views/output.rs:95 src/ui/views/simple.rs:179
-#, fuzzy
 msgid "System sound"
-msgstr "System sound"
+msgstr "Som do sistema"
 
 #: src/ui/views/output.rs:96 src/ui/views/simple.rs:180
-#, fuzzy
 msgid ""
 "Cleans background noise from everything you hear before it reaches your "
 "speakers."
 msgstr ""
-"Cleans background noise from everything you hear before it reaches your "
-"speakers."
+"Limpa o ruído de fundo de tudo o que você ouve antes de chegar aos alto-"
+"falantes."
 
 #: src/ui/views/output.rs:131
-#, fuzzy
 msgid ""
 "Restores high-frequency clarity after suppression. Lower only if the source "
 "already sounds harsh."
 msgstr ""
-"Restores high-frequency clarity after suppression. Lower only if the source "
-"already sounds harsh."
+"Restaura a clareza das altas frequências após a supressão. Reduza apenas se "
+"a fonte já soar áspera."
 
 #: src/ui/views/output.rs:162
-#, fuzzy
 msgid "Cuts low-frequency rumble from playback — wind, AC noise."
-msgstr "Cuts low-frequency rumble from playback — wind, AC noise."
+msgstr ""
+"Corta os ruídos graves da reprodução — vento, ruído de ar-condicionado."
 
 #: src/ui/views/output.rs:181
-#, fuzzy
 msgid ""
 "Mutes playback during silent moments so you don't hear hiss between words."
 msgstr ""
-"Mutes playback during silent moments so you don't hear hiss between words."
+"Silencia a reprodução nos momentos de silêncio para que você não ouça chiado"
+" entre as palavras."
 
 #: src/ui/views/output.rs:211
-#, fuzzy
 msgid ""
 "Evens out volume across loud and quiet speakers — useful for meetings with "
 "mixed mic levels."
 msgstr ""
-"Evens out volume across loud and quiet speakers — useful for meetings with "
-"mixed mic levels."
+"Equilibra o volume entre quem fala alto e baixo — útil em reuniões com "
+"níveis de microfone variados."
 
 #: src/ui/widgets/eq_card.rs:164
-#, fuzzy
 msgid "Default voice"
-msgstr "Default voice"
+msgstr "Voz padrão"
 
 #: src/ui/widgets/eq_card.rs:165
-#, fuzzy
 msgid "Flat"
-msgstr "Flat"
+msgstr "Plano"
 
 #: src/ui/widgets/eq_card.rs:166
-#, fuzzy
 msgid "Voice boost"
-msgstr "Voice boost"
+msgstr "Realce de voz"
 
 #: src/ui/widgets/eq_card.rs:167
-#, fuzzy
 msgid "Podcast"
 msgstr "Podcast"
 
 #: src/ui/widgets/eq_card.rs:168
-#, fuzzy
 msgid "Warm"
-msgstr "Warm"
+msgstr "Quente"
 
 #: src/ui/widgets/eq_card.rs:169
-#, fuzzy
 msgid "Bright"
-msgstr "Bright"
+msgstr "Brilhante"
 
 #: src/ui/widgets/eq_card.rs:170
-#, fuzzy
 msgid "De-esser"
 msgstr "De-esser"
 
 #: src/ui/widgets/eq_card.rs:171
-#, fuzzy
 msgid "Bass cut"
-msgstr "Bass cut"
+msgstr "Corte de graves"
 
 #: src/ui/widgets/eq_card.rs:172
-#, fuzzy
 msgid "Presence"
-msgstr "Presence"
+msgstr "Presença"
 
 #: src/ui/widgets/eq_card.rs:173
-#, fuzzy
 msgid "Custom"
-msgstr "Custom"
+msgstr "Personalizado"
 
 #: src/ui/widgets/eq_card.rs:214
-#, fuzzy
 msgid "Preset"
-msgstr "Preset"
+msgstr "Predefinição"
 
 #: src/ui/widgets/model_picker.rs:42
-#, fuzzy
 msgid "DeepFilterNet3 (48 kHz)"
 msgstr "DeepFilterNet3 (48 kHz)"
 
 #: src/ui/widgets/model_picker.rs:44
-#, fuzzy
 msgid "DeepFilterNet3 (48 kHz) — not installed"
-msgstr "DeepFilterNet3 (48 kHz) — not installed"
+msgstr "DeepFilterNet3 (48 kHz) — não instalado"
 
 #: src/ui/widgets/model_picker.rs:47
-#, fuzzy
 msgid "GTCRN – DNS3 (16 kHz, strong)"
-msgstr "GTCRN – DNS3 (16 kHz, strong)"
+msgstr "GTCRN – DNS3 (16 kHz, forte)"
 
 #: src/ui/widgets/model_picker.rs:48
-#, fuzzy
 msgid "GTCRN – VCTK (16 kHz, gentle)"
-msgstr "GTCRN – VCTK (16 kHz, gentle)"
+msgstr "GTCRN – VCTK (16 kHz, suave)"
 
 #: src/ui/widgets/model_picker.rs:111
-#, fuzzy
 msgid ""
 "DNS3 removes more noise but can smudge consonants. VCTK is gentler and "
 "lighter on CPU. DeepFilterNet3 is a full-band 48 kHz model with the cleanest"
 " output and the highest CPU cost."
 msgstr ""
-"DNS3 removes more noise but can smudge consonants. VCTK is gentler and "
-"lighter on CPU. DeepFilterNet3 is a full-band 48 kHz model with the cleanest"
-" output and the highest CPU cost."
+"O DNS3 remove mais ruído, mas pode borrar as consoantes. O VCTK é mais suave"
+" e mais leve para a CPU. O DeepFilterNet3 é um modelo de banda completa em "
+"48 kHz, com a saída mais limpa e o maior custo de CPU."
 
 #: src/ui/widgets/model_picker.rs:118
-#, fuzzy
 msgid ""
 "DNS3 removes more noise but can smudge consonants. VCTK is gentler and "
 "lighter on CPU — good for podcasts."
 msgstr ""
-"DNS3 removes more noise but can smudge consonants. VCTK is gentler and "
-"lighter on CPU — good for podcasts."
+"O DNS3 remove mais ruído, mas pode borrar as consoantes. O VCTK é mais suave"
+" e mais leve para a CPU — bom para podcasts."
 
 #: src/ui/widgets/source_picker.rs:108
-#, fuzzy
 msgid "Volume"
 msgstr "Volume"
 
@@ -772,15 +745,14 @@ msgid "Don't warn again"
 msgstr "Não avisar de novo"
 
 #: src/ui/widgets/wp_override_warning.rs:133
-#, fuzzy
 msgid ""
 "The file <tt>{path}</tt> is masking the packaged AEC routing script. Package updates won't take effect while this local copy exists.\n"
 "\n"
 "Recommended: remove the override and restart WirePlumber."
 msgstr ""
-"The file <tt>{path}</tt> is masking the packaged AEC routing script. Package updates won't take effect while this local copy exists.\n"
+"O arquivo <tt>{path}</tt> está sobrepondo o script de roteamento AEC do pacote. As atualizações do pacote não terão efeito enquanto esta cópia local existir.\n"
 "\n"
-"Recommended: remove the override and restart WirePlumber."
+"Recomendado: remova a sobreposição e reinicie o WirePlumber."
 
 #, fuzzy
 #~ msgid "Distro default"
