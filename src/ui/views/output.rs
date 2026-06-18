@@ -2,7 +2,8 @@
 //!
 //! Mirrors `views::mic`: every control as its own `DidacticCard`. The
 //! Simple-mode beginner layout lives in [`super::simple::build`] and
-//! does not route through this module.
+//! does not route through this module. Controls emit typed [`MicInput`]
+//! messages; `MicShell::update` owns the `AppState` transitions.
 
 use std::rc::Rc;
 
@@ -12,14 +13,15 @@ use gtk::{Box as GtkBox, Orientation, ScrolledWindow};
 use crate::config::GATE_INTENSITY_MAX;
 
 use super::super::i18n::i18n;
+use super::super::mic_shell::MicInput;
 use super::super::state::AppState;
 use super::super::widgets::didactic::{
-    labelled_row, percent_slider, section_header, u8_slider, DidacticCard,
+    labelled_row, percent_slider_on_change, section_header, u8_slider_on_change, DidacticCard,
 };
-use super::super::widgets::eq_card::{build_eq_card, EqMutation};
+use super::super::widgets::eq_card::build_eq_card;
 use super::super::widgets::model_picker;
 
-pub fn build(state: &Rc<AppState>) -> gtk::Widget {
+pub fn build(state: &Rc<AppState>, input: &relm4::Sender<MicInput>) -> gtk::Widget {
     let scroll = ScrolledWindow::builder()
         .hscrollbar_policy(gtk::PolicyType::Never)
         .vscrollbar_policy(gtk::PolicyType::Automatic)
@@ -35,59 +37,50 @@ pub fn build(state: &Rc<AppState>) -> gtk::Widget {
         .margin_end(24)
         .build();
 
-    content.append(output_combo_card(state).widget());
+    content.append(output_combo_card(state, input).widget());
 
     content.append(&section_header(&i18n("AI noise reduction"), 16));
-    content.append(model_card(state).widget());
-    content.append(voice_recovery_card(state).widget());
+    content.append(model_card(state, input).widget());
+    content.append(voice_recovery_card(state, input).widget());
 
     content.append(&section_header(&i18n("Audio enhancements"), 16));
-    content.append(hpf_card(state).widget());
-    content.append(gate_card(state).widget());
-    content.append(compressor_card(state).widget());
-    content.append(eq_card(state).widget());
+    content.append(hpf_card(state, input).widget());
+    content.append(gate_card(state, input).widget());
+    content.append(compressor_card(state, input).widget());
+    content.append(eq_card(state, input).widget());
 
     scroll.set_child(Some(&content));
     scroll.upcast()
 }
 
-fn eq_card(state: &Rc<AppState>) -> DidacticCard {
+fn eq_card(state: &Rc<AppState>, input: &relm4::Sender<MicInput>) -> DidacticCard {
+    let initial = state.settings().output_filter.equalizer.clone();
+    let input = input.clone();
     build_eq_card(
-        state,
+        initial,
         i18n("Equalizer"),
         i18n(
             "10-band parametric EQ on what you hear. Pick a preset or \
              drag each band between -40 dB and +40 dB.",
         ),
-        |s| s.output_filter.equalizer.clone(),
-        |s, m| match m {
-            EqMutation::Enabled(on) => s.output_filter.equalizer.enabled = on,
-            EqMutation::Preset(id) => id.clone_into(&mut s.output_filter.equalizer.preset),
-            EqMutation::Band { index, gain_db } => {
-                if let Some(slot) = s.output_filter.equalizer.bands.get_mut(index) {
-                    *slot = gain_db;
-                }
-            }
+        move |mutation| {
+            let _ = input.send(MicInput::OutputEq(mutation));
         },
     )
 }
 
 // ── Advanced-mode cards ────────────────────────────────────────────
 
-/// Master card for the output chain. Mirrors
-/// [`super::simple::output_card`] one-for-one (System sound title, the
-/// same description, master switch in the header, intensity slider as
-/// the first row) so the Simple → Advanced jump only adds depth — it
-/// never reshuffles the controls users already learned.
-fn output_combo_card(state: &Rc<AppState>) -> DidacticCard {
+/// Master card for the output chain. Mirrors [`super::simple::output_card`]
+/// one-for-one so the Simple → Advanced jump only adds depth.
+fn output_combo_card(state: &Rc<AppState>, input: &relm4::Sender<MicInput>) -> DidacticCard {
     let switch = gtk::Switch::builder()
         .active(state.settings().output_filter.enabled)
         .build();
     {
-        let state = Rc::clone(state);
+        let input = input.clone();
         switch.connect_active_notify(move |sw| {
-            let on = sw.is_active();
-            state.mutate(|s| s.output_filter.enabled = on);
+            let _ = input.send(MicInput::OutputFilterToggled(sw.is_active()));
         });
     }
     let card = DidacticCard::new(
@@ -97,15 +90,18 @@ fn output_combo_card(state: &Rc<AppState>) -> DidacticCard {
         Some(switch.upcast_ref::<gtk::Widget>()),
     );
 
-    let nr = &state.settings().output_filter.noise_reduction;
-    let row = percent_slider(state, &i18n("Intensity"), nr.strength, |s, v| {
-        s.output_filter.noise_reduction.strength = v;
+    let strength = state.settings().output_filter.noise_reduction.strength;
+    let row = percent_slider_on_change(&i18n("Intensity"), strength, {
+        let input = input.clone();
+        move |v| {
+            let _ = input.send(MicInput::OutputIntensityChanged(v));
+        }
     });
     card.add_row(&row);
     card
 }
 
-fn model_card(state: &Rc<AppState>) -> DidacticCard {
+fn model_card(state: &Rc<AppState>, input: &relm4::Sender<MicInput>) -> DidacticCard {
     let card = DidacticCard::new(
         "model.svg",
         &i18n("Neural model"),
@@ -114,16 +110,16 @@ fn model_card(state: &Rc<AppState>) -> DidacticCard {
     );
     let initial = state.settings().output_filter.noise_reduction.model;
     let dropdown = model_picker::build(initial, {
-        let state = Rc::clone(state);
+        let input = input.clone();
         move |pick| {
-            state.mutate(|s| s.output_filter.noise_reduction.model = pick);
+            let _ = input.send(MicInput::OutputModelChanged(pick));
         }
     });
     card.add_row(&labelled_row(&i18n("Model"), &dropdown));
     card
 }
 
-fn voice_recovery_card(state: &Rc<AppState>) -> DidacticCard {
+fn voice_recovery_card(state: &Rc<AppState>, input: &relm4::Sender<MicInput>) -> DidacticCard {
     let card = DidacticCard::new(
         "voice_recovery.svg",
         &i18n("Voice presence"),
@@ -138,22 +134,24 @@ fn voice_recovery_card(state: &Rc<AppState>) -> DidacticCard {
         .output_filter
         .noise_reduction
         .voice_recovery;
-    let row = percent_slider(state, &i18n("Recovery"), initial, |s, v| {
-        s.output_filter.noise_reduction.voice_recovery = v;
+    let row = percent_slider_on_change(&i18n("Recovery"), initial, {
+        let input = input.clone();
+        move |v| {
+            let _ = input.send(MicInput::OutputVoiceRecoveryChanged(v));
+        }
     });
     card.add_row(&row);
     card
 }
 
-fn hpf_card(state: &Rc<AppState>) -> DidacticCard {
+fn hpf_card(state: &Rc<AppState>, input: &relm4::Sender<MicInput>) -> DidacticCard {
     let switch = gtk::Switch::builder()
         .active(state.settings().output_filter.hpf.enabled)
         .build();
     {
-        let state = Rc::clone(state);
+        let input = input.clone();
         switch.connect_active_notify(move |sw| {
-            let on = sw.is_active();
-            state.mutate(|s| s.output_filter.hpf.enabled = on);
+            let _ = input.send(MicInput::OutputHpfToggled(sw.is_active()));
         });
     }
     DidacticCard::new(
@@ -164,15 +162,14 @@ fn hpf_card(state: &Rc<AppState>) -> DidacticCard {
     )
 }
 
-fn gate_card(state: &Rc<AppState>) -> DidacticCard {
+fn gate_card(state: &Rc<AppState>, input: &relm4::Sender<MicInput>) -> DidacticCard {
     let switch = gtk::Switch::builder()
         .active(state.settings().output_filter.gate.enabled)
         .build();
     {
-        let state = Rc::clone(state);
+        let input = input.clone();
         switch.connect_active_notify(move |sw| {
-            let on = sw.is_active();
-            state.mutate(|s| s.output_filter.gate.enabled = on);
+            let _ = input.send(MicInput::OutputGateToggled(sw.is_active()));
         });
     }
     let card = DidacticCard::new(
@@ -182,26 +179,24 @@ fn gate_card(state: &Rc<AppState>) -> DidacticCard {
         Some(switch.upcast_ref::<gtk::Widget>()),
     );
     let initial = state.settings().output_filter.gate.intensity;
-    let row = u8_slider(
-        state,
-        &i18n("Intensity"),
-        initial,
-        GATE_INTENSITY_MAX,
-        |s, v| s.output_filter.gate.intensity = v,
-    );
+    let row = u8_slider_on_change(&i18n("Intensity"), initial, GATE_INTENSITY_MAX, {
+        let input = input.clone();
+        move |v| {
+            let _ = input.send(MicInput::OutputGateIntensityChanged(v));
+        }
+    });
     card.add_row(&row);
     card
 }
 
-fn compressor_card(state: &Rc<AppState>) -> DidacticCard {
+fn compressor_card(state: &Rc<AppState>, input: &relm4::Sender<MicInput>) -> DidacticCard {
     let switch = gtk::Switch::builder()
         .active(state.settings().output_filter.compressor.enabled)
         .build();
     {
-        let state = Rc::clone(state);
+        let input = input.clone();
         switch.connect_active_notify(move |sw| {
-            let on = sw.is_active();
-            state.mutate(|s| s.output_filter.compressor.enabled = on);
+            let _ = input.send(MicInput::OutputCompressorToggled(sw.is_active()));
         });
     }
     let card = DidacticCard::new(
@@ -214,8 +209,11 @@ fn compressor_card(state: &Rc<AppState>) -> DidacticCard {
         Some(switch.upcast_ref::<gtk::Widget>()),
     );
     let initial = state.settings().output_filter.compressor.intensity;
-    let row = percent_slider(state, &i18n("Intensity"), initial, |s, v| {
-        s.output_filter.compressor.intensity = v;
+    let row = percent_slider_on_change(&i18n("Intensity"), initial, {
+        let input = input.clone();
+        move |v| {
+            let _ = input.send(MicInput::OutputCompressorIntensityChanged(v));
+        }
     });
     card.add_row(&row);
     card

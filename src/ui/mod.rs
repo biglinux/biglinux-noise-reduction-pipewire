@@ -12,6 +12,7 @@
 mod app;
 mod embed;
 mod i18n;
+mod mic_shell;
 mod state;
 mod views;
 mod widgets;

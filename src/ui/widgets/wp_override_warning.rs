@@ -31,7 +31,9 @@ use crate::ui::i18n::i18n;
 use crate::ui::state::AppState;
 
 const RESPONSE_REMOVE: &str = "remove";
-const RESPONSE_KEEP: &str = "keep";
+// The cataloged `content_action_dialog` hard-codes the cancel/close response id
+// to "cancel"; "Keep" is that response here.
+const RESPONSE_KEEP: &str = "cancel";
 
 /// Show the warning when a stale override exists and the user has not
 /// previously asked to silence it. No-op otherwise so app activation
@@ -47,23 +49,29 @@ pub fn maybe_show(parent: &impl IsA<gtk::Widget>, state: Rc<AppState>) {
 }
 
 fn show(parent: &impl IsA<gtk::Widget>, state: Rc<AppState>, override_path: PathBuf) {
-    let dialog = adw::AlertDialog::builder()
-        .heading(i18n("WirePlumber configuration overridden"))
-        .body(format_body(&override_path))
-        .body_use_markup(true)
-        .default_response(RESPONSE_REMOVE)
-        .close_response(RESPONSE_KEEP)
-        .build();
+    // Cataloged shared dialog (cancel = "Keep", destructive confirm = "Remove
+    // override") instead of a hand-built `adw::AlertDialog`.
+    let (dialog, content) = big_app_kit::dialogs::content_action_dialog(
+        &i18n("WirePlumber configuration overridden"),
+        &i18n("Keep"),
+        RESPONSE_REMOVE,
+        &i18n("Remove override"),
+        true,
+    );
 
-    dialog.add_response(RESPONSE_KEEP, &i18n("Keep"));
-    dialog.add_response(RESPONSE_REMOVE, &i18n("Remove override"));
-    dialog.set_response_appearance(RESPONSE_REMOVE, adw::ResponseAppearance::Destructive);
+    let body = gtk::Label::builder()
+        .label(format_body(&override_path))
+        .use_markup(true)
+        .wrap(true)
+        .xalign(0.0)
+        .build();
+    content.append(&body);
 
     let dismiss_check = gtk::CheckButton::builder()
         .label(i18n("Don't warn again"))
         .margin_top(8)
         .build();
-    dialog.set_extra_child(Some(&dismiss_check));
+    content.append(&dismiss_check);
 
     let state_for_response = Rc::clone(&state);
     let path_for_response = override_path.clone();

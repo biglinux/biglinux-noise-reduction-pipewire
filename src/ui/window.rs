@@ -25,13 +25,17 @@
 use std::rc::Rc;
 
 use adw::prelude::*;
+use big_app_kit::desktop;
+use big_relm4_components::feedback::tooltip;
 use glib::MainContext;
 use gtk::{gio, glib, Orientation};
+use relm4::{Component, ComponentController};
 
-use crate::config::{app_id, app_version, settings_file, AppSettings};
+use crate::config::{app_id, app_version, AppSettings};
 use crate::services::audio_monitor::{AudioMonitor, Event as MonitorEvent};
 
 use super::i18n::i18n;
+use super::mic_shell::{MicInput, MicShell, MicShellInit};
 use super::state::AppState;
 use super::views::{advanced, mic, output, simple, Mode};
 use super::widgets::spectrum::Spectrum;
@@ -50,99 +54,21 @@ pub fn build(
     // Opt in to optional Big Gnome Center background styling.
     window.add_css_class("biglinux-microphone");
 
-    let initial_mode = current_mode(&state);
+    // The window content is a mountable Relm4 component (ADR-D14): it owns the
+    // header, spectrum strip, body, the Advanced toggle, and the external
+    // `settings.json` watch. The window-scoped concerns stay here because they
+    // need the `adw::ApplicationWindow` itself — the menu GActions (their
+    // dialogs target the window) and the close handler (geometry persistence +
+    // flush).
+    let controller = MicShell::builder()
+        .launch(MicShellInit {
+            state: Rc::clone(&state),
+            monitor,
+        })
+        .detach();
+    window.set_content(Some(controller.widget()));
 
-    // ── Header ────────────────────────────────────────────────────────
-    let header = adw::HeaderBar::new();
-    header.set_decoration_layout(Some(":minimize,maximize,close"));
-
-    let mode_picker = build_mode_picker(initial_mode);
-    header.pack_start(&mode_picker.container);
-
-    header.pack_end(&build_primary_menu_button());
-
-    // The body container hosts whichever layout the current mode picks.
-    let body = gtk::Box::builder()
-        .orientation(Orientation::Vertical)
-        .vexpand(true)
-        .hexpand(true)
-        .build();
-
-    // ── Spectrum strip ────────────────────────────────────────────────
-    let spectrum = Spectrum::new();
-    bind_spectrum_to_monitor(&spectrum, &monitor);
-    bind_monitor_to_spectrum_visibility(&spectrum, &monitor);
-    let spectrum_container = gtk::Box::builder()
-        .orientation(Orientation::Vertical)
-        .margin_top(12)
-        .margin_bottom(6)
-        .margin_start(12)
-        .margin_end(12)
-        .build();
-    spectrum_container.append(spectrum.widget());
-
-    populate_body(&state, &header, &body, &spectrum_container, initial_mode);
-
-    let root = gtk::Box::new(Orientation::Vertical, 0);
-    root.append(&header);
-    root.append(&spectrum_container);
-    root.append(&body);
-
-    window.set_content(Some(&root));
-
-    // SAFETY: `set_data` keeps the value alive for the window's
-    // lifetime under a unique key. The key `"biglinux-spectrum"` is
-    // only read from this module, so there is no aliasing or type
-    // mismatch risk.
-    unsafe {
-        window.set_data("biglinux-spectrum", spectrum);
-    }
-
-    install_window_actions(
-        &window,
-        Rc::clone(&state),
-        header.clone(),
-        body.clone(),
-        spectrum_container.clone(),
-    );
-
-    // Rebuild body + header title whenever the mode flips.
-    {
-        let state = Rc::clone(&state);
-        // Weak: this closure lives on the switch, itself a descendant of
-        // `header` — strong captures here are a widget⇄closure cycle that
-        // keeps the header/body/spectrum subtrees alive past window close.
-        let header_weak = header.downgrade();
-        let body_weak = body.downgrade();
-        let spectrum_weak = spectrum_container.downgrade();
-        mode_picker.switch.connect_active_notify(move |sw| {
-            let advanced = sw.is_active();
-            state.mutate(|s| s.ui.show_advanced = advanced);
-            let (Some(header), Some(body), Some(spectrum_container)) = (
-                header_weak.upgrade(),
-                body_weak.upgrade(),
-                spectrum_weak.upgrade(),
-            ) else {
-                return;
-            };
-            populate_body(
-                &state,
-                &header,
-                &body,
-                &spectrum_container,
-                Mode::from_advanced_flag(advanced),
-            );
-        });
-    }
-
-    install_external_settings_watch(
-        &window,
-        Rc::clone(&state),
-        header.clone(),
-        body.clone(),
-        spectrum_container.clone(),
-        mode_picker.switch.clone(),
-    );
+    install_window_actions(&window, Rc::clone(&state), controller.sender().clone());
 
     {
         let state = Rc::clone(&state);
@@ -164,6 +90,15 @@ pub fn build(
         });
     }
 
+    // Park the controller for the window's lifetime: the component — and with
+    // it the widget tree, spectrum, monitor binding, and settings watch — drops
+    // when the window finalizes on close.
+    // SAFETY: unique key, only written here, never read back; keeps the
+    // controller alive exactly as long as the window.
+    unsafe {
+        window.set_data("biglinux-mic-shell", controller);
+    }
+
     window
 }
 
@@ -173,8 +108,9 @@ pub fn build(
 /// `spectrum_container` is hidden whenever the active view does not
 /// represent the microphone capture stream (currently: the Output
 /// filter tab in Advanced mode).
-fn populate_body(
+pub(super) fn populate_body(
     state: &Rc<AppState>,
+    input: &relm4::Sender<MicInput>,
     header: &adw::HeaderBar,
     body: &gtk::Box,
     spectrum_container: &gtk::Box,
@@ -188,18 +124,18 @@ fn populate_body(
         Mode::Simple => {
             header.set_title_widget(None::<&gtk::Widget>);
             spectrum_container.set_visible(true);
-            body.append(&simple::build(state));
+            body.append(&simple::build(state, input));
         }
         Mode::Advanced => {
             let stack = adw::ViewStack::new();
             stack.add_titled_with_icon(
-                &mic::build(state),
+                &mic::build(state, input),
                 Some("mic"),
                 &i18n("Microphone"),
                 "audio-input-microphone-symbolic",
             );
             stack.add_titled_with_icon(
-                &output::build(state),
+                &output::build(state, input),
                 Some("output"),
                 &i18n("Output filter"),
                 "audio-headphones-symbolic",
@@ -246,12 +182,12 @@ fn sync_spectrum_visibility(spectrum_container: &gtk::Box, stack: &adw::ViewStac
 /// `[label | switch]` packed at the start of the header bar. Off =
 /// simplified single-page combined layout, on = full per-control layout
 /// with tabs.
-struct ModePicker {
-    container: gtk::Box,
-    switch: gtk::Switch,
+pub(super) struct ModePicker {
+    pub(super) container: gtk::Box,
+    pub(super) switch: gtk::Switch,
 }
 
-fn build_mode_picker(initial: Mode) -> ModePicker {
+pub(super) fn build_mode_picker(initial: Mode) -> ModePicker {
     let container = gtk::Box::builder()
         .orientation(Orientation::Horizontal)
         .spacing(8)
@@ -260,9 +196,9 @@ fn build_mode_picker(initial: Mode) -> ModePicker {
     let label = gtk::Label::builder().label(i18n("Advanced")).build();
     let switch = gtk::Switch::builder()
         .valign(gtk::Align::Center)
-        .tooltip_text(i18n("Show every control individually"))
         .active(matches!(initial, Mode::Advanced))
         .build();
+    tooltip::set(&switch, &i18n("Show every control individually"));
     switch.update_property(&[gtk::accessible::Property::Label(&i18n("Advanced"))]);
 
     container.append(&label);
@@ -270,14 +206,14 @@ fn build_mode_picker(initial: Mode) -> ModePicker {
     ModePicker { container, switch }
 }
 
-fn current_mode(state: &Rc<AppState>) -> Mode {
+pub(super) fn current_mode(state: &Rc<AppState>) -> Mode {
     Mode::from_advanced_flag(state.settings().ui.show_advanced)
 }
 
 /// Hamburger menu in the header. Holds the "Restore default settings"
 /// and "About" entries — both routed through window-scoped GAction
 /// instances installed by [`install_window_actions`].
-fn build_primary_menu_button() -> gtk::MenuButton {
+pub(super) fn build_primary_menu_button() -> gtk::MenuButton {
     let menu = gio::Menu::new();
     menu.append(
         Some(&i18n("Restore default settings")),
@@ -288,9 +224,9 @@ fn build_primary_menu_button() -> gtk::MenuButton {
     let button = gtk::MenuButton::builder()
         .icon_name("open-menu-symbolic")
         .menu_model(&menu)
-        .tooltip_text(i18n("Main menu"))
         .primary(true)
         .build();
+    tooltip::set(&button, &i18n("Main menu"));
     // Icon-only control needs an explicit accessible label; tooltips
     // alone are not surfaced as accessible names by every reader.
     button.update_property(&[gtk::accessible::Property::Label(&i18n("Main menu"))]);
@@ -303,46 +239,30 @@ fn build_primary_menu_button() -> gtk::MenuButton {
 fn install_window_actions(
     window: &adw::ApplicationWindow,
     state: Rc<AppState>,
-    header: adw::HeaderBar,
-    body: gtk::Box,
-    spectrum_container: gtk::Box,
+    shell: relm4::Sender<MicInput>,
 ) {
-    let reset_action = gio::SimpleAction::new("reset-defaults", None);
+    // Cataloged shared action installer (`big_app_kit::desktop`) instead of raw
+    // `gio::SimpleAction`. Weak window captures: the exported actions outlive
+    // widget teardown, so strong refs would leak the window after close. The
+    // reset body-rebuild goes through the shell sender (the component owns the
+    // widgets), so no header/body/spectrum captures are needed.
     {
         let state = Rc::clone(&state);
         let window_weak = window.downgrade();
-        // Weak widget captures: the exported window action outlives the
-        // widget tree teardown, so strong refs here leak the header/body/
-        // spectrum subtrees after close (found via host embed census).
-        let header_weak = header.downgrade();
-        let body_weak = body.downgrade();
-        let spectrum_weak = spectrum_container.downgrade();
-        reset_action.connect_activate(move |_, _| {
-            let Some(window) = window_weak.upgrade() else {
-                return;
-            };
-            let (Some(header), Some(body), Some(spectrum_container)) = (
-                header_weak.upgrade(),
-                body_weak.upgrade(),
-                spectrum_weak.upgrade(),
-            ) else {
-                return;
-            };
-            present_reset_confirmation(&window, &state, &header, &body, &spectrum_container);
+        desktop::install_action(window, "reset-defaults", move || {
+            if let Some(window) = window_weak.upgrade() {
+                present_reset_confirmation(&window, &state, &shell);
+            }
         });
     }
-    window.add_action(&reset_action);
-
-    let about_action = gio::SimpleAction::new("about", None);
     {
         let window_weak = window.downgrade();
-        about_action.connect_activate(move |_, _| {
+        desktop::install_action(window, "about", move || {
             if let Some(window) = window_weak.upgrade() {
                 present_about_dialog(&window);
             }
         });
     }
-    window.add_action(&about_action);
 }
 
 /// Confirm before overwriting the user's audio configuration. Window
@@ -352,9 +272,7 @@ fn install_window_actions(
 fn present_reset_confirmation(
     window: &adw::ApplicationWindow,
     state: &Rc<AppState>,
-    header: &adw::HeaderBar,
-    body: &gtk::Box,
-    spectrum_container: &gtk::Box,
+    shell: &relm4::Sender<MicInput>,
 ) {
     let dialog = adw::AlertDialog::new(
         Some(&i18n("Restore default settings?")),
@@ -370,19 +288,13 @@ fn present_reset_confirmation(
     dialog.set_close_response("cancel");
 
     let state = Rc::clone(state);
-    let header = header.clone();
-    let body = body.clone();
-    let spectrum_container = spectrum_container.clone();
+    let shell = shell.clone();
     dialog.connect_response(None, move |dialog, response| {
         if response == "reset" {
             apply_factory_defaults(&state);
-            populate_body(
-                &state,
-                &header,
-                &body,
-                &spectrum_container,
-                current_mode(&state),
-            );
+            // The component owns the body widgets; ask it to rebuild for the
+            // (geometry/UI-preserving) factory snapshot just written to state.
+            let _ = shell.send(MicInput::RebuildBody);
         }
         dialog.close();
     });
@@ -431,72 +343,9 @@ fn present_about_dialog(parent: &adw::ApplicationWindow) {
     about.present(Some(parent));
 }
 
-/// Watch `settings.json` and reflect changes coming from outside this
-/// process (CLI, plasmoid, manual edit). Cheap by design: a single
-/// `gio::FileMonitor` re-reads the file on each event and only rebuilds
-/// the body when the loaded snapshot differs from the in-memory one —
-/// so our own atomic-rename writes round-trip into a no-op compare. The
-/// monitor stashes itself on the window via `set_data` so it lives as
-/// long as the window does.
-fn install_external_settings_watch(
-    window: &adw::ApplicationWindow,
-    state: Rc<AppState>,
-    header: adw::HeaderBar,
-    body: gtk::Box,
-    spectrum_container: gtk::Box,
-    mode_switch: gtk::Switch,
-) {
-    let path = settings_file();
-    let file = gio::File::for_path(&path);
-    let monitor =
-        match file.monitor_file(gio::FileMonitorFlags::WATCH_MOVES, gio::Cancellable::NONE) {
-            Ok(m) => m,
-            Err(e) => {
-                log::warn!("settings file monitor unavailable: {e}");
-                return;
-            }
-        };
-
-    monitor.connect_changed(move |_, _, _, event| {
-        if !matches!(
-            event,
-            gio::FileMonitorEvent::Changed
-                | gio::FileMonitorEvent::ChangesDoneHint
-                | gio::FileMonitorEvent::Created
-                | gio::FileMonitorEvent::Renamed
-                | gio::FileMonitorEvent::MovedIn
-        ) {
-            return;
-        }
-        let new = AppSettings::load();
-        if !state.external_replace(new) {
-            return;
-        }
-        let new_advanced = state.settings().ui.show_advanced;
-        if mode_switch.is_active() == new_advanced {
-            populate_body(
-                &state,
-                &header,
-                &body,
-                &spectrum_container,
-                Mode::from_advanced_flag(new_advanced),
-            );
-        } else {
-            // Handler on the switch will run populate_body for us.
-            mode_switch.set_active(new_advanced);
-        }
-    });
-
-    // SAFETY: unique key, only read here. Keeps the FileMonitor alive
-    // for the window's lifetime — dropping it would silence the watch.
-    unsafe {
-        window.set_data("biglinux-settings-monitor", monitor);
-    }
-}
-
 /// Wire the audio-monitor event stream into the spectrum widget. Runs on
 /// the GTK main context so every update stays on the UI thread.
-fn bind_spectrum_to_monitor(spectrum: &Rc<Spectrum>, monitor: &Rc<AudioMonitor>) {
+pub(super) fn bind_spectrum_to_monitor(spectrum: &Rc<Spectrum>, monitor: &Rc<AudioMonitor>) {
     let events = monitor.events();
     // Weak: a strong capture here is a teardown deadlock — the loop keeps
     // the spectrum alive until the channel closes, the channel only closes
@@ -523,7 +372,10 @@ fn bind_spectrum_to_monitor(spectrum: &Rc<Spectrum>, monitor: &Rc<AudioMonitor>)
 /// `map`/`unmap` cover both cases without us having to listen on the
 /// `GtkWindow` itself, since GTK4 unmaps every descendant of an
 /// invisible toplevel.
-fn bind_monitor_to_spectrum_visibility(spectrum: &Rc<Spectrum>, monitor: &Rc<AudioMonitor>) {
+pub(super) fn bind_monitor_to_spectrum_visibility(
+    spectrum: &Rc<Spectrum>,
+    monitor: &Rc<AudioMonitor>,
+) {
     let widget = spectrum.widget().clone();
     // Weak: these closures live on the spectrum's widget — strong monitor
     // refs here prevent the embed guard's `Rc::try_unwrap` teardown.

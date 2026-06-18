@@ -89,6 +89,19 @@ gettext-rs = { version = "0.7", features = ["gettext-system"] }
 # pipewire/system-audio service layer.
 big-os-kit = { path = "../big-rust-components/crates/big-os-kit" }
 
+# Shared BigLinux UI primitives — cards, slider/switch rows, preference cards,
+# tooltips. The settings UI reuses these instead of app-local widget forks.
+big-relm4-components = { path = "../big-rust-components/crates/big-relm4-components" }
+# Cataloged desktop actions + dialogs (reset/about GActions, the WirePlumber
+# override AlertDialog) — shared instead of raw gio::SimpleAction / adw::AlertDialog.
+big-app-kit = { path = "../big-rust-components/crates/big-app-kit", default-features = false }
+
+# Relm4 component model for the GUI shell (matches the workspace 0.11 stack).
+# The microphone window is a mountable Relm4 `Component` (ADR-D14 pattern,
+# shared with bigiris/players); raw gtk widgets that have no Relm4 equivalent
+# (the custom-draw spectrum DrawingArea) stay embedded inside the component.
+relm4 = { version = "0.11", features = ["libadwaita"] }
+
 [dev-dependencies]
 tempfile = "3"
 

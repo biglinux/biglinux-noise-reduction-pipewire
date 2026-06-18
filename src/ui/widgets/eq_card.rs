@@ -29,45 +29,38 @@ use gtk::prelude::*;
 use gtk::{Align, Box as GtkBox, DropDown, Label, Orientation, Scale};
 
 use crate::config::{
-    eq_preset_bands, eq_preset_ids, AppSettings, EqualizerConfig, EQ_BANDS_HZ, EQ_BAND_COUNT,
-    EQ_BAND_MAX, EQ_BAND_MIN,
+    eq_preset_bands, eq_preset_ids, EqualizerConfig, EQ_BANDS_HZ, EQ_BAND_COUNT, EQ_BAND_MAX,
+    EQ_BAND_MIN,
 };
 
 use super::super::i18n::i18n;
-use super::super::state::AppState;
 use super::didactic::DidacticCard;
 
-/// Pieces of [`EqualizerConfig`] the widget needs to mutate. The view
-/// closure decides where in the settings tree these land.
+/// Pieces of [`EqualizerConfig`] the widget needs to mutate. Emitted as a
+/// typed message; [`apply_eq_mutation`] applies it into the settings tree.
+#[derive(Debug, Clone, Copy)]
 pub enum EqMutation {
     Enabled(bool),
     Preset(&'static str),
     Band { index: usize, gain_db: f32 },
 }
 
-/// Build an Equalizer card. `read` returns a snapshot of the current
-/// config; `write` applies a single field mutation back into the
-/// settings tree.
+/// Build an Equalizer card from an `initial` snapshot. Each control change is
+/// reported via `apply` as a single [`EqMutation`] (the Relm4 message path —
+/// the component's `update` routes it to state through [`apply_eq_mutation`]).
 pub fn build_eq_card(
-    state: &Rc<AppState>,
+    initial: EqualizerConfig,
     title: String,
     description: String,
-    read: impl Fn(&AppSettings) -> EqualizerConfig + 'static,
-    write: impl Fn(&mut AppSettings, EqMutation) + 'static,
+    apply: impl Fn(EqMutation) + 'static,
 ) -> DidacticCard {
-    let initial = read(&state.settings());
-    let write = Rc::new(write);
-    let _ = read; // accessor was only needed for the initial snapshot
+    let apply = Rc::new(apply);
 
     let switch = gtk::Switch::builder().active(initial.enabled).build();
     switch.update_property(&[gtk::accessible::Property::Label(&i18n("Equalizer enabled"))]);
     {
-        let state = Rc::clone(state);
-        let write = Rc::clone(&write);
-        switch.connect_active_notify(move |sw| {
-            let on = sw.is_active();
-            state.mutate(|s| write(s, EqMutation::Enabled(on)));
-        });
+        let apply = Rc::clone(&apply);
+        switch.connect_active_notify(move |sw| apply(EqMutation::Enabled(sw.is_active())));
     }
 
     let card = DidacticCard::new(
@@ -88,8 +81,7 @@ pub fn build_eq_card(
     // change handlers below would loop back into `Preset(custom)`.
     let suppress: Rc<RefCell<bool>> = Rc::new(RefCell::new(false));
     {
-        let state = Rc::clone(state);
-        let write = Rc::clone(&write);
+        let apply = Rc::clone(&apply);
         let band_scales = Rc::clone(&band_scales);
         let suppress = Rc::clone(&suppress);
         let ids = eq_preset_ids();
@@ -105,46 +97,49 @@ pub fn build_eq_card(
                 scale.adjustment().set_value(f64::from(*gain));
             }
             *suppress.borrow_mut() = false;
-            state.mutate(|s| {
-                write(s, EqMutation::Preset(id));
-                for (i, gain) in bands.iter().enumerate() {
-                    write(
-                        s,
-                        EqMutation::Band {
-                            index: i,
-                            gain_db: *gain,
-                        },
-                    );
-                }
-            });
+            apply(EqMutation::Preset(id));
+            for (i, gain) in bands.iter().enumerate() {
+                apply(EqMutation::Band {
+                    index: i,
+                    gain_db: *gain,
+                });
+            }
         });
     }
 
     for (idx, scale) in band_scales.iter().enumerate() {
-        let state = Rc::clone(state);
-        let write = Rc::clone(&write);
+        let apply = Rc::clone(&apply);
         let suppress = Rc::clone(&suppress);
         scale.adjustment().connect_value_changed(move |a| {
             if *suppress.borrow() {
                 return;
             }
             let gain_db = (a.value() as f32).clamp(EQ_BAND_MIN, EQ_BAND_MAX);
-            state.mutate(|s| {
-                write(
-                    s,
-                    EqMutation::Band {
-                        index: idx,
-                        gain_db,
-                    },
-                );
-                write(s, EqMutation::Preset("custom"));
+            apply(EqMutation::Band {
+                index: idx,
+                gain_db,
             });
+            apply(EqMutation::Preset("custom"));
         });
     }
 
     card.add_row(&preset_row(&preset_dropdown));
     card.add_row(&bands_row(&band_scales));
     card
+}
+
+/// Apply one [`EqMutation`] into an [`EqualizerConfig`] — the reducer shared by
+/// the mic and output EQ message handlers in `MicShell::update`.
+pub fn apply_eq_mutation(eq: &mut EqualizerConfig, mutation: EqMutation) {
+    match mutation {
+        EqMutation::Enabled(on) => eq.enabled = on,
+        EqMutation::Preset(id) => id.clone_into(&mut eq.preset),
+        EqMutation::Band { index, gain_db } => {
+            if let Some(slot) = eq.bands.get_mut(index) {
+                *slot = gain_db;
+            }
+        }
+    }
 }
 
 fn preset_dropdown(initial_id: &str) -> DropDown {

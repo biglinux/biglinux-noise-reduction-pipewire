@@ -5,23 +5,30 @@
 //! card splits internally into "Input device" (always visible) and
 //! "Noise filter" (own switch + intensity), so picking a mic stays
 //! independent from turning the filter on.
+//!
+//! Controls emit typed [`MicInput`] messages to the [`MicShell`] component
+//! (`super::super::mic_shell`); the component's `update` owns every `AppState`
+//! transition. (The device picker keeps its own wiring — converted in a later
+//! stage.)
 
 use std::rc::Rc;
 
 use gtk::prelude::*;
 use gtk::{Align, Box as GtkBox, Label, Orientation, ScrolledWindow};
 
-use crate::pipeline::cascade_mic_off;
 use crate::services::pipewire::source_volume;
 
+use big_relm4_components::feedback::tooltip;
+
 use super::super::i18n::i18n;
+use super::super::mic_shell::MicInput;
 use super::super::state::AppState;
 use super::super::widgets::didactic::{
-    group_separator, illustration, percent_slider, switch_row, DidacticCard,
+    group_separator, illustration, percent_slider_on_change, switch_row, DidacticCard,
 };
 use super::super::widgets::source_picker;
 
-pub fn build(state: &Rc<AppState>) -> gtk::Widget {
+pub fn build(state: &Rc<AppState>, input: &relm4::Sender<MicInput>) -> gtk::Widget {
     let scroll = ScrolledWindow::builder()
         .hscrollbar_policy(gtk::PolicyType::Never)
         .vscrollbar_policy(gtk::PolicyType::Automatic)
@@ -37,8 +44,8 @@ pub fn build(state: &Rc<AppState>) -> gtk::Widget {
         .margin_end(24)
         .build();
 
-    content.append(&mic_card(state));
-    content.append(output_card(state).widget());
+    content.append(&mic_card(state, input));
+    content.append(output_card(state, input).widget());
 
     scroll.set_child(Some(&content));
     scroll.upcast()
@@ -48,7 +55,7 @@ pub fn build(state: &Rc<AppState>) -> gtk::Widget {
 /// (dropdown + volume); bottom half mirrors a [`DidacticCard`] header
 /// inline (`[SVG | title+desc | switch]`) followed by the intensity
 /// slider and the "Hear my voice" toggle.
-fn mic_card(state: &Rc<AppState>) -> GtkBox {
+fn mic_card(state: &Rc<AppState>, input: &relm4::Sender<MicInput>) -> GtkBox {
     let card = GtkBox::builder()
         .orientation(Orientation::Vertical)
         .spacing(0)
@@ -63,41 +70,33 @@ fn mic_card(state: &Rc<AppState>) -> GtkBox {
     card.append(&rows.volume_row);
 
     card.append(&group_separator());
-    card.append(&noise_filter_header(state));
+    card.append(&noise_filter_header(state, input));
 
-    let nr = &state.settings().noise_reduction;
-    let intensity = percent_slider(state, &i18n("Intensity"), nr.strength, |s, v| {
-        s.noise_reduction.strength = v;
+    let nr_strength = state.settings().noise_reduction.strength;
+    let intensity = percent_slider_on_change(&i18n("Intensity"), nr_strength, {
+        let input = input.clone();
+        move |v| {
+            let _ = input.send(MicInput::MicIntensityChanged(v));
+        }
     });
     card.append(&intensity);
-    card.append(&self_listen_row(state));
+    card.append(&self_listen_row(state, input));
     card
 }
 
 /// `[SVG | title+desc | switch]` row that mirrors `DidacticCard::new`
 /// so the Noise filter sub-section visually matches the System sound
 /// card below.
-fn noise_filter_header(state: &Rc<AppState>) -> GtkBox {
+fn noise_filter_header(state: &Rc<AppState>, input: &relm4::Sender<MicInput>) -> GtkBox {
     let switch = gtk::Switch::builder()
         .valign(Align::Center)
         .active(state.settings().noise_reduction.enabled)
         .build();
     switch.update_property(&[gtk::accessible::Property::Label(&i18n("Noise filter"))]);
     {
-        let state = Rc::clone(state);
+        let input = input.clone();
         switch.connect_active_notify(move |sw| {
-            let on = sw.is_active();
-            state.mutate(|s| {
-                s.noise_reduction.enabled = on;
-                if !on {
-                    // Simple-view master is the only mic-side toggle the
-                    // user sees. Cascade so a single click tears down
-                    // every reason `filter-chain.service` would stay
-                    // alive — otherwise default-on flags (echo_cancel,
-                    // stereo) silently keep the worker running.
-                    cascade_mic_off(s);
-                }
-            });
+            let _ = input.send(MicInput::NoiseFilterToggled(sw.is_active()));
         });
     }
 
@@ -148,31 +147,29 @@ fn noise_filter_header(state: &Rc<AppState>) -> GtkBox {
 /// "Hear my voice" toggle row — feeds the mic into the default sink so
 /// the user can calibrate the filter intensity. Recommended only with
 /// headphones (loopback to speakers can create acoustic feedback).
-fn self_listen_row(state: &Rc<AppState>) -> GtkBox {
+fn self_listen_row(state: &Rc<AppState>, input: &relm4::Sender<MicInput>) -> GtkBox {
     let switch = gtk::Switch::builder()
         .valign(gtk::Align::Center)
-        .tooltip_text(i18n("Headphones only — speakers cause feedback."))
         .active(state.settings().monitor.enabled)
         .build();
+    tooltip::set(&switch, &i18n("Headphones only — speakers cause feedback."));
     {
-        let state = Rc::clone(state);
+        let input = input.clone();
         switch.connect_active_notify(move |sw| {
-            let on = sw.is_active();
-            state.mutate(|s| s.monitor.enabled = on);
+            let _ = input.send(MicInput::SelfListenToggled(sw.is_active()));
         });
     }
     switch_row(&i18n("Hear my voice"), &switch)
 }
 
-fn output_card(state: &Rc<AppState>) -> DidacticCard {
+fn output_card(state: &Rc<AppState>, input: &relm4::Sender<MicInput>) -> DidacticCard {
     let switch = gtk::Switch::builder()
         .active(state.settings().output_filter.enabled)
         .build();
     {
-        let state = Rc::clone(state);
+        let input = input.clone();
         switch.connect_active_notify(move |sw| {
-            let on = sw.is_active();
-            state.mutate(|s| s.output_filter.enabled = on);
+            let _ = input.send(MicInput::OutputFilterToggled(sw.is_active()));
         });
     }
     let card = DidacticCard::new(
@@ -182,9 +179,12 @@ fn output_card(state: &Rc<AppState>) -> DidacticCard {
         Some(switch.upcast_ref::<gtk::Widget>()),
     );
 
-    let nr = &state.settings().output_filter.noise_reduction;
-    let row = percent_slider(state, &i18n("Intensity"), nr.strength, |s, v| {
-        s.output_filter.noise_reduction.strength = v;
+    let strength = state.settings().output_filter.noise_reduction.strength;
+    let row = percent_slider_on_change(&i18n("Intensity"), strength, {
+        let input = input.clone();
+        move |v| {
+            let _ = input.send(MicInput::OutputIntensityChanged(v));
+        }
     });
     card.add_row(&row);
     card

@@ -20,13 +20,14 @@
 //! wired to the [`AppState`](crate::ui::state::AppState) debouncer.
 
 use std::path::PathBuf;
-use std::rc::Rc;
 
+use big_relm4_components::layout::illustration_card::{
+    BigIllustrationCard, BigIllustrationCardSpec,
+};
 use gtk::prelude::*;
 use gtk::{Align, Box as GtkBox, Label, Orientation, Picture};
 
-use crate::config::{illustrations_dir, AppSettings};
-use crate::ui::state::AppState;
+use crate::config::illustrations_dir;
 
 /// Width of the SVG slot inside a card, in logical pixels.
 const ILLUSTRATION_WIDTH: i32 = 120;
@@ -37,91 +38,41 @@ const ILLUSTRATION_HEIGHT: i32 = 80;
 /// styled with the libadwaita `card` CSS class so the surrounding
 /// `PreferencesPage` already knows how to render it.
 pub struct DidacticCard {
-    root: GtkBox,
-    body: GtkBox,
+    inner: BigIllustrationCard,
 }
 
 impl DidacticCard {
     /// Build a card whose top row is `[svg | title+desc | trailing]`.
     /// `trailing` is typically a `gtk::Switch` or empty placeholder.
+    ///
+    /// Thin wrapper over the cataloged shared
+    /// [`big_relm4_components::layout::illustration_card::BigIllustrationCard`]
+    /// (filesystem-illustration variant) — the card shell, header layout, and
+    /// row stacking are the shared primitive; noise only supplies its
+    /// `illustrations_dir` SVGs and the explicit trailing-control a11y label.
     pub fn new(svg: &str, title: &str, description: &str, trailing: Option<&gtk::Widget>) -> Self {
-        let root = GtkBox::builder()
-            .orientation(Orientation::Vertical)
-            .spacing(0)
-            .css_classes(vec!["card"])
-            .margin_bottom(12)
-            .build();
-
-        let header = GtkBox::builder()
-            .orientation(Orientation::Horizontal)
-            .spacing(16)
-            .margin_top(16)
-            .margin_bottom(12)
-            .margin_start(16)
-            .margin_end(16)
-            .build();
-
-        header.append(&illustration(svg));
-
-        let text = GtkBox::builder()
-            .orientation(Orientation::Vertical)
-            .spacing(4)
-            .hexpand(true)
-            .valign(Align::Center)
-            .build();
-
-        let title_label = Label::builder()
-            .label(title)
-            .halign(Align::Start)
-            .wrap(true)
-            .use_underline(true)
-            .css_classes(vec!["heading"])
-            .build();
-        text.append(&title_label);
-
-        let desc_label = Label::builder()
-            .label(description)
-            .wrap(true)
-            .xalign(0.0)
-            .css_classes(vec!["dim-label"])
-            .build();
-        text.append(&desc_label);
-
-        header.append(&text);
-
+        let spec =
+            BigIllustrationCardSpec::from_file(illustrations_dir().join(svg), title, description)
+                .picture_size(ILLUSTRATION_WIDTH, ILLUSTRATION_HEIGHT);
         if let Some(w) = trailing {
-            w.set_valign(Align::Center);
-            // Card title acts as the accessible label for the trailing
-            // control (typically a `gtk::Switch`). Without this link
-            // screen readers announce a bare "switch on/off" with no
-            // context.
-            title_label.set_mnemonic_widget(Some(w));
-            // Direct accessible label: the mnemonic relation alone does not
-            // surface as the AT-SPI name for screen readers.
+            // Direct accessible label: the shared card sets only the title↔control
+            // mnemonic relation, which not every screen reader surfaces as a name.
             w.update_property(&[gtk::accessible::Property::Label(title)]);
-            header.append(w);
         }
-
-        root.append(&header);
-
-        let body = GtkBox::builder()
-            .orientation(Orientation::Vertical)
-            .spacing(0)
-            .build();
-        root.append(&body);
-
-        Self { root, body }
+        Self {
+            inner: BigIllustrationCard::new_optional(spec, trailing),
+        }
     }
 
     /// Append a labelled row to the card (slider, dropdown, …).
     pub fn add_row(&self, row: &impl IsA<gtk::Widget>) {
-        self.body.append(row);
+        self.inner.add_row(row);
     }
 
     /// Hand the underlying `GtkBox` to the caller for inclusion in a
     /// page layout.
     pub fn widget(&self) -> &GtkBox {
-        &self.root
+        self.inner.widget()
     }
 }
 
@@ -132,141 +83,69 @@ impl DidacticCard {
 /// The spin button accepts arrow-key nudges of `step_increment` and
 /// allows the user to type a precise value.
 pub fn slider_row(label: &str, scale: &gtk::Scale, spin: &gtk::SpinButton) -> GtkBox {
-    let row = GtkBox::builder()
-        .orientation(Orientation::Horizontal)
-        .spacing(12)
-        .margin_start(16)
-        .margin_end(16)
-        .margin_bottom(12)
-        .build();
-
-    let title = Label::builder()
-        .label(label)
-        .xalign(0.0)
-        .width_request(140)
-        .use_underline(true)
-        .build();
-    row.append(&title);
-
-    scale.set_hexpand(true);
-    scale.set_valign(Align::Center);
-    scale.set_draw_value(false);
-    title.set_mnemonic_widget(Some(scale));
+    // Reuse the cataloged shared row; keep noise's explicit accessible labels
+    // (belt-and-suspenders alongside the shared label↔control mnemonic).
     scale.update_property(&[gtk::accessible::Property::Label(label)]);
-    row.append(scale);
-
-    spin.set_valign(Align::Center);
-    spin.set_numeric(true);
-    spin.set_width_chars(5);
-    spin.add_css_class("numeric");
     spin.update_property(&[gtk::accessible::Property::Label(label)]);
-    row.append(spin);
-
-    row
+    big_relm4_components::layout::illustration_card::slider_spin_row(label, scale, spin)
 }
 
 /// `[label | … | switch]` row. Pads with a flexible filler so the
 /// switch keeps its native size at the trailing edge instead of being
 /// stretched by `hexpand` like in [`labelled_row`].
 pub fn switch_row(label: &str, switch: &gtk::Switch) -> GtkBox {
-    let row = GtkBox::builder()
-        .orientation(Orientation::Horizontal)
-        .spacing(12)
-        .margin_start(16)
-        .margin_end(16)
-        .margin_bottom(12)
-        .build();
-
-    let title = Label::builder()
-        .label(label)
-        .xalign(0.0)
-        .width_request(140)
-        .use_underline(true)
-        .build();
-    title.set_mnemonic_widget(Some(switch));
     switch.update_property(&[gtk::accessible::Property::Label(label)]);
-    row.append(&title);
-
-    let filler = GtkBox::builder()
-        .orientation(Orientation::Horizontal)
-        .hexpand(true)
-        .build();
-    row.append(&filler);
-
-    switch.set_valign(Align::Center);
-    switch.set_halign(Align::End);
-    row.append(switch);
-    row
+    big_relm4_components::layout::illustration_card::switch_row(label, switch)
 }
 
 /// Compose a `[label | control]` row that hosts non-slider widgets
 /// (dropdowns, entries…). The caller decides the trailing widget.
 pub fn labelled_row(label: &str, control: &impl IsA<gtk::Widget>) -> GtkBox {
-    let row = GtkBox::builder()
-        .orientation(Orientation::Horizontal)
-        .spacing(12)
-        .margin_start(16)
-        .margin_end(16)
-        .margin_bottom(12)
-        .build();
-
-    let title = Label::builder()
-        .label(label)
-        .xalign(0.0)
-        .width_request(140)
-        .use_underline(true)
-        .build();
-    title.set_mnemonic_widget(Some(control));
     control
         .upcast_ref::<gtk::Widget>()
         .update_property(&[gtk::accessible::Property::Label(label)]);
-    row.append(&title);
-
-    control.set_hexpand(true);
-    row.append(control);
-    row
+    big_relm4_components::layout::illustration_card::labelled_row(label, control)
 }
 
 /// `[label | scale | spin]` row driving a `0.0..=1.0` setting. The
 /// underlying widgets run on a 0..100 percent scale because typing
 /// `85` into the spin button feels more natural than `0.85`.
-pub fn percent_slider<F>(state: &Rc<AppState>, label: &str, initial: f32, writer: F) -> GtkBox
+/// `[label | scale | spin]` row for a `0.0..=1.0` setting that reports changes
+/// through a caller-supplied callback instead of mutating [`AppState`] directly
+/// — the Relm4 message path (the handler emits a typed `MicInput`; the
+/// component's `update` owns the state transition). Same 0–100 percent UI as
+/// [`percent_slider`].
+pub fn percent_slider_on_change<F>(label: &str, initial: f32, on_change: F) -> GtkBox
 where
-    F: Fn(&mut AppSettings, f32) + 'static,
+    F: Fn(f32) + 'static,
 {
     let percent = (f64::from(initial) * 100.0).clamp(0.0, 100.0);
     let adj = gtk::Adjustment::new(percent, 0.0, 100.0, 1.0, 5.0, 0.0);
     let scale = gtk::Scale::new(Orientation::Horizontal, Some(&adj));
     let spin = gtk::SpinButton::new(Some(&adj), 1.0, 0);
 
-    {
-        let state = Rc::clone(state);
-        adj.connect_value_changed(move |a| {
-            let v = (a.value() / 100.0).clamp(0.0, 1.0) as f32;
-            state.mutate(|cfg| writer(cfg, v));
-        });
-    }
+    adj.connect_value_changed(move |a| {
+        let v = (a.value() / 100.0).clamp(0.0, 1.0) as f32;
+        on_change(v);
+    });
 
     slider_row(label, &scale, &spin)
 }
 
 /// `[label | scale | spin]` row driving a `0..=max` `u8` setting.
-pub fn u8_slider<F>(state: &Rc<AppState>, label: &str, initial: u8, max: u8, writer: F) -> GtkBox
+pub fn u8_slider_on_change<F>(label: &str, initial: u8, max: u8, on_change: F) -> GtkBox
 where
-    F: Fn(&mut AppSettings, u8) + 'static,
+    F: Fn(u8) + 'static,
 {
     let adj = gtk::Adjustment::new(f64::from(initial), 0.0, f64::from(max), 1.0, 5.0, 0.0);
     let scale = gtk::Scale::new(Orientation::Horizontal, Some(&adj));
     let spin = gtk::SpinButton::new(Some(&adj), 1.0, 0);
 
-    {
-        let state = Rc::clone(state);
-        let max_f = f64::from(max);
-        adj.connect_value_changed(move |a| {
-            let v = a.value().round().clamp(0.0, max_f) as u8;
-            state.mutate(|cfg| writer(cfg, v));
-        });
-    }
+    let max_f = f64::from(max);
+    adj.connect_value_changed(move |a| {
+        let v = a.value().round().clamp(0.0, max_f) as u8;
+        on_change(v);
+    });
 
     slider_row(label, &scale, &spin)
 }
@@ -274,22 +153,19 @@ where
 /// `[label | scale | spin]` row driving a `0..=max` `u32` setting.
 /// Used by controls whose values exceed `u8::MAX` — e.g. the
 /// self-listen delay (millisecond range up to a few seconds).
-pub fn u32_slider<F>(state: &Rc<AppState>, label: &str, initial: u32, max: u32, writer: F) -> GtkBox
+pub fn u32_slider_on_change<F>(label: &str, initial: u32, max: u32, on_change: F) -> GtkBox
 where
-    F: Fn(&mut AppSettings, u32) + 'static,
+    F: Fn(u32) + 'static,
 {
     let adj = gtk::Adjustment::new(f64::from(initial), 0.0, f64::from(max), 1.0, 50.0, 0.0);
     let scale = gtk::Scale::new(Orientation::Horizontal, Some(&adj));
     let spin = gtk::SpinButton::new(Some(&adj), 1.0, 0);
 
-    {
-        let state = Rc::clone(state);
-        let max_f = f64::from(max);
-        adj.connect_value_changed(move |a| {
-            let v = a.value().round().clamp(0.0, max_f) as u32;
-            state.mutate(|cfg| writer(cfg, v));
-        });
-    }
+    let max_f = f64::from(max);
+    adj.connect_value_changed(move |a| {
+        let v = a.value().round().clamp(0.0, max_f) as u32;
+        on_change(v);
+    });
 
     slider_row(label, &scale, &spin)
 }
