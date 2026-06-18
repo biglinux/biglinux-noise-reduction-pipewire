@@ -105,10 +105,6 @@ relm4 = { version = "0.11", features = ["libadwaita"] }
 [dev-dependencies]
 tempfile = "3"
 
-[patch.crates-io]
-libspa = { path = "vendor/libspa-0.10.0" }
-pipewire = { path = "vendor/pipewire-0.10.0" }
-
 [package.metadata.cargo-machete]
 # gettext-rs exposes its API under the `gettextrs` crate name, which
 # machete's name matcher doesn't see through.
