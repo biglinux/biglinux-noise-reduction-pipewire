@@ -567,6 +567,59 @@ mod tests {
     }
 
     #[test]
+    fn is_modified_reflects_any_single_field() {
+        assert!(!UserTweaks::default().is_modified());
+        // A single set field anywhere in the OR chain marks it modified.
+        assert!(UserTweaks {
+            quantum: Some(1024),
+            ..UserTweaks::default()
+        }
+        .is_modified());
+        assert!(UserTweaks {
+            alsa_no_suspend: Some(true),
+            ..UserTweaks::default()
+        }
+        .is_modified());
+    }
+
+    #[test]
+    fn parse_pipewire_standard_and_cd_rate_sets() {
+        let mut standard = UserTweaks::default();
+        parse_pipewire("default.clock.allowed-rates = [ 48000 ]", &mut standard);
+        assert_eq!(standard.sample_rates, Some(SampleRates::Standard));
+
+        let mut cd = UserTweaks::default();
+        parse_pipewire("default.clock.allowed-rates = [ 44100 48000 ]", &mut cd);
+        assert_eq!(cd.sample_rates, Some(SampleRates::Cd));
+
+        // An unknown rate set stays None.
+        let mut unknown = UserTweaks::default();
+        parse_pipewire("default.clock.allowed-rates = [ 12345 ]", &mut unknown);
+        assert_eq!(unknown.sample_rates, None);
+    }
+
+    #[test]
+    fn parse_wireplumber_bluetooth_false_values() {
+        let text = "bluez5.enable-sbc-xq = false\n\
+                    bluetooth.autoswitch-to-headset-profile = false\n";
+        let mut parsed = UserTweaks::default();
+        parse_wireplumber(text, &mut parsed);
+        assert_eq!(parsed.bt_sbc_xq, Some(false));
+        assert_eq!(parsed.bt_call_autoswitch, Some(false));
+    }
+
+    #[test]
+    fn parse_wireplumber_suspend_zero_only_in_alsa_all_section() {
+        // suspend-timeout 0 inside a USB section must NOT enable alsa_no_suspend
+        // (pins the `current == alsa_all && value == "0"` guard against `||`).
+        let usb_section = "matches = \"~alsa_input.usb-.*\"\n\
+                           session.suspend-timeout-seconds = 0\n";
+        let mut parsed = UserTweaks::default();
+        parse_wireplumber(usb_section, &mut parsed);
+        assert_eq!(parsed.alsa_no_suspend, None);
+    }
+
+    #[test]
     fn wireplumber_render_omits_new_fields_when_none() {
         let body = render_wireplumber(&UserTweaks {
             bt_latency: Some(2048),
