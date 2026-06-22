@@ -44,7 +44,7 @@ jobs:
     name: rustfmt
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - uses: dtolnay/rust-toolchain@stable
         with:
           components: rustfmt
@@ -56,7 +56,7 @@ jobs:
     container: archlinux:latest
     steps:
       - run: pacman -Sy --noconfirm --needed git
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - uses: ./.github/actions/install-system-deps
       - uses: dtolnay/rust-toolchain@stable
         with:
@@ -70,7 +70,7 @@ jobs:
     container: archlinux:latest
     steps:
       - run: pacman -Sy --noconfirm --needed git
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - uses: ./.github/actions/install-system-deps
       - uses: dtolnay/rust-toolchain@stable
       - uses: Swatinem/rust-cache@v2
@@ -85,7 +85,7 @@ jobs:
     container: archlinux:latest
     steps:
       - run: pacman -Sy --noconfirm --needed git
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - uses: ./.github/actions/install-system-deps
       # Pinning toolchain via `with:` so Dependabot can't bump our MSRV
       # by changing the action ref.
@@ -101,7 +101,7 @@ jobs:
     container: archlinux:latest
     steps:
       - run: pacman -Sy --noconfirm --needed git
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - uses: ./.github/actions/install-system-deps
       - uses: dtolnay/rust-toolchain@stable
       - uses: Swatinem/rust-cache@v2
@@ -111,7 +111,7 @@ jobs:
     name: cargo-deny (advisories + licenses + bans)
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - uses: taiki-e/install-action@v2
         with:
           tool: cargo-deny
@@ -121,7 +121,7 @@ jobs:
     name: cargo-machete (unused deps)
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - uses: taiki-e/install-action@v2
         with:
           tool: cargo-machete
@@ -131,14 +131,14 @@ jobs:
     name: typos (spellcheck)
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - uses: crate-ci/typos@master
 
   complexity:
     name: lizard (CCN <= 25) + jscpd (duplication)
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - name: Install lizard
         run: pipx install lizard
       - name: Install jscpd
@@ -152,7 +152,7 @@ jobs:
     name: gettext catalogs (msgfmt -c)
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - name: Install gettext
         run: sudo apt-get update && sudo apt-get install -y gettext
       - name: Validate every .po
@@ -170,7 +170,7 @@ jobs:
     name: flatpak manifest lint
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - name: YAML parse
         run: python3 -c "import yaml; yaml.safe_load(open('packaging/flatpak/br.com.biglinux.microphone.yml'))"
 
@@ -178,7 +178,7 @@ jobs:
     name: shellcheck
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - uses: ludeeus/action-shellcheck@master
         env:
           SHELLCHECK_OPTS: -e SC2034,SC2154
@@ -195,7 +195,7 @@ jobs:
     runs-on: ubuntu-latest
     if: github.event_name == 'pull_request'
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - uses: actions/dependency-review-action@v4
         with:
           fail-on-severity: high
