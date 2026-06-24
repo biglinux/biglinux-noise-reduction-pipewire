@@ -219,120 +219,125 @@ impl Component for MicShell {
         ComponentParts { model, widgets: () }
     }
 
-    fn update(&mut self, msg: Self::Input, _sender: ComponentSender<Self>, _root: &Self::Root) {
-        match msg {
-            MicInput::AdvancedToggled(advanced) => {
-                self.state.mutate(|s| s.ui.show_advanced = advanced);
-                self.mode = Mode::from_advanced_flag(advanced);
-                self.repopulate();
-            }
-            MicInput::RebuildBody => {
-                self.mode = window::current_mode(&self.state);
-                self.repopulate();
-            }
-            MicInput::ExternalSettingsLoaded => {
-                let advanced = self.state.settings().ui.show_advanced;
-                if self.mode_switch.is_active() == advanced {
+    fn update(&mut self, msg: Self::Input, _sender: ComponentSender<Self>, root: &Self::Root) {
+        // Panic boundary (module contract): a panic in message handling reaps
+        // this module's window cleanly (host closes it) instead of orphaning a
+        // dead window; the host process and sibling modules survive.
+        big_app_kit::containment::contain_embedded_update(root, "microphone", || {
+            match msg {
+                MicInput::AdvancedToggled(advanced) => {
+                    self.state.mutate(|s| s.ui.show_advanced = advanced);
                     self.mode = Mode::from_advanced_flag(advanced);
                     self.repopulate();
-                } else {
-                    // Flipping the switch re-enters update via AdvancedToggled,
-                    // which mutates + rebuilds (matches the pre-migration path).
-                    self.mode_switch.set_active(advanced);
+                }
+                MicInput::RebuildBody => {
+                    self.mode = window::current_mode(&self.state);
+                    self.repopulate();
+                }
+                MicInput::ExternalSettingsLoaded => {
+                    let advanced = self.state.settings().ui.show_advanced;
+                    if self.mode_switch.is_active() == advanced {
+                        self.mode = Mode::from_advanced_flag(advanced);
+                        self.repopulate();
+                    } else {
+                        // Flipping the switch re-enters update via AdvancedToggled,
+                        // which mutates + rebuilds (matches the pre-migration path).
+                        self.mode_switch.set_active(advanced);
+                    }
+                }
+                // Body-control transitions. The widget already shows the new value;
+                // the mutation triggers the debounced apply. No rebuild (the visible
+                // Simple-view controls don't depend on these fields).
+                MicInput::NoiseFilterToggled(on) => self.state.mutate(|s| {
+                    s.noise_reduction.enabled = on;
+                    if !on {
+                        // Single Simple-view master: cascade so one click tears down
+                        // every reason the mic worker would stay alive.
+                        cascade_mic_off(s);
+                    }
+                }),
+                MicInput::MicIntensityChanged(v) => {
+                    self.state.mutate(|s| s.noise_reduction.strength = v);
+                }
+                MicInput::SelfListenToggled(on) => self.state.mutate(|s| s.monitor.enabled = on),
+                MicInput::OutputFilterToggled(on) => {
+                    self.state.mutate(|s| s.output_filter.enabled = on);
+                }
+                MicInput::OutputIntensityChanged(v) => {
+                    self.state
+                        .mutate(|s| s.output_filter.noise_reduction.strength = v);
+                }
+
+                // ── Advanced mic-chain ────────────────────────────────────
+                MicInput::MicNrEnabled(on) => self.state.mutate(|s| s.noise_reduction.enabled = on),
+                MicInput::MicEchoCancelToggled(on) => {
+                    self.state.mutate(|s| s.echo_cancel.enabled = on);
+                }
+                MicInput::MicModelChanged(model) => {
+                    self.state.mutate(|s| s.noise_reduction.model = model);
+                }
+                MicInput::MicVoiceRecoveryChanged(v) => {
+                    self.state.mutate(|s| s.noise_reduction.voice_recovery = v);
+                }
+                MicInput::MicHpfToggled(on) => self.state.mutate(|s| s.hpf.enabled = on),
+                MicInput::MicGateToggled(on) => self.state.mutate(|s| s.gate.enabled = on),
+                MicInput::MicGateIntensityChanged(v) => self.state.mutate(|s| s.gate.intensity = v),
+                MicInput::MicCompressorToggled(on) => {
+                    self.state.mutate(|s| s.compressor.enabled = on);
+                }
+                MicInput::MicCompressorIntensityChanged(v) => {
+                    self.state.mutate(|s| s.compressor.intensity = v);
+                }
+                MicInput::MicEq(mutation) => {
+                    self.state
+                        .mutate(|s| eq_card::apply_eq_mutation(&mut s.equalizer, mutation));
+                }
+                MicInput::MicVoiceChangerToggled(on) => self.state.mutate(|s| {
+                    s.stereo.enabled = on;
+                    s.stereo.mode = if on {
+                        StereoMode::VoiceChanger
+                    } else {
+                        StereoMode::Mono
+                    };
+                }),
+                MicInput::MicPitchChanged(v) => self.state.mutate(|s| s.stereo.width = v),
+                MicInput::MicSelfListenDelayChanged(v) => {
+                    self.state.mutate(|s| s.monitor.delay_ms = v);
+                }
+
+                // ── Advanced output-chain ─────────────────────────────────
+                MicInput::OutputModelChanged(model) => {
+                    self.state
+                        .mutate(|s| s.output_filter.noise_reduction.model = model);
+                }
+                MicInput::OutputVoiceRecoveryChanged(v) => {
+                    self.state
+                        .mutate(|s| s.output_filter.noise_reduction.voice_recovery = v);
+                }
+                MicInput::OutputHpfToggled(on) => {
+                    self.state.mutate(|s| s.output_filter.hpf.enabled = on);
+                }
+                MicInput::OutputGateToggled(on) => {
+                    self.state.mutate(|s| s.output_filter.gate.enabled = on);
+                }
+                MicInput::OutputGateIntensityChanged(v) => {
+                    self.state.mutate(|s| s.output_filter.gate.intensity = v);
+                }
+                MicInput::OutputCompressorToggled(on) => {
+                    self.state
+                        .mutate(|s| s.output_filter.compressor.enabled = on);
+                }
+                MicInput::OutputCompressorIntensityChanged(v) => {
+                    self.state
+                        .mutate(|s| s.output_filter.compressor.intensity = v);
+                }
+                MicInput::OutputEq(mutation) => {
+                    self.state.mutate(|s| {
+                        eq_card::apply_eq_mutation(&mut s.output_filter.equalizer, mutation);
+                    });
                 }
             }
-            // Body-control transitions. The widget already shows the new value;
-            // the mutation triggers the debounced apply. No rebuild (the visible
-            // Simple-view controls don't depend on these fields).
-            MicInput::NoiseFilterToggled(on) => self.state.mutate(|s| {
-                s.noise_reduction.enabled = on;
-                if !on {
-                    // Single Simple-view master: cascade so one click tears down
-                    // every reason the mic worker would stay alive.
-                    cascade_mic_off(s);
-                }
-            }),
-            MicInput::MicIntensityChanged(v) => {
-                self.state.mutate(|s| s.noise_reduction.strength = v);
-            }
-            MicInput::SelfListenToggled(on) => self.state.mutate(|s| s.monitor.enabled = on),
-            MicInput::OutputFilterToggled(on) => {
-                self.state.mutate(|s| s.output_filter.enabled = on);
-            }
-            MicInput::OutputIntensityChanged(v) => {
-                self.state
-                    .mutate(|s| s.output_filter.noise_reduction.strength = v);
-            }
-
-            // ── Advanced mic-chain ────────────────────────────────────
-            MicInput::MicNrEnabled(on) => self.state.mutate(|s| s.noise_reduction.enabled = on),
-            MicInput::MicEchoCancelToggled(on) => {
-                self.state.mutate(|s| s.echo_cancel.enabled = on);
-            }
-            MicInput::MicModelChanged(model) => {
-                self.state.mutate(|s| s.noise_reduction.model = model);
-            }
-            MicInput::MicVoiceRecoveryChanged(v) => {
-                self.state.mutate(|s| s.noise_reduction.voice_recovery = v);
-            }
-            MicInput::MicHpfToggled(on) => self.state.mutate(|s| s.hpf.enabled = on),
-            MicInput::MicGateToggled(on) => self.state.mutate(|s| s.gate.enabled = on),
-            MicInput::MicGateIntensityChanged(v) => self.state.mutate(|s| s.gate.intensity = v),
-            MicInput::MicCompressorToggled(on) => {
-                self.state.mutate(|s| s.compressor.enabled = on);
-            }
-            MicInput::MicCompressorIntensityChanged(v) => {
-                self.state.mutate(|s| s.compressor.intensity = v);
-            }
-            MicInput::MicEq(mutation) => {
-                self.state
-                    .mutate(|s| eq_card::apply_eq_mutation(&mut s.equalizer, mutation));
-            }
-            MicInput::MicVoiceChangerToggled(on) => self.state.mutate(|s| {
-                s.stereo.enabled = on;
-                s.stereo.mode = if on {
-                    StereoMode::VoiceChanger
-                } else {
-                    StereoMode::Mono
-                };
-            }),
-            MicInput::MicPitchChanged(v) => self.state.mutate(|s| s.stereo.width = v),
-            MicInput::MicSelfListenDelayChanged(v) => {
-                self.state.mutate(|s| s.monitor.delay_ms = v);
-            }
-
-            // ── Advanced output-chain ─────────────────────────────────
-            MicInput::OutputModelChanged(model) => {
-                self.state
-                    .mutate(|s| s.output_filter.noise_reduction.model = model);
-            }
-            MicInput::OutputVoiceRecoveryChanged(v) => {
-                self.state
-                    .mutate(|s| s.output_filter.noise_reduction.voice_recovery = v);
-            }
-            MicInput::OutputHpfToggled(on) => {
-                self.state.mutate(|s| s.output_filter.hpf.enabled = on);
-            }
-            MicInput::OutputGateToggled(on) => {
-                self.state.mutate(|s| s.output_filter.gate.enabled = on);
-            }
-            MicInput::OutputGateIntensityChanged(v) => {
-                self.state.mutate(|s| s.output_filter.gate.intensity = v);
-            }
-            MicInput::OutputCompressorToggled(on) => {
-                self.state
-                    .mutate(|s| s.output_filter.compressor.enabled = on);
-            }
-            MicInput::OutputCompressorIntensityChanged(v) => {
-                self.state
-                    .mutate(|s| s.output_filter.compressor.intensity = v);
-            }
-            MicInput::OutputEq(mutation) => {
-                self.state.mutate(|s| {
-                    eq_card::apply_eq_mutation(&mut s.output_filter.equalizer, mutation);
-                });
-            }
-        }
+        });
     }
 }
 
