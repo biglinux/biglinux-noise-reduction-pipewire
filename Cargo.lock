@@ -110,6 +110,10 @@ dependencies = [
 ]
 
 [[package]]
+name = "big-jemalloc"
+version = "0.1.0"
+
+[[package]]
 name = "big-os-kit"
 version = "0.1.0"
 dependencies = [
@@ -138,6 +142,7 @@ version = "5.0.0"
 dependencies = [
  "async-channel",
  "big-app-kit",
+ "big-jemalloc",
  "big-os-kit",
  "big-relm4-components",
  "cairo-rs",

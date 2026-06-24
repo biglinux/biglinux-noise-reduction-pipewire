@@ -11,6 +11,10 @@ arch=('x86_64')
 url="https://github.com/biglinux/${pkgname}"
 license=('GPL-3.0-or-later')
 depends=(
+    # The GUI binary links jemalloc (big-jemalloc crate): GTK4 only returns freed
+    # memory to the OS under it. Pulls the free_sized-correct build, not stock
+    # jemalloc (which crashes GLib under glibc 2.41+). Not inherited by children.
+    'jemalloc-gtk-fixed'
     'pipewire>=1.4'
     'wireplumber>=0.5'
     'gtcrn-ladspa'
@@ -29,6 +33,8 @@ makedepends=(
     'gettext'
     'pkgconf'
     'clang'
+    # libjemalloc.so for the `-ljemalloc` link of the GUI binary.
+    'jemalloc-gtk-fixed'
 )
 optdepends=(
     'inotify-tools: instant Plasma applet sync with the GTK config window'

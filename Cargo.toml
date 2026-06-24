@@ -89,6 +89,11 @@ gettext-rs = { version = "0.7", features = ["gettext-system"] }
 # pipewire/system-audio service layer.
 big-os-kit = { path = "../big-rust-components/crates/big-os-kit" }
 
+# Links the system jemalloc into the GUI binary (anchored in gui.rs main): GTK4
+# returns freed memory to the OS only under jemalloc. Only the GUI bin calls
+# anchor(), so the cli/pwloader bins stay on glibc.
+big-jemalloc = { path = "../big-rust-components/crates/big-jemalloc" }
+
 # Shared BigLinux UI primitives — cards, slider/switch rows, preference cards,
 # tooltips. The settings UI reuses these instead of app-local widget forks.
 big-relm4-components = { path = "../big-rust-components/crates/big-relm4-components" }
