@@ -247,7 +247,7 @@ mod parser_tests {
     }
 
     #[test]
-    fn parse_pw_cli_nodes_emits_one_entry_per_stream_object() {
+    fn parse_pw_cli_nodes_emits_one_entry_per_stream_node() {
         let parsed = parse_pw_cli_nodes(fixture_with_two_streams());
         assert_eq!(parsed.len(), 2);
 

@@ -53,18 +53,19 @@ where
     let model = gtk::StringList::new(&str_refs);
 
     let factory = gtk::SignalListItemFactory::new();
-    factory.connect_setup(|_, item| {
+    factory.connect_setup(|_, list_item| {
         let label = gtk::Label::builder().xalign(0.0).build();
-        item.downcast_ref::<gtk::ListItem>()
+        list_item
+            .downcast_ref::<gtk::ListItem>()
             .expect("ListItem")
             .set_child(Some(&label));
     });
-    factory.connect_bind(move |_, item| {
-        let item = item.downcast_ref::<gtk::ListItem>().expect("ListItem");
-        let Some(string) = item.item().and_downcast::<gtk::StringObject>() else {
+    factory.connect_bind(move |_, list_item| {
+        let bound_list_item = list_item.downcast_ref::<gtk::ListItem>().expect("ListItem");
+        let Some(string) = bound_list_item.item().and_downcast::<gtk::StringObject>() else {
             return;
         };
-        let Some(label) = item.child().and_downcast::<gtk::Label>() else {
+        let Some(label) = bound_list_item.child().and_downcast::<gtk::Label>() else {
             return;
         };
         label.set_label(&string.string());
@@ -72,10 +73,10 @@ where
         // Index 2 is DFN3. When the plugin is missing, render the row
         // greyed and refuse selection so users see the option is real
         // but can't point the chain at a plugin that isn't there.
-        let dfn3_row = item.position() == DFN3_INDEX;
+        let dfn3_row = bound_list_item.position() == DFN3_INDEX;
         let disabled = dfn3_row && !dfn3_present;
-        item.set_selectable(!disabled);
-        item.set_activatable(!disabled);
+        bound_list_item.set_selectable(!disabled);
+        bound_list_item.set_activatable(!disabled);
         if disabled {
             label.add_css_class("dim-label");
         } else {

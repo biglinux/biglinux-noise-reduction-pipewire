@@ -55,7 +55,7 @@ mod tests {
     }
 
     #[test]
-    fn empty_object_falls_back_to_default() {
+    fn empty_json_configuration_falls_back_to_default() {
         let c: EchoCancelConfig = serde_json::from_str("{}").unwrap();
         assert_eq!(c, EchoCancelConfig::default());
     }

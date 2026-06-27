@@ -118,15 +118,15 @@ impl AppSettings {
         if let Some(dir) = path.parent() {
             fs::create_dir_all(dir)?;
         }
-        let tmp = path.with_extension("tmp");
+        let temporary_settings_file = path.with_extension("tmp");
         {
-            let mut f = fs::File::create(&tmp)?;
+            let mut f = fs::File::create(&temporary_settings_file)?;
             let json = serde_json::to_vec_pretty(self)
                 .map_err(|e| io::Error::new(io::ErrorKind::InvalidData, e))?;
             f.write_all(&json)?;
             f.sync_all()?;
         }
-        fs::rename(&tmp, path)?;
+        fs::rename(&temporary_settings_file, path)?;
         debug!("settings: saved to {}", path.display());
         Ok(())
     }

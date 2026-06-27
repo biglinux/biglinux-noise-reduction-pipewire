@@ -40,7 +40,7 @@ impl Default for AnalyzerConfig {
 /// One-shot FFT + banding helper. Created once per capture session and
 /// fed successive windows of samples.
 pub struct Analyzer {
-    cfg: AnalyzerConfig,
+    configuration: AnalyzerConfig,
     fft: Arc<dyn Fft<f32>>,
     window: Vec<f32>,
     scratch: Vec<Complex32>,
@@ -50,14 +50,14 @@ pub struct Analyzer {
 
 impl Analyzer {
     #[must_use]
-    pub fn new(cfg: AnalyzerConfig) -> Self {
+    pub fn new(configuration: AnalyzerConfig) -> Self {
         let mut planner = FftPlanner::<f32>::new();
-        let fft = planner.plan_fft_forward(cfg.fft_size);
-        let window = hann_window(cfg.fft_size);
-        let scratch = vec![Complex32::new(0.0, 0.0); cfg.fft_size];
-        let band_boundaries = log_band_boundaries(&cfg);
+        let fft = planner.plan_fft_forward(configuration.fft_size);
+        let window = hann_window(configuration.fft_size);
+        let scratch = vec![Complex32::new(0.0, 0.0); configuration.fft_size];
+        let band_boundaries = log_band_boundaries(&configuration);
         Self {
-            cfg,
+            configuration,
             fft,
             window,
             scratch,
@@ -70,10 +70,10 @@ impl Analyzer {
     /// must contain exactly `fft_size` values; anything shorter / longer
     /// triggers a panic because it is always a programming error at the
     /// call site.
-    pub fn process(&mut self, samples: &[f32]) -> SpectrumFrame {
+    pub fn analyze_samples(&mut self, samples: &[f32]) -> SpectrumFrame {
         assert_eq!(
             samples.len(),
-            self.cfg.fft_size,
+            self.configuration.fft_size,
             "analyzer fed wrong-sized window",
         );
 
@@ -87,7 +87,7 @@ impl Analyzer {
         // Magnitude spectrum, normalised for the Hann window sum so a
         // full-scale tone at bin `k` reads close to 0 dBFS.
         let norm = 2.0 / self.window.iter().sum::<f32>();
-        let half = self.cfg.fft_size / 2;
+        let half = self.configuration.fft_size / 2;
         let mut mag = vec![0.0_f32; half];
         for (i, m) in mag.iter_mut().enumerate() {
             *m = self.scratch[i].norm() * norm;
@@ -121,7 +121,7 @@ impl Analyzer {
 
     #[must_use]
     pub fn config(&self) -> &AnalyzerConfig {
-        &self.cfg
+        &self.configuration
     }
 }
 
@@ -176,14 +176,14 @@ pub fn peak_dbfs(samples: &[f32]) -> f32 {
 /// Compute `(low_bin, high_bin)` boundaries for `band_count` log-spaced
 /// bands from `min_hz` to `max_hz` (inclusive on low end, exclusive on
 /// the high end except for the last band which extends to Nyquist).
-fn log_band_boundaries(cfg: &AnalyzerConfig) -> Vec<(usize, usize)> {
-    let bins = cfg.fft_size / 2;
-    let nyquist = f64::from(cfg.sample_rate) / 2.0;
-    let min = f64::from(cfg.min_hz).max(1.0);
-    let max = f64::from(cfg.max_hz).min(nyquist);
+fn log_band_boundaries(configuration: &AnalyzerConfig) -> Vec<(usize, usize)> {
+    let bins = configuration.fft_size / 2;
+    let nyquist = f64::from(configuration.sample_rate) / 2.0;
+    let min = f64::from(configuration.min_hz).max(1.0);
+    let max = f64::from(configuration.max_hz).min(nyquist);
     let log_min = min.log10();
     let log_max = max.log10();
-    let band_count = cfg.band_count.max(1);
+    let band_count = configuration.band_count.max(1);
 
     let mut out = Vec::with_capacity(band_count);
     let mut last_hi = 0;
@@ -193,8 +193,10 @@ fn log_band_boundaries(cfg: &AnalyzerConfig) -> Vec<(usize, usize)> {
         let f0 = 10_f64.powf(log_min + t0 * (log_max - log_min));
         let f1 = 10_f64.powf(log_min + t1 * (log_max - log_min));
 
-        let lo_bin = (f0 * cfg.fft_size as f64 / f64::from(cfg.sample_rate)).floor() as usize;
-        let hi_bin = (f1 * cfg.fft_size as f64 / f64::from(cfg.sample_rate)).floor() as usize;
+        let lo_bin = (f0 * configuration.fft_size as f64 / f64::from(configuration.sample_rate))
+            .floor() as usize;
+        let hi_bin = (f1 * configuration.fft_size as f64 / f64::from(configuration.sample_rate))
+            .floor() as usize;
 
         // Guarantee monotonic coverage: each band owns at least one bin
         // and never overlaps with the previous one.
@@ -272,15 +274,15 @@ mod tests {
 
     #[test]
     fn log_band_boundaries_span_full_count() {
-        let cfg = AnalyzerConfig::default();
-        let bands = log_band_boundaries(&cfg);
-        assert_eq!(bands.len(), cfg.band_count);
+        let configuration = AnalyzerConfig::default();
+        let bands = log_band_boundaries(&configuration);
+        assert_eq!(bands.len(), configuration.band_count);
     }
 
     #[test]
     fn log_band_boundaries_are_non_overlapping_and_non_decreasing() {
-        let cfg = AnalyzerConfig::default();
-        let bands = log_band_boundaries(&cfg);
+        let configuration = AnalyzerConfig::default();
+        let bands = log_band_boundaries(&configuration);
         for window in bands.windows(2) {
             let (_, prev_hi) = window[0];
             let (next_lo, _) = window[1];
@@ -290,33 +292,33 @@ mod tests {
 
     #[test]
     fn analyzer_emits_expected_number_of_bands() {
-        let cfg = AnalyzerConfig {
+        let configuration = AnalyzerConfig {
             fft_size: 1024,
             sample_rate: 48_000,
             band_count: 16,
             min_hz: 20.0,
             max_hz: 20_000.0,
         };
-        let mut a = Analyzer::new(cfg.clone());
-        let samples = vec![0.0_f32; cfg.fft_size];
-        let frame = a.process(&samples);
-        assert_eq!(frame.bands_db.len(), cfg.band_count);
+        let mut a = Analyzer::new(configuration.clone());
+        let samples = vec![0.0_f32; configuration.fft_size];
+        let frame = a.analyze_samples(&samples);
+        assert_eq!(frame.bands_db.len(), configuration.band_count);
     }
 
     #[test]
     fn analyzer_sequence_counter_advances_monotonically() {
-        let cfg = AnalyzerConfig {
+        let configuration = AnalyzerConfig {
             fft_size: 256,
             sample_rate: 48_000,
             band_count: 8,
             min_hz: 20.0,
             max_hz: 20_000.0,
         };
-        let mut a = Analyzer::new(cfg.clone());
-        let silence = vec![0.0_f32; cfg.fft_size];
-        let f1 = a.process(&silence);
-        let f2 = a.process(&silence);
-        let f3 = a.process(&silence);
+        let mut a = Analyzer::new(configuration.clone());
+        let silence = vec![0.0_f32; configuration.fft_size];
+        let f1 = a.analyze_samples(&silence);
+        let f2 = a.analyze_samples(&silence);
+        let f3 = a.analyze_samples(&silence);
         assert_eq!(f1.seq, 0);
         assert_eq!(f2.seq, 1);
         assert_eq!(f3.seq, 2);
@@ -325,19 +327,22 @@ mod tests {
     #[test]
     fn analyzer_detects_strong_tone_in_expected_band() {
         // Synthesise a 1 kHz sine at sample rate 48 kHz.
-        let cfg = AnalyzerConfig {
+        let configuration = AnalyzerConfig {
             fft_size: 2048,
             sample_rate: 48_000,
             band_count: 32,
             min_hz: 20.0,
             max_hz: 20_000.0,
         };
-        let mut a = Analyzer::new(cfg.clone());
+        let mut a = Analyzer::new(configuration.clone());
         let freq = 1000.0_f32;
-        let samples: Vec<f32> = (0..cfg.fft_size)
-            .map(|i| (std::f32::consts::TAU * freq * i as f32 / cfg.sample_rate as f32).sin() * 0.5)
+        let samples: Vec<f32> = (0..configuration.fft_size)
+            .map(|i| {
+                (std::f32::consts::TAU * freq * i as f32 / configuration.sample_rate as f32).sin()
+                    * 0.5
+            })
             .collect();
-        let frame = a.process(&samples);
+        let frame = a.analyze_samples(&samples);
 
         // Find the band containing 1 kHz and make sure it is loud (≥ −20 dB)
         // while the lowest and highest bands stay below −40 dB.
@@ -351,17 +356,17 @@ mod tests {
             "expected peak around 1 kHz, got {max_db} dB"
         );
         assert!(frame.bands_db[0] < -40.0);
-        assert!(frame.bands_db[cfg.band_count - 1] < -40.0);
+        assert!(frame.bands_db[configuration.band_count - 1] < -40.0);
     }
 
     #[test]
     #[should_panic(expected = "wrong-sized window")]
     fn analyzer_panics_on_wrong_sized_input() {
-        let cfg = AnalyzerConfig {
+        let configuration = AnalyzerConfig {
             fft_size: 256,
             ..AnalyzerConfig::default()
         };
-        let mut a = Analyzer::new(cfg);
-        a.process(&[0.0_f32; 128]);
+        let mut a = Analyzer::new(configuration);
+        a.analyze_samples(&[0.0_f32; 128]);
     }
 }

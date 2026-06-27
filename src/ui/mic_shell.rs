@@ -219,12 +219,12 @@ impl Component for MicShell {
         ComponentParts { model, widgets: () }
     }
 
-    fn update(&mut self, msg: Self::Input, _sender: ComponentSender<Self>, root: &Self::Root) {
+    fn update(&mut self, message: Self::Input, _sender: ComponentSender<Self>, root: &Self::Root) {
         // Panic boundary (module contract): a panic in message handling reaps
         // this module's window cleanly (host closes it) instead of orphaning a
         // dead window; the host process and sibling modules survive.
         big_app_kit::containment::contain_embedded_update(root, "microphone", || {
-            match msg {
+            match message {
                 MicInput::AdvancedToggled(advanced) => {
                     self.state.mutate(|s| s.ui.show_advanced = advanced);
                     self.mode = Mode::from_advanced_flag(advanced);

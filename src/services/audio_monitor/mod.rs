@@ -75,7 +75,7 @@ impl AudioMonitor {
     /// while running is forwarded as [`Event::Fatal`] on the events
     /// channel; the worker then exits.
     #[must_use]
-    pub fn start(cfg: MonitorConfig) -> Self {
+    pub fn start(monitor_config: MonitorConfig) -> Self {
         let (events_tx, events_rx) = async_channel::bounded::<Event>(64);
         let stop = Arc::new(AtomicBool::new(false));
         let active = Arc::new(AtomicBool::new(true));
@@ -84,7 +84,7 @@ impl AudioMonitor {
 
         let worker = thread::Builder::new()
             .name("biglinux-microphone/audio-monitor".into())
-            .spawn(move || run_worker(cfg, events_tx, worker_stop, worker_active))
+            .spawn(move || run_worker(monitor_config, events_tx, worker_stop, worker_active))
             .expect("OS refused to spawn audio monitor thread");
 
         Self {
@@ -130,16 +130,16 @@ impl Drop for AudioMonitor {
 }
 
 fn run_worker(
-    cfg: MonitorConfig,
+    monitor_config: MonitorConfig,
     tx: AsyncSender<Event>,
     stop: Arc<AtomicBool>,
     active: Arc<AtomicBool>,
 ) {
     let mut capture = match Capture::spawn(
-        &cfg.target,
-        cfg.analyzer.sample_rate,
-        cfg.analyzer.fft_size,
-        cfg.hop_size,
+        &monitor_config.target,
+        monitor_config.analyzer.sample_rate,
+        monitor_config.analyzer.fft_size,
+        monitor_config.hop_size,
     ) {
         Ok(c) => c,
         Err(e) => {
@@ -148,7 +148,7 @@ fn run_worker(
         }
     };
 
-    let mut analyzer = Analyzer::new(cfg.analyzer.clone());
+    let mut analyzer = Analyzer::new(monitor_config.analyzer.clone());
 
     debug!("audio monitor: loop start");
     while !stop.load(Ordering::Acquire) {
@@ -166,7 +166,7 @@ fn run_worker(
             continue;
         }
         let window = capture.window_snapshot();
-        let frame = analyzer.process(&window);
+        let frame = analyzer.analyze_samples(&window);
         match tx.try_send(Event::Frame(frame)) {
             // UI is falling behind — drop the frame; the next tick will
             // overwrite the visualisation anyway.
@@ -183,11 +183,14 @@ mod tests {
 
     #[test]
     fn monitor_config_default_uses_default_source() {
-        let cfg = MonitorConfig::default();
-        assert!(matches!(cfg.target, CaptureTarget::DefaultSource));
-        assert_eq!(cfg.hop_size, DEFAULT_HOP_SIZE);
-        assert_eq!(cfg.analyzer.sample_rate, DEFAULT_SAMPLE_RATE);
-        assert_eq!(cfg.analyzer.fft_size, DEFAULT_FFT_SIZE);
+        let monitor_config = MonitorConfig::default();
+        assert!(matches!(
+            monitor_config.target,
+            CaptureTarget::DefaultSource
+        ));
+        assert_eq!(monitor_config.hop_size, DEFAULT_HOP_SIZE);
+        assert_eq!(monitor_config.analyzer.sample_rate, DEFAULT_SAMPLE_RATE);
+        assert_eq!(monitor_config.analyzer.fft_size, DEFAULT_FFT_SIZE);
     }
 
     #[test]
@@ -201,11 +204,11 @@ mod tests {
 
     #[test]
     fn monitor_config_can_target_named_node() {
-        let cfg = MonitorConfig {
+        let monitor_config = MonitorConfig {
             target: CaptureTarget::NodeName("mic-biglinux".into()),
             ..MonitorConfig::default()
         };
-        match cfg.target {
+        match monitor_config.target {
             CaptureTarget::NodeName(ref name) => assert_eq!(name, "mic-biglinux"),
             CaptureTarget::DefaultSource => panic!("expected NodeName"),
         }

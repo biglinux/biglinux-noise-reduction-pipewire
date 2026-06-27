@@ -52,8 +52,8 @@ impl GateDerived {
     }
 
     #[must_use]
-    pub fn from_config(cfg: &GateConfig) -> Self {
-        Self::from_intensity(cfg.intensity)
+    pub fn from_config(gate_config: &GateConfig) -> Self {
+        Self::from_intensity(gate_config.intensity)
     }
 }
 
@@ -105,8 +105,8 @@ impl CompressorDerived {
     }
 
     #[must_use]
-    pub fn from_config(cfg: &CompressorConfig) -> Self {
-        Self::from_intensity(cfg.intensity)
+    pub fn from_config(compressor_config: &CompressorConfig) -> Self {
+        Self::from_intensity(compressor_config.intensity)
     }
 }
 

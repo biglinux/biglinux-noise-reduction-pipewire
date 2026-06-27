@@ -245,19 +245,19 @@ fn param_eq_node(settings: &AppSettings) -> Node {
         eq_preset_bands(&eq.preset).map_or_else(|| vec![0.0; EQ_BAND_COUNT], |a| a.to_vec())
     };
 
-    let mut cfg = String::from("config = {\n    filters = [\n");
+    let mut filter_config = String::from("config = {\n    filters = [\n");
     for (i, gain) in bands.iter().enumerate() {
         let freq = EQ_BANDS_HZ[i];
         let _ = writeln!(
-            cfg,
+            filter_config,
             "        {{ type = bq_peaking freq = {freq} gain = {gain:.2} q = 1.41 }}",
         );
     }
-    cfg.push_str("    ]\n}");
+    filter_config.push_str("    ]\n}");
 
     Node::builtin("eq", LABEL_PARAM_EQ)
         .with_ports("In 1", "Out 1")
-        .with_config(cfg)
+        .with_config(filter_config)
 }
 
 fn output_links(nodes: &[Node]) -> Vec<Link> {

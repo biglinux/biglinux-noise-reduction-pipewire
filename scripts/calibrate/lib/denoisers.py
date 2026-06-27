@@ -150,7 +150,7 @@ class DenoiserRunner:
         norm = np.zeros_like(x_in) + 1e-9
 
         # Framing depends on model family.
-        runner = _FRAMERS[self.spec.family]
+        runner = _DENOISER_FRAMERS[self.spec.family]
         in_names = [i.name for i in sess.get_inputs()]
         cache_state = runner.init_caches(sess)
 
@@ -237,7 +237,7 @@ class _DpdfnetFramer:
         return {state.name: outputs[1]}
 
 
-_FRAMERS = {
+_DENOISER_FRAMERS = {
     "gtcrn": _GtcrnFramer,
     "ulunas": _GtcrnFramer,  # same layout, different cache names
     "dpdfnet": _DpdfnetFramer,

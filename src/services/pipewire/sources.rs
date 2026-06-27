@@ -319,7 +319,7 @@ mod tests {
     }
 
     #[test]
-    fn parse_sources_skips_object_without_node_name() {
+    fn parse_sources_skips_node_without_node_name() {
         let stdout = "\tid 5, type PipeWire:Interface:Node\n\
                       \t\tmedia.class = \"Audio/Source\"\n";
         assert!(parse_sources(stdout).is_empty());

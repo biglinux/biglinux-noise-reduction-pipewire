@@ -16,9 +16,8 @@ from pathlib import Path
 
 import numpy as np
 
-
-_INPUT_LENGTH_S = 9.01
-_TARGET_SR = 16000
+_INPUT_WINDOW_SECONDS = 9.01
+_TARGET_SAMPLE_RATE_HZ = 16000
 
 
 @dataclass
@@ -28,7 +27,11 @@ class DnsmosScores:
     ovrl: float
 
     def as_dict(self) -> dict[str, float]:
-        return {"dnsmos_sig": self.sig, "dnsmos_bak": self.bak, "dnsmos_ovrl": self.ovrl}
+        return {
+            "dnsmos_sig": self.sig,
+            "dnsmos_bak": self.bak,
+            "dnsmos_ovrl": self.ovrl,
+        }
 
 
 def _polyfit(sig: float, bak: float, ovrl: float) -> DnsmosScores:
@@ -45,10 +48,10 @@ def score(audio: np.ndarray, sr: int, model_path: Path) -> DnsmosScores:
     import onnxruntime as ort
     from scipy.signal import resample_poly
 
-    if sr != _TARGET_SR:
-        audio = resample_poly(audio, _TARGET_SR, sr).astype(np.float32)
+    if sr != _TARGET_SAMPLE_RATE_HZ:
+        audio = resample_poly(audio, _TARGET_SAMPLE_RATE_HZ, sr).astype(np.float32)
     audio = audio.astype(np.float32)
-    target_len = int(_INPUT_LENGTH_S * _TARGET_SR)
+    target_len = int(_INPUT_WINDOW_SECONDS * _TARGET_SAMPLE_RATE_HZ)
     if audio.size < target_len:
         reps = int(np.ceil(target_len / audio.size))
         audio = np.tile(audio, reps)
@@ -63,7 +66,7 @@ def score(audio: np.ndarray, sr: int, model_path: Path) -> DnsmosScores:
 
 def score_batch(audio: np.ndarray, sr: int, model_path: Path) -> DnsmosScores:
     """Score by averaging across overlapping 9-second windows."""
-    target_len = int(_INPUT_LENGTH_S * sr)
+    target_len = int(_INPUT_WINDOW_SECONDS * sr)
     hop = target_len // 2
     if audio.size <= target_len:
         return score(audio, sr, model_path)
@@ -74,4 +77,6 @@ def score_batch(audio: np.ndarray, sr: int, model_path: Path) -> DnsmosScores:
         sigs.append(s.sig)
         baks.append(s.bak)
         ovrs.append(s.ovrl)
-    return DnsmosScores(float(np.mean(sigs)), float(np.mean(baks)), float(np.mean(ovrs)))
+    return DnsmosScores(
+        float(np.mean(sigs)), float(np.mean(baks)), float(np.mean(ovrs))
+    )

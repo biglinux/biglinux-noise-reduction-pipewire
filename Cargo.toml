@@ -87,19 +87,19 @@ gettext-rs = { version = "0.7", features = ["gettext-system"] }
 # pipe draining (no >64 KiB deadlock on `pw-cli ls Node`), a kill timeout, and
 # zombie reaping. Replaces the raw `std::process::Command` calls in the
 # pipewire/system-audio service layer.
-big-os-kit = { path = "../big-rust-components/crates/big-os-kit" }
+big-os-kit = { path = "../big-rust-components/crates/foundation/big-os-kit" }
 
 # Links the system jemalloc into the GUI binary (anchored in gui.rs main): GTK4
 # returns freed memory to the OS only under jemalloc. Only the GUI bin calls
 # anchor(), so the cli/pwloader bins stay on glibc.
-big-jemalloc = { path = "../big-rust-components/crates/big-jemalloc" }
+big-jemalloc = { path = "../big-rust-components/crates/foundation/big-jemalloc" }
 
 # Shared BigLinux UI primitives — cards, slider/switch rows, preference cards,
 # tooltips. The settings UI reuses these instead of app-local widget forks.
-big-relm4-components = { path = "../big-rust-components/crates/big-relm4-components" }
+big-relm4-components = { path = "../big-rust-components/crates/ui/generic/big-relm4-components" }
 # Cataloged desktop actions + dialogs (reset/about GActions, the WirePlumber
 # override AlertDialog) — shared instead of raw gio::SimpleAction / adw::AlertDialog.
-big-app-kit = { path = "../big-rust-components/crates/big-app-kit", default-features = false }
+big-app-kit = { path = "../big-rust-components/crates/app/big-app-kit", default-features = false }
 
 # Relm4 component model for the GUI shell (matches the workspace 0.11 stack).
 # The microphone window is a mountable Relm4 `Component` (ADR-D14 pattern,

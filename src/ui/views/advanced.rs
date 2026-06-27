@@ -611,11 +611,11 @@ fn apply_clicked(button: &gtk::Button, selection: &Rc<RefCell<Selection>>, banne
 
         match outcome {
             ApplyOutcome::Ok => {}
-            ApplyOutcome::WriteFailed(msg) => {
-                present_error(&button, &i18n("Failed to write configuration"), &msg);
+            ApplyOutcome::WriteFailed(message) => {
+                present_error(&button, &i18n("Failed to write configuration"), &message);
             }
-            ApplyOutcome::RestartFailed(msg) => {
-                present_error(&button, &i18n("Audio service restart failed"), &msg);
+            ApplyOutcome::RestartFailed(message) => {
+                present_error(&button, &i18n("Audio service restart failed"), &message);
             }
         }
     });

@@ -197,8 +197,8 @@ fn remove_configs() -> ExitCode {
     }
 }
 
-fn exit_with_error(msg: &str) -> ExitCode {
-    eprintln!("error: {msg}");
+fn exit_with_error(message: &str) -> ExitCode {
+    eprintln!("error: {message}");
     ExitCode::FAILURE
 }
 

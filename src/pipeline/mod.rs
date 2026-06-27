@@ -333,13 +333,13 @@ fn atomic_write(path: &Path, body: &[u8]) -> io::Result<()> {
     if let Some(parent) = path.parent() {
         fs::create_dir_all(parent)?;
     }
-    let tmp = path.with_extension("tmp");
+    let temporary_pipeline_file = path.with_extension("tmp");
     {
-        let mut f = fs::File::create(&tmp)?;
+        let mut f = fs::File::create(&temporary_pipeline_file)?;
         f.write_all(body)?;
         f.sync_all()?;
     }
-    fs::rename(&tmp, path)?;
+    fs::rename(&temporary_pipeline_file, path)?;
     Ok(())
 }
 

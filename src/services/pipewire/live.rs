@@ -394,32 +394,45 @@ fn output_params(s: &AppSettings) -> Vec<(String, f64)> {
 fn append_compressor_params(
     params: &mut Vec<(String, f64)>,
     prefix: &str,
-    cfg: crate::config::CompressorConfig,
+    compressor_config: crate::config::CompressorConfig,
     enabled: bool,
 ) {
-    let d = CompressorDerived::from_intensity(cfg.intensity);
+    let compressor_derived = CompressorDerived::from_intensity(compressor_config.intensity);
     let keyed = |tail: &str| format!("{prefix}:{tail}");
     params.extend([
-        (keyed("RMS/peak"), f64::from(d.rms_peak)),
-        (keyed("Attack time (ms)"), f64::from(d.attack_ms)),
-        (keyed("Release time (ms)"), f64::from(d.release_ms)),
+        (keyed("RMS/peak"), f64::from(compressor_derived.rms_peak)),
+        (
+            keyed("Attack time (ms)"),
+            f64::from(compressor_derived.attack_ms),
+        ),
+        (
+            keyed("Release time (ms)"),
+            f64::from(compressor_derived.release_ms),
+        ),
         (
             keyed("Threshold level (dB)"),
             if enabled {
-                f64::from(d.threshold_db)
+                f64::from(compressor_derived.threshold_db)
             } else {
                 0.0
             },
         ),
         (
             keyed("Ratio (1:n)"),
-            if enabled { f64::from(d.ratio) } else { 1.0 },
+            if enabled {
+                f64::from(compressor_derived.ratio)
+            } else {
+                1.0
+            },
         ),
-        (keyed("Knee radius (dB)"), f64::from(d.knee_db)),
+        (
+            keyed("Knee radius (dB)"),
+            f64::from(compressor_derived.knee_db),
+        ),
         (
             keyed("Makeup gain (dB)"),
             if enabled {
-                f64::from(d.makeup_gain_db)
+                f64::from(compressor_derived.makeup_gain_db)
             } else {
                 0.0
             },

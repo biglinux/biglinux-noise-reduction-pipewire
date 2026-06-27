@@ -101,9 +101,9 @@ impl Node {
             }
             let _ = writeln!(out, "{pad}    }}");
         }
-        if let Some(cfg) = &self.config {
-            // `cfg` is already rendered; indent each line.
-            for line in cfg.lines() {
+        if let Some(rendered_config) = &self.config {
+            // `rendered_config` is already rendered; indent each line.
+            for line in rendered_config.lines() {
                 let _ = writeln!(out, "{pad}    {line}");
             }
         }

@@ -9,6 +9,7 @@ anyhow
 async-channel
 autocfg
 big-app-kit
+big-jemalloc
 big-os-kit
 big-relm4-components
 biglinux-microphone

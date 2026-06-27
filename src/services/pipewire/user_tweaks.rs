@@ -176,13 +176,13 @@ fn write_or_remove(path: &Path, body: &str) -> io::Result<()> {
         .ok_or_else(|| io::Error::other(format!("path has no parent: {}", path.display())))?;
     fs::create_dir_all(parent)?;
 
-    let tmp = path.with_extension("conf.tmp");
+    let temporary_override_file = path.with_extension("conf.tmp");
     {
-        let mut f = File::create(&tmp)?;
+        let mut f = File::create(&temporary_override_file)?;
         f.write_all(body.as_bytes())?;
         f.sync_all()?;
     }
-    fs::rename(&tmp, path)?;
+    fs::rename(&temporary_override_file, path)?;
 
     // fsync the parent directory so the rename is durable before
     // systemctl restarts pipewire — otherwise the daemons can re-read

@@ -15,11 +15,9 @@ from __future__ import annotations
 
 import argparse
 import csv
-import itertools
-import json
 import os
 import sys
-from dataclasses import asdict, replace
+from dataclasses import replace
 from pathlib import Path
 
 import numpy as np
@@ -30,9 +28,10 @@ from lib import chain, metrics, signals  # noqa: E402
 
 
 def _default_cache() -> Path:
-    return Path(
-        os.environ.get("XDG_CACHE_HOME", str(Path.home() / ".cache"))
-    ) / "biglinux-noise-reduction-pipewire/calibration"
+    return (
+        Path(os.environ.get("XDG_CACHE_HOME", str(Path.home() / ".cache")))
+        / "biglinux-noise-reduction-pipewire/calibration"
+    )
 
 
 def _discover_samples(*roots: Path) -> list[Path]:
@@ -70,7 +69,9 @@ def _build_matrix(args) -> list[chain.ChainSettings]:
     matrix: list[chain.ChainSettings] = []
 
     # 1. Bypass — establishes the unprocessed reference floor.
-    matrix.append(replace(base, gtcrn_enabled=False, hpf_enabled=False, eq_enabled=False))
+    matrix.append(
+        replace(base, gtcrn_enabled=False, hpf_enabled=False, eq_enabled=False)
+    )
 
     # 2. HPF candidates.
     for freq in (40.0, 80.0, 100.0):
@@ -143,7 +144,10 @@ def main() -> int:
     if args.limit_samples > 0:
         samples = samples[: args.limit_samples]
     if not samples:
-        print("no input samples found — pass --samples-dir or run setup.sh", file=sys.stderr)
+        print(
+            "no input samples found — pass --samples-dir or run setup.sh",
+            file=sys.stderr,
+        )
         return 1
 
     args.out.mkdir(parents=True, exist_ok=True)
@@ -156,16 +160,21 @@ def main() -> int:
         except Exception as e:  # noqa: BLE001
             print(f"skip {sample.name}: {e}", file=sys.stderr)
             continue
-        for cfg in matrix:
+        for chain_configuration in matrix:
             try:
-                y = chain.apply_chain(x, sr, cfg)
+                y = chain.apply_chain(x, sr, chain_configuration)
                 m = metrics.score_pair(None, y, sr, dnsmos_model=args.dnsmos)
             except Exception as e:  # noqa: BLE001
-                print(f"  fail {_label(cfg)} on {sample.name}: {e}", file=sys.stderr)
+                print(
+                    f"  fail {_label(chain_configuration)} on {sample.name}: {e}",
+                    file=sys.stderr,
+                )
                 continue
-            row = {"sample": sample.name, "config": _label(cfg), **m}
+            row = {"sample": sample.name, "config": _label(chain_configuration), **m}
             rows.append(row)
-            print(f"{sample.name:50s}  {_label(cfg):60s}  ovrl={m.get('dnsmos_ovrl', float('nan')):.2f}")
+            print(
+                f"{sample.name:50s}  {_label(chain_configuration):60s}  ovrl={m.get('dnsmos_ovrl', float('nan')):.2f}"
+            )
 
     if not rows:
         print("no rows produced", file=sys.stderr)
@@ -202,13 +211,13 @@ def _write_markdown(rows: list[dict], dest: Path) -> None:
     ]
 
     summary: list[tuple[str, dict[str, float]]] = []
-    for cfg, entries in by_cfg.items():
+    for configuration_label, entries in by_cfg.items():
         agg = {}
         for k in metric_keys:
             vals = [e.get(k, float("nan")) for e in entries]
             vals = [v for v in vals if not np.isnan(v)]
             agg[k] = float(np.mean(vals)) if vals else float("nan")
-        summary.append((cfg, agg))
+        summary.append((configuration_label, agg))
     summary.sort(key=lambda kv: -kv[1].get("dnsmos_ovrl", float("nan")))
 
     lines = [
@@ -222,9 +231,9 @@ def _write_markdown(rows: list[dict], dest: Path) -> None:
         "| config | OVRL | SIG | BAK | LUFS | crest dB | sub-80 dB | 2-4 kHz dB |",
         "|---|---:|---:|---:|---:|---:|---:|---:|",
     ]
-    for cfg, agg in summary:
+    for configuration_label, agg in summary:
         lines.append(
-            f"| `{cfg}` "
+            f"| `{configuration_label}` "
             f"| {agg['dnsmos_ovrl']:.2f} "
             f"| {agg['dnsmos_sig']:.2f} "
             f"| {agg['dnsmos_bak']:.2f} "
