@@ -49,7 +49,7 @@ def _eq_preset(name: str) -> tuple[float, ...]:
     calibration runner doesn't need a Rust build."""
     presets = {
         "flat": (0.0,) * 10,
-        # Updated presence (post f336542 / 4ba77fe).
+        # Updated presence preset after the voice-clarity retune.
         "presence": (0.0, 0.0, 0.0, -3.0, -2.0, 2.0, 8.0, 10.0, 5.0, 0.0),
         "default_voice": (0.0, 0.0, 0.0, 1.0, 0.0, 1.0, 2.0, 3.0, 1.0, 0.0),
         "podcast": (5.0, 5.0, 10.0, 5.0, 0.0, 5.0, 10.0, 5.0, 0.0, -5.0),

@@ -23,6 +23,9 @@
 use std::rc::Rc;
 
 use adw::prelude::*;
+use big_relm4_components::layout::hamburger_menu::{
+    build_flat_action_popover_button, BigActionPopoverButton,
+};
 use gtk::{gio, Orientation};
 use relm4::{Component, ComponentParts, ComponentSender};
 
@@ -127,6 +130,9 @@ pub(super) struct MicShell {
     /// Kept alive for the shell's lifetime; the monitor/visibility bindings hold
     /// weak refs to it (see [`window::bind_spectrum_to_monitor`]).
     _spectrum: Rc<Spectrum>,
+    /// Kept alive because the actionable menu button owns a manually-parented
+    /// popover instead of a native `GtkMenuButton`.
+    _primary_menu: BigActionPopoverButton,
     /// Kept alive so the watch keeps firing; dropped with the model on close.
     _monitor: Rc<AudioMonitor>,
     /// `settings.json` watch; held to keep the subscription alive.
@@ -159,7 +165,8 @@ impl Component for MicShell {
         header.set_decoration_layout(Some(":minimize,maximize,close"));
         let mode_picker = window::build_mode_picker(initial_mode);
         header.pack_start(&mode_picker.container);
-        header.pack_end(&window::build_primary_menu_button());
+        let primary_menu = build_flat_action_popover_button(&window::primary_menu_spec());
+        header.pack_end(primary_menu.button());
 
         // ── Body + spectrum strip ─────────────────────────────────────────
         let body = gtk::Box::builder()
@@ -213,6 +220,7 @@ impl Component for MicShell {
             mode_switch: mode_picker.switch,
             input,
             _spectrum: spectrum,
+            _primary_menu: primary_menu,
             _monitor: monitor,
             _settings_monitor: settings_monitor,
         };
@@ -396,6 +404,7 @@ fn install_external_settings_watch(
 #[cfg(test)]
 mod tests {
     use super::*;
+    #[cfg(not(miri))]
     use crate::config::AppSettings;
 
     // Pure reducer-style checks on the shell's mode mapping. Building the full
@@ -407,6 +416,9 @@ mod tests {
         assert_eq!(Mode::from_advanced_flag(false), Mode::Simple);
     }
 
+    // Miri cannot enter GLib's main-context FFI used by AppState's debounce
+    // timer; the normal cargo test gate still covers this UI-state mutation.
+    #[cfg(not(miri))]
     #[test]
     fn advanced_toggle_persists_into_settings() {
         // `AdvancedToggled` mutates `AppState.ui.show_advanced`; verify the

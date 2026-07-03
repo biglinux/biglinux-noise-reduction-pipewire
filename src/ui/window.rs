@@ -25,10 +25,11 @@
 use std::rc::Rc;
 
 use adw::prelude::*;
-use big_app_kit::desktop;
+use big_app_kit::{desktop, dialogs};
 use big_relm4_components::feedback::tooltip;
+use big_relm4_components::layout::hamburger_menu::{BigHamburgerMenuSpec, BigMenuActionItem};
 use glib::MainContext;
-use gtk::{gio, glib, Orientation};
+use gtk::{glib, Orientation};
 use relm4::{Component, ComponentController};
 
 use crate::config::{app_id, app_version, AppSettings};
@@ -171,7 +172,10 @@ pub(super) fn populate_body(
 /// stack page that isn't about the microphone (today: the `output`
 /// page). Centralised here so both the initial render and the
 /// `notify::visible-child-name` handler agree on the rule.
-fn sync_spectrum_visibility(spectrum_container: &gtk::Box, stack: &adw::ViewStack) {
+pub(in crate::ui) fn sync_spectrum_visibility(
+    spectrum_container: &gtk::Box,
+    stack: &adw::ViewStack,
+) {
     let visible = stack.visible_child_name().is_none_or(|name| {
         let n = name.as_str();
         n != "output" && n != "tuning"
@@ -210,27 +214,23 @@ pub(super) fn current_mode(state: &Rc<AppState>) -> Mode {
     Mode::from_advanced_flag(state.settings().ui.show_advanced)
 }
 
-/// Hamburger menu in the header. Holds the "Restore default settings"
+/// Hamburger menu spec in the header. Holds the "Restore default settings"
 /// and "About" entries — both routed through window-scoped GAction
 /// instances installed by [`install_window_actions`].
-pub(super) fn build_primary_menu_button() -> gtk::MenuButton {
-    let menu = gio::Menu::new();
-    menu.append(
-        Some(&i18n("Restore default settings")),
-        Some("win.reset-defaults"),
-    );
-    menu.append(Some(&i18n("About Filter noise")), Some("win.about"));
+pub(super) fn primary_menu_spec() -> BigHamburgerMenuSpec {
+    BigHamburgerMenuSpec::new(i18n(PRIMARY_MENU_LABEL)).items(
+        primary_menu_action_specs()
+            .map(|(label, action)| BigMenuActionItem::new(i18n(label), action)),
+    )
+}
 
-    let button = gtk::MenuButton::builder()
-        .icon_name("open-menu-symbolic")
-        .menu_model(&menu)
-        .primary(true)
-        .build();
-    tooltip::set(&button, &i18n("Main menu"));
-    // Icon-only control needs an explicit accessible label; tooltips
-    // alone are not surfaced as accessible names by every reader.
-    button.update_property(&[gtk::accessible::Property::Label(&i18n("Main menu"))]);
-    button
+const PRIMARY_MENU_LABEL: &str = "Main menu";
+
+fn primary_menu_action_specs() -> [(&'static str, &'static str); 2] {
+    [
+        ("Restore default settings", "win.reset-defaults"),
+        ("About Filter noise", "win.about"),
+    ]
 }
 
 /// Wire the hamburger menu's GActions to the window. Window-scoped (not
@@ -251,7 +251,19 @@ fn install_window_actions(
         let window_weak = window.downgrade();
         desktop::install_action(window, "reset-defaults", move || {
             if let Some(window) = window_weak.upgrade() {
-                present_reset_confirmation(&window, &state, &shell);
+                let dialog = reset_confirmation_dialog();
+                let state = Rc::clone(&state);
+                let shell = shell.clone();
+                dialog.connect_response(None, move |dialog, response| {
+                    if is_reset_response(response) {
+                        apply_factory_defaults(&state);
+                        // The component owns the body widgets; ask it to rebuild for the
+                        // (geometry/UI-preserving) factory snapshot just written to state.
+                        let _ = shell.send(MicInput::RebuildBody);
+                    }
+                    dialog.close();
+                });
+                dialog.present(Some(&window));
             }
         });
     }
@@ -265,46 +277,38 @@ fn install_window_actions(
     }
 }
 
-/// Confirm before overwriting the user's audio configuration. Window
-/// geometry (`window`) and UI preferences (`ui`) are preserved so the
-/// reset doesn't snap the window back to default size or flip the
-/// Simple/Advanced toggle the user already chose.
-fn present_reset_confirmation(
+#[cfg(test)]
+pub(in crate::ui) fn install_window_actions_contract(
     window: &adw::ApplicationWindow,
-    state: &Rc<AppState>,
-    shell: &relm4::Sender<MicInput>,
-) {
-    let dialog = adw::AlertDialog::new(
-        Some(&i18n("Restore default settings?")),
-        Some(&i18n(
+    state: Rc<AppState>,
+) -> relm4::Receiver<MicInput> {
+    let (sender, receiver) = relm4::channel();
+    install_window_actions(window, state, sender);
+    receiver
+}
+
+fn is_reset_response(response: &str) -> bool {
+    response == "reset"
+}
+
+/// Confirm before overwriting the user's audio configuration.
+pub(in crate::ui) fn reset_confirmation_dialog() -> adw::AlertDialog {
+    dialogs::confirm_dialog(
+        &i18n("Restore default settings?"),
+        &i18n(
             "All audio processing settings will return to their factory values. \
              Your window size and view preferences are kept.",
-        )),
-    );
-    dialog.add_response("cancel", &i18n("Cancel"));
-    dialog.add_response("reset", &i18n("Restore defaults"));
-    dialog.set_response_appearance("reset", adw::ResponseAppearance::Destructive);
-    dialog.set_default_response(Some("cancel"));
-    dialog.set_close_response("cancel");
-
-    let state = Rc::clone(state);
-    let shell = shell.clone();
-    dialog.connect_response(None, move |dialog, response| {
-        if response == "reset" {
-            apply_factory_defaults(&state);
-            // The component owns the body widgets; ask it to rebuild for the
-            // (geometry/UI-preserving) factory snapshot just written to state.
-            let _ = shell.send(MicInput::RebuildBody);
-        }
-        dialog.close();
-    });
-
-    dialog.present(Some(window));
+        ),
+        &i18n("Cancel"),
+        "reset",
+        &i18n("Restore defaults"),
+        true,
+    )
 }
 
 /// Replace the current settings with [`AppSettings::default`] while
 /// keeping window geometry and UI preferences intact.
-fn apply_factory_defaults(state: &Rc<AppState>) {
+pub(in crate::ui) fn apply_factory_defaults(state: &Rc<AppState>) {
     state.mutate(|s| {
         let preserved_window = s.window.clone();
         let preserved_ui = s.ui.clone();
@@ -314,7 +318,7 @@ fn apply_factory_defaults(state: &Rc<AppState>) {
     });
 }
 
-fn present_about_dialog(parent: &adw::ApplicationWindow) {
+fn present_about_dialog(parent: &adw::ApplicationWindow) -> adw::AboutDialog {
     let about = adw::AboutDialog::builder()
         .application_name(i18n("Filter noise"))
         .application_icon(app_id())
@@ -341,6 +345,14 @@ fn present_about_dialog(parent: &adw::ApplicationWindow) {
         ],
     );
     about.present(Some(parent));
+    about
+}
+
+#[cfg(test)]
+pub(in crate::ui) fn present_about_dialog_contract(
+    parent: &adw::ApplicationWindow,
+) -> adw::AboutDialog {
+    present_about_dialog(parent)
 }
 
 /// Wire the audio-monitor event stream into the spectrum widget. Runs on
@@ -395,7 +407,55 @@ pub(super) fn bind_monitor_to_spectrum_visibility(
     // worker stays active until GTK realises the strip — at which point
     // the `map` signal fires. Pause now so the brief startup window
     // does not pump the FFT for a hidden widget on Advanced/Output mode.
-    if !widget.is_mapped() {
+    if should_pause_monitor_for_initial_mapping(widget.is_mapped()) {
         monitor.set_active(false);
+    }
+}
+
+fn should_pause_monitor_for_initial_mapping(is_mapped: bool) -> bool {
+    !is_mapped
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn primary_menu_actions_use_accessible_contract() {
+        assert_eq!(PRIMARY_MENU_LABEL, "Main menu");
+        assert_eq!(
+            primary_menu_action_specs(),
+            [
+                ("Restore default settings", "win.reset-defaults"),
+                ("About Filter noise", "win.about"),
+            ]
+        );
+    }
+
+    #[test]
+    #[cfg(not(miri))]
+    fn localized_primary_menu_spec_uses_accessible_main_menu_contract() {
+        let spec = primary_menu_spec();
+
+        assert_eq!(spec.icon_name, "open-menu-symbolic");
+        assert_eq!(spec.label, "Main menu");
+        assert_eq!(spec.items.len(), 2);
+        assert_eq!(spec.items[0].label, "Restore default settings");
+        assert_eq!(spec.items[0].action, "win.reset-defaults");
+        assert_eq!(spec.items[1].label, "About Filter noise");
+        assert_eq!(spec.items[1].action, "win.about");
+    }
+
+    #[test]
+    fn reset_response_only_accepts_reset_id() {
+        assert!(is_reset_response("reset"));
+        assert!(!is_reset_response("cancel"));
+        assert!(!is_reset_response(""));
+    }
+
+    #[test]
+    fn initial_monitor_pause_tracks_mapping_state() {
+        assert!(should_pause_monitor_for_initial_mapping(false));
+        assert!(!should_pause_monitor_for_initial_mapping(true));
     }
 }

@@ -73,6 +73,9 @@ fn dev_locale_dir() -> Option<String> {
 mod tests {
     use super::*;
 
+    // Miri cannot call gettext's `dgettext` FFI; the normal cargo test
+    // gate still covers the untranslated fallback contract.
+    #[cfg(not(miri))]
     #[test]
     fn i18n_returns_input_when_catalog_unavailable() {
         // No `bindtextdomain` was called in this test process, so

@@ -10,6 +10,8 @@
 //! `XDG_CONFIG_HOME` so it never reads or writes the developer's real
 //! settings file.
 
+#![cfg(not(miri))]
+
 use std::path::PathBuf;
 use std::process::Command;
 

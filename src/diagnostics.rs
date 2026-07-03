@@ -392,6 +392,9 @@ mod tests {
         assert_eq!(r.failed, u8::MAX);
     }
 
+    // Miri cannot spawn `systemctl` (`posix_spawnattr_init` unsupported);
+    // the normal cargo test gate still covers this live-subprocess fallback.
+    #[cfg(not(miri))]
     #[test]
     fn unit_active_state_returns_string_for_unknown_unit() {
         let s = unit_active_state("definitely-not-a-real-unit-xyz.service");

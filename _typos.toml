@@ -17,6 +17,11 @@ extend-ignore-identifiers-re = [
 [default.extend-words]
 # Portuguese for "sound" — appears in pt_BR translations.
 som = "som"
+# Relm4 GTK application framework.
+relm = "relm"
+Relm = "Relm"
+# Intel High Definition Audio.
+HDA = "HDA"
 
 [files]
 extend-exclude = [

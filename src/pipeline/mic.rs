@@ -282,7 +282,15 @@ fn pitch_controls(settings: &AppSettings) -> Option<(f64, f64)> {
         return None;
     }
     let width = f64::from(st.width).clamp(0.0, 1.0);
-    let coeff = (0.5 * 4.0_f64.powf(width)).clamp(0.5, 2.0);
+    let coeff = if width == 0.0 {
+        0.5
+    } else if width == 0.5 {
+        1.0
+    } else if width == 1.0 {
+        2.0
+    } else {
+        (0.5 * 4.0_f64.powf(width)).clamp(0.5, 2.0)
+    };
     let gain_db = if coeff < 1.0 {
         (1.0 - coeff) * 20.0
     } else if coeff > 1.0 {

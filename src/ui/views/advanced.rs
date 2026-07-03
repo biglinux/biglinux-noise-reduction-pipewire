@@ -36,6 +36,7 @@ use std::cell::RefCell;
 use std::rc::Rc;
 
 use adw::prelude::*;
+use big_app_kit::dialogs;
 use gtk::{gio, glib, Box as GtkBox, Orientation, ScrolledWindow};
 
 use crate::services::pipewire::user_tweaks::{SampleRates, UserTweaks};
@@ -191,9 +192,32 @@ fn populate_tuning_page(content: &GtkBox, initial: Selection) {
         let selection = Rc::clone(&selection);
         let banner = banner.clone();
         toolbar.reset.connect_clicked(move |btn| {
-            reset_clicked(btn, &selection, &banner);
+            let dialog = reset_audio_settings_dialog();
+            let selection = Rc::clone(&selection);
+            let banner = banner.clone();
+            let button_weak = btn.downgrade();
+            dialog.connect_response(None, move |dlg, response| {
+                if is_reset_response(response) {
+                    *selection.borrow_mut() = Selection::default();
+                    refresh_banner(&banner, &selection);
+                    // No separate synchronous `UserTweaks::clear()`: applying the
+                    // now-default selection renders empty drop-ins, and
+                    // `UserTweaks::apply` deletes them (same two files, same
+                    // order) — but on the worker thread, with the restart, so the
+                    // reset no longer fsyncs/removes on the main loop.
+                    if let Some(button) = button_weak.upgrade() {
+                        apply_clicked(&button, &selection, &banner);
+                    }
+                }
+                dlg.close();
+            });
+            dialog.present(Some(btn));
         });
     }
+}
+
+fn is_reset_response(response: &str) -> bool {
+    response == "reset"
 }
 
 struct ActionToolbar {
@@ -229,12 +253,20 @@ fn action_toolbar() -> ActionToolbar {
 
 fn refresh_banner(banner: &adw::Banner, selection: &Rc<RefCell<Selection>>) {
     let modified = selection.borrow().is_modified();
-    banner.set_title(&if modified {
-        i18n("Custom settings active. Click Apply to enable them.")
-    } else {
-        i18n("The standard audio settings are in use.")
-    });
+    banner.set_title(&banner_title_for_modified_state(modified));
     banner.set_revealed(modified);
+}
+
+fn banner_title_for_modified_state(is_modified: bool) -> String {
+    i18n(banner_title_message_for_modified_state(is_modified))
+}
+
+fn banner_title_message_for_modified_state(is_modified: bool) -> &'static str {
+    if is_modified {
+        "Custom settings active. Click Apply to enable them."
+    } else {
+        "The standard audio settings are in use."
+    }
 }
 
 // ── Bluetooth cards ──────────────────────────────────────────────────
@@ -562,6 +594,30 @@ where
     dropdown
 }
 
+#[cfg(test)]
+pub(in crate::ui) fn build_headroom_contract_dropdown<F>(
+    initial: Option<u32>,
+    on_pick: F,
+) -> gtk::DropDown
+where
+    F: Fn(Option<u32>) + 'static,
+{
+    build_dropdown(headroom_options(), initial, on_pick)
+}
+
+#[cfg(test)]
+pub(in crate::ui) fn refresh_banner_contract(banner: &adw::Banner, tweaks: UserTweaks) {
+    let selection = Rc::new(RefCell::new(Selection::from_disk(&tweaks)));
+    refresh_banner(banner, &selection);
+}
+
+#[cfg(test)]
+pub(in crate::ui) fn build_tuning_page_contract(tweaks: UserTweaks) -> GtkBox {
+    let content = GtkBox::builder().orientation(Orientation::Vertical).build();
+    populate_tuning_page(&content, Selection::from_disk(&tweaks));
+    content
+}
+
 // ── Apply / Reset ────────────────────────────────────────────────────
 
 /// Outcome of the apply worker, distinguishing a config-write failure
@@ -612,55 +668,184 @@ fn apply_clicked(button: &gtk::Button, selection: &Rc<RefCell<Selection>>, banne
         match outcome {
             ApplyOutcome::Ok => {}
             ApplyOutcome::WriteFailed(message) => {
-                present_error(&button, &i18n("Failed to write configuration"), &message);
+                dialogs::error_dialog(
+                    &i18n("Failed to write configuration"),
+                    &message,
+                    &i18n("OK"),
+                )
+                .present(Some(&button));
             }
             ApplyOutcome::RestartFailed(message) => {
-                present_error(&button, &i18n("Audio service restart failed"), &message);
+                dialogs::error_dialog(&i18n("Audio service restart failed"), &message, &i18n("OK"))
+                    .present(Some(&button));
             }
         }
     });
 }
 
-fn reset_clicked(button: &gtk::Button, selection: &Rc<RefCell<Selection>>, banner: &adw::Banner) {
-    let dialog = adw::AlertDialog::new(
-        Some(&i18n("Restore default audio settings?")),
-        Some(&i18n(
+#[cfg(test)]
+pub(in crate::ui) fn trigger_apply_button_contract(button: &gtk::Button, banner: &adw::Banner) {
+    let selection = Rc::new(RefCell::new(Selection::default()));
+    apply_clicked(button, &selection, banner);
+}
+
+pub(in crate::ui) fn reset_audio_settings_dialog() -> adw::AlertDialog {
+    dialogs::confirm_dialog(
+        &i18n("Restore default audio settings?"),
+        &i18n(
             "All your custom audio settings will be removed and the \
              audio service will restart with the defaults.",
-        )),
-    );
-    dialog.add_response("cancel", &i18n("Cancel"));
-    dialog.add_response("reset", &i18n("Restore"));
-    dialog.set_response_appearance("reset", adw::ResponseAppearance::Destructive);
-    dialog.set_default_response(Some("cancel"));
-    dialog.set_close_response("cancel");
-
-    let selection = Rc::clone(selection);
-    let banner = banner.clone();
-    let button_weak = button.downgrade();
-    dialog.connect_response(None, move |dlg, response| {
-        if response == "reset" {
-            *selection.borrow_mut() = Selection::default();
-            refresh_banner(&banner, &selection);
-            // No separate synchronous `UserTweaks::clear()`: applying the
-            // now-default selection renders empty drop-ins, and
-            // `UserTweaks::apply` deletes them (same two files, same
-            // order) — but on the worker thread, with the restart, so the
-            // reset no longer fsyncs/removes on the main loop.
-            if let Some(b) = button_weak.upgrade() {
-                apply_clicked(&b, &selection, &banner);
-            }
-        }
-        dlg.close();
-    });
-
-    dialog.present(Some(button));
+        ),
+        &i18n("Cancel"),
+        "reset",
+        &i18n("Restore"),
+        true,
+    )
 }
 
-fn present_error(parent: &gtk::Button, title: &str, body: &str) {
-    let dialog = adw::AlertDialog::new(Some(title), Some(body));
-    dialog.add_response("ok", &i18n("OK"));
-    dialog.set_default_response(Some("ok"));
-    dialog.set_close_response("ok");
-    dialog.present(Some(parent));
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    fn fully_custom_tweaks() -> UserTweaks {
+        UserTweaks {
+            quantum: Some(512),
+            headroom_usb: Some(256),
+            headroom_pci: Some(1024),
+            bt_latency: Some(2048),
+            sample_rates: Some(SampleRates::HiRes),
+            bt_sbc_xq: Some(true),
+            bt_call_autoswitch: Some(false),
+            alsa_no_suspend: Some(true),
+        }
+    }
+
+    #[test]
+    fn selection_round_trips_every_user_tweak_field() {
+        let tweaks = fully_custom_tweaks();
+        let selection = Selection::from_disk(&tweaks);
+
+        assert_eq!(selection.quantum, Some(512));
+        assert_eq!(selection.headroom_usb, Some(256));
+        assert_eq!(selection.headroom_pci, Some(1024));
+        assert_eq!(selection.bt_latency, Some(2048));
+        assert_eq!(selection.sample_rates, Some(SampleRates::HiRes));
+        assert_eq!(selection.bt_sbc_xq, Some(true));
+        assert_eq!(selection.bt_call_autoswitch, Some(false));
+        assert_eq!(selection.alsa_no_suspend, Some(true));
+        assert_eq!(selection.into_tweaks(), tweaks);
+    }
+
+    #[test]
+    fn selection_modified_state_tracks_each_field_independently() {
+        assert!(!Selection::default().is_modified());
+
+        for selection in [
+            Selection {
+                quantum: Some(512),
+                ..Selection::default()
+            },
+            Selection {
+                headroom_usb: Some(256),
+                ..Selection::default()
+            },
+            Selection {
+                headroom_pci: Some(1024),
+                ..Selection::default()
+            },
+            Selection {
+                bt_latency: Some(2048),
+                ..Selection::default()
+            },
+            Selection {
+                sample_rates: Some(SampleRates::Cd),
+                ..Selection::default()
+            },
+            Selection {
+                bt_sbc_xq: Some(false),
+                ..Selection::default()
+            },
+            Selection {
+                bt_call_autoswitch: Some(true),
+                ..Selection::default()
+            },
+            Selection {
+                alsa_no_suspend: Some(true),
+                ..Selection::default()
+            },
+        ] {
+            assert!(selection.is_modified(), "{selection:?}");
+        }
+    }
+
+    #[test]
+    fn banner_title_message_matches_modified_state() {
+        assert_eq!(
+            banner_title_message_for_modified_state(false),
+            "The standard audio settings are in use."
+        );
+        assert_eq!(
+            banner_title_message_for_modified_state(true),
+            "Custom settings active. Click Apply to enable them."
+        );
+    }
+
+    #[test]
+    #[cfg(not(miri))]
+    fn localized_banner_title_matches_modified_state() {
+        assert_eq!(
+            banner_title_for_modified_state(false),
+            "The standard audio settings are in use."
+        );
+        assert_eq!(
+            banner_title_for_modified_state(true),
+            "Custom settings active. Click Apply to enable them."
+        );
+    }
+
+    #[test]
+    fn reset_response_only_accepts_reset_id() {
+        assert!(is_reset_response("reset"));
+        assert!(!is_reset_response("cancel"));
+        assert!(!is_reset_response(""));
+    }
+
+    #[test]
+    #[cfg(not(miri))]
+    fn headroom_options_keep_default_and_curated_values() {
+        let options = headroom_options();
+        let labels = options
+            .iter()
+            .map(|option| option.label.as_str())
+            .collect::<Vec<_>>();
+        let values = options
+            .iter()
+            .map(|option| option.value)
+            .collect::<Vec<_>>();
+
+        assert_eq!(
+            labels,
+            [
+                "Default",
+                "None",
+                "Small (~5 ms)",
+                "Medium (~11 ms)",
+                "Standard (default, ~21 ms)",
+                "Large (virtual machines, ~42 ms)",
+                "Maximum (last resort, ~85 ms)",
+            ]
+        );
+        assert_eq!(
+            values,
+            [
+                None,
+                Some(0),
+                Some(256),
+                Some(512),
+                Some(1024),
+                Some(2048),
+                Some(4096),
+            ]
+        );
+    }
 }

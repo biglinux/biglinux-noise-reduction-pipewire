@@ -55,13 +55,15 @@ where
     let factory = gtk::SignalListItemFactory::new();
     factory.connect_setup(|_, list_item| {
         let label = gtk::Label::builder().xalign(0.0).build();
-        list_item
-            .downcast_ref::<gtk::ListItem>()
-            .expect("ListItem")
-            .set_child(Some(&label));
+        let Some(setup_list_item) = list_item.downcast_ref::<gtk::ListItem>() else {
+            return;
+        };
+        setup_list_item.set_child(Some(&label));
     });
     factory.connect_bind(move |_, list_item| {
-        let bound_list_item = list_item.downcast_ref::<gtk::ListItem>().expect("ListItem");
+        let Some(bound_list_item) = list_item.downcast_ref::<gtk::ListItem>() else {
+            return;
+        };
         let Some(string) = bound_list_item.item().and_downcast::<gtk::StringObject>() else {
             return;
         };
@@ -73,11 +75,10 @@ where
         // Index 2 is DFN3. When the plugin is missing, render the row
         // greyed and refuse selection so users see the option is real
         // but can't point the chain at a plugin that isn't there.
-        let dfn3_row = bound_list_item.position() == DFN3_INDEX;
-        let disabled = dfn3_row && !dfn3_present;
-        bound_list_item.set_selectable(!disabled);
-        bound_list_item.set_activatable(!disabled);
-        if disabled {
+        let row_interaction = dfn3_row_interaction(bound_list_item.position(), dfn3_present);
+        bound_list_item.set_selectable(row_interaction.is_selectable);
+        bound_list_item.set_activatable(row_interaction.is_activatable);
+        if row_interaction.is_dimmed {
             label.add_css_class("dim-label");
         } else {
             label.remove_css_class("dim-label");
@@ -93,7 +94,7 @@ where
     // on the disabled DFN3 row.
     dropdown.connect_selected_notify(move |dd| {
         let idx = dd.selected();
-        if idx == DFN3_INDEX && !dfn3_present {
+        if selected_index_requires_dfn3_snapback(idx, dfn3_present) {
             dd.set_selected(model_to_index(NoiseModel::GtcrnDns3, dfn3_present));
             return;
         }
@@ -107,22 +108,46 @@ where
 /// "premium" wording can never resurface in only one of the two cards.
 #[must_use]
 pub fn description() -> String {
-    if deepfilter_available() {
-        i18n(
-            "DNS3 removes more noise but can smudge consonants. VCTK is \
-             gentler and lighter on CPU. DeepFilterNet3 is a full-band \
-             48 kHz model with the cleanest output and the highest CPU \
-             cost.",
-        )
+    i18n(description_message(deepfilter_available()))
+}
+
+fn description_message(dfn3_present: bool) -> &'static str {
+    if dfn3_present {
+        "DNS3 removes more noise but can smudge consonants. VCTK is \
+         gentler and lighter on CPU. DeepFilterNet3 is a full-band \
+         48 kHz model with the cleanest output and the highest CPU \
+         cost."
     } else {
-        i18n(
-            "DNS3 removes more noise but can smudge consonants. VCTK is \
-             gentler and lighter on CPU — good for podcasts.",
-        )
+        "DNS3 removes more noise but can smudge consonants. VCTK is \
+         gentler and lighter on CPU — good for podcasts."
     }
 }
 
 const DFN3_INDEX: u32 = 2;
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+struct ModelRowInteraction {
+    is_selectable: bool,
+    is_activatable: bool,
+    is_dimmed: bool,
+}
+
+fn dfn3_row_interaction(row_position: u32, dfn3_present: bool) -> ModelRowInteraction {
+    let is_disabled = is_dfn3_row_disabled(row_position, dfn3_present);
+    ModelRowInteraction {
+        is_selectable: !is_disabled,
+        is_activatable: !is_disabled,
+        is_dimmed: is_disabled,
+    }
+}
+
+fn is_dfn3_row_disabled(row_position: u32, dfn3_present: bool) -> bool {
+    row_position == DFN3_INDEX && !dfn3_present
+}
+
+fn selected_index_requires_dfn3_snapback(selected_index: u32, dfn3_present: bool) -> bool {
+    selected_index == DFN3_INDEX && !dfn3_present
+}
 
 fn model_to_index(model: NoiseModel, dfn3_present: bool) -> u32 {
     match model {
@@ -170,5 +195,70 @@ mod tests {
     #[test]
     fn dfn3_index_is_last() {
         assert_eq!(DFN3_INDEX, 2);
+    }
+
+    #[test]
+    fn missing_dfn3_is_visible_but_not_selectable() {
+        assert!(!is_dfn3_row_disabled(0, false));
+        assert!(!is_dfn3_row_disabled(1, false));
+        assert!(is_dfn3_row_disabled(DFN3_INDEX, false));
+        assert!(!is_dfn3_row_disabled(DFN3_INDEX, true));
+
+        assert!(selected_index_requires_dfn3_snapback(DFN3_INDEX, false));
+        assert!(!selected_index_requires_dfn3_snapback(DFN3_INDEX, true));
+        assert!(!selected_index_requires_dfn3_snapback(1, false));
+    }
+
+    #[test]
+    fn dfn3_row_interaction_dims_only_missing_dfn3() {
+        assert_eq!(
+            dfn3_row_interaction(DFN3_INDEX, false),
+            ModelRowInteraction {
+                is_selectable: false,
+                is_activatable: false,
+                is_dimmed: true,
+            }
+        );
+        assert_eq!(
+            dfn3_row_interaction(DFN3_INDEX, true),
+            ModelRowInteraction {
+                is_selectable: true,
+                is_activatable: true,
+                is_dimmed: false,
+            }
+        );
+        assert_eq!(
+            dfn3_row_interaction(1, false),
+            ModelRowInteraction {
+                is_selectable: true,
+                is_activatable: true,
+                is_dimmed: false,
+            }
+        );
+    }
+
+    #[test]
+    fn dfn3_index_falls_back_when_plugin_is_missing() {
+        assert_eq!(model_to_index(NoiseModel::DeepFilterNet3, false), 0);
+        assert_eq!(index_to_model(DFN3_INDEX, false), NoiseModel::GtcrnDns3);
+        assert_eq!(model_to_index(NoiseModel::DeepFilterNet3, true), DFN3_INDEX);
+        assert_eq!(index_to_model(DFN3_INDEX, true), NoiseModel::DeepFilterNet3);
+    }
+
+    #[test]
+    fn description_messages_name_available_gtcrn_models() {
+        for text in [description_message(false), description_message(true)] {
+            assert!(text.contains("DNS3"), "{text}");
+            assert!(text.contains("VCTK"), "{text}");
+        }
+    }
+
+    #[test]
+    #[cfg(not(miri))]
+    fn localized_description_names_available_gtcrn_models() {
+        let text = description();
+
+        assert!(text.contains("DNS3"), "{text}");
+        assert!(text.contains("VCTK"), "{text}");
     }
 }

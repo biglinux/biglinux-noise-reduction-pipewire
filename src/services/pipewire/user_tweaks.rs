@@ -86,7 +86,7 @@ pub struct UserTweaks {
     pub sample_rates: Option<SampleRates>,
     /// `bluez5.enable-sbc-xq` — explicitly true/false. WP 0.5 already
     /// defaults to true; the field exists so users can pin the value
-    /// for hardware that mis-negotiates the codec.
+    /// for hardware that negotiates the codec incorrectly.
     pub bt_sbc_xq: Option<bool>,
     /// `wireplumber.settings.bluetooth.autoswitch-to-headset-profile`.
     /// When `Some(true)` the headset flips to HFP/HSP (mono call mode)
@@ -103,7 +103,7 @@ pub struct UserTweaks {
 
 impl UserTweaks {
     /// Read both drop-in files and reconstruct the tweak set. Missing
-    /// files / unparseable lines are silently ignored — the field stays
+    /// files / unparsable lines are silently ignored — the field stays
     /// `None`, matching the "user has not customised" semantics. We
     /// never error out: a hand-edited drop-in must not lock the user
     /// out of the UI.

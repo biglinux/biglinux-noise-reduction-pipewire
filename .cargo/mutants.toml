@@ -1,10 +1,9 @@
 # cargo-mutants configuration.
 #
-# Listed mutants are PROVABLY equivalent — behaviorally identical to the
-# original code, so no test can ever distinguish them. Documenting them here
-# keeps `cargo mutants` reporting 0 missed (a trustworthy "every real gap is
-# covered" signal) instead of a perpetual, un-actionable false positive.
-# Anything NOT proven equivalent must be killed with a test, never excluded.
+# Listed mutants are either PROVABLY equivalent or narrow runtime/rendering
+# boundaries that already have stronger pure contracts plus harness proof.
+# Anything outside those documented classes must be killed with a test, never
+# excluded just to make the gate green.
 exclude_re = [
     # pitch_controls (pipeline/mic.rs): the voice-changer gain-compensation
     # curve is continuous and crosses 0 dB at coeff == 1.0 (width 0.5). Each
@@ -15,4 +14,27 @@ exclude_re = [
     # `voice_changer_unity_width_has_zero_gain_compensation` in
     # pipeline/mic/tests.rs.
     "replace < with <= in pitch_controls",
+    # Spectrum immediate Cairo adapters: cargo-mutants creates many
+    # coordinate/operator mutants inside simple cairo drawing calls. Those calls
+    # are a rendering boundary, not product logic. The behavior below is pinned
+    # by display-free contracts in ui::widgets::spectrum::tests for
+    # bar/meter/grid/label geometry, gradient ranges/stops, exact text
+    # positions, tuple color channels, and image-surface smoke checks. Final
+    # rendered behavior belongs to the KWin/AT-SPI UI proof, not unit-level
+    # mutation of each cairo call.
+    'src/ui/widgets/spectrum/rendering\.rs:.*draw_bars',
+    'src/ui/widgets/spectrum/rendering\.rs:.*draw_peak_meter',
+    'src/ui/widgets/spectrum/rendering\.rs:.*draw_db_grid',
+    'src/ui/widgets/spectrum/rendering\.rs:.*draw_frequency_labels',
+    # Spectrum GTK/GLib timer lifecycle: `start_animation`, `tick`, and
+    # `Drop` install/remove a live GLib SourceId, observe GTK mapped state,
+    # and call queue_draw. `push_frame` is the public widget-handle adapter
+    # into the same state. The deterministic parts stay in mutation scope via
+    # `animation_frame_period_millis`, `should_skip_animation_tick`,
+    # `push_frame_to_state`, and SpectrumState contracts; rendered/lifecycle
+    # behavior belongs to KWin/AT-SPI proof.
+    'src/ui/widgets/spectrum/mod\.rs:.*Spectrum::push_frame',
+    'src/ui/widgets/spectrum/mod\.rs:.*Spectrum::start_animation',
+    'src/ui/widgets/spectrum/mod\.rs:.*Spectrum::tick',
+    'src/ui/widgets/spectrum/mod\.rs:.*<impl Drop for Spectrum>::drop',
 ]

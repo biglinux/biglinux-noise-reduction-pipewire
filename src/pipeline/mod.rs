@@ -566,6 +566,9 @@ mod tests {
         }
     }
 
+    // Miri cannot spawn `systemctl` (`posix_spawnattr_init` unsupported);
+    // the normal cargo test gate still covers this legacy-service cleanup.
+    #[cfg(not(miri))]
     #[test]
     fn purge_legacy_files_does_not_panic_when_none_present() {
         // Run the public function — it consults the user's real XDG

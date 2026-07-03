@@ -34,6 +34,7 @@ impl MicrophoneApplication {
             .application_id(app_id())
             .flags(gio::ApplicationFlags::FLAGS_NONE)
             .build();
+        let _relm_application_seed = relm4::RelmApp::<()>::from_app(inner.clone());
 
         let state = AppState::new(AppSettings::load());
         let app = Rc::new(Self {

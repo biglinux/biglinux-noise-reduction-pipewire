@@ -365,6 +365,24 @@ fn conf_voice_changer_deep_voice_compensates_with_positive_gain() {
 }
 
 #[test]
+fn voice_changer_mid_high_width_uses_exponential_pitch_curve() {
+    // width=0.75 sits between passthrough and full high voice:
+    // 0.5 * 4^0.75 = sqrt(2), then attenuate by (sqrt(2) - 1) * 3 dB.
+    let s = AppSettings {
+        stereo: crate::config::StereoConfig {
+            enabled: true,
+            mode: crate::config::StereoMode::VoiceChanger,
+            width: 0.75,
+            ..crate::config::StereoConfig::default()
+        },
+        ..AppSettings::default()
+    };
+    let (coeff, gain_db) = pitch_controls(&s).expect("voice changer controls");
+    assert!((coeff - std::f64::consts::SQRT_2).abs() < 1e-12);
+    assert!((gain_db + 1.242_640_687_119_285_4).abs() < 1e-12);
+}
+
+#[test]
 fn conf_dual_mono_stereo_does_not_emit_pitch() {
     let s = AppSettings {
         stereo: crate::config::StereoConfig {

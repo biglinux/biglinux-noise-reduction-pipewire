@@ -109,6 +109,23 @@ impl AudioMonitor {
         self.active.store(on, Ordering::Release);
     }
 
+    #[cfg(test)]
+    pub(crate) fn contract_handle() -> (Self, AsyncSender<Event>) {
+        let (events_tx, events_rx) = async_channel::bounded::<Event>(64);
+        let monitor = Self {
+            events_rx,
+            stop: Arc::new(AtomicBool::new(false)),
+            active: Arc::new(AtomicBool::new(true)),
+            worker: None,
+        };
+        (monitor, events_tx)
+    }
+
+    #[cfg(test)]
+    pub(crate) fn is_active_for_contract(&self) -> bool {
+        self.active.load(Ordering::Acquire)
+    }
+
     pub fn shutdown(mut self) {
         self.shutdown_internal();
     }

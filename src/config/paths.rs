@@ -29,19 +29,25 @@ pub const EQ_BANDS_HZ: [u32; 10] = [31, 63, 125, 250, 500, 1000, 2000, 4000, 800
 /// `$HOME/.config/biglinux-microphone` as the portable fallback.
 #[must_use]
 pub fn config_dir() -> PathBuf {
-    dirs::config_dir()
-        .unwrap_or_else(|| {
-            dirs::home_dir()
-                .unwrap_or_else(|| PathBuf::from("/tmp"))
-                .join(".config")
-        })
-        .join("biglinux-microphone")
+    app_config_dir(dirs::config_dir().unwrap_or_else(|| {
+        dirs::home_dir()
+            .unwrap_or_else(|| PathBuf::from("/tmp"))
+            .join(".config")
+    }))
+}
+
+fn app_config_dir(config_root: PathBuf) -> PathBuf {
+    config_root.join("biglinux-microphone")
+}
+
+fn settings_file_in(config_directory: &Path) -> PathBuf {
+    config_directory.join("settings.json")
 }
 
 /// Path to `settings.json` inside the user config directory.
 #[must_use]
 pub fn settings_file() -> PathBuf {
-    config_dir().join("settings.json")
+    settings_file_in(&config_dir())
 }
 
 /// System LADSPA directory.
@@ -119,16 +125,35 @@ mod tests {
     use super::*;
 
     #[test]
-    fn config_dir_ends_with_app_folder() {
+    #[cfg(not(miri))]
+    fn host_config_dir_ends_with_app_folder() {
         assert!(config_dir().ends_with("biglinux-microphone"));
     }
 
     #[test]
-    fn settings_file_is_inside_config_dir() {
+    fn app_config_dir_appends_app_folder() {
+        assert_eq!(
+            app_config_dir(PathBuf::from("/tmp/config-root")),
+            PathBuf::from("/tmp/config-root/biglinux-microphone")
+        );
+    }
+
+    #[test]
+    #[cfg(not(miri))]
+    fn host_settings_file_is_inside_config_dir() {
         assert_eq!(settings_file().parent().unwrap(), config_dir());
         assert_eq!(
             settings_file().file_name().unwrap().to_str().unwrap(),
             "settings.json"
+        );
+    }
+
+    #[test]
+    fn settings_file_is_inside_given_config_dir() {
+        let config_directory = PathBuf::from("/tmp/config-root/biglinux-microphone");
+        assert_eq!(
+            settings_file_in(&config_directory),
+            PathBuf::from("/tmp/config-root/biglinux-microphone/settings.json")
         );
     }
 
