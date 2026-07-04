@@ -343,7 +343,7 @@ fn self_listen_row(state: &Rc<AppState>, input: &relm4::Sender<MicInput>) -> Gtk
         .valign(Align::Center)
         .active(state.settings().monitor.enabled)
         .build();
-    tooltip::set(&switch, &i18n("Headphones only — speakers cause feedback."));
+    tooltip::set(&switch, i18n("Headphones only — speakers cause feedback."));
     switch.update_property(&[gtk::accessible::Property::Label(&i18n("Hear my voice"))]);
     {
         let input = input.clone();

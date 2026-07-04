@@ -202,7 +202,7 @@ pub(super) fn build_mode_picker(initial: Mode) -> ModePicker {
         .valign(gtk::Align::Center)
         .active(matches!(initial, Mode::Advanced))
         .build();
-    tooltip::set(&switch, &i18n("Show every control individually"));
+    tooltip::set(&switch, i18n("Show every control individually"));
     switch.update_property(&[gtk::accessible::Property::Label(&i18n("Advanced"))]);
 
     container.append(&label);
