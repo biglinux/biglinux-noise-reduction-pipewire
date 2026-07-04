@@ -8,8 +8,8 @@
 use std::cell::RefCell;
 use std::rc::Rc;
 
-use adw::prelude::*;
 use gtk::{gio, glib};
+use relm4::adw::{prelude::*, Application};
 
 use crate::config::{app_id, AppSettings};
 use crate::pipeline;
@@ -22,7 +22,7 @@ use super::window;
 /// Thin wrapper around `adw::Application` that keeps the domain services
 /// alive for the app's lifetime.
 pub struct MicrophoneApplication {
-    inner: adw::Application,
+    inner: Application,
     state: Rc<AppState>,
     monitor: RefCell<Option<Rc<AudioMonitor>>>,
 }
@@ -30,7 +30,7 @@ pub struct MicrophoneApplication {
 impl MicrophoneApplication {
     #[must_use]
     pub fn new() -> Rc<Self> {
-        let inner = adw::Application::builder()
+        let inner = Application::builder()
             .application_id(app_id())
             .flags(gio::ApplicationFlags::FLAGS_NONE)
             .build();

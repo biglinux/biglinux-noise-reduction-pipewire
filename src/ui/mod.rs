@@ -364,7 +364,9 @@ mod tests {
 
     #[cfg(not(miri))]
     fn registered_test_application(application_id: &str) -> adw::Application {
-        let application = adw::Application::builder()
+        use relm4::adw::Application as RelmApplication;
+
+        let application = RelmApplication::builder()
             .application_id(application_id)
             .build();
         application
