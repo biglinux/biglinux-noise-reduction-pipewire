@@ -74,8 +74,8 @@ rustfft = "6"
 
 # GTK4 + libadwaita stack for the configuration GUI. Versions match the
 # big-media-player project to keep the shared knowledge base consistent.
-adw = { version = "0.9", features = ["v1_8"], package = "libadwaita" }
-gtk = { version = "0.11", features = ["v4_20"], package = "gtk4" }
+adw = { version = "0.9", features = ["v1_9"], package = "libadwaita" }
+gtk = { version = "0.11", features = ["v4_22"], package = "gtk4" }
 glib = "0.22"
 gio = "0.22"
 cairo = { version = "0.22", package = "cairo-rs" }
