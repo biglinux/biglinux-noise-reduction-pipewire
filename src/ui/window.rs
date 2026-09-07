@@ -47,6 +47,8 @@ pub fn build(
         .default_width(state.settings().window.width.try_into().unwrap_or(720))
         .default_height(state.settings().window.height.try_into().unwrap_or(700))
         .build();
+    // Opt in to optional Big Gnome Center background styling.
+    window.add_css_class("biglinux-microphone");
 
     let initial_mode = current_mode(&state);
 
