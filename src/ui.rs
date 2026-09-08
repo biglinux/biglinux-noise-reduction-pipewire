@@ -44,19 +44,33 @@ mod tests {
             "GTK contracts require an isolated session; run scripts/test-ui.sh"
         );
         gtk::init().expect("isolated GTK session is available");
+        eprintln!("GTK contract: assert_window_reset_dialog_contract();");
         assert_window_reset_dialog_contract();
+        eprintln!("GTK contract: assert_tuning_reset_dialog_contract();");
         assert_tuning_reset_dialog_contract();
+        eprintln!("GTK contract: assert_model_picker_contract();");
         assert_model_picker_contract();
+        eprintln!("GTK contract: super::widgets::eq_card::assert_interaction_contract();");
         super::widgets::eq_card::assert_interaction_contract();
+        eprintln!("GTK contract: assert_spectrum_visibility_contract();");
         assert_spectrum_visibility_contract();
+        eprintln!("GTK contract: assert_populate_body_contract();");
         assert_populate_body_contract();
+        eprintln!("GTK contract: assert_window_actions_contract();");
         assert_window_actions_contract();
+        eprintln!("GTK contract: assert_window_build_contract();");
         assert_window_build_contract();
+        eprintln!("GTK contract: assert_meter_range_contract();");
         assert_meter_range_contract();
+        eprintln!("GTK contract: assert_monitor_binding_contract();");
         assert_monitor_binding_contract();
+        eprintln!("GTK contract: assert_factory_reset_preserves_window_and_ui_preferences();");
         assert_factory_reset_preserves_window_and_ui_preferences();
+        eprintln!("GTK contract: assert_tuning_dropdown_and_banner_contract();");
         assert_tuning_dropdown_and_banner_contract();
+        eprintln!("GTK contract: assert_tuning_page_populates_expected_sections();");
         assert_tuning_page_populates_expected_sections();
+        eprintln!("GTK contract: assert_tuning_apply_button_contract();");
         assert_tuning_apply_button_contract();
     }
 

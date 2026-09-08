@@ -18,4 +18,4 @@ export G_DEBUG=fatal-warnings
 export LANG=C.UTF-8 LC_ALL=C.UTF-8 LANGUAGE=C GDK_BACKEND=x11 GSK_RENDERER=cairo
 xvfb-run -a dbus-run-session -- cargo test --all-features --locked --lib \
     ui::tests::gtk_display_contracts_cover_dialogs_and_model_picker \
-    -- --ignored --exact --test-threads=1
+    -- --ignored --exact --nocapture --test-threads=1
