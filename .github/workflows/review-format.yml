@@ -1,0 +1,47 @@
+name: PR30 checked formatting
+on:
+  push:
+    branches: [fix/review-audio-reliability-20260908]
+    paths: [.github/workflows/review-format.yml]
+permissions:
+  contents: read
+jobs:
+  format:
+    if: github.repository == 'biglinux/biglinux-noise-reduction-pipewire'
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    permissions:
+      contents: write
+    env:
+      RUSTUP_TOOLCHAIN: 1.98.1
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          ref: fix/review-reliability-accessibility-20260908
+          fetch-depth: 1
+      - uses: dtolnay/rust-toolchain@6bed0761d98439e5a578e2877258200ad565ba87
+        with:
+          toolchain: 1.98.1
+          components: rustfmt
+      - name: Format the exact reviewed checkpoint without changing logic
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "$(git rev-parse HEAD)" = 24dc1919fc6c3d5170b279f62c85e03b4dc8e0af
+          cargo fmt --all
+          git diff --check
+          python3 - <<'PY'
+          import subprocess
+          changed = set(subprocess.check_output(['git', 'diff', '--name-only'], text=True).splitlines())
+          allowed = {'src/ui.rs', 'tests/pipewire_runtime.rs'}
+          assert changed <= allowed, f'Unexpected formatting changes: {changed - allowed}'
+          PY
+          git diff --stat
+          if ! git diff --quiet; then
+            git config user.name 'github-actions[bot]'
+            git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+            git add -- src/ui.rs tests/pipewire_runtime.rs
+            git commit -m 'style: format isolated GTK and PipeWire regression fixtures'
+            git push origin HEAD:refs/heads/fix/review-reliability-accessibility-20260908
+          fi
+          git rev-parse HEAD
