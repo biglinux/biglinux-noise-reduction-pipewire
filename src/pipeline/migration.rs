@@ -5,6 +5,7 @@
 //! old directory entry be removed. Unknown files and symlinks are left alone.
 
 use std::io;
+use std::os::unix::fs::MetadataExt;
 use std::path::Path;
 
 pub(super) fn archive(path: &Path) -> io::Result<()> {
@@ -29,7 +30,25 @@ pub(super) fn archive(path: &Path) -> io::Result<()> {
     let backup = path.with_file_name(backup_name);
     // Both entries are in the same directory/filesystem. hard_link is an
     // atomic create-if-absent, unlike rename, which could overwrite a backup.
-    std::fs::hard_link(path, &backup)?;
+    match std::fs::hard_link(path, &backup) {
+        Ok(()) => {}
+        Err(error) if error.kind() == io::ErrorKind::AlreadyExists => {
+            let saved = std::fs::symlink_metadata(&backup)?;
+            if !same_regular_file(&metadata, &saved) {
+                return Err(io::Error::new(
+                    io::ErrorKind::AlreadyExists,
+                    "a different legacy backup exists; both files were left unchanged",
+                ));
+            }
+            // Resume after a crash between linking and unlinking.
+        }
+        Err(error) => return Err(error),
+    }
+    if !same_regular_file(&metadata, &std::fs::symlink_metadata(path)?) {
+        return Err(io::Error::other(
+            "legacy configuration changed during migration",
+        ));
+    }
     if let Some(parent) = path.parent() {
         std::fs::File::open(parent)?.sync_all()?;
     }
@@ -42,6 +61,10 @@ pub(super) fn archive(path: &Path) -> io::Result<()> {
         backup.display()
     );
     Ok(())
+}
+
+fn same_regular_file(left: &std::fs::Metadata, right: &std::fs::Metadata) -> bool {
+    left.is_file() && right.is_file() && left.dev() == right.dev() && left.ino() == right.ino()
 }
 
 #[cfg(test)]
@@ -72,6 +95,30 @@ mod tests {
         assert!(archive(&path).is_err());
         assert_eq!(std::fs::read_to_string(path).unwrap(), "new user edits");
         assert_eq!(std::fs::read_to_string(backup).unwrap(), "original backup");
+    }
+
+    #[test]
+    fn interrupted_migration_resumes_without_overwriting() {
+        let dir = tempfile::tempdir().unwrap();
+        let path = dir.path().join("biglinux.conf");
+        let backup = dir.path().join("biglinux.conf.biglinux-backup");
+        std::fs::write(&path, "original edits").unwrap();
+        std::fs::hard_link(&path, &backup).unwrap();
+        archive(&path).unwrap();
+        assert!(!path.exists());
+        assert_eq!(std::fs::read_to_string(&backup).unwrap(), "original edits");
+    }
+
+    #[test]
+    fn a_backup_symlink_is_not_an_interrupted_migration() {
+        let dir = tempfile::tempdir().unwrap();
+        let path = dir.path().join("biglinux.conf");
+        let backup = dir.path().join("biglinux.conf.biglinux-backup");
+        std::fs::write(&path, "original edits").unwrap();
+        std::os::unix::fs::symlink(&path, &backup).unwrap();
+        assert!(archive(&path).is_err());
+        assert!(path.exists());
+        assert!(backup.is_symlink());
     }
 
     #[test]
