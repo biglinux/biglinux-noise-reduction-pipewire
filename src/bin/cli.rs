@@ -49,6 +49,7 @@ enum Cmd {
     Repair,
     Models,
     MeasureModel,
+    PreviewQuantum,
 }
 
 /// One writable setting, named on the command line. Deliberately a short
@@ -110,6 +111,7 @@ impl Cmd {
             "doctor" => Self::Doctor,
             "models" => Self::Models,
             "measure-model" => Self::MeasureModel,
+            "preview-quantum" => Self::PreviewQuantum,
             "repair" => Self::Repair,
             _ => return None,
         })
@@ -138,6 +140,7 @@ impl Cmd {
             Self::Doctor => biglinux_microphone::diagnostics::doctor(),
             Self::Repair => repair(),
             Self::Models => print_models(),
+            Self::PreviewQuantum => biglinux_microphone::services::preview::run_child(args.next()),
             Self::MeasureModel => {
                 let Some(model) = args
                     .next()

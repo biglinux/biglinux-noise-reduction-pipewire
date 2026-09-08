@@ -16,3 +16,5 @@ pub mod echo;
 
 /// Shared verified apply path for all application surfaces.
 pub mod reconcile;
+
+pub mod preview;
