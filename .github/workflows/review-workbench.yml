@@ -1,6 +1,6 @@
 name: Review workbench
 
-# Temporary, branch-scoped development helper. Never handles PR/fork input.
+# Temporary branch-scoped workbench. Never executes fork/PR input.
 on:
   push:
     branches: [fix/review-audio-reliability-20260908]
@@ -32,16 +32,14 @@ jobs:
       - uses: dtolnay/rust-toolchain@stable
         with:
           components: rustfmt
-      - name: Apply reviewed patches and publish topic commits
+      - name: Apply patches and publish topic commits
         id: publish
         working-directory: project
         run: |
           set -euo pipefail
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
-          for patch in ../workbench/.github/review/apply_*.py; do
-            python3 "$patch"
-          done
+          for patch in ../workbench/.github/review/apply_*.py; do python3 "$patch"; done
           cargo +stable fmt --all
           git diff --check
           if ! git diff --quiet; then
@@ -70,9 +68,35 @@ jobs:
       - uses: Swatinem/rust-cache@v2
         with:
           shared-key: review-workbench
-      - name: Compile every target
-        run: cargo +stable check --all-targets --all-features --locked
+      - name: Compile every target and collect lint diagnostics
+        id: lint
+        shell: bash
+        run: |
+          set +e
+          cargo +stable clippy --all-targets --all-features --locked --message-format=json -- -D warnings > /tmp/lint.jsonl 2>/tmp/lint.stderr
+          status=$?
+          python3 - <<'PY'
+          import json
+          from pathlib import Path
+          for line in Path('/tmp/lint.jsonl').read_text().splitlines():
+              try:
+                  item = json.loads(line)
+              except json.JSONDecodeError:
+                  continue
+              if item.get('reason') == 'compiler-message':
+                  message = item['message']
+                  if message.get('level') in ('error', 'warning'):
+                      print(message.get('rendered', message['message']))
+          print(Path('/tmp/lint.stderr').read_text()[-2500:])
+          PY
+          exit "$status"
       - name: Regression tests without a desktop session
-        run: cargo +stable test --all-features --locked -- --test-threads=1
-      - name: Strict lint checks
-        run: cargo +stable clippy --all-targets --all-features --locked -- -D warnings
+        if: always()
+        shell: bash
+        run: |
+          set +e
+          cargo +stable test --all-features --locked -- --test-threads=1 > /tmp/tests.out 2>&1
+          status=$?
+          grep -E '^test result:|^failures:|^----|^error|^thread |panicked|FAILED|assertion|left:|right:' /tmp/tests.out || true
+          if [ "$status" -ne 0 ]; then tail -100 /tmp/tests.out; fi
+          exit "$status"
