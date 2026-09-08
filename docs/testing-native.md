@@ -10,7 +10,7 @@ A passing compilation is not evidence that ignored tests were executed.
 planner uses the complete Git diff (including removed and renamed paths), not
 the GitHub path filter's truncated file list. Documentation-only and
 translation-only change sets do not start Rust builds. Unknown build inputs,
-new branches or unavailable history conservatively select every check.
+new branches or unavailable history conservatively select every regular check.
 
 A push to a testing/stable branch with an open PR into main at the same SHA is
 covered by that PR. If discovery fails, push checks run rather than losing
@@ -20,20 +20,39 @@ different integration points, not interchangeable success evidence.
 
 Concurrency cancels obsolete runs within an event and branch/PR. Push and PR
 concurrency groups are separate, so a duplicate push that does no work cannot
-cancel the real PR validation. Manual CI dispatch selects all checks.
+cancel the real PR validation. Manual CI dispatch selects every regular check.
 
 `Security` only performs scheduled/manual RustSec scans for newly published
-advisories. It does not repeat CI on every push or PR and no longer rebuilds
-Miri daily. Change-driven RustSec has one owner in CI: cargo-audit checks both
-lockfiles; cargo-deny checks licenses, bans and sources without repeating the
-advisory scan. Miri and the secret scan each run once under CI. CodeQL remains
-a distinct code-analysis tool; a dependency audit is not a replacement for it.
+advisories. It does not repeat CI on every push or PR. Change-driven RustSec
+has one owner in CI: cargo-audit checks both distinct lockfiles; cargo-deny
+checks licenses, bans and sources without repeating the advisory scan. The
+secret scan runs once under CI.
 
-The `CI result` check fails when planning or any selected job fails/cancels.
-Non-applicable jobs are visibly skipped, not represented as tests that ran.
-There is no workflow-wide documentation path exclusion leaving CI pending.
-Repositories using branch protection should require this aggregate check.
-The planner itself is covered by inexpensive Python unit tests.
+The `CI result` check fails when planning or a selected job fails/cancels.
+Non-applicable or intentionally deferred jobs are visibly skipped, not reported
+as tests that ran. There is no workflow-wide documentation path exclusion
+leaving CI pending. The planner has inexpensive Python regression tests.
+
+## Frequency of expensive checks
+
+| Check | Automatic execution | Explicit execution |
+| --- | --- | --- |
+| Rust, GTK and private PipeWire suites | Once each when their inputs change, including draft PRs. | CI workflow dispatch. |
+| MSRV and release builds | Relevant pushes and non-draft PRs; `ready_for_review` triggers the deferred profiles. | CI workflow dispatch, including on a draft branch. |
+| Miri | Weekly in its own workflow, not per commit or in daily Security. | Miri workflow dispatch. |
+| CodeQL | Weekly, not an extra build after each push. | CodeQL workflow dispatch. |
+| RustSec | Dependency/policy changes in CI; daily Security checks for newly published advisories. | CI or Security dispatch. |
+
+Manual CI dispatch does not also launch the independent Miri/CodeQL workflows.
+Their results are separate evidence, not implied by a successful regular CI.
+Scheduled runs use the default branch, so schedule changes in a PR take effect
+there only after integration. Do not mark a draft PR ready solely to run tests.
+
+The Build Package template's deployment hooks remain disabled. It is manual
+only and explicitly reports that it did not build or publish a package. The
+five temporary `review-*` workflows on the auxiliary review branch were retired.
+Related edits should be published in one commit/push, not one push per file.
+No validation workflow should publish application commits to start more tests.
 
 ## Application checks, without an allocator matrix
 

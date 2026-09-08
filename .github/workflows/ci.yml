@@ -5,6 +5,7 @@ on:
     branches: [main, "**stable**", "**testing**"]
   pull_request:
     branches: [main]
+    types: [opened, synchronize, reopened, ready_for_review]
   workflow_dispatch:
 
 permissions:
@@ -118,7 +119,9 @@ jobs:
   msrv:
     name: MSRV 1.97.1
     needs: plan
-    if: needs.plan.outputs.rust == 'true'
+    # Compile distinct production profiles for ready PRs, protected-branch
+    # pushes and manual validation, not every intermediate draft revision.
+    if: needs.plan.outputs.rust == 'true' && (github.event_name != 'pull_request' || github.event.pull_request.draft == false)
     runs-on: ubuntu-latest
     container: archlinux:latest
     timeout-minutes: 25
@@ -139,7 +142,7 @@ jobs:
   release-build:
     name: Release build
     needs: plan
-    if: needs.plan.outputs.rust == 'true'
+    if: needs.plan.outputs.rust == 'true' && (github.event_name != 'pull_request' || github.event.pull_request.draft == false)
     runs-on: ubuntu-latest
     container: archlinux:latest
     timeout-minutes: 25
@@ -313,30 +316,10 @@ jobs:
           version: '3.97.4'
           extra_args: --results=verified,unknown
 
-  miri:
-    name: Miri, deterministic data-model contracts
-    needs: plan
-    if: needs.plan.outputs.rust == 'true'
-    runs-on: ubuntu-latest
-    container: archlinux:latest
-    timeout-minutes: 30
-    steps:
-      - run: pacman -Syu --noconfirm --needed git
-      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
-        with:
-          persist-credentials: false
-      - uses: ./.github/actions/install-system-deps
-      - uses: dtolnay/rust-toolchain@6bed0761d98439e5a578e2877258200ad565ba87
-        with:
-          toolchain: nightly
-          components: miri
-      - uses: Swatinem/rust-cache@6323deb102c322ba6fcbdcafc7e3dddab59af2b6
-      - run: bash scripts/test-miri.sh
-
   result:
     name: CI result
     if: always()
-    needs: [plan, fmt, native, msrv, release-build, deny, audit, machete, typos, complexity, i18n, flatpak-manifest, shell, plasmoid-contracts, secrets, miri]
+    needs: [plan, fmt, native, msrv, release-build, deny, audit, machete, typos, complexity, i18n, flatpak-manifest, shell, plasmoid-contracts, secrets]
     runs-on: ubuntu-latest
     timeout-minutes: 2
     steps:
@@ -353,5 +336,5 @@ jobs:
               failed['plan'] = results['plan']['result']
           if failed:
               raise SystemExit(f'CI did not pass: {failed}')
-          print('All selected checks passed; non-applicable jobs were skipped.')
+          print('All selected checks passed; non-applicable or deferred jobs were skipped.')
           PY

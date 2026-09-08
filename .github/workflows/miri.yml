@@ -1,0 +1,38 @@
+name: Miri
+
+# One owner for the interpreter-based suite. Ordinary CI runs native tests;
+# Miri is explicitly requested or run weekly, never repeated on every commit.
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: '30 6 * * 1'
+
+permissions:
+  contents: read
+
+concurrency:
+  group: miri-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  miri:
+    name: Miri, deterministic data-model contracts
+    runs-on: ubuntu-latest
+    container: archlinux:latest
+    timeout-minutes: 30
+    env:
+      RUSTUP_TOOLCHAIN: nightly
+    steps:
+      - run: pacman -Syu --noconfirm --needed git
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          persist-credentials: false
+      - uses: ./.github/actions/install-system-deps
+      - uses: dtolnay/rust-toolchain@6bed0761d98439e5a578e2877258200ad565ba87
+        with:
+          toolchain: nightly
+          components: miri
+      - uses: Swatinem/rust-cache@6323deb102c322ba6fcbdcafc7e3dddab59af2b6
+      # Unsupported native FFI is not an undefined-behavior result. Keep the
+      # existing deterministic scope; GTK and real audio are tested in CI.
+      - run: bash scripts/test-miri.sh
