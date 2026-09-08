@@ -29,7 +29,7 @@ const MEASURED: Duration = Duration::from_secs(2);
 /// Audio discarded first, so the model is loaded and its worker is running.
 const WARMUP: Duration = Duration::from_millis(2500);
 /// The block the microphone chain runs at, and therefore the deadline that matters.
-const QUANTUM: usize = 1920;
+const QUANTUM: usize = 960;
 const RATE: u32 = 48_000;
 
 // The LADSPA 1.1 ABI. Stable since 2002 and the reason this is safe to bind by hand:
@@ -85,17 +85,28 @@ fn default_for(hint: &PortRangeHint, rate: u32) -> f32 {
     };
     let low = hint.lower_bound * scale;
     let high = hint.upper_bound * scale;
-    match hint.hint_descriptor & HINT_DEFAULT_MASK {
+    let interpolate = |weight: f32| {
+        if hint.hint_descriptor & 0x10 != 0 && low > 0.0 && high > 0.0 {
+            (low.ln() * (1.0 - weight) + high.ln() * weight).exp()
+        } else {
+            high.mul_add(weight, low * (1.0 - weight))
+        }
+    };
+    let value = match hint.hint_descriptor & HINT_DEFAULT_MASK {
         0x40 => low,
-        0x80 => high.mul_add(0.25, low * 0.75),
-        0xC0 => f32::midpoint(low, high),
-        0x100 => high.mul_add(0.75, low * 0.25),
+        0x80 => interpolate(0.25),
+        0xC0 => interpolate(0.5),
+        0x100 => interpolate(0.75),
         0x140 => high,
         0x240 => 1.0,
         0x280 => 100.0,
         0x2C0 => 440.0,
-        // 0x200 is "default zero", and so is a plugin that declares no default at all.
         _ => 0.0,
+    };
+    if hint.hint_descriptor & 0x20 != 0 {
+        value.round()
+    } else {
+        value
     }
 }
 
@@ -124,6 +135,11 @@ fn speech_like(buffer: &mut [f32], block: usize) {
 /// callback.
 #[must_use]
 pub fn audio_thread_share(model: NoiseModel) -> Option<f32> {
+    // The live graph uses 48 kHz. Never instantiate a 16 kHz-only plugin
+    // with the wrong host rate, even when a CLI caller provides its ID.
+    if !model.is_realtime_lavfi_supported() {
+        return None;
+    }
     let (path, label) = model.plugin_and_label();
     let cpath = CString::new(path).ok()?;
     let want = CString::new(label).ok()?;
@@ -134,13 +150,26 @@ pub fn audio_thread_share(model: NoiseModel) -> Option<f32> {
     if handle.is_null() {
         return None;
     }
-    let result = measure(handle, &want);
+    let result = measure(handle, &want, model);
     // SAFETY: closing the handle opened above, with nothing borrowed from it still live.
     unsafe { libc::dlclose(handle) };
     result
 }
 
-fn measure(handle: *mut c_void, want: &CString) -> Option<f32> {
+fn measure(handle: *mut c_void, want: &CString, model: NoiseModel) -> Option<f32> {
+    let asynchronous = matches!(model, NoiseModel::DpdfnetV2Hr | NoiseModel::DpdfnetV8Hr);
+    let hops = if asynchronous {
+        // These shipped plugins publish process-global atomic hop counters.
+        // Without this evidence a cheap callback is not proof of denoising.
+        let symbol = unsafe { libc::dlsym(handle, c"dpdfnet_hops".as_ptr()) };
+        if symbol.is_null() {
+            return None;
+        }
+        // SAFETY: the shipped accessor ABI is fn(*mut u64, *mut u64).
+        Some(unsafe { std::mem::transmute::<*mut c_void, HopCounter>(symbol) })
+    } else {
+        None
+    };
     let symbol = CString::new("ladspa_descriptor").ok()?;
     // SAFETY: `handle` is live and `symbol` is NUL-terminated.
     let entry = unsafe { libc::dlsym(handle, symbol.as_ptr()) };
@@ -203,7 +232,9 @@ fn measure(handle: *mut c_void, want: &CString) -> Option<f32> {
                 };
                 connect(instance, port as c_ulong, buffer);
             } else {
-                controls[port] = default_for(&*d.port_range_hints.add(port), RATE);
+                let name = std::ffi::CStr::from_ptr(*d.port_names.add(port)).to_string_lossy();
+                let default = default_for(&*d.port_range_hints.add(port), RATE);
+                controls[port] = benchmark_control(model, &name).unwrap_or(default);
                 connect(instance, port as c_ulong, controls.as_mut_ptr().add(port));
             }
         }
@@ -219,7 +250,11 @@ fn measure(handle: *mut c_void, want: &CString) -> Option<f32> {
     let timed_blocks = (MEASURED.as_secs_f64() / block.as_secs_f64()) as usize;
     let mut taken: Vec<Duration> = Vec::with_capacity(timed_blocks);
 
+    let mut initial_hops = None;
     for b in 0..warmup_blocks + timed_blocks {
+        if b == warmup_blocks {
+            initial_hops = hops.map(read_hops);
+        }
         speech_like(&mut input, b);
         let started = Instant::now();
         // SAFETY: every port is connected and the buffers are `QUANTUM` long.
@@ -236,6 +271,7 @@ fn measure(handle: *mut c_void, want: &CString) -> Option<f32> {
         }
     }
 
+    let final_hops = hops.map(read_hops);
     if let Some(deactivate) = d.deactivate {
         // SAFETY: as for `activate`.
         unsafe { deactivate(instance) };
@@ -243,6 +279,9 @@ fn measure(handle: *mut c_void, want: &CString) -> Option<f32> {
     // SAFETY: last use of `instance`; nothing below touches it.
     unsafe { cleanup(instance) };
 
+    if asynchronous && !processing_verified(initial_hops, final_hops) {
+        return None;
+    }
     taken.sort_unstable();
     let at = ((taken.len() as f64 * 0.99) as usize).min(taken.len().checked_sub(1)?);
     Some((taken[at].as_secs_f64() / block.as_secs_f64()) as f32)
@@ -256,11 +295,19 @@ fn measure(handle: *mut c_void, want: &CString) -> Option<f32> {
 /// time, so a package update re-measures and nothing else does.
 #[must_use]
 pub fn audio_thread_share_cached(model: NoiseModel) -> Option<f32> {
-    let (path, _) = model.plugin_and_label();
+    let (path, label) = model.plugin_and_label();
     let stamp = std::fs::metadata(path)
         .ok()
         .and_then(|meta| Some((meta.len(), meta.modified().ok()?)))?;
-    let key = format!("{path}:{}:{:?}", stamp.0, stamp.1);
+    // A different model/control surface or boot must not reuse this reading.
+    // Binding to the boot also avoids copying a timing result between hosts.
+    let boot = std::fs::read_to_string("/proc/sys/kernel/random/boot_id").ok()?;
+    let key = cache_key(
+        model,
+        label,
+        path,
+        &format!("{}:{:?}:{}", stamp.0, stamp.1, boot.trim()),
+    );
     let cache = cache_file();
 
     // Read once and keep it: the same file was read again below to rebuild
@@ -298,7 +345,7 @@ pub fn audio_thread_share_cached(model: NoiseModel) -> Option<f32> {
         return None;
     }
     let share = output.stdout_lossy().trim().parse::<f32>().ok()?;
-    if !share.is_finite() || share < 0.0 {
+    if !share.is_finite() || share <= 0.0 {
         return None;
     }
     // Keep only the entries that still describe a file on this machine, so a cache that
@@ -370,5 +417,83 @@ mod tests {
         speech_like(&mut buffer, 0);
         let rms = (buffer.iter().map(|s| s * s).sum::<f32>() / buffer.len() as f32).sqrt();
         assert!(rms > 0.05, "a silent probe would measure the skip path");
+    }
+}
+
+type HopCounter = unsafe extern "C" fn(*mut u64, *mut u64);
+
+fn read_hops(counter: HopCounter) -> (u64, u64) {
+    let (mut asked, mut enhanced) = (0, 0);
+    // SAFETY: both arguments point to live u64 values; the accessor was
+    // resolved from a library handle retained for the whole measurement.
+    unsafe {
+        counter(&raw mut asked, &raw mut enhanced);
+    }
+    (asked, enhanced)
+}
+
+fn processing_verified(start: Option<(u64, u64)>, end: Option<(u64, u64)>) -> bool {
+    let (Some((before, completed_before)), Some((after, completed_after))) = (start, end) else {
+        return false;
+    };
+    let (Some(asked), Some(enhanced)) = (
+        after.checked_sub(before),
+        completed_after.checked_sub(completed_before),
+    ) else {
+        return false;
+    };
+    asked > 0 && enhanced <= asked && enhanced as f64 / asked as f64 >= 0.98
+}
+
+fn benchmark_control(model: NoiseModel, name: &str) -> Option<f32> {
+    if model.is_attenuation_only() {
+        return (name == "Attenuation Limit (dB)").then_some(100.0);
+    }
+    match name {
+        "Enable" | "Strength" | "VoiceRecovery" => Some(1.0),
+        "Model" => Some(model.ladspa_control()),
+        "SpeechStrength" => Some(crate::config::gtcrn_speech_strength(1.0) as f32),
+        "LookaheadMs" | "ModelBlend" => Some(0.0),
+        "Threshold (dB)" => Some(-80.0),
+        _ => None,
+    }
+}
+
+fn cache_key(model: NoiseModel, label: &str, path: &str, stamp: &str) -> String {
+    format!(
+        "verified-v2:{}:{label}:{RATE}:{QUANTUM}:{path}:{stamp}",
+        model as u8
+    )
+}
+
+#[cfg(test)]
+mod measurement_contracts {
+    use super::*;
+    #[test]
+    fn fast_callbacks_without_completed_work_are_not_a_valid_measurement() {
+        assert!(!processing_verified(Some((0, 0)), Some((100, 20))));
+        assert!(!processing_verified(None, None));
+        assert!(!processing_verified(Some((100, 100)), Some((0, 0))));
+        assert!(processing_verified(Some((0, 0)), Some((100, 99))));
+    }
+    #[test]
+    fn variants_sharing_a_library_have_distinct_controls_and_cache_keys() {
+        let a = NoiseModel::GtcrnDns3;
+        let b = NoiseModel::GtcrnVctk;
+        assert_ne!(
+            cache_key(a, "same", "same", "same"),
+            cache_key(b, "same", "same", "same")
+        );
+        assert_eq!(benchmark_control(a, "Model"), Some(0.0));
+        assert_eq!(benchmark_control(b, "Model"), Some(1.0));
+    }
+    #[test]
+    fn logarithmic_ladspa_defaults_use_geometric_interpolation() {
+        let hint = PortRangeHint {
+            hint_descriptor: 0xC0 | 0x10,
+            lower_bound: 1.0,
+            upper_bound: 100.0,
+        };
+        assert!((default_for(&hint, RATE) - 10.0).abs() < 0.001);
     }
 }

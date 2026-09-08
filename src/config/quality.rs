@@ -214,7 +214,10 @@ fn automatic(machine: &Machine, standing: Option<NoiseModel>) -> NoiseModel {
     // An asynchronous callback is not a valid capacity measurement unless
     // the plugin also confirms that its worker processed the requested blocks.
     // Unknown measurements keep the baseline model; explicit Best is separate.
-    if machine.heavy_share.is_some_and(|share| share > TOO_DEAR) {
+    if machine
+        .heavy_share
+        .is_none_or(|share| !share.is_finite() || share > TOO_DEAR)
+    {
         return LIGHT;
     }
 
@@ -354,7 +357,7 @@ mod tests {
             heavy_share: None,
             ..idle()
         };
-        assert_eq!(choose(Quality::Automatic, &unmeasured, None), HEAVY);
+        assert_eq!(choose(Quality::Automatic, &unmeasured, None), LIGHT);
 
         let just_under = Machine {
             heavy_share: Some(0.49),
