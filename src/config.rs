@@ -41,7 +41,7 @@ pub use echo_cancel::{EchoCancelConfig, EchoMode};
 pub use equalizer::{
     EQ_BAND_COUNT, EQ_BAND_MAX, EQ_BAND_MIN, EqualizerConfig, eq_preset_bands, eq_preset_ids,
 };
-pub use output_filter::OutputFilterSettings;
+pub use output_filter::{OutputChannelMode, OutputFilterSettings};
 pub use paths::{
     APP_DATA_DIR, APP_ID, EQ_BANDS_HZ, GETTEXT_PACKAGE, app_id, app_version, config_dir,
     gettext_package, gtcrn_plugin, illustrations_dir, settings_file,

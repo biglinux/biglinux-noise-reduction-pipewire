@@ -124,6 +124,7 @@ pub(super) enum MicInput {
     // ── Advanced output-chain controls (views::output) ────────────────
     /// Output neural-model selection.
     OutputModelChanged(NoiseModel),
+    OutputChannelsChanged(crate::config::OutputChannelMode),
     /// Output voice-presence intensity.
     OutputVoiceRecoveryChanged(f32),
     /// Output high-pass filter toggle.
@@ -548,6 +549,9 @@ impl Component for MicShell {
             }
 
             // ── Advanced output-chain ─────────────────────────────────
+            MicInput::OutputChannelsChanged(mode) => {
+                self.mutate_settings(&sender, |settings| settings.output_filter.channel_mode = mode);
+            }
             MicInput::OutputModelChanged(model) => {
                 self.mutate_settings(&sender, |s| {
                     s.output_filter.noise_reduction.model = model;

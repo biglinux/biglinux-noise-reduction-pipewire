@@ -7,7 +7,7 @@ fn enabled_settings() -> AppSettings {
             enabled: true,
             ..crate::config::OutputFilterSettings::default()
         },
-        ..AppSettings::default()
+        ..mono_settings()
     }
 }
 
@@ -79,7 +79,7 @@ fn output_conf_is_a_bare_module_args_body() {
             },
             ..crate::config::OutputFilterSettings::default()
         },
-        ..AppSettings::default()
+        ..mono_settings()
     };
     let conf = build_output_conf(&s);
     assert!(conf.starts_with('{'));
@@ -129,7 +129,7 @@ fn master_off_forces_full_bypass_regardless_of_sub_flags() {
             },
             target_sink_name: None,
         },
-        ..AppSettings::default()
+        ..mono_settings()
     };
     let conf = build_output_conf(&s);
 
@@ -176,7 +176,7 @@ fn nr_off_with_master_on_keeps_gtcrn_with_enable_zero() {
             },
             ..crate::config::OutputFilterSettings::default()
         },
-        ..AppSettings::default()
+        ..mono_settings()
     };
     let conf = build_output_conf(&s);
     assert!(conf.contains("name = \"ai\""));
@@ -200,7 +200,7 @@ fn master_on_eq_off_renders_flat_regardless_of_preset() {
             },
             ..crate::config::OutputFilterSettings::default()
         },
-        ..AppSettings::default()
+        ..mono_settings()
     };
     let conf = build_output_conf(&s);
     assert!(
@@ -258,7 +258,7 @@ fn ai_processing_on_renders_gtcrn_enable_one() {
             },
             ..crate::config::OutputFilterSettings::default()
         },
-        ..AppSettings::default()
+        ..mono_settings()
     };
     let conf = build_output_conf(&s);
     assert!(
@@ -299,7 +299,7 @@ fn output_eq_prefers_explicit_bands_over_preset() {
             },
             ..crate::config::OutputFilterSettings::default()
         },
-        ..AppSettings::default()
+        ..mono_settings()
     };
     let conf = build_output_conf(&s);
     assert!(
@@ -310,4 +310,10 @@ fn output_eq_prefers_explicit_bands_over_preset() {
         !conf.contains("gain = 20.00"),
         "voice_boost preset must be ignored"
     );
+}
+
+fn mono_settings() -> AppSettings {
+    let mut settings = AppSettings::default();
+    settings.output_filter.channel_mode = crate::config::OutputChannelMode::Mono;
+    settings
 }

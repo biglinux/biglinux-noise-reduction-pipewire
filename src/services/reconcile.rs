@@ -243,8 +243,10 @@ pub fn output_topology_changed(prev: Option<&AppSettings>, now: &AppSettings) ->
     // band/preset changes rewrite the graph, and so does selecting a
     // different denoiser backend (GTCRN vs attenuation-only) since the LADSPA
     // plugin and port names differ.
-    prev.is_some_and(|p| {
-        p.output_filter.equalizer.bands != now.output_filter.equalizer.bands
+    prev.is_none_or(|p| {
+        p.output_filter.channel_mode != now.output_filter.channel_mode
+            || p.output_filter.noise_reduction.enabled != now.output_filter.noise_reduction.enabled
+            || p.output_filter.equalizer.bands != now.output_filter.equalizer.bands
             || p.output_filter.equalizer.preset != now.output_filter.equalizer.preset
             || p.output_filter.equalizer.enabled != now.output_filter.equalizer.enabled
             || p.output_filter.noise_reduction.model != now.output_filter.noise_reduction.model

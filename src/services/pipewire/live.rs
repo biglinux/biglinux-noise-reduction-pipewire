@@ -289,6 +289,15 @@ fn mic_params(s: &AppSettings) -> Vec<(String, f64)> {
 /// to bypass — the same policy used by the on-disk configuration while
 /// the output service is stopping or before it is reconciled.
 fn output_params(s: &AppSettings) -> Vec<(String, f64)> {
+    let mut parameters = output_params_mono(s);
+    if s.output_filter.channel_mode == crate::config::OutputChannelMode::Stereo {
+        let right: Vec<_> = parameters.iter().map(|(key, value)| (format!("right_{key}"), *value)).collect();
+        parameters.extend(right);
+    }
+    parameters
+}
+
+fn output_params_mono(s: &AppSettings) -> Vec<(String, f64)> {
     let of = &s.output_filter;
     let master = of.enabled;
     let nr = &of.noise_reduction;
