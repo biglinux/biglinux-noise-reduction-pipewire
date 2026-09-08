@@ -398,14 +398,20 @@ impl BigSubprocessSpec {
         notify_spawn_observer(child.id(), &self.program);
         let child = std::sync::Arc::new(std::sync::Mutex::new(Some(child)));
         let worker_child = std::sync::Arc::clone(&child);
-        let reaper = std::thread::Builder::new().name("subprocess-reaper".into()).spawn(move || {
-            if let Ok(mut slot) = worker_child.lock() && let Some(mut child) = slot.take() {
-                let _ = child.wait();
-            }
-        });
+        let reaper = std::thread::Builder::new()
+            .name("subprocess-reaper".into())
+            .spawn(move || {
+                if let Ok(mut slot) = worker_child.lock()
+                    && let Some(mut child) = slot.take()
+                {
+                    let _ = child.wait();
+                }
+            });
         if let Err(error) = reaper {
             // Failed thread creation must not leak an unowned child.
-            if let Ok(mut slot) = child.lock() && let Some(mut child) = slot.take() {
+            if let Ok(mut slot) = child.lock()
+                && let Some(mut child) = slot.take()
+            {
                 let _ = child.kill();
                 let _ = child.wait();
             }
