@@ -211,7 +211,9 @@ fn run_worker(
     while !stop.load(Ordering::Acquire) {
         if !active.load(Ordering::Acquire) {
             drop(capture.take());
-            if let Ok(mut slot) = capture_child.lock() { slot.take(); }
+            if let Ok(mut slot) = capture_child.lock() {
+                slot.take();
+            }
             thread::sleep(PAUSED_POLL);
             continue;
         }
@@ -220,38 +222,70 @@ fn run_worker(
                 thread::sleep(PAUSED_POLL);
                 continue;
             }
-            match Capture::spawn(monitor_config.analyzer.sample_rate, monitor_config.analyzer.fft_size, monitor_config.hop_size) {
+            match Capture::spawn(
+                monitor_config.analyzer.sample_rate,
+                monitor_config.analyzer.fft_size,
+                monitor_config.hop_size,
+            ) {
                 Ok(next) => {
-                    if let Ok(mut slot) = capture_child.lock() { *slot = Some(next.cancellation_handle()); }
+                    if let Ok(mut slot) = capture_child.lock() {
+                        *slot = Some(next.cancellation_handle());
+                    }
                     capture = Some(next);
-                    if stop.load(Ordering::Acquire) || !active.load(Ordering::Acquire) { continue; }
+                    if stop.load(Ordering::Acquire) || !active.load(Ordering::Acquire) {
+                        continue;
+                    }
                 }
                 Err(error) => {
-                    if tx.force_send(Event::Fatal(format!("Microphone monitoring unavailable: {error}"))).is_err() { break; }
+                    if tx
+                        .force_send(Event::Fatal(format!(
+                            "Microphone monitoring unavailable: {error}"
+                        )))
+                        .is_err()
+                    {
+                        break;
+                    }
                     retry_at = std::time::Instant::now() + Duration::from_secs(2);
                     continue;
                 }
             }
         }
-        let Some(current) = capture.as_mut() else { continue; };
+        let Some(current) = capture.as_mut() else {
+            continue;
+        };
         if let Err(error) = current.pump() {
             drop(capture.take());
-            if let Ok(mut slot) = capture_child.lock() { slot.take(); }
+            if let Ok(mut slot) = capture_child.lock() {
+                slot.take();
+            }
             if active.load(Ordering::Acquire) && !stop.load(Ordering::Acquire) {
-                if tx.force_send(Event::Fatal(format!("Microphone monitoring interrupted: {error}"))).is_err() { break; }
+                if tx
+                    .force_send(Event::Fatal(format!(
+                        "Microphone monitoring interrupted: {error}"
+                    )))
+                    .is_err()
+                {
+                    break;
+                }
                 retry_at = std::time::Instant::now() + Duration::from_secs(2);
             }
             continue;
         }
-        if !current.ready() { continue; }
+        if !current.ready() {
+            continue;
+        }
         current.copy_window_into(&mut window);
         let frame = analyzer.analyze_samples(&window);
         // Latest-value delivery: after a slow UI frame, show the present,
         // not a queue of obsolete microphone levels.
-        if tx.force_send(Event::Frame(frame)).is_err() { break; }
+        if tx.force_send(Event::Frame(frame)).is_err() {
+            break;
+        }
     }
     drop(capture);
-    if let Ok(mut slot) = capture_child.lock() { slot.take(); }
+    if let Ok(mut slot) = capture_child.lock() {
+        slot.take();
+    }
 }
 
 #[cfg(test)]
