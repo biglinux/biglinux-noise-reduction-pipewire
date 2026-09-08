@@ -58,6 +58,7 @@ enum Cmd {
 #[derive(Debug, Clone, Copy)]
 enum Key {
     Mic,
+    OutputMaster,
     MicIntensity,
     VoiceClarity,
     Echo,
@@ -73,6 +74,7 @@ impl Key {
     fn parse(s: &str) -> Option<Self> {
         Some(match s {
             "mic" => Self::Mic,
+            "output" => Self::OutputMaster,
             "mic-intensity" => Self::MicIntensity,
             "voice-clarity" => Self::VoiceClarity,
             "echo" => Self::Echo,
@@ -86,7 +88,7 @@ impl Key {
         })
     }
 
-    const NAMES: &'static str = "mic, mic-intensity, voice-clarity, echo, output-voices, \
+    const NAMES: &'static str = "mic, output, mic-intensity, voice-clarity, echo, output-voices, \
                                  equalizer, voice-changer, voice-pitch, quality, eq-preset";
 }
 
@@ -447,6 +449,10 @@ fn set_one(key: Option<String>, value: Option<String>) -> ExitCode {
     match key {
         // Off cascades, exactly as `toggle-mic` does: leaving the chain
         // alive on `echo_cancel`/`stereo` defaults is not "off".
+        Key::OutputMaster => match on_or_off(&value) {
+            Some(enabled) => settings.output_filter.enabled = enabled,
+            None => return not_a_switch(&name, &value),
+        },
         Key::Mic => match on_or_off(&value) {
             Some(true) => settings.set_microphone_enabled(true),
             Some(false) => settings.set_microphone_enabled(false),
@@ -592,10 +598,22 @@ fn not_a_percentage(name: &str, value: &str) -> ExitCode {
 /// while any other mic filter (HPF, gate, EQ, …) is on — and would
 /// leave the plasmoid switch stuck after the user disables NR alone.
 fn print_status() -> ExitCode {
-    let s = AppSettings::load();
-    let mic = pipeline::mic_chain_wanted(&s);
-    let output = s.output_filter.enabled;
-    println!("{{\"mic_enabled\":{mic},\"output_enabled\":{output}}}");
+    let settings = match AppSettings::load_strict() {
+        Ok(settings) => settings,
+        Err(error) => return exit_with_error(&error.to_string()),
+    };
+    let observed = biglinux_microphone::services::reconcile::observe();
+    let available = observed.is_ok();
+    let observed = observed.unwrap_or_default();
+    let result = serde_json::json!({
+        "mic_enabled": pipeline::mic_chain_wanted(&settings),
+        "output_enabled": settings.output_filter.enabled,
+        "audio_available": available,
+        "mic_running": observed.mic_present,
+        "output_running": observed.output_present,
+        "aec_running": observed.aec_present,
+    });
+    println!("{result}");
     ExitCode::SUCCESS
 }
 

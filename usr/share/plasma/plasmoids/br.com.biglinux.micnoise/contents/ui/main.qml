@@ -1,9 +1,4 @@
-/*
- * SPDX-FileCopyleftText: 2022-2026 Bruno Goncalves <bigbruno@gmail.com>
- *                                  and Rafael Ruscher <rruscher@gmail.com>
- *
- * SPDX-License-Identifier: GPL-2.0-or-later
- */
+/* SPDX-License-Identifier: GPL-2.0-or-later */
 import QtQuick
 import QtQuick.Layouts
 import org.kde.plasma.plasmoid
@@ -14,280 +9,168 @@ import org.kde.plasma.plasma5support as Plasma5Support
 
 PlasmoidItem {
     id: root
-
-    // ── Status the icon + popup react to ─────────────────────────────
     property bool micEnabled: false
     property bool outputEnabled: false
-
+    property bool micReady: false
+    property bool outputReady: false
+    property bool audioAvailable: false
+    property bool busy: false
+    property string actionError: ""
+    property int fastPolls: 0
+    property bool watcherDisabled: false
+    property int watcherBackoff: 1000
     readonly property bool anyEnabled: micEnabled || outputEnabled
-
-    // ── Polling cadence ──────────────────────────────────────────────
-    readonly property int defaultInterval: 7000   // 7 s — idle
-    readonly property int toggleInterval: 1500    // 1.5 s — settle right after a toggle
-
-    // ── External commands the plasmoid issues ────────────────────────
+    readonly property bool needsAttention: !audioAvailable || (micEnabled && !micReady) || (outputEnabled && !outputReady)
     readonly property string statusCommand: "/usr/bin/biglinux-microphone-cli status"
-    readonly property string toggleMicCommand: "/usr/bin/biglinux-microphone-cli toggle-mic"
-    readonly property string toggleOutputCommand: "/usr/bin/biglinux-microphone-cli toggle-output"
     readonly property string openConfigCommand: "/usr/bin/biglinux-microphone"
+    // Watch the directory: settings.json is replaced atomically. Only a real
+    // settings event refreshes the status. Missing optional tools stop this
+    // lane; other failures back off instead of spawning every 100 ms.
+    readonly property string watchCommand: "sh -c 'command -v inotifywait >/dev/null 2>&1 || exit 78; d=\"${XDG_CONFIG_HOME:-$HOME/.config}/biglinux-microphone\"; test -d \"$d\" || exit 75; exec inotifywait -q -e close_write,moved_to,create,delete --format=%f \"$d\" 2>/dev/null'"
 
-    // Block one inotifywait event per CLI write so our own toggle does
-    // not bounce back through the file watcher. Decremented when the
-    // watcher emits.
-    property int suppressFileEvents: 0
-    // Watches the GTK app's settings file. `inotify-tools` is an
-    // optional dependency — if absent, the spawn fails harmlessly and
-    // the polling Timer remains the only refresh path.
-    readonly property string watchCommand:
-        "sh -c 'inotifywait -q -e modify,close_write,move_self --format=. " +
-        "\"${HOME}/.config/biglinux-microphone/settings.json\" 2>/dev/null'"
+    Plasmoid.status: anyEnabled ? PlasmaCore.Types.ActiveStatus : PlasmaCore.Types.PassiveStatus
+    Plasmoid.icon: needsAttention ? "dialog-warning-symbolic" : (anyEnabled ? "big-noise-reduction-on" : "big-noise-reduction-off")
 
-    function refreshStatus() {
-        executable.exec(statusCommand)
+    function refreshStatus() { executable.exec(statusCommand) }
+    function change(key, enabled) {
+        if (busy) return
+        busy = true
+        actionError = ""
+        executable.exec("/usr/bin/biglinux-microphone-cli set " + key + (enabled ? " on" : " off"))
     }
-    function toggleMic() {
-        suppressFileEvents += 1
-        executable.exec(toggleMicCommand)
-        timer.interval = toggleInterval
-    }
-    function toggleOutput() {
-        suppressFileEvents += 1
-        executable.exec(toggleOutputCommand)
-        timer.interval = toggleInterval
-    }
+    function openConfigurator() { executable.exec(openConfigCommand) }
     function startSettingsWatch() {
-        if (watcher.connectedSources.length === 0) {
-            watcher.connectSource(watchCommand)
-        }
+        if (!watcherDisabled && watcher.connectedSources.length === 0) watcher.connectSource(watchCommand)
     }
-    function openConfigurator() {
-        executable.exec(openConfigCommand)
-    }
-
-    Plasmoid.status: PlasmaCore.Types.PassiveStatus
-    Plasmoid.icon: anyEnabled ? "big-noise-reduction-on" : "big-noise-reduction-off"
-
-    // No `Plasmoid.contextualActions` here on purpose: Plasma 6 already
-    // injects a "Configure {Plasmoid.title}…" entry into the tray
-    // right-click menu, and the popup Button below covers the same
-    // shortcut. Adding our own custom action duplicates the gear icon.
-    Component.onCompleted: {
-        var configureAction = Plasmoid.internalAction("configure")
-        if (configureAction) {
-            configureAction.visible = false
+    function parseStatus(stdout) {
+        try {
+            const data = JSON.parse(stdout)
+            if (typeof data.mic_enabled !== "boolean" || typeof data.output_enabled !== "boolean") throw new Error("invalid status schema")
+            micEnabled = data.mic_enabled
+            outputEnabled = data.output_enabled
+            audioAvailable = data.audio_available === true
+            micReady = data.mic_running === true
+            outputReady = data.output_running === true
+        } catch (error) {
+            audioAvailable = false
+            actionError = i18nd("biglinux-microphone", "Could not read the audio status. Open settings to check the connection.")
         }
     }
 
-    // ── Subprocess plumbing ──────────────────────────────────────────
     Plasma5Support.DataSource {
         id: executable
         engine: "executable"
         connectedSources: []
-
-        signal exited(string sourceName, int exitCode, int exitStatus, string stdout, string stderr)
-
-        function exec(cmd) {
-            connectSource(cmd)
+        function exec(command) {
+            if (connectedSources.indexOf(command) === -1) connectSource(command)
         }
-
         onNewData: function(sourceName, data) {
-            exited(sourceName,
-                   data["exit code"],
-                   data["exit status"],
-                   data["stdout"],
-                   data["stderr"])
             disconnectSource(sourceName)
-        }
-    }
-
-    Connections {
-        target: executable
-
-        function onExited(sourceName, exitCode, exitStatus, stdout, stderr) {
             if (sourceName === root.statusCommand) {
-                root.parseStatus(stdout)
-            } else {
-                // It was a toggle (or the configurator launch). Force an
-                // immediate status refresh so the icon flips without waiting
-                // for the slow polling interval.
+                if (data["exit code"] === 0) root.parseStatus(data["stdout"])
+                else {
+                    root.audioAvailable = false
+                    root.actionError = i18nd("biglinux-microphone", "Could not read the audio status. Open settings to check the connection.")
+                }
+            } else if (sourceName !== root.openConfigCommand) {
+                root.busy = false
+                if (data["exit code"] !== 0) root.actionError = i18nd("biglinux-microphone", "The change could not be applied. Your previous choices have been kept where possible. Open settings for details.")
+                root.fastPolls = 3
                 root.refreshStatus()
             }
-            timer.restart()
         }
     }
-
-    // Lightweight JSON parse: status output is a single flat object with
-    // boolean values, so we don't need a full JSON.parse — but using it
-    // keeps us forward-compatible if the schema grows.
-    function parseStatus(stdout) {
-        try {
-            var obj = JSON.parse(stdout)
-            micEnabled = !!obj.mic_enabled
-            outputEnabled = !!obj.output_enabled
-        } catch (e) {
-            console.warn("micnoise: could not parse status output:", e, stdout)
-        }
-    }
-
     Timer {
-        id: timer
-        interval: defaultInterval
-        repeat: true
+        interval: root.fastPolls > 0 ? 1500 : 7000
         running: true
-        onTriggered: refreshStatus()
-        Component.onCompleted: {
-            refreshStatus()
-            startSettingsWatch()
+        repeat: true
+        onTriggered: {
+            root.refreshStatus()
+            if (root.fastPolls > 0) root.fastPolls -= 1
         }
     }
-
-    // ── Instant push from GTK app / CLI / manual edits ───────────────
-    // `inotifywait` blocks until the settings file changes, then exits.
-    // When it exits we refresh and respawn it — exactly one round-trip
-    // per external write, no polling between events. Falls back
-    // gracefully to the 7 s Timer above when inotify-tools is missing.
     Plasma5Support.DataSource {
         id: watcher
         engine: "executable"
         connectedSources: []
-
         onNewData: function(sourceName, data) {
             disconnectSource(sourceName)
-            // Skip exactly one event right after we ourselves toggled,
-            // so the CLI write we just triggered doesn't echo back.
-            if (suppressFileEvents > 0) {
-                suppressFileEvents -= 1
+            const code = data["exit code"]
+            if (code === 78) { root.watcherDisabled = true; return }
+            if (code === 0) {
+                root.watcherBackoff = 1000
+                if (String(data["stdout"]).trim() === "settings.json") {
+                    root.fastPolls = 3
+                    root.refreshStatus()
+                }
+                respawn.interval = 250
             } else {
-                refreshStatus()
+                respawn.interval = root.watcherBackoff
+                root.watcherBackoff = Math.min(root.watcherBackoff * 2, 60000)
             }
-            settingsWatchRespawn.restart()
+            respawn.restart()
         }
     }
-    // Respawn the watcher off the signal handler so connectSource()
-    // doesn't reenter the engine while it's still tearing down the
-    // previous source.
-    Timer {
-        id: settingsWatchRespawn
-        interval: 100
-        repeat: false
-        onTriggered: startSettingsWatch()
+    Timer { id: respawn; repeat: false; onTriggered: root.startSettingsWatch() }
+    Component.onCompleted: { refreshStatus(); startSettingsWatch() }
+
+    compactRepresentation: PlasmaComponents.ToolButton {
+        icon.name: Plasmoid.icon
+        Accessible.name: i18nd("biglinux-microphone", "Microphone and system sound filters")
+        Accessible.description: root.needsAttention ? i18nd("biglinux-microphone", "Audio needs attention. Open the controls for details.") : i18nd("biglinux-microphone", "Open audio filter controls")
+        onClicked: root.expanded = !root.expanded
+        TapHandler { acceptedButtons: Qt.MiddleButton; onTapped: root.openConfigurator() }
     }
-
-    // ── Compact (tray icon) ──────────────────────────────────────────
-    compactRepresentation: Kirigami.Icon {
-        source: root.anyEnabled ? "big-noise-reduction-on" : "big-noise-reduction-off"
-        active: mouseArea.containsMouse
-
-        MouseArea {
-            id: mouseArea
-            anchors.fill: parent
-            hoverEnabled: true
-            acceptedButtons: Qt.LeftButton | Qt.MiddleButton
-            onClicked: function(mouse) {
-                if (mouse.button === Qt.MiddleButton) {
-                    root.openConfigurator()
-                } else {
-                    root.expanded = !root.expanded
-                }
-            }
-        }
-    }
-
-    // ── Full (popup) ────────────────────────────────────────────────
     fullRepresentation: ColumnLayout {
-        Layout.preferredWidth: Kirigami.Units.gridUnit * 18
-        Layout.preferredHeight: Kirigami.Units.gridUnit * 9
+        Layout.preferredWidth: Kirigami.Units.gridUnit * 20
+        Layout.minimumWidth: Kirigami.Units.gridUnit * 14
         spacing: Kirigami.Units.smallSpacing
-
         PlasmaComponents.Label {
-            Layout.fillWidth: true
-            Layout.margins: Kirigami.Units.smallSpacing
-            text: i18nd("biglinux-microphone","Filter noise")
+            text: i18nd("biglinux-microphone", "Filter noise")
             font.bold: true
-            elide: Text.ElideRight
-        }
-
-        // Mic toggle row
-        RowLayout {
             Layout.fillWidth: true
-            Layout.leftMargin: Kirigami.Units.smallSpacing
-            Layout.rightMargin: Kirigami.Units.smallSpacing
-            spacing: Kirigami.Units.smallSpacing
-
-            Kirigami.Icon {
-                source: "audio-input-microphone-symbolic"
-                Layout.preferredWidth: Kirigami.Units.iconSizes.medium
-                Layout.preferredHeight: Kirigami.Units.iconSizes.medium
-            }
-            ColumnLayout {
-                Layout.fillWidth: true
-                spacing: 0
-                PlasmaComponents.Label {
-                    text: i18nd("biglinux-microphone","Microphone filter")
-                    elide: Text.ElideRight
-                    Layout.fillWidth: true
-                }
-                PlasmaComponents.Label {
-                    text: i18nd("biglinux-microphone","Cleans your voice for calls and recordings")
-                    opacity: 0.7
-                    font.pixelSize: Kirigami.Theme.smallFont.pixelSize
-                    elide: Text.ElideRight
-                    Layout.fillWidth: true
-                    wrapMode: Text.WordWrap
-                }
-            }
-            PlasmaComponents.Switch {
-                checked: root.micEnabled
-                onToggled: root.toggleMic()
-            }
+            wrapMode: Text.WordWrap
         }
-
-        // Output toggle row
-        RowLayout {
+        PlasmaComponents.Label {
+            visible: root.actionError.length > 0 || root.needsAttention
+            text: root.actionError.length > 0 ? root.actionError : i18nd("biglinux-microphone", "Some audio filters are not ready. Open settings to check them.")
             Layout.fillWidth: true
-            Layout.leftMargin: Kirigami.Units.smallSpacing
-            Layout.rightMargin: Kirigami.Units.smallSpacing
-            spacing: Kirigami.Units.smallSpacing
-
-            Kirigami.Icon {
-                source: "audio-headphones-symbolic"
-                Layout.preferredWidth: Kirigami.Units.iconSizes.medium
-                Layout.preferredHeight: Kirigami.Units.iconSizes.medium
-            }
-            ColumnLayout {
-                Layout.fillWidth: true
-                spacing: 0
-                PlasmaComponents.Label {
-                    text: i18nd("biglinux-microphone","System sound filter")
-                    elide: Text.ElideRight
-                    Layout.fillWidth: true
-                }
-                PlasmaComponents.Label {
-                    text: i18nd("biglinux-microphone","Cleans every sound the system plays before it reaches your speakers")
-                    opacity: 0.7
-                    font.pixelSize: Kirigami.Theme.smallFont.pixelSize
-                    elide: Text.ElideRight
-                    wrapMode: Text.WordWrap
-                    Layout.fillWidth: true
-                }
-            }
-            PlasmaComponents.Switch {
-                checked: root.outputEnabled
-                onToggled: root.toggleOutput()
-            }
+            wrapMode: Text.WordWrap
+            Accessible.name: text
         }
-
-        Item { Layout.fillHeight: true }
-
+        PlasmaComponents.Switch {
+            text: i18nd("biglinux-microphone", "Microphone filter")
+            Accessible.name: text
+            Accessible.description: i18nd("biglinux-microphone", "Turning this off pauses the effects without erasing your preferences.")
+            checked: root.micEnabled
+            enabled: !root.busy && root.audioAvailable
+            Layout.fillWidth: true
+            onToggled: root.change("mic", checked)
+        }
+        PlasmaComponents.Label {
+            text: i18nd("biglinux-microphone", "Cleans your voice for calls and recordings")
+            Layout.fillWidth: true
+            wrapMode: Text.WordWrap
+        }
+        PlasmaComponents.Switch {
+            text: i18nd("biglinux-microphone", "System sound filter")
+            Accessible.name: text
+            checked: root.outputEnabled
+            enabled: !root.busy && root.audioAvailable
+            Layout.fillWidth: true
+            onToggled: root.change("output", checked)
+        }
+        PlasmaComponents.Label {
+            text: i18nd("biglinux-microphone", "Applies your selected effects to the sound you hear.")
+            Layout.fillWidth: true
+            wrapMode: Text.WordWrap
+        }
+        PlasmaComponents.BusyIndicator { visible: root.busy; running: root.busy; Layout.alignment: Qt.AlignHCenter }
         PlasmaComponents.Button {
-            Layout.alignment: Qt.AlignRight
-            Layout.margins: Kirigami.Units.smallSpacing
-            text: i18nd("biglinux-microphone","Open settings…")
+            text: i18nd("biglinux-microphone", "Open settings…")
             icon.name: "preferences-desktop-sound"
-            onClicked: {
-                root.openConfigurator()
-                root.expanded = false
-            }
+            Layout.alignment: Qt.AlignTrailing
+            onClicked: { root.openConfigurator(); root.expanded = false }
         }
     }
 }
