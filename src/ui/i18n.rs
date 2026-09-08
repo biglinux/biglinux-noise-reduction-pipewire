@@ -94,4 +94,6 @@ mod tests {
 
 /// Extraction marker for a literal that is translated only when displayed.
 /// This must not translate at startup, before the locale is initialized.
-pub const fn mark(message: &'static str) -> &'static str { message }
+pub const fn mark(message: &'static str) -> &'static str {
+    message
+}
