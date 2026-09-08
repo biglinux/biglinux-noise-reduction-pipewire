@@ -1,3 +1,5 @@
+from pathlib import Path
+import re
 from _common import done, replace, write, commit
 
 TITLE = 'fix(ui): import libadwaita traits for advanced runtime controls'
@@ -15,7 +17,7 @@ set -euo pipefail
 export LC_ALL=C.UTF-8
 ROOT="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")/.." && pwd)"
 cd "$ROOT"
-for tool in xtr xgettext msguniq msgcat msgcmp msgmerge; do
+for tool in xtr xgettext msguniq msgcat msgcmp msgmerge python3; do
     command -v "$tool" >/dev/null || { printf 'Missing translation tool: %s\n' "$tool" >&2; exit 1; }
 done
 work="$(mktemp -d)"
@@ -27,12 +29,41 @@ version="$(awk -F\" '/^version[[:space:]]*=/{print $2; exit}' Cargo.toml)"
 xtr --keywords=i18n --keywords=mark --package-name=biglinux-noise-reduction-pipewire \
     --package-version="$version" --copyright-holder='BigLinux Team' \
     --output "$work/rust.pot" "${rust_sources[@]}"
-# A source listed both directly and as a Rust child module may be visited
-# twice. Normalize extractor duplicates before combining separate languages.
-msguniq --use-first "$work/rust.pot" -o "$work/rust-unique.pot"
+# gettext reserves the context-free empty msgid for its header. xtr can
+# also extract an empty UI literal; gettext then rejects the duplicate
+# before msguniq can merge it. Remove only empty msgids, not multiline
+# nonempty messages, and write exactly one explicit UTF-8 header.
+python3 - "$work/rust.pot" "$work/rust-clean.pot" "$version" <<'PY'
+import ast
+import re
+import sys
+from pathlib import Path
+source, destination, version = sys.argv[1:]
+kept = []
+for block in re.split(r'\n[ \t]*\n', Path(source).read_text(encoding='utf-8')):
+    lines = block.splitlines()
+    if 'msgid ""' in lines and not any(line.startswith('msgctxt ') for line in lines):
+        start = lines.index('msgid ""') + 1
+        fragments = []
+        for line in lines[start:]:
+            if not line.startswith('"'):
+                break
+            fragments.append(ast.literal_eval(line))
+        if not ''.join(fragments):
+            continue
+    if block.strip():
+        kept.append(block)
+header = '\n'.join([
+    'msgid ""', 'msgstr ""',
+    '"Project-Id-Version: biglinux-noise-reduction-pipewire ' + version + '\\n"',
+    '"MIME-Version: 1.0\\n"',
+    '"Content-Type: text/plain; charset=UTF-8\\n"',
+    '"Content-Transfer-Encoding: 8bit\\n"',
+])
+Path(destination).write_text(header + '\n\n' + '\n\n'.join(kept) + '\n', encoding='utf-8')
+PY
+msguniq --use-first "$work/rust-clean.pot" -o "$work/rust-unique.pot"
 if ((${#qml_sources[@]} > 0)); then
-    # Retain the UTF-8 header: a headerless QML catalog is interpreted as
-    # ASCII by msgcat, corrupting ellipses and translated punctuation.
     xgettext --language=JavaScript --from-code=UTF-8 --keyword=i18nd:2 \
         --package-name=biglinux-noise-reduction-pipewire --package-version="$version" \
         --output="$work/qml.pot" "${qml_sources[@]}"
@@ -53,3 +84,19 @@ for catalog in po/*.po; do
 done
 ''')
     commit(TITLE, ['scripts/refresh-pot.sh'])
+
+TITLE = 'fix(i18n): keep empty interface text empty rather than showing catalog metadata'
+if not done(TITLE):
+    path = Path('src/ui/i18n.rs')
+    text, changes = re.subn(r'(pub fn i18n\((\w+): &str\) -> String \{\n)', lambda match: match[1] + '    if ' + match[2] + '.is_empty() { return String::new(); }\n', path.read_text(), count=1)
+    assert changes == 1
+    path.write_text(text + '''
+#[cfg(test)]
+mod empty_message_contract {
+    #[test]
+    fn empty_ui_text_does_not_return_the_gettext_header() {
+        assert!(super::i18n("").is_empty());
+    }
+}
+''')
+    commit(TITLE, [str(path)])
