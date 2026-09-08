@@ -20,7 +20,7 @@ msg2() { printf '%s\n' "$*"; }
 # The source fixture contains nested makepkg/custom output directories.
 # This exercises prepare() without doing a second application compilation.
 (
-    _local_root="$stage/local"
+    _local_root="$stage/local/$pkgname"
     mkdir -p "$_local_root/src" "$_local_root/target" "$_local_root/.git" "$_local_root/build-locale"
     printf 'original\n' > "$_local_root/src/example.rs"
     printf 'generated\n' > "$_local_root/target/do-not-copy"
@@ -37,8 +37,8 @@ msg2() { printf '%s\n' "$*"; }
         prepare
         test ! -e "$destination/removed.rs"
     done
-    srcdir="$_local_root"
-    pkgname='.'
+    # This resolves to the checkout itself without changing the package name.
+    srcdir="$stage/local"
     if prepare; then
         printf 'Unsafe source destination was accepted\n' >&2
         exit 1

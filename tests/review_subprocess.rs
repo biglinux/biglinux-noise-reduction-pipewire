@@ -1,6 +1,8 @@
 //! Real-child regressions for the shared subprocess boundary.
 #![cfg(not(miri))]
 use big_os_kit::subprocess::{BigSubprocessError, BigSubprocessSpec};
+use std::path::Path;
+use std::process::{Command, Stdio};
 use std::time::{Duration, Instant};
 
 #[test]
@@ -40,18 +42,90 @@ fn full_duplex_pipes_do_not_deadlock() {
     assert_eq!(result.stdout, payload);
 }
 
+// This short-lived fixture deliberately exits without waiting: the object
+// under test must terminate its descendant process group. No shell job-control
+// policy or ignored test is involved. The PID file proves spawn succeeded.
+#[allow(clippy::zombie_processes)]
+fn exit_with_inherited_pipes(directory: &Path) -> ! {
+    let descendant = Command::new("sleep")
+        .arg("10")
+        .stdin(Stdio::null())
+        .stdout(Stdio::inherit())
+        .stderr(Stdio::inherit())
+        .spawn()
+        .expect("start the pipe-holding descendant");
+    std::fs::write(directory.join("pid"), descendant.id().to_string()).unwrap();
+    std::process::exit(0);
+}
+
+#[cfg(target_os = "linux")]
+fn assert_descendant_stopped(pid: u32) {
+    let deadline = Instant::now() + Duration::from_secs(1);
+    loop {
+        let state = std::fs::read_to_string(format!("/proc/{pid}/stat"));
+        match state {
+            Err(error) if error.kind() == std::io::ErrorKind::NotFound => return,
+            Ok(stat) => {
+                // The orphan can briefly be a zombie pending the container's
+                // init reaper. It must not remain runnable or hold live pipes.
+                let state = stat.rsplit_once(") ").map(|(_, tail)| tail.as_bytes()[0]);
+                if matches!(state, Some(b'Z' | b'X')) {
+                    return;
+                }
+            }
+            Err(error) => panic!("Cannot inspect descendant {pid}: {error}"),
+        }
+        assert!(Instant::now() < deadline, "Descendant {pid} was not stopped");
+        std::thread::sleep(Duration::from_millis(10));
+    }
+}
+
 #[test]
 fn inherited_pipe_lifetimes_are_bounded_too() {
+    const FIXTURE: &str = "BIGMIC_SUBPROCESS_PIPE_FIXTURE";
+    if let Some(directory) = std::env::var_os(FIXTURE) {
+        exit_with_inherited_pipes(Path::new(&directory));
+    }
+    let directory = tempfile::tempdir().unwrap();
+    let executable = std::env::current_exe().unwrap();
     let started = Instant::now();
-    // Literal test fixture; no untrusted value is passed to the shell.
     let result = BigSubprocessSpec::builder()
-        .program("sh")
-        .args(["-c", "sleep 10 & exit 0"])
-        .timeout(Duration::from_millis(100))
+        .program(executable.to_str().unwrap())
+        .args([
+            "--exact",
+            "inherited_pipe_lifetimes_are_bounded_too",
+            "--nocapture",
+        ])
+        .env(FIXTURE, directory.path())
+        .timeout(Duration::from_secs(1))
         .build()
         .run();
-    assert!(matches!(result, Err(BigSubprocessError::Timeout)));
-    assert!(started.elapsed() < Duration::from_secs(2));
+    let pid: u32 = std::fs::read_to_string(directory.path().join("pid"))
+        .expect("The deadline must exercise inherited pipes, not failed startup")
+        .parse()
+        .unwrap();
+    assert!(
+        matches!(result, Err(BigSubprocessError::Timeout)),
+        "Inherited captured pipes must not be reported as completed: {result:?}"
+    );
+    assert!(started.elapsed() < Duration::from_secs(3));
+    #[cfg(target_os = "linux")]
+    assert_descendant_stopped(pid);
+    #[cfg(not(target_os = "linux"))]
+    let _ = pid;
+}
+
+#[test]
+fn completed_child_does_not_report_a_spurious_timeout() {
+    let result = BigSubprocessSpec::builder()
+        .program("printf")
+        .arg("complete")
+        .timeout(Duration::from_secs(1))
+        .build()
+        .run()
+        .unwrap();
+    assert!(result.status.success());
+    assert_eq!(result.stdout, b"complete");
 }
 
 #[test]
