@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: biglinux-noise-reduction-pipewire\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-09-07 23:27+0000\n"
+"POT-Creation-Date: 2026-09-08 05:53+0000\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: uk\n"
@@ -16,27 +16,37 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "X-Generator: attranslate\n"
 
-#: src/ui/health.rs:42
+#: src/ui/health.rs:46
 msgid "The audio system (PipeWire) is not responding."
 msgstr ""
 
-#: src/ui/health.rs:43
+#: src/ui/health.rs:47
 msgid "Log out and back in, then reopen this window."
 msgstr ""
 
-#: src/ui/health.rs:48
+#: src/ui/health.rs:58
 msgid "The noise-reduction engine is not installed."
 msgstr ""
 
-#: src/ui/health.rs:49
+#: src/ui/health.rs:59
 msgid "Install the gtcrn-ladspa package, then check again."
 msgstr ""
 
-#: src/ui/health.rs:54
+#: src/ui/health.rs:64
+msgid "The noise-reduction engine cannot start."
+msgstr ""
+
+#: src/ui/health.rs:66
+msgid ""
+"Its inference runtime is missing. Reinstall the gtcrn-ladspa package, then "
+"check again."
+msgstr ""
+
+#: src/ui/health.rs:73
 msgid "The background audio services are not installed."
 msgstr ""
 
-#: src/ui/health.rs:55
+#: src/ui/health.rs:74
 msgid "Reinstall Filter noise, then log out and back in."
 msgstr ""
 
@@ -819,7 +829,7 @@ msgstr "Пресет"
 msgid "Equalizer band"
 msgstr "Еквалайзер"
 
-#: src/ui/widgets/model_picker.rs:96
+#: src/ui/widgets/model_picker.rs:98
 #, fuzzy
 msgid ""
 "DNS3 removes more noise but can smudge consonants. VCTK is gentler and "
@@ -829,7 +839,7 @@ msgstr ""
 "DNS3 видаляє більше шуму, але може розмивати приголосні. VCTK м’якший і менш "
 "навантажує процесор — підходить для подкастів."
 
-#: src/ui/widgets/model_picker.rs:118
+#: src/ui/widgets/model_picker.rs:113
 msgid "{model} - not installed"
 msgstr ""
 

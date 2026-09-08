@@ -8,10 +8,10 @@
 //! source (subprocess / file stat), never from assumptions:
 //!
 //! 1. Is PipeWire answering? (`pw-cli info 0`)
-//! 2. Can the default denoiser actually run? (LADSPA path stat plus the
-//!    `dlopen` of its inference runtime, via
-//!    [`NoiseModel::plugin_loadable_cached`])
-//! 3. Are the pwloader user units installed? (`systemctl --user cat`)
+//! 2. Is the default denoiser's plugin installed? (LADSPA path stat)
+//! 3. Can it actually run, i.e. does its inference runtime resolve?
+//!    ([`NoiseModel::plugin_loadable_cached`])
+//! 4. Are the pwloader user units installed? (`systemctl --user cat`)
 //!
 //! The probes themselves are `diagnostics`' — the banner and `doctor` must
 //! not be able to disagree about whether the same check passed.
@@ -47,13 +47,25 @@ pub fn probe() -> Health {
             hint: i18n("Log out and back in, then reopen this window."),
         };
     }
-    // Loadability, not bare presence. A stat passes with the plugin file
-    // installed and its runtime missing, and the plugins pass audio through
-    // instead of failing — so the window said Ready while nothing denoised.
-    if !NoiseModel::default().plugin_loadable_cached() {
+    // Two different failures with two different next actions, so they are
+    // reported apart. A bare stat passes with the plugin installed and its
+    // inference runtime missing, and the plugins pass audio through rather
+    // than failing — that combination had the window reporting Ready while
+    // nothing denoised.
+    let model = NoiseModel::default();
+    if !model.plugin_available() {
         return Health::Unavailable {
             cause: i18n("The noise-reduction engine is not installed."),
             hint: i18n("Install the gtcrn-ladspa package, then check again."),
+        };
+    }
+    if !model.plugin_loadable_cached() {
+        return Health::Unavailable {
+            cause: i18n("The noise-reduction engine cannot start."),
+            hint: i18n(
+                "Its inference runtime is missing. Reinstall the gtcrn-ladspa \
+                 package, then check again.",
+            ),
         };
     }
     if !unit_known(MIC_UNIT) {

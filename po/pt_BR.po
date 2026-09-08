@@ -3,7 +3,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: biglinux-noise-reduction-pipewire\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-09-07 23:27+0000\n"
+"POT-Creation-Date: 2026-09-08 05:53+0000\n"
 "PO-Revision-Date: 2026-04-28 13:29\n"
 "Last-Translator: Translation Automator <auto@translator.ai>\n"
 "Language-Team: Portuguese (Brazil) <pt_BR@li.org>\n"
@@ -12,27 +12,39 @@ msgstr ""
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 
-#: src/ui/health.rs:42
+#: src/ui/health.rs:46
 msgid "The audio system (PipeWire) is not responding."
 msgstr "O sistema de áudio (PipeWire) não está respondendo."
 
-#: src/ui/health.rs:43
+#: src/ui/health.rs:47
 msgid "Log out and back in, then reopen this window."
 msgstr "Encerre a sessão e entre novamente, depois reabra esta janela."
 
-#: src/ui/health.rs:48
+#: src/ui/health.rs:58
 msgid "The noise-reduction engine is not installed."
 msgstr "O motor de redução de ruído não está instalado."
 
-#: src/ui/health.rs:49
+#: src/ui/health.rs:59
 msgid "Install the gtcrn-ladspa package, then check again."
 msgstr "Instale o pacote gtcrn-ladspa e verifique novamente."
 
-#: src/ui/health.rs:54
+#: src/ui/health.rs:64
+msgid "The noise-reduction engine cannot start."
+msgstr "O motor de redução de ruído não consegue iniciar."
+
+#: src/ui/health.rs:66
+msgid ""
+"Its inference runtime is missing. Reinstall the gtcrn-ladspa package, then "
+"check again."
+msgstr ""
+"A biblioteca de inferência não foi encontrada. Reinstale o pacote gtcrn-"
+"ladspa e verifique novamente."
+
+#: src/ui/health.rs:73
 msgid "The background audio services are not installed."
 msgstr "Os serviços de áudio em segundo plano não estão instalados."
 
-#: src/ui/health.rs:55
+#: src/ui/health.rs:74
 msgid "Reinstall Filter noise, then log out and back in."
 msgstr "Reinstale o Filtro de ruído e encerre e inicie a sessão novamente."
 
@@ -507,7 +519,9 @@ msgstr "Cancelamento de eco"
 msgid ""
 "Automatic cancels speaker echo and turns off cancellation when headphones "
 "are in use."
-msgstr "O modo automático cancela o eco dos alto-falantes e desativa o cancelamento ao usar fones de ouvido."
+msgstr ""
+"O modo automático cancela o eco dos alto-falantes e desativa o cancelamento "
+"ao usar fones de ouvido."
 
 #: src/ui/views/mic.rs:142
 msgid "Best quality"
@@ -529,7 +543,9 @@ msgstr "Qualidade da redução de ruído"
 msgid ""
 "Automatic chooses a model for this computer. Choose lower CPU use if sound "
 "stutters, or select a model in Advanced."
-msgstr "O modo automático escolhe um modelo para este computador. Escolha um menor uso de CPU se o som falhar, ou selecione um modelo em Avançado."
+msgstr ""
+"O modo automático escolhe um modelo para este computador. Escolha um menor "
+"uso de CPU se o som falhar, ou selecione um modelo em Avançado."
 
 #: src/ui/views/mic.rs:180 src/ui/views/mic.rs:209 src/ui/views/simple.rs:127
 #: src/ui/views/simple.rs:156
@@ -782,7 +798,7 @@ msgstr "Predefinição"
 msgid "Equalizer band"
 msgstr "Faixa do equalizador"
 
-#: src/ui/widgets/model_picker.rs:96
+#: src/ui/widgets/model_picker.rs:98
 msgid ""
 "DNS3 removes more noise but can smudge consonants. VCTK is gentler and "
 "lighter on CPU. Full-band models can sound cleaner when their LADSPA "
@@ -792,7 +808,7 @@ msgstr ""
 "e mais leve para a CPU. Os modelos de banda completa podem soar mais limpos "
 "quando seus pacotes LADSPA estão instalados, com maior custo de CPU."
 
-#: src/ui/widgets/model_picker.rs:118
+#: src/ui/widgets/model_picker.rs:113
 msgid "{model} - not installed"
 msgstr "{model} - não instalado"
 
