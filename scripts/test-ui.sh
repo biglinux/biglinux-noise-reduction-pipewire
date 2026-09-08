@@ -45,15 +45,20 @@ while IFS= read -r line; do
     mkdir -m 700 "$session/runtime" "$session/config" "$session/cache" "$session/data"
     printf '\n=== GTK contract %s ===\n' "$test_name"
     if (
-        unset DBUS_SESSION_BUS_ADDRESS PULSE_SERVER PIPEWIRE_REMOTE
+        unset DBUS_SESSION_BUS_ADDRESS PULSE_SERVER G_DEBUG
+        unset PIPEWIRE_CONFIG_DIR PIPEWIRE_CONFIG_PREFIX PIPEWIRE_CONFIG_NAME
         export XDG_RUNTIME_DIR="$session/runtime" XDG_CONFIG_HOME="$session/config"
         export XDG_CACHE_HOME="$session/cache" XDG_DATA_HOME="$session/data"
+        export PIPEWIRE_RUNTIME_DIR="$session/runtime" PIPEWIRE_REMOTE=pipewire-0
+        export PULSE_RUNTIME_PATH="$session/runtime/pulse"
         export DBUS_SYSTEM_BUS_ADDRESS="unix:path=$session/no-system-bus"
         export BIGLINUX_UI_SESSION_MODE=disposable
-        export G_DEBUG=fatal-warnings
         export LANG=C.UTF-8 LC_ALL=C.UTF-8 LANGUAGE=C GDK_BACKEND=x11 GSK_RENDERER=cairo
+        # The application's warnings remain fatal, not the unrelated portal
+        # services activated by DBus in a container without a document mount.
         timeout --kill-after=5s 60s xvfb-run -a dbus-run-session -- \
-            "$executable" "$test_name" --ignored --exact --nocapture --test-threads=1
+            env G_DEBUG=fatal-warnings "$executable" "$test_name" \
+            --ignored --exact --nocapture --test-threads=1
     ); then
         printf 'PASS: %s\n' "$test_name"
     else
