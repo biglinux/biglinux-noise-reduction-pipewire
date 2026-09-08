@@ -150,7 +150,14 @@ pub(super) fn serialized_preserving_unknown(
     path: &Path,
 ) -> io::Result<Vec<u8>> {
     let known = serde_json::to_value(settings).map_err(io::Error::other)?;
-    let mut stored = match std::fs::read(path) {
+    // REPLACE_DESTINATION replaces the link itself. Never read or modify
+    // the unrelated file a settings symlink may point at during that write.
+    let existing = if path.is_symlink() {
+        Err(io::Error::from(io::ErrorKind::NotFound))
+    } else {
+        std::fs::read(path)
+    };
+    let mut stored = match existing {
         Ok(bytes) => serde_json::from_slice::<Value>(&bytes)
             .map_err(|error| io::Error::new(io::ErrorKind::InvalidData, error))?,
         Err(error) if error.kind() == io::ErrorKind::NotFound => Value::Object(Default::default()),

@@ -28,7 +28,7 @@ mod ui;
 use std::io;
 use std::path::Path;
 
-use log::{debug, error, info};
+use log::{debug, error};
 use serde::{Deserialize, Serialize};
 use std::fs::read_to_string;
 
@@ -74,54 +74,23 @@ pub struct AppSettings {
 }
 
 impl AppSettings {
+    /// Strict transaction read: migration, validation and normalization use
+    /// one byte snapshot. Malformed files are never converted to defaults.
     pub fn load_strict() -> io::Result<Self> {
-        let path = settings_file();
-        match std::fs::read(&path) {
-            Ok(bytes) => {
-                let value: serde_json::Value = serde_json::from_slice(&bytes)
-                    .map_err(|error| io::Error::new(io::ErrorKind::InvalidData, error))?;
-                if !value.is_object() {
-                    return Err(io::Error::new(
-                        io::ErrorKind::InvalidData,
-                        "settings must be a JSON object",
-                    ));
-                }
-                // Validate the schema before using the compatibility loader.
-                // Old quality spelling is accepted by its serde alias.
-                serde_json::from_value::<Self>(value)
-                    .map_err(|error| io::Error::new(io::ErrorKind::InvalidData, error))?;
-                Ok(Self::load_from(&path))
-            }
-            Err(error) if error.kind() == io::ErrorKind::NotFound => Ok(Self::default()),
-            Err(error) => Err(error),
-        }
+        Self::load_from_strict(&settings_file())
     }
 
-    /// Load from the default location (`~/.config/biglinux-microphone/settings.json`).
-    /// Missing file → defaults. Malformed JSON → defaults + error log.
-    #[must_use]
-    pub fn load() -> Self {
-        let path = settings_file();
-        Self::load_from(&path)
-    }
-
-    /// Load from an explicit path. Testable variant of [`AppSettings::load`].
-    pub fn load_from(path: &Path) -> Self {
+    pub fn load_from_strict(path: &Path) -> io::Result<Self> {
         let content = match read_to_string(path) {
             Ok(content) => content,
-            Err(e) if e.kind() == io::ErrorKind::NotFound => {
-                info!("settings: no file at {}, using defaults", path.display());
-                return Self::default();
-            }
-            Err(e) => {
-                error!(
-                    "settings: read error at {}: {e} — falling back to defaults",
-                    path.display()
-                );
-                return Self::default();
-            }
+            Err(error) if error.kind() == io::ErrorKind::NotFound => return Ok(Self::default()),
+            Err(error) => return Err(error),
         };
-        let parsed = serde_json::from_str::<serde_json::Value>(&content).and_then(|mut value| {
+        let mut value: serde_json::Value = serde_json::from_str(&content)
+            .map_err(|error| io::Error::new(io::ErrorKind::InvalidData, error))?;
+        if !value.is_object() {
+            return Err(io::Error::new(io::ErrorKind::InvalidData, "settings must be a JSON object"));
+        }
             // Older standalone settings only had the switch. An explicit off
             // remains off when the automatic mode is introduced.
             if let Some(echo) = value
@@ -147,24 +116,26 @@ impl AppSettings {
             {
                 output.remove("routed_apps");
             }
-            serde_json::from_value::<Self>(value)
-        });
-        match parsed {
-            Ok(mut s) => {
-                s.equalizer.normalize();
-                s.output_filter.equalizer.normalize();
-                s.window = s.window.sanitized();
-                s.demote_unavailable_models();
-                s
-            }
-            Err(e) => {
-                error!(
-                    "settings: parse error at {}: {e} — falling back to defaults",
-                    path.display()
-                );
-                Self::default()
-            }
-        }
+        let mut settings: Self = serde_json::from_value(value)
+            .map_err(|error| io::Error::new(io::ErrorKind::InvalidData, error))?;
+        settings.equalizer.normalize();
+        settings.output_filter.equalizer.normalize();
+        settings.window = settings.window.sanitized();
+        settings.demote_unavailable_models();
+        Ok(settings)
+    }
+
+    #[must_use]
+    pub fn load() -> Self {
+        Self::load_from(&settings_file())
+    }
+
+    /// Read-only compatibility entry point. Writers use load_strict instead.
+    pub fn load_from(path: &Path) -> Self {
+        Self::load_from_strict(path).unwrap_or_else(|error| {
+            error!("settings: could not read {}: {error}", path.display());
+            Self::default()
+        })
     }
 
     /// Settings may persist an optional model from a previous run while
@@ -230,7 +201,7 @@ impl AppSettings {
 
     pub fn save_to(&self, path: &Path) -> io::Result<()> {
         let json = storage::serialized_preserving_unknown(self, path)?;
-        if std::fs::read(path).is_ok_and(|existing| existing == json) {
+        if !path.is_symlink() && std::fs::read(path).is_ok_and(|existing| existing == json) {
             return Ok(());
         }
         atomic_write_private(path, &json)?;
