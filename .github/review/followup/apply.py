@@ -18,12 +18,15 @@ def digest(value):
     return hashlib.sha256(value).hexdigest() if value is not None else None
 
 assert git('rev-parse', 'HEAD') == request['base'], 'PR branch moved; refusing stale changes'
-assert re.fullmatch(r'batch-[0-9]+\.b64', request['patch'])
-payload = (root / request['patch']).read_text()
-for at, old, new in request.get('transport_corrections', []):
-    assert len(old) == len(new) == 1 and payload[at] == old
-    payload = payload[:at] + new + payload[at + 1:]
-data = gzip.decompress(base64.b64decode(payload))
+parts = request.get('parts', [request['patch']])
+assert all(re.fullmatch(r'batch-[0-9]+(?:-part[0-9]+)?\.b64', part) for part in parts)
+payload = ''.join((root / part).read_text().strip() for part in parts)
+# Every correction specifies its original bytes. The complete corrected data
+# must still pass the independent SHA-256, per-file checksums and tree check.
+for at, old, new in sorted(request.get('transport_corrections', []), reverse=True):
+    assert payload[at:at + len(old)] == old
+    payload = payload[:at] + new + payload[at + len(old):]
+data = gzip.decompress(base64.b64decode(payload, validate=True))
 assert digest(data) == request['sha256'], 'Payload checksum mismatch'
 if request.get('format') == 'line-edits':
     for commit in json.loads(data):
