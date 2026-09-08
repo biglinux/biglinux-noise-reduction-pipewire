@@ -128,6 +128,7 @@ fn master_off_forces_full_bypass_regardless_of_sub_flags() {
                 ..crate::config::EqualizerConfig::default()
             },
             target_sink_name: None,
+            channel_mode: crate::config::OutputChannelMode::Mono,
         },
         ..mono_settings()
     };

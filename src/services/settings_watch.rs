@@ -28,7 +28,11 @@ impl SettingsWatch {
                     let Some(parent) = path.parent() else {
                         return;
                     };
-                    let monitor = match gio::File::for_path(parent).monitor_directory(
+                    if let Err(error) = std::fs::create_dir_all(parent) {
+                    log::error!("settings watcher directory unavailable: {error}");
+                    return;
+                }
+                let monitor = match gio::File::for_path(parent).monitor_directory(
                         gio::FileMonitorFlags::WATCH_MOVES,
                         gio::Cancellable::NONE,
                     ) {

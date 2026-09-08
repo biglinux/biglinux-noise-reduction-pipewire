@@ -44,9 +44,9 @@ const SETTLE: Duration = Duration::from_secs(30);
 /// statics the audio thread writes. No IPC, because there is no boundary —
 /// the plugin runs inside this process.
 pub struct DenoiseWatch {
-    // SAFETY INVARIANT: `hops` is a symbol from `_handle`, which is never
+    // SAFETY INVARIANT: `hops` is a symbol from `handle`, which is never
     // closed while this struct lives.
-    _handle: *mut libc::c_void,
+    handle: *mut libc::c_void,
     hops: unsafe extern "C" fn(*mut u64, *mut u64),
     last: Option<(u64, u64)>,
     /// Whether the last announced state was "degraded".
@@ -84,7 +84,7 @@ impl DenoiseWatch {
             )
         };
         Some(Self {
-            _handle: handle,
+            handle: handle,
             hops,
             last: None,
             announced_degraded: false,
@@ -169,7 +169,7 @@ impl Drop for DenoiseWatch {
     fn drop(&mut self) {
         // SAFETY: this is our owned dlopen reference. No callback outlives
         // the watcher, and PipeWire owns its separate plugin reference.
-        unsafe { libc::dlclose(self._handle) };
+        unsafe { libc::dlclose(self.handle) };
     }
 }
 

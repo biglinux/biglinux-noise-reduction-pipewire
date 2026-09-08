@@ -87,6 +87,7 @@ impl AppSettings {
     }
 
     /// Materialize effective flags without destroying the saved choices.
+    #[must_use]
     pub fn runtime_settings(&self) -> Self {
         let mut effective = self.clone();
         if self.mic_bypass {

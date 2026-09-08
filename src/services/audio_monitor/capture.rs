@@ -133,7 +133,7 @@ impl Capture {
             }
         })?;
 
-        for chunk in self.read_buf.chunks_exact(4) {
+        for chunk in self.read_buf.as_chunks::<4>().0 {
             let sample = f32::from_ne_bytes([chunk[0], chunk[1], chunk[2], chunk[3]]);
             self.ring[self.write_pos] = sample;
             self.write_pos = (self.write_pos + 1) % self.fft_size;

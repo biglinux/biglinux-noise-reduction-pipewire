@@ -88,11 +88,11 @@ impl Drop for QuantumPreview {
         if let Some(child) = self.child.take() {
             // GIO's shared pool owns the blocking reap; widget destruction
             // must not wait for a backend command to finish.
-            let _ = gio::spawn_blocking(move || {
+            drop(gio::spawn_blocking(move || {
                 if let Err(error) = finish_child(child) {
                     log::warn!("preview cleanup: {error}");
                 }
-            });
+            }));
         }
     }
 }

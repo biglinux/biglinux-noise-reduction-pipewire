@@ -86,9 +86,7 @@ fn action(
 }
 
 fn baseline_path() -> PathBuf {
-    dirs::runtime_dir()
-        .map(|path| path.join("biglinux-microphone"))
-        .unwrap_or_else(crate::config::config_dir)
+    dirs::runtime_dir().map_or_else(crate::config::config_dir, |path| path.join("biglinux-microphone"))
         .join("last-applied.json")
 }
 

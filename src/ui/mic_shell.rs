@@ -582,7 +582,7 @@ impl Component for MicShell {
             // ── Advanced output-chain ─────────────────────────────────
             MicInput::OutputChannelsChanged(mode) => {
                 self.mutate_settings(&sender, |settings| {
-                    settings.output_filter.channel_mode = mode
+                    settings.output_filter.channel_mode = mode;
                 });
             }
             MicInput::OutputModelChanged(model) => {
