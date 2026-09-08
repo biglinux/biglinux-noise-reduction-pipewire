@@ -52,6 +52,10 @@ use state::{db_to_norm, resampled_band_targets};
 /// Public handle. Hold one per window.
 pub struct Spectrum {
     area: gtk::DrawingArea,
+    root: gtk::Box,
+    level: gtk::LevelBar,
+    readout: gtk::Label,
+    last_meter_update: Cell<Option<std::time::Instant>>,
     state: Rc<RefCell<SpectrumState>>,
     timer: Cell<Option<SourceId>>,
 }
@@ -64,7 +68,7 @@ impl Spectrum {
             .hexpand(true)
             .build();
         area.set_size_request(-1, WIDGET_HEIGHT);
-        area.set_accessible_role(gtk::AccessibleRole::Meter);
+        area.set_accessible_role(gtk::AccessibleRole::Presentation);
         area.update_property(&[
             gtk::accessible::Property::Label(&i18n("Microphone level meter")),
             gtk::accessible::Property::Description(&i18n(
@@ -72,6 +76,21 @@ impl Spectrum {
             )),
         ]);
 
+        let root = gtk::Box::new(gtk::Orientation::Vertical, 6);
+        let readout = gtk::Label::builder().xalign(0.0).wrap(true).build();
+        readout.set_text(&i18n("Speak normally to check your microphone level."));
+        let level = gtk::LevelBar::for_interval(-60.0, 0.0);
+        level.set_value(-60.0);
+        level.add_offset_value("low", -30.0);
+        level.add_offset_value("high", -6.0);
+        level.add_offset_value("full", -1.0);
+        level.update_property(&[
+            gtk::accessible::Property::Label(&i18n("Microphone level meter")),
+            gtk::accessible::Property::Description(&i18n("Input level in decibels. Reduce microphone volume if it reaches zero.")),
+        ]);
+        root.append(&readout);
+        root.append(&level);
+        root.append(&area);
         let state = Rc::new(RefCell::new(SpectrumState::default()));
         let peak_meter_caption = i18n(PEAK_METER_CAPTION_MSGID);
 
@@ -89,6 +108,10 @@ impl Spectrum {
 
         let widget = Rc::new(Self {
             area,
+            root,
+            level,
+            readout,
+            last_meter_update: Cell::new(None),
             state,
             timer: Cell::new(None),
         });
@@ -99,13 +122,24 @@ impl Spectrum {
     /// GTK widget handle for embedding in a container.
     #[must_use]
     pub fn widget(&self) -> &gtk::Widget {
-        self.area.upcast_ref()
+        self.root.upcast_ref()
     }
 
     /// Push a new frame from the audio monitor. Only stores the target
     /// values — the 30 Hz timer drives the interpolation.
     pub fn push_frame(&self, frame: &SpectrumFrame) {
         self.state.borrow_mut().update_targets(frame);
+        let now = std::time::Instant::now();
+        if self.last_meter_update.get().is_none_or(|previous| now.duration_since(previous) >= Duration::from_millis(250)) {
+            self.last_meter_update.set(Some(now));
+            let rms = finite_db(frame.rms_db);
+            let peak = finite_db(frame.peak_db);
+            self.level.set_value(f64::from(rms));
+            let text = i18n("Level: {level} dB · Peak: {peak} dB")
+                .replace("{level}", &format!("{rms:.0}"))
+                .replace("{peak}", &format!("{peak:.0}"));
+            self.readout.set_text(&text);
+        }
     }
 
     #[cfg(test)]
@@ -138,10 +172,19 @@ impl Spectrum {
         if !self.area.is_mapped() {
             return;
         }
+        let animate = gtk::Settings::default().is_none_or(|settings| settings.is_gtk_enable_animations());
+        if !animate {
+            self.area.queue_draw();
+            return;
+        }
         if self.state.borrow_mut().advance_animation(true) {
             self.area.queue_draw();
         }
     }
+}
+
+fn finite_db(value: f32) -> f32 {
+    if value.is_finite() { value.clamp(-60.0, 0.0) } else { -60.0 }
 }
 
 impl Drop for Spectrum {
