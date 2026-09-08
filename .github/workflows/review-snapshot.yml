@@ -13,17 +13,15 @@ jobs:
     steps:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
         with:
-          ref: dcd1da89e2b5e725a8e0f74fbfc46b89c42791aa
           persist-credentials: false
-      - name: Export tracked source only
+      - name: Archive only the staged text payloads
         run: |
           set -euo pipefail
-          test "$(git rev-parse HEAD)" = dcd1da89e2b5e725a8e0f74fbfc46b89c42791aa
-          git archive --format=tar.gz --output="$RUNNER_TEMP/pr30-source.tar.gz" HEAD
-          sha256sum "$RUNNER_TEMP/pr30-source.tar.gz"
+          tar -czf "$RUNNER_TEMP/review-transport.tar.gz" .github/review/followup/batch-02-part*.b64
+          sha256sum "$RUNNER_TEMP/review-transport.tar.gz"
       - uses: actions/upload-artifact@v4
         with:
-          name: pr30-source-dcd1da8
-          path: ${{ runner.temp }}/pr30-source.tar.gz
+          name: review-transport-batch02
+          path: ${{ runner.temp }}/review-transport.tar.gz
           retention-days: 1
           if-no-files-found: error
