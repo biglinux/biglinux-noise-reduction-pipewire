@@ -6,7 +6,11 @@ use super::constants::{
 };
 
 pub(super) fn db_to_norm(db: f32) -> f32 {
-    ((db - DB_FLOOR) / DB_SPAN).clamp(0.0, 1.0)
+    if db.is_finite() {
+        ((db - DB_FLOOR) / DB_SPAN).clamp(0.0, 1.0)
+    } else {
+        0.0
+    }
 }
 
 pub(super) fn resampled_band_targets(input_bands_db: &[f32]) -> [f32; BAND_COUNT] {
@@ -56,7 +60,7 @@ impl SpectrumState {
             self.peak_level = self.target_peak;
             changed = true;
         } else {
-            self.peak_level = (self.peak_level - METER_PEAK_DECAY).max(0.0);
+            self.peak_level = (self.peak_level - METER_PEAK_DECAY).max(self.target_peak);
             changed |= self.peak_level > 0.01;
         }
 
@@ -68,7 +72,7 @@ impl SpectrumState {
             self.meter_hold_ticks -= 1;
             changed = true;
         } else {
-            self.peak_hold = (self.peak_hold - METER_HOLD_DECAY).max(0.0);
+            self.peak_hold = (self.peak_hold - METER_HOLD_DECAY).max(self.target_peak);
             changed |= self.peak_hold > 0.01;
         }
         changed
@@ -91,7 +95,8 @@ impl SpectrumState {
                 self.band_peak_ticks[band_index] -= 1;
                 changed = true;
             } else {
-                self.peaks[band_index] = (self.peaks[band_index] - PEAK_DECAY).max(0.0);
+                self.peaks[band_index] =
+                    (self.peaks[band_index] - PEAK_DECAY).max(self.bands[band_index]);
             }
         }
         changed

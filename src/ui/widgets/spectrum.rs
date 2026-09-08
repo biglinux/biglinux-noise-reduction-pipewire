@@ -1,25 +1,5 @@
-//! Premium spectrum analyser widget.
-//!
-//! Key design decisions that give it the "award-winning" feel:
-//!
-//! * **30 bands, 3-zone gradient** — green (−60 … −20 dB), orange
-//!   (−20 … −10 dB), red (−10 … 0 dB). A dark-shade version of the
-//!   same gradient renders as a background track so empty bars stay
-//!   readable and keep the zone hint visible.
-//! * **Sticky per-band peaks** — each bar draws a thin peak tick that
-//!   holds for ~0.7 s then decays linearly.
-//! * **30 Hz smoothing loop** — audio-monitor frames arrive at ~94 Hz;
-//!   the widget interpolates current → target at 70 % per frame so
-//!   transients stay responsive with less redraw work.
-//! * **Horizontal peak meter** — LEVEL / PEAK numeric readout plus a
-//!   bar with ruler marks every 10 dB and its own peak-hold indicator.
-//! * **Segmented bars** — each column is cut every 10 dB, giving the
-//!   classic LED-stack look without actually running many widgets.
-//!
-//! The widget owns its animation timer through an internal
-//! `Rc<RefCell<SpectrumState>>`, so multiple [`Spectrum::push_frame`] calls
-//! only update `target_*` fields while the timer handles the rest.
-
+//! Native, accessible microphone level and a supplementary frequency profile.
+//! Text and contrast follow GTK; Cairo draws bars only. No fixed-size toy fonts.
 mod constants;
 mod rendering;
 mod state;
@@ -32,15 +12,13 @@ use glib::SourceId;
 use gtk::prelude::*;
 
 use crate::services::audio_monitor::SpectrumFrame;
-use crate::ui::i18n::{i18n, mark};
+use crate::ui::i18n::i18n;
 
 #[allow(unused_imports)]
 pub use constants::BAND_COUNT;
 use constants::{ANIMATION_FPS, WIDGET_HEIGHT};
 use rendering::draw;
 use state::SpectrumState;
-
-const PEAK_METER_CAPTION_MSGID: &str = mark("LEVEL / PEAK");
 
 #[cfg(test)]
 use constants::{
@@ -95,18 +73,23 @@ impl Spectrum {
         root.append(&readout);
         root.append(&level);
         root.append(&area);
+        root.append(&frequency_legend());
         let state = Rc::new(RefCell::new(SpectrumState::default()));
-        let peak_meter_caption = i18n(PEAK_METER_CAPTION_MSGID);
 
         // Draw callback reads the interpolated state.
         let draw_state = Rc::clone(&state);
-        area.set_draw_func(move |_, cairo_context, w, h| {
+        area.set_draw_func(move |area, cairo_context, w, h| {
+            let color = area.color();
             draw(
                 cairo_context,
                 w,
                 h,
                 &draw_state.borrow(),
-                &peak_meter_caption,
+                (
+                    f64::from(color.red()),
+                    f64::from(color.green()),
+                    f64::from(color.blue()),
+                ),
             );
         });
 
@@ -262,4 +245,27 @@ mod meter_value_tests {
         assert_eq!(super::finite_db(20.0), 0.0);
         assert_eq!(super::finite_db(-18.0), -18.0);
     }
+}
+
+fn frequency_legend() -> gtk::Box {
+    use crate::services::audio_monitor::{AnalyzerConfig, band_range_hz};
+    let row = gtk::Box::builder()
+        .homogeneous(true)
+        .orientation(gtk::Orientation::Horizontal)
+        .build();
+    // Frequency axes run low to high independently of UI reading direction.
+    row.set_direction(gtk::TextDirection::Ltr);
+    let config = AnalyzerConfig::default();
+    for index in [2, 7, 12, 17, 22, 27] {
+        let (low, high) = band_range_hz(&config, index).expect("default frequency band");
+        let hz = (low * high).sqrt();
+        let text = if hz < 1000.0 {
+            format!("{hz:.0} Hz")
+        } else {
+            format!("{:.1} kHz", hz / 1000.0)
+        };
+        let label = gtk::Label::builder().label(&text).wrap(true).build();
+        row.append(&label);
+    }
+    row
 }

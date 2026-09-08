@@ -1,8 +1,7 @@
 //! Plain-data types surfaced by the spectrum analyser.
 
-/// Default number of frequency buckets emitted per frame. The 30-band layout
-/// places the calibrated labels (63 Hz, 180 Hz, 500 Hz, 1.5 kHz, 4 kHz,
-/// 9.5 kHz) on their designated columns.
+/// Default number of logarithmic frequency buckets. Display labels and
+/// FFT-bin assignment derive from the same AnalyzerConfig frequency edges.
 pub const DEFAULT_BAND_COUNT: usize = 30;
 
 /// Default FFT window size (samples). 2048 at 48 kHz ≈ 42 ms, a decent

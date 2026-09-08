@@ -47,6 +47,7 @@ mod tests {
         assert_window_reset_dialog_contract();
         assert_tuning_reset_dialog_contract();
         assert_model_picker_contract();
+        super::widgets::eq_card::assert_interaction_contract();
         assert_spectrum_visibility_contract();
         assert_populate_body_contract();
         assert_window_actions_contract();

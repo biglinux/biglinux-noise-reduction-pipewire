@@ -32,7 +32,9 @@ use async_channel::Sender as AsyncSender;
 use big_os_kit::subprocess::BigSubprocessChild;
 use log::warn;
 
-pub use analyzer::{Analyzer, AnalyzerConfig, amplitude_to_db, hann_window, peak_dbfs, rms_dbfs};
+pub use analyzer::{
+    Analyzer, AnalyzerConfig, amplitude_to_db, band_range_hz, hann_window, peak_dbfs, rms_dbfs,
+};
 use capture::Capture;
 pub use types::{
     DEFAULT_BAND_COUNT, DEFAULT_FFT_SIZE, DEFAULT_HOP_SIZE, DEFAULT_SAMPLE_RATE, Event,

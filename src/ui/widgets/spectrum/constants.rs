@@ -3,7 +3,7 @@
 pub const BAND_COUNT: usize = 30;
 
 /// Drawing area height in logical pixels.
-pub(super) const WIDGET_HEIGHT: i32 = 200;
+pub(super) const WIDGET_HEIGHT: i32 = 120;
 
 /// Animation rate. 30 Hz keeps the bars smooth while bounding redraw and
 /// interpolation work.
@@ -24,7 +24,6 @@ pub(super) const METER_HOLD_DECAY: f32 = 0.01;
 
 pub(super) const BAR_SPACING: f64 = 3.0;
 pub(super) const CORNER_RADIUS: f64 = 2.0;
-pub(super) const BG_RADIUS: f64 = 12.0;
 
 pub(super) const DB_FLOOR: f32 = -60.0;
 /// Height of the displayed range, floor to 0 dBFS.
@@ -34,4 +33,3 @@ pub(super) const DB_FLOOR: f32 = -60.0;
 /// the peak-meter ticks and the grid labels on the old range — the labels
 /// stop annotating the bars they sit next to.
 pub(super) const DB_SPAN: f32 = -DB_FLOOR;
-pub(super) const PEAK_METER_TICK_VALUES: [i32; 5] = [-50, -40, -30, -20, -10];
