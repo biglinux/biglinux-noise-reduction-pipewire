@@ -89,33 +89,36 @@ impl AppSettings {
         let mut value: serde_json::Value = serde_json::from_str(&content)
             .map_err(|error| io::Error::new(io::ErrorKind::InvalidData, error))?;
         if !value.is_object() {
-            return Err(io::Error::new(io::ErrorKind::InvalidData, "settings must be a JSON object"));
+            return Err(io::Error::new(
+                io::ErrorKind::InvalidData,
+                "settings must be a JSON object",
+            ));
         }
-            // Older standalone settings only had the switch. An explicit off
-            // remains off when the automatic mode is introduced.
-            if let Some(echo) = value
-                .get_mut("echo_cancel")
-                .and_then(serde_json::Value::as_object_mut)
-                && !echo.contains_key("mode")
-                && echo.get("enabled") == Some(&serde_json::Value::Bool(false))
-            {
-                echo.insert("mode".into(), "off".into());
-            }
-            if value.get("quality").is_none()
-                && value
-                    .get("noise_reduction")
-                    .and_then(|noise| noise.get("model"))
-                    .is_some()
-                && let Some(settings) = value.as_object_mut()
-            {
-                settings.insert("quality".into(), "manual".into());
-            }
-            if let Some(output) = value
-                .get_mut("output_filter")
-                .and_then(serde_json::Value::as_object_mut)
-            {
-                output.remove("routed_apps");
-            }
+        // Older standalone settings only had the switch. An explicit off
+        // remains off when the automatic mode is introduced.
+        if let Some(echo) = value
+            .get_mut("echo_cancel")
+            .and_then(serde_json::Value::as_object_mut)
+            && !echo.contains_key("mode")
+            && echo.get("enabled") == Some(&serde_json::Value::Bool(false))
+        {
+            echo.insert("mode".into(), "off".into());
+        }
+        if value.get("quality").is_none()
+            && value
+                .get("noise_reduction")
+                .and_then(|noise| noise.get("model"))
+                .is_some()
+            && let Some(settings) = value.as_object_mut()
+        {
+            settings.insert("quality".into(), "manual".into());
+        }
+        if let Some(output) = value
+            .get_mut("output_filter")
+            .and_then(serde_json::Value::as_object_mut)
+        {
+            output.remove("routed_apps");
+        }
         let mut settings: Self = serde_json::from_value(value)
             .map_err(|error| io::Error::new(io::ErrorKind::InvalidData, error))?;
         settings.equalizer.normalize();
