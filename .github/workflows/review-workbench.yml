@@ -1,21 +1,22 @@
 name: Review workbench
 
-# Temporary development helper. It can write only to the review branch and
-# never runs on pull_request, fork, issue, or user-supplied command input.
+# Temporary, branch-scoped development helper. Never handles PR/fork input.
 on:
   push:
     branches: [fix/review-audio-reliability-20260908]
     paths: [.github/review/**, .github/workflows/review-workbench.yml]
 permissions:
   contents: read
-concurrency:
-  group: review-workbench-20260908
-  cancel-in-progress: false
 jobs:
   apply:
     if: github.repository == 'biglinux/biglinux-noise-reduction-pipewire'
     runs-on: ubuntu-latest
     timeout-minutes: 15
+    concurrency:
+      group: review-workbench-apply-20260908
+      cancel-in-progress: false
+    outputs:
+      commit: ${{ steps.publish.outputs.commit }}
     permissions:
       contents: write
     steps:
@@ -32,6 +33,7 @@ jobs:
         with:
           components: rustfmt
       - name: Apply reviewed patches and publish topic commits
+        id: publish
         working-directory: project
         run: |
           set -euo pipefail
@@ -47,4 +49,30 @@ jobs:
             git commit -m 'style: format review fixes with rustfmt'
           fi
           git push origin HEAD:refs/heads/fix/review-reliability-accessibility-20260908
+          echo "commit=$(git rev-parse HEAD)" >> "$GITHUB_OUTPUT"
           git log -12 --oneline
+  validate:
+    needs: apply
+    if: contains(github.event.head_commit.message, '[validate]')
+    runs-on: ubuntu-latest
+    container: archlinux:latest
+    timeout-minutes: 30
+    steps:
+      - run: pacman -Syu --noconfirm --needed git
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ needs.apply.outputs.commit }}
+          persist-credentials: false
+      - uses: ./.github/actions/install-system-deps
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          components: clippy
+      - uses: Swatinem/rust-cache@v2
+        with:
+          shared-key: review-workbench
+      - name: Compile every target
+        run: cargo +stable check --all-targets --all-features --locked
+      - name: Regression tests without a desktop session
+        run: cargo +stable test --all-features --locked -- --test-threads=1
+      - name: Strict lint checks
+        run: cargo +stable clippy --all-targets --all-features --locked -- -D warnings
