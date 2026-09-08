@@ -4,7 +4,8 @@
 # Options:
 #   --fix   Apply autofixes where possible (fmt only)
 #   --full  Include slower local-only checks
-#   --ci    Use the exact gate enforced in CI
+#   --ci    Fail rather than skip a required portable gate; cloud security
+#           checks and the isolated GUI job run separately in GitHub Actions.
 #
 # shellcheck disable=SC2059
 # We embed ANSI color escape variables directly in printf format
@@ -42,7 +43,7 @@ for arg in "$@"; do
             echo "Usage: $0 [--fix] [--full] [--ci]"
             echo "  --fix   Apply autofixes where possible"
             echo "  --full  Include slower local-only checks"
-            echo "  --ci    Use the exact CI gate"
+            echo "  --ci    Fail when a required portable check cannot run"
             exit 0
             ;;
         *) echo "Unknown argument: $arg" >&2; exit 1 ;;
@@ -70,6 +71,13 @@ run_check() {
 skip_check() {
     local name="$1"
     local reason="${2:-not installed}"
+    if $CI; then
+        CHECKS+=("$name")
+        RESULTS+=("fail")
+        FAIL=$((FAIL + 1))
+        printf 'Required check unavailable: %s (%s)\n' "$name" "$reason" >&2
+        return
+    fi
     CHECKS+=("$name")
     printf "\n${YELLOW}━━━ ${BOLD}%s${NC} — ${DIM}skipped (%s)${NC}\n" "$name" "$reason"
     RESULTS+=("skip")
@@ -85,16 +93,16 @@ printf "${CYAN}╚════════════════════�
 
 # 1) Formatting
 if $FIX; then
-    run_check "rustfmt (fix)" cargo fmt
+    run_check "rustfmt (fix)" cargo fmt --all
 else
-    run_check "rustfmt" cargo fmt --check
+    run_check "rustfmt" cargo fmt --all --check
 fi
 
 # 2) Clippy (strict)
-run_check "clippy (strict)" cargo clippy --all-targets --all-features -- -D warnings
+run_check "clippy (strict)" cargo clippy --all-targets --all-features --locked -- -D warnings
 
 # 3) Tests
-run_check "tests" cargo test
+run_check "tests (unit, integration and doctests)" cargo test --all-features --locked
 
 # 4) cargo-deny
 if has_cmd cargo-deny; then
@@ -131,6 +139,16 @@ else
     skip_check "jscpd (dup)" "install: npm install -g jscpd"
 fi
 
+# Translation validation includes source coverage, not just PO syntax.
+if has_cmd xtr && has_cmd xgettext && has_cmd msgcat && has_cmd msgcmp && has_cmd msgmerge && has_cmd msgfmt; then
+    run_check "translation extraction coverage" bash scripts/refresh-pot.sh --check
+    for catalog in po/*.po; do
+        run_check "catalog: $catalog" msgfmt --check --check-header -o /dev/null "$catalog"
+    done
+else
+    skip_check "gettext source coverage" "install gettext and xtr"
+fi
+
 # ── --full extras ──────────────────────────────────────────────────
 if $FULL; then
     if has_cmd typos; then
@@ -160,16 +178,7 @@ if $FULL; then
     # simulate, so it is excluded by listing the safe modules explicitly.
     if rustup toolchain list | grep -q nightly \
        && rustup component list --toolchain nightly 2>/dev/null | grep -q 'miri.*installed'; then
-        run_check "miri (safe-code UB)" bash -c '
-            MIRIFLAGS=-Zmiri-disable-isolation \
-            cargo +nightly miri test --lib -- \
-              config::audio:: \
-              config::echo_cancel:: \
-              config::equalizer:: \
-              config::output_filter:: \
-              config::processing:: \
-              config::ui::
-        '
+        run_check "miri (pure data-model contracts)" bash scripts/test-miri.sh
     else
         skip_check "miri" "install: rustup +nightly component add miri"
     fi
@@ -195,6 +204,9 @@ printf "  ${GREEN}%d passed${NC}  ${RED}%d failed${NC}  ${YELLOW}%d skipped${NC}
 if [[ $FAIL -gt 0 ]]; then
     printf "${RED}${BOLD}  ✗ Quality check FAILED${NC}\n\n"
     exit 1
+elif [[ $SKIP -gt 0 ]]; then
+    printf "Checks completed with %d checks unavailable; not a full approval.\n" "$SKIP"
+    exit 0
 else
     printf "${GREEN}${BOLD}  ✓ Quality check PASSED${NC}\n\n"
     exit 0
