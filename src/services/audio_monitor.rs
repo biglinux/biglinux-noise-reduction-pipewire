@@ -218,6 +218,7 @@ fn run_worker(
 
     let mut analyzer = Analyzer::new(monitor_config.analyzer.clone());
 
+    let mut window = Vec::with_capacity(monitor_config.analyzer.fft_size);
     debug!("audio monitor: loop start");
     while !stop.load(Ordering::Acquire) {
         if !active.load(Ordering::Acquire) {
@@ -233,7 +234,7 @@ fn run_worker(
         if !capture.ready() {
             continue;
         }
-        let window = capture.window_snapshot();
+        capture.copy_window_into(&mut window);
         let frame = analyzer.analyze_samples(&window);
         match tx.try_send(Event::Frame(frame)) {
             // UI is falling behind — drop the frame; the next tick will

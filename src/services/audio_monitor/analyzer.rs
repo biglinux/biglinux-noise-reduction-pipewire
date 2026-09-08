@@ -44,6 +44,9 @@ pub struct Analyzer {
     fft: Arc<dyn Fft<f32>>,
     window: Vec<f32>,
     scratch: Vec<Complex32>,
+    fft_workspace: Vec<Complex32>,
+    magnitudes: Vec<f32>,
+    normalization: f32,
     band_boundaries: Vec<(usize, usize)>,
     seq: u64,
 }
@@ -51,16 +54,30 @@ pub struct Analyzer {
 impl Analyzer {
     #[must_use]
     pub fn new(configuration: AnalyzerConfig) -> Self {
+        assert!(configuration.fft_size >= 4, "FFT window must contain at least four samples");
+        assert!(configuration.sample_rate > 0, "sample rate must be nonzero");
+        assert!(configuration.band_count > 0 && configuration.band_count <= configuration.fft_size / 2,
+            "band count must fit the FFT bins");
+        assert!(configuration.min_hz.is_finite() && configuration.max_hz.is_finite()
+            && configuration.min_hz > 0.0 && configuration.max_hz > configuration.min_hz
+            && configuration.min_hz < configuration.sample_rate as f32 / 2.0,
+            "frequency range must be finite, ordered and below Nyquist");
         let mut planner = FftPlanner::<f32>::new();
         let fft = planner.plan_fft_forward(configuration.fft_size);
         let window = hann_window(configuration.fft_size);
         let scratch = vec![Complex32::new(0.0, 0.0); configuration.fft_size];
+        let fft_workspace = vec![Complex32::new(0.0, 0.0); fft.get_inplace_scratch_len()];
+        let magnitudes = vec![0.0; configuration.fft_size / 2];
+        let normalization = 2.0 / window.iter().sum::<f32>();
         let band_boundaries = log_band_boundaries(&configuration);
         Self {
             configuration,
             fft,
             window,
             scratch,
+            fft_workspace,
+            magnitudes,
+            normalization,
             band_boundaries,
             seq: 0,
         }
@@ -82,16 +99,15 @@ impl Analyzer {
             self.scratch[i] = Complex32::new(s * self.window[i], 0.0);
         }
 
-        self.fft.process(&mut self.scratch);
+        self.fft.process_with_scratch(&mut self.scratch, &mut self.fft_workspace);
 
         // Magnitude spectrum, normalised for the Hann window sum so a
         // full-scale tone at bin `k` reads close to 0 dBFS.
-        let norm = 2.0 / self.window.iter().sum::<f32>();
         let half = self.configuration.fft_size / 2;
-        let mut mag = vec![0.0_f32; half];
-        for (i, m) in mag.iter_mut().enumerate() {
-            *m = self.scratch[i].norm() * norm;
+        for (value, sample) in self.magnitudes.iter_mut().zip(&self.scratch) {
+            *value = sample.norm() * self.normalization;
         }
+        let mag = &self.magnitudes;
 
         let bands_db: Vec<f32> = self
             .band_boundaries
@@ -211,6 +227,18 @@ fn log_band_boundaries(configuration: &AnalyzerConfig) -> Vec<(usize, usize)> {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn repeated_analysis_reuses_its_working_storage() {
+        let mut analyzer = Analyzer::new(AnalyzerConfig::default());
+        let input = vec![0.0; analyzer.configuration.fft_size];
+        let buffers = (analyzer.scratch.as_ptr(), analyzer.fft_workspace.as_ptr(), analyzer.magnitudes.as_ptr());
+        for _ in 0..100 {
+            let frame = analyzer.analyze_samples(&input);
+            assert!(frame.bands_db.iter().all(|value| value.is_finite()));
+            assert_eq!(buffers, (analyzer.scratch.as_ptr(), analyzer.fft_workspace.as_ptr(), analyzer.magnitudes.as_ptr()));
+        }
+    }
 
     #[test]
     fn hann_window_endpoints_are_zero() {

@@ -31,7 +31,7 @@ use log::debug;
 const MARKED_AS_A_METER: &str = concat!(
     "{ media.role=monitor media.category=Monitor",
     " application.id=br.com.biglinux.microphone",
-    " application.name=Filter noise",
+    " application.name=\"Filter noise\"",
     " node.name=biglinux-microphone.meter.spectrum",
     " node.description=\"Filter noise — analisador de espectro\" }",
 );
@@ -115,7 +115,7 @@ impl Capture {
     }
 
     /// True when at least one full window of audio has accumulated and a
-    /// call to [`Self::window_snapshot`] will produce meaningful data.
+    /// call to [`Self::copy_window_into`] will produce meaningful data.
     #[must_use]
     pub(super) fn ready(&self) -> bool {
         self.samples_read >= self.fft_size
@@ -134,7 +134,7 @@ impl Capture {
         })?;
 
         for chunk in self.read_buf.chunks_exact(4) {
-            let sample = f32::from_le_bytes([chunk[0], chunk[1], chunk[2], chunk[3]]);
+            let sample = f32::from_ne_bytes([chunk[0], chunk[1], chunk[2], chunk[3]]);
             self.ring[self.write_pos] = sample;
             self.write_pos = (self.write_pos + 1) % self.fft_size;
             self.samples_read = self.samples_read.saturating_add(1);
@@ -142,16 +142,13 @@ impl Capture {
         Ok(self.hop_size)
     }
 
-    /// Copy the current ring buffer contents into a linear slice ordered
-    /// oldest → newest. Allocates once per frame; at 94 Hz on 2048-float
-    /// windows that's ~770 KiB/s, negligible for a desktop app.
-    #[must_use]
-    pub(super) fn window_snapshot(&self) -> Vec<f32> {
-        let mut out = Vec::with_capacity(self.fft_size);
+    /// Copy into reusable caller-owned storage in chronological order.
+    pub(super) fn copy_window_into(&self, out: &mut Vec<f32>) {
+        out.clear();
         out.extend_from_slice(&self.ring[self.write_pos..]);
         out.extend_from_slice(&self.ring[..self.write_pos]);
-        out
     }
+
 }
 
 impl Drop for Capture {
