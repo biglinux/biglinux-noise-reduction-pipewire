@@ -127,7 +127,7 @@ pub fn build() -> gtk::Widget {
         if let Some(content) = content_weak.upgrade() {
             match result {
                 Ok(Ok((tweaks, revision))) => {
-                    populate_tuning_page(&content, tweaks, Some(revision))
+                    populate_tuning_page(&content, tweaks, Some(revision));
                 }
                 other => {
                     log::warn!("tuning configuration could not be read: {other:?}");

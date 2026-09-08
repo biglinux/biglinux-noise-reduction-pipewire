@@ -268,7 +268,7 @@ mod tests {
         assert!(readout.text().contains("-30"));
         assert!(readout.text().contains("-6"));
         for offset in ["low", "high", "full"] {
-            assert!((0.0..=1.0).contains(&meter.offset_value(offset).unwrap()));
+            assert!((0.0..=1.0).contains(&meter.offset_value(Some(offset)).unwrap()));
         }
     }
 

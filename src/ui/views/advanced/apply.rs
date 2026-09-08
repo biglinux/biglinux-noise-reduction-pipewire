@@ -7,7 +7,9 @@ use crate::services::system_audio::restart_pipewire_user_stack;
 
 use super::super::super::app_kit_edges::dialogs;
 use super::super::super::i18n::i18n;
-use super::{TuningRevision, TuningSelection, UserTweaks, refresh_banner};
+#[cfg(test)]
+use super::UserTweaks;
+use super::{TuningRevision, TuningSelection, refresh_banner};
 
 // ── Apply / Reset ────────────────────────────────────────────────────
 
