@@ -12,6 +12,7 @@ use crate::config::GETTEXT_PACKAGE;
 /// Translate a string through the application gettext domain.
 #[must_use]
 pub fn i18n(s: &str) -> String {
+    if s.is_empty() { return String::new(); }
     gettextrs::dgettext(GETTEXT_PACKAGE, s)
 }
 
@@ -96,4 +97,12 @@ mod tests {
 /// This must not translate at startup, before the locale is initialized.
 pub const fn mark(message: &'static str) -> &'static str {
     message
+}
+
+#[cfg(test)]
+mod empty_message_contract {
+    #[test]
+    fn empty_ui_text_does_not_return_the_gettext_header() {
+        assert!(super::i18n("").is_empty());
+    }
 }
