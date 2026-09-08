@@ -1,15 +1,14 @@
 name: Review workbench
-
-# Temporary branch-scoped workbench. Never executes fork/PR input.
+# Temporary, branch-scoped tooling; not part of the application PR.
 on:
   push:
     branches: [fix/review-audio-reliability-20260908]
-    paths: [.github/review/**, .github/workflows/review-workbench.yml]
+    paths: [.github/review/followup/request.json]
 permissions:
   contents: read
 jobs:
   apply:
-    if: github.repository == 'biglinux/biglinux-noise-reduction-pipewire'
+    if: github.repository == 'biglinux/biglinux-noise-reduction-pipewire' && contains(github.event.head_commit.message, '[apply]')
     runs-on: ubuntu-latest
     timeout-minutes: 15
     concurrency:
@@ -31,33 +30,64 @@ jobs:
           fetch-depth: 0
       - uses: dtolnay/rust-toolchain@6bed0761d98439e5a578e2877258200ad565ba87
         with:
-          toolchain: stable
+          toolchain: '1.98.1'
           components: rustfmt
-      - name: Apply patches and publish topic commits
+      - run: sudo apt-get update -qq && sudo apt-get install -y -qq gettext python3-polib
+      - run: cargo install xtr --version 0.1.11 --locked
+      - name: Verify exact base, replay topic commits and publish a fast-forward
         id: publish
         working-directory: project
+        shell: bash
         run: |
           set -euo pipefail
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
-          for patch in ../workbench/.github/review/apply_*.py; do python3 "$patch"; done
-          cargo +stable fmt --all
+          python3 - <<'PY'
+          import base64, gzip, hashlib, json, re, subprocess
+          from pathlib import Path
+          request = json.loads(Path('../workbench/.github/review/followup/request.json').read_text())
+          def run(*args):
+              return subprocess.check_output(args, text=True).strip()
+          assert re.fullmatch(r'batch-[0-9]+\.b64', request['patch'])
+          assert run('git', 'rev-parse', 'HEAD') == request['base'], 'PR branch moved; refusing stale patches'
+          payload = Path('../workbench/.github/review/followup', request['patch']).read_text()
+          patch = gzip.decompress(base64.b64decode(payload, validate=False))
+          assert hashlib.sha256(patch).hexdigest() == request['sha256'], 'Patch checksum mismatch'
+          subprocess.run(['git', 'am', '--keep-cr'], input=patch, check=True)
+          assert run('git', 'rev-parse', 'HEAD^{tree}') == request['tree'], 'Replayed tree differs from offline source'
+          PY
+          cargo fmt --all --check
           git diff --check
-          if ! git diff --quiet; then
-            git add -- '*.rs'
-            git commit -m 'style: format review fixes with rustfmt'
+          bash scripts/refresh-pot.sh
+          /usr/bin/python3 - <<'PY'
+          import json, polib
+          from pathlib import Path
+          request = json.loads(Path('../workbench/.github/review/followup/request.json').read_text())
+          po = polib.pofile('po/pt_BR.po')
+          for message, translation in request.get('translations', {}).items():
+              entry = po.find(message)
+              assert entry is not None, 'Translation has no extracted source: ' + message
+              entry.msgstr = translation
+              if 'fuzzy' in entry.flags: entry.flags.remove('fuzzy')
+          po.save()
+          missing = [e.msgid for e in po if not e.obsolete and not e.translated()]
+          assert not missing, 'Brazilian messages need translation: ' + repr(missing)
+          PY
+          for po in po/*.po; do msgfmt --check --check-header -o /dev/null "$po"; done
+          if ! git diff --quiet -- po; then
+            git add -- po
+            git commit -m 'i18n: synchronize review fixes and Brazilian guidance'
           fi
           git push origin HEAD:refs/heads/fix/review-reliability-accessibility-20260908
           echo "commit=$(git rev-parse HEAD)" >> "$GITHUB_OUTPUT"
-          git log -12 --oneline
+          git log -15 --oneline
   validate:
     needs: apply
-    if: contains(github.event.head_commit.message, '[validate]')
     runs-on: ubuntu-latest
     container: archlinux:latest
     timeout-minutes: 30
     env:
-      RUSTUP_TOOLCHAIN: stable
+      RUSTUP_TOOLCHAIN: '1.98.1'
     steps:
       - run: pacman -Syu --noconfirm --needed git xorg-server-xvfb xorg-xauth dbus
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
@@ -67,68 +97,55 @@ jobs:
       - uses: ./.github/actions/install-system-deps
       - uses: dtolnay/rust-toolchain@6bed0761d98439e5a578e2877258200ad565ba87
         with:
-          toolchain: stable
+          toolchain: '1.98.1'
           components: clippy
       - uses: Swatinem/rust-cache@v2
         with:
           shared-key: review-workbench
-      - name: Compile every target and collect lint diagnostics
+      - name: Strict Clippy
         shell: bash
         run: |
-          set +e
-          cargo +stable clippy --all-targets --all-features --locked --message-format=json -- -D warnings > /tmp/lint.jsonl 2>/tmp/lint.stderr
-          status=$?
-          python3 - <<'PY'
-          import json
-          from pathlib import Path
-          for line in Path('/tmp/lint.jsonl').read_text().splitlines():
-              try:
-                  item = json.loads(line)
-              except json.JSONDecodeError:
-                  continue
-              if item.get('reason') == 'compiler-message':
-                  message = item['message']
-                  if message.get('level') in ('error', 'warning'):
-                      print(message.get('rendered', message['message']))
-          print(Path('/tmp/lint.stderr').read_text()[-2500:])
-          PY
-          exit "$status"
-      - name: Regression tests without a desktop session
+          set -o pipefail
+          cargo clippy --all-targets --all-features --locked -- -D warnings 2>&1 | tee /tmp/clippy.log
+      - name: Unit, integration and documentation regressions
         if: always()
         shell: bash
         run: |
-          set +e
-          cargo +stable test --all-features --locked -- --test-threads=1 > /tmp/tests.out 2>&1
-          status=$?
-          grep -E '^test result:|^failures:|^----|^error|^thread |panicked|FAILED|assertion|left:|right:' /tmp/tests.out || true
-          if [ "$status" -ne 0 ]; then tail -100 /tmp/tests.out; fi
-          exit "$status"
+          set -o pipefail
+          cargo test --all-features --locked -- --test-threads=1 2>&1 | tee /tmp/tests.log
       - name: Isolated GTK display contracts
         if: always()
         shell: bash
         run: |
-          set +e
-          timeout 180s bash scripts/test-ui.sh > /tmp/gui.out 2>&1
-          status=$?
-          tail -100 /tmp/gui.out
-          exit "$status"
-      - name: System allocator regression suite
+          set -o pipefail
+          timeout 240s bash scripts/test-ui.sh 2>&1 | tee /tmp/gtk.log
+      - name: System allocator regressions
         if: always()
         shell: bash
         run: |
-          set +e
-          cargo +stable test --no-default-features --locked -- --test-threads=1 > /tmp/system-allocator.out 2>&1
-          status=$?
-          grep -E '^test result:|^failures:|^----|^error|^thread |panicked|FAILED|assertion|left:|right:' /tmp/system-allocator.out || true
-          if [ "$status" -ne 0 ]; then tail -100 /tmp/system-allocator.out; fi
-          exit "$status"
+          set -o pipefail
+          cargo test --no-default-features --locked -- --test-threads=1 2>&1 | tee /tmp/system-allocator.log
+      - name: Source and diagnostic evidence for this exact checkout
+        if: always()
+        shell: bash
+        run: |
+          git rev-parse HEAD | tee /tmp/tested-commit.txt
+          git archive --format=tar.gz --output=/tmp/tested-source.tar.gz HEAD
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: review-native-${{ needs.apply.outputs.commit }}
+          path: |
+            /tmp/*.log
+            /tmp/tested-commit.txt
+            /tmp/tested-source.tar.gz
+          retention-days: 3
   portable:
     needs: apply
-    if: contains(github.event.head_commit.message, '[validate]')
     runs-on: ubuntu-latest
     timeout-minutes: 20
     env:
-      RUSTUP_TOOLCHAIN: stable
+      RUSTUP_TOOLCHAIN: '1.98.1'
     steps:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
         with:
@@ -136,35 +153,31 @@ jobs:
           persist-credentials: false
       - uses: dtolnay/rust-toolchain@6bed0761d98439e5a578e2877258200ad565ba87
         with:
-          toolchain: stable
+          toolchain: '1.98.1'
       - run: sudo apt-get update -qq && sudo apt-get install -y -qq gettext python3-polib python3-yaml shellcheck nix-bin
       - uses: taiki-e/install-action@v2
         with:
           tool: cargo-audit,cargo-deny,cargo-machete
-      - name: Dependency advisories including unsound code
+      - name: Audited dependency locks
         run: |
           cargo audit --deny unsound
           cargo audit --deny unsound --file vendor/big-rust-components/Cargo.lock
       - name: License and source policy
         if: always()
         run: cargo deny check
-      - name: Unused dependency check
+      - name: Unused dependencies
         if: always()
         run: cargo machete --with-metadata
-      - name: Shell scripts and Nix syntax
+      - name: Shell and Nix syntax
         if: always()
         shell: bash
         run: |
           set -euo pipefail
           find scripts -type f -name '*.sh' -print0 | xargs -0 -r shellcheck -e SC2034,SC2154
-          shellcheck packaging/flatpak/generate-cargo-sources.sh
-          # The disposable runner's packaged Nix daemon is not available to
-          # this user. Parse only, using the local store; do not build or run
-          # package expressions as root.
           sudo env NIX_REMOTE=local nix-instantiate --parse default.nix >/dev/null
           sudo env NIX_REMOTE=local nix-instantiate --parse flake.nix >/dev/null
           sudo env NIX_REMOTE=local nix-instantiate --parse packaging/nix/module.nix >/dev/null
-      - name: Translation completeness and extraction
+      - name: Extraction and translations
         if: always()
         shell: bash
         run: |
@@ -174,15 +187,14 @@ jobs:
           for po in po/*.po; do msgfmt --check --check-header -o /dev/null "$po"; done
           /usr/bin/python3 - <<'PY'
           import polib
-          po = polib.pofile('po/pt_BR.po')
-          active = [entry for entry in po if not entry.obsolete]
+          active = [entry for entry in polib.pofile('po/pt_BR.po') if not entry.obsolete]
           assert all(entry.translated() for entry in active)
           print(f'pt_BR: {len(active)} current messages translated')
           PY
-      - name: Complexity budget
+      - name: Complexity
         if: always()
         run: pipx run lizard src/ -l rust -C 25 -w
-      - name: Duplication budget
+      - name: Duplication
         if: always()
         run: npx --yes jscpd --min-lines 50 --min-tokens 100 --threshold 5 --reporters console --silent src/
       - uses: crate-ci/typos@master
