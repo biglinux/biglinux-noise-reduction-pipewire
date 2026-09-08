@@ -26,7 +26,11 @@ depends=(
 	'gcc-libs'
 )
 makedepends=(
-	'rust>=1.97.1'
+	# Unversioned on purpose: rustup declares `provides=(rust)` without a
+	# version, so a versioned floor here makes makepkg refuse to build on
+	# every developer machine that gets its toolchain from rustup. The
+	# minimum version lives in rust-toolchain.toml and the MSRV CI job.
+	'rust'
 	'cargo'
 	'gettext'
 	'desktop-file-utils'
