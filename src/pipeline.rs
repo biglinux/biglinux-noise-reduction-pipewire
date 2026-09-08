@@ -240,7 +240,11 @@ mod tests {
         let args = args_dir(&dir);
         apply_to_dir(&AppSettings::default(), &args).unwrap();
         assert!(fs::read_dir(&args).unwrap().all(|entry| {
-            entry.unwrap().path().extension().is_none_or(|extension| extension != "tmp")
+            entry
+                .unwrap()
+                .path()
+                .extension()
+                .is_none_or(|extension| extension != "tmp")
         }));
     }
 
