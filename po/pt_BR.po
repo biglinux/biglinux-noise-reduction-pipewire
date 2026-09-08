@@ -12,179 +12,39 @@ msgstr ""
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 
-#: src/ui/health.rs:46
-msgid "The audio system (PipeWire) is not responding."
-msgstr "O sistema de áudio (PipeWire) não está respondendo."
-
-#: src/ui/health.rs:47
-msgid "Log out and back in, then reopen this window."
-msgstr "Encerre a sessão e entre novamente, depois reabra esta janela."
-
-#: src/ui/health.rs:58
-msgid "The noise-reduction engine is not installed."
-msgstr "O motor de redução de ruído não está instalado."
-
-#: src/ui/health.rs:59
-msgid "Install the gtcrn-ladspa package, then check again."
-msgstr "Instale o pacote gtcrn-ladspa e verifique novamente."
-
-#: src/ui/health.rs:64
-msgid "The noise-reduction engine cannot start."
-msgstr "O motor de redução de ruído não consegue iniciar."
-
-#: src/ui/health.rs:66
+#: src/ui/views/output.rs:85
 msgid ""
-"Its inference runtime is missing. Reinstall the gtcrn-ladspa package, then "
-"check again."
+"10-band parametric EQ on what you hear. Pick a preset or drag each band "
+"between -40 dB and +40 dB."
 msgstr ""
-"A biblioteca de inferência não foi encontrada. Reinstale o pacote gtcrn-"
-"ladspa e verifique novamente."
+"Equalizador paramétrico de 10 bandas no que você ouve. Escolha uma "
+"predefinição ou arraste cada banda entre -40 dB e +40 dB."
 
-#: src/ui/health.rs:73
-msgid "The background audio services are not installed."
-msgstr "Os serviços de áudio em segundo plano não estão instalados."
-
-#: src/ui/health.rs:74
-msgid "Reinstall Filter noise, then log out and back in."
-msgstr "Reinstale o Filtro de ruído e encerre e inicie a sessão novamente."
-
-#: src/ui/mic_shell.rs:218 src/ui/window.rs:227
-msgid "Filter noise"
-msgstr "Filtro de ruído"
-
-#: src/ui/mic_shell.rs:266 src/ui/mic_shell.rs:693
-msgid "Checking the audio system…"
-msgstr "Verificando o sistema de áudio…"
-
-#: src/ui/mic_shell.rs:683
-msgid "Try again"
-msgstr "Tentar novamente"
-
-#: src/ui/mic_shell.rs:746
-msgid "The audio system check failed unexpectedly."
-msgstr "A verificação do sistema de áudio falhou inesperadamente."
-
-#: src/ui/mic_shell.rs:748
-msgid "Check again, or run biglinux-microphone-cli doctor in a terminal."
-msgstr ""
-"Verifique novamente, ou execute biglinux-microphone-cli doctor em um "
-"terminal."
-
-#: src/ui/mic_shell.rs:808
+#: src/ui/views/advanced.rs:500
 msgid ""
-"Could not stop the audio monitor safely. Close the window again to retry."
+"A small extra reserve for USB headsets, microphones and external audio "
+"interfaces. Increase only if you hear tiny cuts or pops on a USB device when "
+"the computer is busy."
 msgstr ""
-"Não foi possível parar o monitor de áudio com segurança. Feche a janela "
-"novamente para tentar de novo."
+"Uma pequena reserva extra para fones, microfones e interfaces de áudio USB. "
+"Aumente apenas se você ouvir pequenos cortes ou estalos em um dispositivo "
+"USB quando o computador está ocupado."
 
-#: src/ui/mic_shell.rs:837
-msgid "Check again"
-msgstr "Verificar novamente"
+#: src/ui/views/output.rs:64
+msgid "AI noise reduction"
+msgstr "Redução de ruído com IA"
 
-#: src/ui/mic_shell.rs:847
-msgid "Could not apply the audio settings:"
-msgstr "Não foi possível aplicar as configurações de áudio:"
+#: src/ui/window.rs:262 src/ui/window.rs:427
+msgid "About Filter noise"
+msgstr "Sobre o Filtro de ruído"
 
-#: src/ui/window.rs:72 src/ui/widgets/source_picker.rs:92
-msgid "Microphone"
-msgstr "Microfone"
-
-#: src/ui/window.rs:78
-msgid "Output filter"
-msgstr "Filtro de saída"
-
-#: src/ui/window.rs:84
-msgid "Tuning"
-msgstr "Ajustes"
-
-#: src/ui/window.rs:137 src/ui/window.rs:143
-msgid "Advanced"
-msgstr "Avançado"
-
-#: src/ui/window.rs:142
-msgid "Show every control individually"
-msgstr "Mostrar cada controle individualmente"
-
-#: src/ui/window.rs:201
-msgid "Restore default settings?"
-msgstr "Restaurar configurações padrão?"
-
-#: src/ui/window.rs:203
+#: src/ui/widgets/source_picker.rs:98
 msgid ""
-"All audio processing settings will return to their factory values. Your "
-"window size and view preferences are kept."
+"Above 100% may distort your voice. Lower the volume if the level meter "
+"reaches the top."
 msgstr ""
-"Todas as configurações de processamento de áudio voltarão aos valores de "
-"fábrica. O tamanho da janela e as preferências de exibição são mantidos."
 
-#: src/ui/window.rs:206 src/ui/views/advanced/apply.rs:94
-msgid "Cancel"
-msgstr "Cancelar"
-
-#: src/ui/window.rs:208 src/ui/views/advanced.rs:187
-msgid "Restore defaults"
-msgstr "Restaurar padrões"
-
-#: src/ui/window.rs:236
-msgid ""
-"Real-time noise filter for microphone capture and system audio playback. "
-"Powered by the GTCRN neural network running as a LADSPA plugin on top of "
-"PipeWire — every filter is driven by a WirePlumber smart-filter so the "
-"default source and sink stay clean even after device changes."
-msgstr ""
-"Filtro de ruído em tempo real para a captura do microfone e a reprodução de "
-"áudio do sistema. Movido pela rede neural GTCRN executada como um plugin "
-"LADSPA sobre o PipeWire — cada filtro é controlado por um smart-filter do "
-"WirePlumber, de modo que a fonte e o destino padrão permaneçam limpos mesmo "
-"após trocas de dispositivo."
-
-#: src/ui/window.rs:243
-msgid "Built on"
-msgstr "Desenvolvido com"
-
-#: src/ui/views/advanced/apply.rs:31
-msgid "Restarting audio…"
-msgstr "Reiniciando o áudio…"
-
-#: src/ui/views/advanced/apply.rs:57 src/ui/views/advanced.rs:192
-msgid "Apply and restart audio"
-msgstr "Aplicar e reiniciar o áudio"
-
-#: src/ui/views/advanced/apply.rs:67
-msgid "Failed to write configuration"
-msgstr "Falha ao gravar a configuração"
-
-#: src/ui/views/advanced/apply.rs:69 src/ui/views/advanced/apply.rs:74
-#: src/ui/widgets/wp_override_warning.rs:165
-#: src/ui/widgets/wp_override_warning.rs:177
-msgid "OK"
-msgstr "OK"
-
-#: src/ui/views/advanced/apply.rs:74
-msgid "Audio service restart failed"
-msgstr "Falha ao reiniciar o serviço de áudio"
-
-#: src/ui/views/advanced/apply.rs:89
-msgid "Restore default audio settings?"
-msgstr "Restaurar as configurações de áudio padrão?"
-
-#: src/ui/views/advanced/apply.rs:91
-msgid ""
-"All your custom audio settings will be removed and the audio service will "
-"restart with the defaults."
-msgstr ""
-"Todas as suas configurações de áudio personalizadas serão removidas e o "
-"serviço de áudio reiniciará com os padrões."
-
-#: src/ui/views/advanced/apply.rs:96
-msgid "Restore"
-msgstr "Restaurar"
-
-#: src/ui/views/advanced.rs:90
-msgid "The standard audio settings are in use."
-msgstr "As configurações de áudio padrão estão em uso."
-
-#: src/ui/views/advanced.rs:97
+#: src/ui/views/advanced.rs:145
 msgid ""
 "Adjust how the system drives your audio hardware. Each card starts on the "
 "default we tested across a wide range of machines — change a value only if "
@@ -194,57 +54,146 @@ msgstr ""
 "no padrão que testamos em uma ampla variedade de máquinas — altere um valor "
 "apenas se tiver um motivo específico."
 
-#. ── Bluetooth ────────────────────────────────────────────────────
-#: src/ui/views/advanced.rs:114
-msgid "Bluetooth"
-msgstr "Bluetooth"
+#: src/ui/window.rs:230 src/ui/window.rs:236
+msgid "Advanced"
+msgstr "Avançado"
 
-#. ── Estabilidade e desempenho ────────────────────────────────────
-#: src/ui/views/advanced.rs:120
-msgid "Stability and performance"
-msgstr "Estabilidade e desempenho"
-
-#. ── Qualidade de som ─────────────────────────────────────────────
-#: src/ui/views/advanced.rs:127
-msgid "Sound quality"
-msgstr "Qualidade do som"
-
-#: src/ui/views/advanced.rs:225
-msgid "Bluetooth call mode"
-msgstr "Modo de chamada Bluetooth"
-
-#: src/ui/views/advanced.rs:227
+#: src/ui/window.rs:296
 msgid ""
-"When you start a video or voice call, your Bluetooth headset can switch to a "
-"special call mode that turns on the microphone — but the sound becomes mono "
-"and lower quality, like an old phone. This is off by default so music and "
-"movies stay in full quality even when an app asks for the microphone. Turn "
-"it on if you rely on the headset's microphone for calls."
+"All audio processing settings will return to their factory values. Your "
+"window size and view preferences are kept."
 msgstr ""
-"Quando você inicia uma chamada de vídeo ou voz, o seu fone Bluetooth pode "
-"alternar para um modo de chamada especial que liga o microfone — mas o som "
-"fica mono e com qualidade menor, como em um telefone antigo. Isso vem "
-"desligado por padrão para que músicas e filmes permaneçam em qualidade total "
-"mesmo quando um aplicativo pede o microfone. Ligue se você depende do "
-"microfone do fone para chamadas."
+"Todas as configurações de processamento de áudio voltarão aos valores de "
+"fábrica. O tamanho da janela e as preferências de exibição são mantidos."
 
-#: src/ui/views/advanced.rs:239
-msgid "On — switch to call mode automatically"
-msgstr "Ligado — alternar para o modo de chamada automaticamente"
+#: src/ui/views/advanced.rs:588
+msgid ""
+"All audio runs at studio quality (48 kHz) by default. Hi-res music players "
+"and high-end USB DACs can play higher quality if you allow it here, but "
+"every change between qualities causes a brief audio reload. Keep the default "
+"unless you actually own hi-res equipment."
+msgstr ""
+"Todo o áudio funciona em qualidade de estúdio (48 kHz) por padrão. "
+"Reprodutores de música de alta resolução e DACs USB topo de linha podem "
+"reproduzir em qualidade maior se você permitir aqui, mas cada mudança entre "
+"qualidades causa uma breve recarga do áudio. Mantenha o padrão a menos que "
+"você realmente tenha equipamento de alta resolução."
 
-#: src/ui/views/advanced.rs:240
-msgid "Off — always keep stereo sound (default)"
-msgstr "Desligado — manter sempre o som estéreo (padrão)"
+#: src/ui/views/advanced/apply.rs:118
+msgid ""
+"All your custom audio settings will be removed and the audio service will "
+"restart with the defaults."
+msgstr ""
+"Todas as suas configurações de áudio personalizadas serão removidas e o "
+"serviço de áudio reiniciará com os padrões."
 
-#: src/ui/views/advanced.rs:250
+#: src/ui/views/advanced.rs:607
+msgid "Allow hi-res audio (44.1 / 48 / 88.2 / 96 / 176.4 / 192 kHz)"
+msgstr ""
+"Permitir áudio de alta resolução (44.1 / 48 / 88.2 / 96 / 176.4 / 192 kHz)"
+
+#: src/ui/views/advanced.rs:620
+msgid "Allowed quality"
+msgstr "Qualidade permitida"
+
+#: src/ui/views/mic.rs:107
+msgid "Always"
+msgstr "Sempre"
+
+#: src/ui/views/advanced.rs:563
+msgid "Always keep the speakers ready (recommended on desktops)"
+msgstr "Manter os alto-falantes sempre prontos (recomendado em desktops)"
+
+#: src/ui/mic_shell.rs:724
+msgid ""
+"Another application may be changing the settings, or the settings file is "
+"not writable. Try again, keep this window open, or close without saving your "
+"latest changes."
+msgstr ""
+
+#: usr/share/plasma/plasmoids/br.com.biglinux.micnoise/contents/ui/main.qml:164
+msgid "Applies your selected effects to the sound you hear."
+msgstr ""
+
+#: src/ui/views/advanced.rs:244
+msgid "Apply and restart audio"
+msgstr "Aplicar e reiniciar o áudio"
+
+#: src/ui/views/advanced.rs:259
+#, fuzzy
+msgid "Applying audio settings…"
+msgstr "Não foi possível aplicar as configurações de áudio:"
+
+#: src/ui/views/output.rs:68
+msgid "Audio enhancements"
+msgstr "Aprimoramentos de áudio"
+
+#: usr/share/plasma/plasmoids/br.com.biglinux.micnoise/contents/ui/main.qml:120
+msgid "Audio needs attention. Open the controls for details."
+msgstr ""
+
+#: src/ui/views/advanced.rs:400
+msgid "Audio responsiveness"
+msgstr "Responsividade do áudio"
+
+#: src/ui/views/advanced/apply.rs:101
+msgid "Audio service restart failed"
+msgstr "Falha ao reiniciar o serviço de áudio"
+
+#: src/ui/views/mic.rs:107 src/ui/views/mic.rs:142
+msgid "Automatic"
+msgstr "Automático"
+
+#: src/ui/views/mic.rs:127
+msgid ""
+"Automatic cancels speaker echo and turns off cancellation when headphones "
+"are in use."
+msgstr ""
+"O modo automático cancela o eco dos alto-falantes e desativa o cancelamento "
+"ao usar fones de ouvido."
+
+#: src/ui/views/mic.rs:168
+msgid ""
+"Automatic chooses a model for this computer. Choose lower CPU use if sound "
+"stutters, or select a model in Advanced."
+msgstr ""
+"O modo automático escolhe um modelo para este computador. Escolha um menor "
+"uso de CPU se o som falhar, ou selecione um modelo em Avançado."
+
+#: src/ui/views/advanced.rs:549
+msgid "Avoid the click at the start of sounds"
+msgstr "Evitar o clique no início dos sons"
+
+#: src/ui/views/advanced.rs:415
+msgid "Balanced (upstream PipeWire default, ~21 ms)"
+msgstr "Equilibrado (padrão do PipeWire, ~21 ms)"
+
+#: src/ui/widgets/eq_card.rs:168
+msgid "Bass cut"
+msgstr "Corte de graves"
+
+#: src/ui/views/advanced.rs:322
 msgid "Behaviour"
 msgstr "Comportamento"
 
-#: src/ui/views/advanced.rs:257
+#: src/ui/views/mic.rs:143
+msgid "Best quality"
+msgstr "Melhor qualidade"
+
+#. ── Bluetooth ────────────────────────────────────────────────────
+#: src/ui/views/advanced.rs:165
+msgid "Bluetooth"
+msgstr "Bluetooth"
+
+#: src/ui/views/advanced.rs:329
 msgid "Bluetooth audio buffer"
 msgstr "Buffer de áudio do Bluetooth"
 
-#: src/ui/views/advanced.rs:259
+#: src/ui/views/advanced.rs:296
+msgid "Bluetooth call mode"
+msgstr "Modo de chamada Bluetooth"
+
+#: src/ui/views/advanced.rs:331
 msgid ""
 "Bluetooth needs a small audio reserve so the sound plays smoothly even when "
 "the wireless connection has tiny stutters. A bigger reserve hides hiccups "
@@ -257,58 +206,239 @@ msgstr ""
 "mantenha o padrão a menos que o seu fone falhe ou você precise de áudio mais "
 "rápido."
 
-#: src/ui/views/advanced.rs:270
-msgid "Lower delay (needs a stable headset, ~11 ms)"
-msgstr "Menor atraso (precisa de um fone estável, ~11 ms)"
+#: src/ui/widgets/eq_card.rs:166
+msgid "Bright"
+msgstr "Brilhante"
 
-#: src/ui/views/advanced.rs:273
-msgid "Medium (~21 ms)"
-msgstr "Médio (~21 ms)"
-
-#: src/ui/views/advanced.rs:274
-msgid "Standard (default, ~42 ms)"
-msgstr "Normal (padrão, ~42 ms)"
-
-#: src/ui/views/advanced.rs:275
-msgid "Large (steadiest, ~85 ms)"
-msgstr "Grande (mais estável, ~85 ms)"
-
-#: src/ui/views/advanced.rs:285
+#: src/ui/views/advanced.rs:358
 msgid "Buffer size"
 msgstr "Tamanho do buffer"
 
-#: src/ui/views/advanced.rs:292
-msgid "High-quality Bluetooth audio (SBC-XQ)"
-msgstr "Áudio Bluetooth de alta qualidade (SBC-XQ)"
+#: src/ui/window.rs:336
+msgid "Built on"
+msgstr "Desenvolvido com"
 
-#: src/ui/views/advanced.rs:294
-msgid ""
-"Your Bluetooth devices already use the best sound mode they support. Force "
-"this on if a headset stubbornly chooses lower quality, or off if you have a "
-"very old device that breaks with the high-quality mode."
+#: src/ui/views/advanced.rs:523
+msgid "Built-in audio safety margin"
+msgstr "Margem de segurança do áudio integrado"
+
+#: src/ui/views/advanced.rs:603
+msgid "CD and standard quality (44.1 + 48 kHz)"
+msgstr "Qualidade de CD e padrão (44,1 + 48 kHz)"
+
+#: src/ui/window.rs:299 src/ui/views/advanced/apply.rs:121
+msgid "Cancel"
+msgstr "Cancelar"
+
+#: src/ui/views/advanced.rs:261
+msgid "Changes are not applied yet. Apply them when you are ready."
 msgstr ""
-"Os seus dispositivos Bluetooth já usam o melhor modo de som que suportam. "
-"Force ligado se um fone insistir em escolher uma qualidade menor, ou "
-"desligado se você tiver um dispositivo muito antigo que não funciona com o "
-"modo de alta qualidade."
 
-#: src/ui/views/advanced.rs:303
-msgid "Force on (high quality)"
-msgstr "Forçar ligado (alta qualidade)"
+#: src/ui/mic_shell.rs:383
+msgid ""
+"Changes have not been saved. You can keep editing or close without saving."
+msgstr ""
 
-#: src/ui/views/advanced.rs:304
+#: src/ui/mic_shell.rs:961
+msgid "Check again"
+msgstr "Verificar novamente"
+
+#: src/ui/mic_shell.rs:857
+msgid "Check again, or run biglinux-microphone-cli doctor in a terminal."
+msgstr ""
+"Verifique novamente, ou execute biglinux-microphone-cli doctor em um "
+"terminal."
+
+#: src/ui/mic_shell.rs:278 src/ui/mic_shell.rs:802
+msgid "Checking the audio system…"
+msgstr "Verificando o sistema de áudio…"
+
+#: src/ui/views/mic.rs:377
+msgid "Chipmunk"
+msgstr "Agudíssimo"
+
+#: src/ui/views/simple.rs:209
+msgid ""
+"Cleans background noise from everything you hear before it reaches your "
+"speakers."
+msgstr ""
+"Limpa o ruído de fundo de tudo o que você ouve antes de chegar aos alto-"
+"falantes."
+
+#: usr/share/plasma/plasmoids/br.com.biglinux.micnoise/contents/ui/main.qml:151
+msgid "Cleans your voice for calls and recordings"
+msgstr ""
+
+#: src/ui/mic_shell.rs:727
+msgid "Close without saving"
+msgstr ""
+
+#: src/ui/views/output.rs:45
+msgid "Combine to mono (lower CPU use)"
+msgstr ""
+
+#: src/ui/views/mic.rs:425 src/ui/views/output.rs:196
+msgid "Compressor"
+msgstr "Compressor"
+
+#: src/ui/mic_shell.rs:971
+msgid "Could not apply the audio settings:"
+msgstr "Não foi possível aplicar as configurações de áudio:"
+
+#: usr/share/plasma/plasmoids/br.com.biglinux.micnoise/contents/ui/main.qml:56
+#: usr/share/plasma/plasmoids/br.com.biglinux.micnoise/contents/ui/main.qml:73
+msgid "Could not read the audio status. Open settings to check the connection."
+msgstr ""
+
+#: src/ui/widgets/wp_override_warning.rs:172
+msgid "Could not remove the override"
+msgstr "Não foi possível remover a substituição"
+
+#: src/ui/mic_shell.rs:932
+msgid ""
+"Could not stop the audio monitor safely. Close the window again to retry."
+msgstr ""
+"Não foi possível parar o monitor de áudio com segurança. Feche a janela "
+"novamente para tentar de novo."
+
+#: src/ui/widgets/source_picker.rs:258
+msgid ""
+"Could not update the microphone. Check the audio connection and try again."
+msgstr ""
+
+#: src/ui/widgets/eq_card.rs:170
+msgid "Custom"
+msgstr "Personalizado"
+
+#: src/ui/views/output.rs:152
+msgid "Cuts low-frequency rumble from playback — wind, AC noise."
+msgstr ""
+"Corta os ruídos graves da reprodução — vento, ruído de ar-condicionado."
+
+#: src/ui/views/mic.rs:285
+msgid "Cuts low-frequency rumble — AC, wind, mic-stand bumps."
+msgstr ""
+"Corta os ruídos graves — ar-condicionado, vento, batidas no pedestal do "
+"microfone."
+
+#: src/ui/widgets/model_picker.rs:98
+msgid ""
+"DNS3 removes more noise but can smudge consonants. VCTK is gentler and "
+"lighter on CPU. Full-band models can sound cleaner when their LADSPA "
+"packages are installed, with higher CPU cost."
+msgstr ""
+"O DNS3 remove mais ruído, mas pode borrar as consoantes. O VCTK é mais suave "
+"e mais leve para a CPU. Os modelos de banda completa podem soar mais limpos "
+"quando seus pacotes LADSPA estão instalados, com maior custo de CPU."
+
+#: src/ui/widgets/eq_card.rs:167
+msgid "De-esser"
+msgstr "De-esser"
+
+#: src/ui/views/mic.rs:373
+msgid "Deep"
+msgstr "Profundo"
+
+#: src/ui/views/advanced.rs:636
+msgid "Default"
+msgstr "Padrão"
+
+#: src/ui/widgets/eq_card.rs:161
+msgid "Default voice"
+msgstr "Voz padrão"
+
+#: src/ui/views/mic.rs:403
+msgid "Delay (ms)"
+msgstr "Atraso (ms)"
+
+#: src/ui/widgets/wp_override_warning.rs:90
+msgid "Don't warn again"
+msgstr "Não avisar de novo"
+
+#: src/ui/views/mic.rs:116 src/ui/views/mic.rs:125
+msgid "Echo cancellation"
+msgstr "Cancelamento de eco"
+
+#: src/ui/views/mic.rs:325 src/ui/views/output.rs:83
+msgid "Equalizer"
+msgstr "Equalizador"
+
+#: src/ui/widgets/eq_card.rs:230
+msgid "Equalizer band"
+msgstr "Faixa do equalizador"
+
+#: src/ui/widgets/eq_card.rs:60
+msgid "Equalizer enabled"
+msgstr "Equalizador ativado"
+
+#: src/ui/views/mic.rs:426
+msgid ""
+"Evens out loud peaks and quiet parts so your voice stays at a steady volume."
+msgstr ""
+"Equilibra os picos altos e as partes baixas para que a sua voz fique em um "
+"volume constante."
+
+#: src/ui/views/output.rs:198
+msgid ""
+"Evens out volume across loud and quiet speakers — useful for meetings with "
+"mixed mic levels."
+msgstr ""
+"Equilibra o volume entre quem fala alto e baixo — útil em reuniões com "
+"níveis de microfone variados."
+
+#: src/ui/views/advanced/apply.rs:94
+msgid "Failed to write configuration"
+msgstr "Falha ao gravar a configuração"
+
+#: src/ui/mic_shell.rs:231 src/ui/window.rs:320
+msgid "Filter noise"
+msgstr "Filtro de ruído"
+
+#: src/ui/views/mic.rs:327
+msgid ""
+"Fine-tune your voice tone across 10 frequency bands. Pick a preset or drag "
+"each band between -40 dB and +40 dB."
+msgstr ""
+"Ajuste o tom da sua voz em 10 faixas de frequência. Escolha uma predefinição "
+"ou arraste cada faixa entre -40 dB e +40 dB."
+
+#: src/ui/widgets/eq_card.rs:162
+msgid "Flat"
+msgstr "Plano"
+
+#: src/ui/views/advanced.rs:377
 msgid "Force off (maximum compatibility)"
 msgstr "Forçar desligado (compatibilidade máxima)"
 
-#: src/ui/views/advanced.rs:315
+#: src/ui/views/advanced.rs:376
+msgid "Force on (high quality)"
+msgstr "Forçar ligado (alta qualidade)"
+
+#: src/ui/views/simple.rs:186
+msgid "Headphones only — speakers cause feedback."
+msgstr "Apenas com fones de ouvido — alto-falantes causam microfonia."
+
+#: src/ui/views/simple.rs:193
+msgid "Hear my voice"
+msgstr "Ouvir minha voz"
+
+#: src/ui/views/mic.rs:284 src/ui/views/output.rs:151
+msgid "High-pass filter"
+msgstr "Filtro passa-alta"
+
+#: src/ui/views/advanced.rs:365
+msgid "High-quality Bluetooth audio (SBC-XQ)"
+msgstr "Áudio Bluetooth de alta qualidade (SBC-XQ)"
+
+#: src/ui/views/mic.rs:376
+msgid "Higher"
+msgstr "Agudo"
+
+#: src/ui/views/advanced.rs:389
 msgid "Higher Bluetooth audio quality (SBC-XQ)"
 msgstr "Qualidade de áudio Bluetooth superior (SBC-XQ)"
 
-#: src/ui/views/advanced.rs:326
-msgid "Audio responsiveness"
-msgstr "Responsividade do áudio"
-
-#: src/ui/views/advanced.rs:328
+#: src/ui/views/advanced.rs:402
 msgid ""
 "How fast the system reacts to sound changes. Faster reaction is great for "
 "music production but uses more CPU; slower reaction makes playback steadier "
@@ -320,65 +450,354 @@ msgstr ""
 "a reprodução mais estável em máquinas mais fracas. O padrão funciona bem "
 "para chamadas de vídeo, músicas e jogos na maioria dos computadores."
 
-#: src/ui/views/advanced.rs:338
-msgid "Very fast (music production, ~5 ms)"
-msgstr "Muito rápido (produção musical, ~5 ms)"
+#: src/ui/widgets/spectrum.rs:90
+msgid "Input level in decibels. Reduce microphone volume if it reaches zero."
+msgstr ""
 
-#: src/ui/views/advanced.rs:339
+#: src/ui/health.rs:59
+msgid "Install the gtcrn-ladspa package, then check again."
+msgstr "Instale o pacote gtcrn-ladspa e verifique novamente."
+
+#: src/ui/views/mic.rs:89 src/ui/views/mic.rs:310 src/ui/views/mic.rs:430
+#: src/ui/views/output.rs:174 src/ui/views/output.rs:204
+#: src/ui/views/simple.rs:78 src/ui/views/simple.rs:214
+msgid "Intensity"
+msgstr "Intensidade"
+
+#: src/ui/health.rs:66
+msgid ""
+"Its inference runtime is missing. Reinstall the gtcrn-ladspa package, then "
+"check again."
+msgstr ""
+"A biblioteca de inferência não foi encontrada. Reinstale o pacote gtcrn-"
+"ladspa e verifique novamente."
+
+#: src/ui/widgets/wp_override_warning.rs:75
+msgid "Keep"
+msgstr "Manter"
+
+#: src/ui/views/mic.rs:458
+msgid "Keep loaded audio data in memory"
+msgstr ""
+
+#: src/ui/views/output.rs:45
+msgid "Keep stereo (recommended)"
+msgstr ""
+
+#: src/ui/mic_shell.rs:726
+msgid "Keep window open"
+msgstr ""
+
+#: src/ui/widgets/spectrum.rs:43
+msgid "LEVEL / PEAK"
+msgstr ""
+
+#: src/ui/views/advanced.rs:347
+msgid "Large (steadiest, ~85 ms)"
+msgstr "Grande (mais estável, ~85 ms)"
+
+#: src/ui/views/advanced.rs:656
+msgid "Large (virtual machines, ~42 ms)"
+msgstr "Grande (máquinas virtuais, ~42 ms)"
+
+#: src/ui/views/mic.rs:447
+msgid ""
+"Leave these off unless audio still stutters. Changing them briefly restarts "
+"the filters."
+msgstr ""
+
+#: src/ui/views/advanced.rs:566
+msgid "Let the speakers sleep when idle (default)"
+msgstr "Deixar os alto-falantes dormirem quando ociosos (padrão)"
+
+#: src/ui/widgets/spectrum.rs:144
+msgid "Level: {level} dB · Peak: {peak} dB"
+msgstr ""
+
+#: src/ui/health.rs:47
+msgid "Log out and back in, then reopen this window."
+msgstr "Encerre a sessão e entre novamente, depois reabra esta janela."
+
+#: src/ui/views/advanced.rs:413
 msgid "Low delay (~11 ms)"
 msgstr "Baixo atraso (~11 ms)"
 
-#: src/ui/views/advanced.rs:341
-msgid "Balanced (upstream PipeWire default, ~21 ms)"
-msgstr "Equilibrado (padrão do PipeWire, ~21 ms)"
+#: src/ui/views/mic.rs:374
+msgid "Lower"
+msgstr "Grave"
 
-#: src/ui/views/advanced.rs:344
-msgid "Steady (default, ~42 ms)"
-msgstr "Estável (padrão, ~42 ms)"
+#: src/ui/views/mic.rs:144
+msgid "Lower CPU use"
+msgstr "Menor uso de CPU"
 
-#: src/ui/views/advanced.rs:346
-msgid "Most stable (older or busy machines, ~85 ms)"
-msgstr "Mais estável (máquinas antigas ou ocupadas, ~85 ms)"
+#: src/ui/views/advanced.rs:342
+msgid "Lower delay (needs a stable headset, ~11 ms)"
+msgstr "Menor atraso (precisa de um fone estável, ~11 ms)"
 
-#: src/ui/views/advanced.rs:358
-msgid "Reaction speed"
-msgstr "Velocidade de reação"
+#: src/ui/window.rs:257
+msgid "Main menu"
+msgstr "Menu principal"
 
-#: src/ui/views/advanced.rs:365
-msgid "Listen to it now"
-msgstr "Ouvir agora"
+#: src/ui/views/mic.rs:145
+msgid "Manual model"
+msgstr "Modelo manual"
 
-#: src/ui/views/advanced.rs:374
-msgid "Playing at this setting until you log out"
-msgstr "Tocando com este ajuste até você sair da sessão"
-
-#: src/ui/views/advanced.rs:376
-msgid "This computer would not let it be tried"
-msgstr "Este computador não permitiu testar"
-
-#: src/ui/views/advanced.rs:388
-msgid "USB audio safety margin"
-msgstr "Margem de segurança do áudio USB"
-
-#: src/ui/views/advanced.rs:390
-msgid ""
-"A small extra reserve for USB headsets, microphones and external audio "
-"interfaces. Increase only if you hear tiny cuts or pops on a USB device when "
-"the computer is busy."
-msgstr ""
-"Uma pequena reserva extra para fones, microfones e interfaces de áudio USB. "
-"Aumente apenas se você ouvir pequenos cortes ou estalos em um dispositivo "
-"USB quando o computador está ocupado."
-
-#: src/ui/views/advanced.rs:405 src/ui/views/advanced.rs:430
+#: src/ui/views/advanced.rs:516 src/ui/views/advanced.rs:542
 msgid "Margin"
 msgstr "Margem"
 
-#: src/ui/views/advanced.rs:412
-msgid "Built-in audio safety margin"
-msgstr "Margem de segurança do áudio integrado"
+#: src/ui/views/advanced.rs:657
+msgid "Maximum (last resort, ~85 ms)"
+msgstr "Máximo (último recurso, ~85 ms)"
 
-#: src/ui/views/advanced.rs:414
+#: src/ui/views/mic.rs:451
+msgid ""
+"May help on some computers, but can use more power. The automatic system "
+"choice is usually best."
+msgstr ""
+
+#: src/ui/views/mic.rs:459
+msgid ""
+"May reduce pauses under memory pressure, but leaves less RAM for other "
+"applications. This is optional and limited by the system."
+msgstr ""
+
+#: src/ui/views/advanced.rs:654
+msgid "Medium (~11 ms)"
+msgstr "Médio (~11 ms)"
+
+#: src/ui/views/advanced.rs:345
+msgid "Medium (~21 ms)"
+msgstr "Médio (~21 ms)"
+
+#. No `bindtextdomain` was called in this test process, so
+#. `gettext` falls back to the input string verbatim. That is
+#. exactly the contract callers rely on at runtime when running
+#. outside an installed locale.
+#: src/ui/window.rs:86 src/ui/widgets/source_picker.rs:90 src/ui/i18n.rs:91
+msgid "Microphone"
+msgstr "Microfone"
+
+#: usr/share/plasma/plasmoids/br.com.biglinux.micnoise/contents/ui/main.qml:119
+msgid "Microphone and system sound filters"
+msgstr ""
+
+#: usr/share/plasma/plasmoids/br.com.biglinux.micnoise/contents/ui/main.qml:142
+#, fuzzy
+msgid "Microphone filter"
+msgstr "Medidor de nível do microfone"
+
+#: src/ui/widgets/spectrum.rs:73 src/ui/widgets/spectrum.rs:88
+msgid "Microphone level meter"
+msgstr "Medidor de nível do microfone"
+
+#: src/ui/views/mic.rs:247 src/ui/views/output.rs:110
+msgid "Model"
+msgstr "Modelo"
+
+#: src/ui/views/advanced.rs:420
+msgid "Most stable (older or busy machines, ~85 ms)"
+msgstr "Mais estável (máquinas antigas ou ocupadas, ~85 ms)"
+
+#: src/ui/views/output.rs:170
+msgid ""
+"Mutes playback during silent moments so you don't hear hiss between words."
+msgstr ""
+"Silencia a reprodução nos momentos de silêncio para que você não ouça chiado "
+"entre as palavras."
+
+#: src/ui/views/mic.rs:304
+msgid ""
+"Mutes the mic during pauses so listeners hear silence instead of hiss. "
+"Higher = more aggressive."
+msgstr ""
+"Silencia o microfone nas pausas para que os ouvintes ouçam silêncio em vez "
+"de chiado. Mais alto = mais agressivo."
+
+#: src/ui/views/mic.rs:375
+msgid "Natural"
+msgstr "Natural"
+
+#: src/ui/views/mic.rs:236 src/ui/views/output.rs:99
+msgid "Neural model"
+msgstr "Modelo neural"
+
+#: src/ui/views/mic.rs:107
+msgid "Never"
+msgstr "Nunca"
+
+#: src/ui/views/mic.rs:181 src/ui/views/mic.rs:210 src/ui/views/simple.rs:127
+#: src/ui/views/simple.rs:156
+msgid "Noise filter"
+msgstr "Filtro de ruído"
+
+#: src/ui/views/mic.rs:46
+msgid "Noise filter — fine-tune"
+msgstr "Filtro de ruído — ajuste fino"
+
+#: src/ui/views/mic.rs:156 src/ui/views/mic.rs:166
+msgid "Noise reduction quality"
+msgstr "Qualidade da redução de ruído"
+
+#: src/ui/views/advanced.rs:652
+msgid "None"
+msgstr "Nenhum"
+
+#: src/ui/views/advanced/apply.rs:96 src/ui/views/advanced/apply.rs:101
+#: src/ui/widgets/wp_override_warning.rs:165
+#: src/ui/widgets/wp_override_warning.rs:177
+msgid "OK"
+msgstr "OK"
+
+#: src/ui/views/advanced.rs:311
+msgid "Off — always keep stereo sound (default)"
+msgstr "Desligado — manter sempre o som estéreo (padrão)"
+
+#: src/ui/views/advanced.rs:310
+msgid "On — switch to call mode automatically"
+msgstr "Ligado — alternar para o modo de chamada automaticamente"
+
+#: usr/share/plasma/plasmoids/br.com.biglinux.micnoise/contents/ui/main.qml:120
+msgid "Open audio filter controls"
+msgstr ""
+
+#: usr/share/plasma/plasmoids/br.com.biglinux.micnoise/contents/ui/main.qml:170
+msgid "Open settings…"
+msgstr ""
+
+#: src/ui/views/simple.rs:107
+msgid "Other microphone effects are still active — see the Advanced view."
+msgstr ""
+"Outros efeitos de microfone ainda estão ativos — veja a exibição Avançada."
+
+#: src/ui/window.rs:92
+msgid "Output filter"
+msgstr "Filtro de saída"
+
+#: src/ui/widgets/wp_override_warning.rs:159
+msgid "Override removed"
+msgstr "Substituição removida"
+
+#: src/ui/views/mic.rs:446
+msgid "Performance options"
+msgstr ""
+
+#: src/ui/views/mic.rs:388
+msgid "Pitch"
+msgstr "Tom"
+
+#: src/ui/widgets/eq_card.rs:164
+msgid "Podcast"
+msgstr "Podcast"
+
+#: src/ui/views/mic.rs:450
+msgid "Prefer faster processor cores"
+msgstr ""
+
+#: src/ui/widgets/eq_card.rs:169
+msgid "Presence"
+msgstr "Presença"
+
+#: src/ui/widgets/eq_card.rs:205
+msgid "Preset"
+msgstr "Predefinição"
+
+#: src/ui/views/advanced.rs:433
+msgid "Reaction speed"
+msgstr "Velocidade de reação"
+
+#: src/ui/window.rs:329
+msgid ""
+"Real-time noise filter for microphone capture and system audio playback. "
+"Powered by the GTCRN neural network running as a LADSPA plugin on top of "
+"PipeWire — every filter is driven by a WirePlumber smart-filter so the "
+"default source and sink stay clean even after device changes."
+msgstr ""
+"Filtro de ruído em tempo real para a captura do microfone e a reprodução de "
+"áudio do sistema. Movido pela rede neural GTCRN executada como um plugin "
+"LADSPA sobre o PipeWire — cada filtro é controlado por um smart-filter do "
+"WirePlumber, de modo que a fonte e o destino padrão permaneçam limpos mesmo "
+"após trocas de dispositivo."
+
+#: src/ui/views/mic.rs:262 src/ui/views/output.rs:129
+msgid "Recovery"
+msgstr "Recuperação"
+
+#: src/ui/views/simple.rs:165
+msgid ""
+"Reduces background noise in your voice. Turning this off pauses microphone "
+"effects without forgetting your choices."
+msgstr ""
+
+#: src/ui/health.rs:74
+msgid "Reinstall Filter noise, then log out and back in."
+msgstr "Reinstale o Filtro de ruído e encerre e inicie a sessão novamente."
+
+#: src/ui/widgets/wp_override_warning.rs:77
+msgid "Remove override"
+msgstr "Remover sobreposição"
+
+#: src/ui/widgets/wp_override_warning.rs:175
+msgid "Remove the file manually, then restart WirePlumber."
+msgstr "Remova o arquivo manualmente, depois reinicie o WirePlumber."
+
+#: src/ui/views/mic.rs:219
+msgid ""
+"Removes background noise from your voice using AI. Higher intensity = "
+"stronger cleanup."
+msgstr ""
+"Remove o ruído de fundo da sua voz usando IA. Maior intensidade = limpeza "
+"mais forte."
+
+#: src/ui/views/advanced/apply.rs:40
+msgid "Restarting audio…"
+msgstr "Reiniciando o áudio…"
+
+#: src/ui/views/advanced/apply.rs:123
+msgid "Restore"
+msgstr "Restaurar"
+
+#: src/ui/views/advanced/apply.rs:116
+msgid "Restore default audio settings?"
+msgstr "Restaurar as configurações de áudio padrão?"
+
+#: src/ui/window.rs:261 src/ui/window.rs:426
+msgid "Restore default settings"
+msgstr "Restaurar configurações padrão"
+
+#: src/ui/window.rs:294
+msgid "Restore default settings?"
+msgstr "Restaurar configurações padrão?"
+
+#: src/ui/window.rs:301 src/ui/views/advanced.rs:239
+msgid "Restore defaults"
+msgstr "Restaurar padrões"
+
+#: src/ui/views/mic.rs:256
+msgid ""
+"Restores high-frequency clarity (sibilants like \"s\", \"sh\") after "
+"suppression. Lower only if your voice already sounds harsh."
+msgstr ""
+"Restaura a clareza das altas frequências (sibilantes como \"s\", \"ch\") "
+"após a supressão. Reduza apenas se a sua voz já soar áspera."
+
+#: src/ui/views/output.rs:119
+msgid ""
+"Restores high-frequency clarity after suppression. Lower only if the source "
+"already sounds harsh."
+msgstr ""
+"Restaura a clareza das altas frequências após a supressão. Reduza apenas se "
+"a fonte já soar áspera."
+
+#: src/ui/views/mic.rs:397
+msgid ""
+"Round-trip latency for the \"Hear my voice\" monitor. Raise only if the "
+"loopback sounds rushed or chops on your hardware."
+msgstr ""
+"Latência de ida e volta do monitor \"Ouvir minha voz\". Aumente apenas se o "
+"retorno soar acelerado ou cortado no seu hardware."
+
+#: src/ui/views/advanced.rs:525
 msgid ""
 "Same idea as the USB margin, but for the speakers and microphone built into "
 "your laptop or motherboard. Most people never need to change this — try it "
@@ -389,11 +808,47 @@ msgstr ""
 "mudar isso — experimente apenas se o alto-falante interno falhar quando o "
 "computador está sob carga."
 
-#: src/ui/views/advanced.rs:437
-msgid "Avoid the click at the start of sounds"
-msgstr "Evitar o clique no início dos sons"
+#: src/ui/mic_shell.rs:885
+msgid "Saving settings…"
+msgstr ""
 
-#: src/ui/views/advanced.rs:439
+#: src/ui/views/mic.rs:395
+msgid "Self-listen delay"
+msgstr "Atraso da auto-escuta"
+
+#: src/ui/mic_shell.rs:723
+msgid "Settings could not be saved"
+msgstr ""
+
+#: src/ui/views/mic.rs:355
+msgid ""
+"Shifts the pitch of your voice without retiming. Left = deeper, right = "
+"higher. Center keeps your natural voice."
+msgstr ""
+"Altera o tom da sua voz sem mudar o ritmo. Esquerda = mais grave, direita = "
+"mais agudo. O centro mantém a sua voz natural."
+
+#: src/ui/window.rs:235
+msgid "Show every control individually"
+msgstr "Mostrar cada controle individualmente"
+
+#: src/ui/widgets/spectrum.rs:75
+msgid "Shows the live microphone input level and peak."
+msgstr "Mostra o nível de entrada e o pico do microfone ao vivo."
+
+#: src/ui/views/mic.rs:302 src/ui/views/output.rs:169
+msgid "Silence gate"
+msgstr "Portão de silêncio"
+
+#: src/ui/views/advanced.rs:653
+msgid "Small (~5 ms)"
+msgstr "Pequeno (~5 ms)"
+
+#: usr/share/plasma/plasmoids/br.com.biglinux.micnoise/contents/ui/main.qml:136
+msgid "Some audio filters are not ready. Open settings to check them."
+msgstr ""
+
+#: src/ui/views/advanced.rs:551
 msgid ""
 "Some laptops and motherboards put the speakers to sleep after a few seconds "
 "of silence to save power. When the next sound arrives — a notification, a "
@@ -407,473 +862,97 @@ msgstr ""
 "clique ou perder o início do áudio. Ligue isto para manter os alto-falantes "
 "sempre prontos. O consumo extra de bateria é mínimo."
 
-#: src/ui/views/advanced.rs:451
-msgid "Always keep the speakers ready (recommended on desktops)"
-msgstr "Manter os alto-falantes sempre prontos (recomendado em desktops)"
+#. ── Qualidade de som ─────────────────────────────────────────────
+#: src/ui/views/advanced.rs:178
+msgid "Sound quality"
+msgstr "Qualidade do som"
 
-#: src/ui/views/advanced.rs:454
-msgid "Let the speakers sleep when idle (default)"
-msgstr "Deixar os alto-falantes dormirem quando ociosos (padrão)"
-
-#: src/ui/views/advanced.rs:464
-msgid "Speaker sleep"
-msgstr "Suspensão dos alto-falantes"
-
-#: src/ui/views/advanced.rs:473
+#: src/ui/views/advanced.rs:586
 msgid "Sound quality range"
 msgstr "Faixa de qualidade do som"
 
-#: src/ui/views/advanced.rs:475
-msgid ""
-"All audio runs at studio quality (48 kHz) by default. Hi-res music players "
-"and high-end USB DACs can play higher quality if you allow it here, but "
-"every change between qualities causes a brief audio reload. Keep the default "
-"unless you actually own hi-res equipment."
+#: src/ui/widgets/spectrum.rs:81
+msgid "Speak normally to check your microphone level."
 msgstr ""
-"Todo o áudio funciona em qualidade de estúdio (48 kHz) por padrão. "
-"Reprodutores de música de alta resolução e DACs USB topo de linha podem "
-"reproduzir em qualidade maior se você permitir aqui, mas cada mudança entre "
-"qualidades causa uma breve recarga do áudio. Mantenha o padrão a menos que "
-"você realmente tenha equipamento de alta resolução."
 
-#: src/ui/views/advanced.rs:486
-msgid "Standard quality only (default, 48 kHz)"
-msgstr "Apenas qualidade padrão (predefinido, 48 kHz)"
+#: src/ui/views/advanced.rs:577
+msgid "Speaker sleep"
+msgstr "Suspensão dos alto-falantes"
 
-#: src/ui/views/advanced.rs:490
-msgid "CD and standard quality (44.1 + 48 kHz)"
-msgstr "Qualidade de CD e padrão (44,1 + 48 kHz)"
+#. ── Estabilidade e desempenho ────────────────────────────────────
+#: src/ui/views/advanced.rs:171
+msgid "Stability and performance"
+msgstr "Estabilidade e desempenho"
 
-#: src/ui/views/advanced.rs:494
-msgid "Allow hi-res audio (44.1 / 48 / 88.2 / 96 / 176.4 / 192 kHz)"
-msgstr ""
-"Permitir áudio de alta resolução (44.1 / 48 / 88.2 / 96 / 176.4 / 192 kHz)"
+#: src/ui/views/advanced.rs:346
+msgid "Standard (default, ~42 ms)"
+msgstr "Normal (padrão, ~42 ms)"
 
-#: src/ui/views/advanced.rs:506
-msgid "Allowed quality"
-msgstr "Qualidade permitida"
-
-#: src/ui/views/advanced.rs:522
-msgid "Default"
-msgstr "Padrão"
-
-#: src/ui/views/advanced.rs:538
-msgid "None"
-msgstr "Nenhum"
-
-#: src/ui/views/advanced.rs:539
-msgid "Small (~5 ms)"
-msgstr "Pequeno (~5 ms)"
-
-#: src/ui/views/advanced.rs:540
-msgid "Medium (~11 ms)"
-msgstr "Médio (~11 ms)"
-
-#: src/ui/views/advanced.rs:541
+#: src/ui/views/advanced.rs:655
 msgid "Standard (~21 ms)"
 msgstr "Padrão (~21 ms)"
 
-#: src/ui/views/advanced.rs:542
-msgid "Large (virtual machines, ~42 ms)"
-msgstr "Grande (máquinas virtuais, ~42 ms)"
+#: src/ui/views/advanced.rs:599
+msgid "Standard quality only (default, 48 kHz)"
+msgstr "Apenas qualidade padrão (predefinido, 48 kHz)"
 
-#: src/ui/views/advanced.rs:543
-msgid "Maximum (last resort, ~85 ms)"
-msgstr "Máximo (último recurso, ~85 ms)"
+#: src/ui/views/advanced.rs:418
+msgid "Steady (default, ~42 ms)"
+msgstr "Estável (padrão, ~42 ms)"
 
-#: src/ui/views/mic.rs:46
-msgid "Noise filter — fine-tune"
-msgstr "Filtro de ruído — ajuste fino"
-
-#: src/ui/views/mic.rs:51
-msgid "Voice enhancements"
-msgstr "Aprimoramentos de voz"
-
-#: src/ui/views/mic.rs:57 src/ui/views/mic.rs:352
-msgid "Voice changer"
-msgstr "Modificador de voz"
-
-#: src/ui/views/mic.rs:88 src/ui/views/mic.rs:309 src/ui/views/mic.rs:429
-#: src/ui/views/output.rs:152 src/ui/views/output.rs:182
-#: src/ui/views/simple.rs:78 src/ui/views/simple.rs:215
-msgid "Intensity"
-msgstr "Intensidade"
-
-#: src/ui/views/mic.rs:106 src/ui/views/mic.rs:141
-msgid "Automatic"
-msgstr "Automático"
-
-#: src/ui/views/mic.rs:106
-msgid "Always"
-msgstr "Sempre"
-
-#: src/ui/views/mic.rs:106
-msgid "Never"
-msgstr "Nunca"
-
-#: src/ui/views/mic.rs:115 src/ui/views/mic.rs:124
-msgid "Echo cancellation"
-msgstr "Cancelamento de eco"
-
-#: src/ui/views/mic.rs:126
+#: src/ui/views/output.rs:43
 msgid ""
-"Automatic cancels speaker echo and turns off cancellation when headphones "
-"are in use."
+"Stereo keeps left and right separate for music and video. Mono uses fewer "
+"resources but combines both sides; use it mainly for speech."
 msgstr ""
-"O modo automático cancela o eco dos alto-falantes e desativa o cancelamento "
-"ao usar fones de ouvido."
-
-#: src/ui/views/mic.rs:142
-msgid "Best quality"
-msgstr "Melhor qualidade"
-
-#: src/ui/views/mic.rs:143
-msgid "Lower CPU use"
-msgstr "Menor uso de CPU"
-
-#: src/ui/views/mic.rs:144
-msgid "Manual model"
-msgstr "Modelo manual"
-
-#: src/ui/views/mic.rs:155 src/ui/views/mic.rs:165
-msgid "Noise reduction quality"
-msgstr "Qualidade da redução de ruído"
-
-#: src/ui/views/mic.rs:167
-msgid ""
-"Automatic chooses a model for this computer. Choose lower CPU use if sound "
-"stutters, or select a model in Advanced."
-msgstr ""
-"O modo automático escolhe um modelo para este computador. Escolha um menor "
-"uso de CPU se o som falhar, ou selecione um modelo em Avançado."
-
-#: src/ui/views/mic.rs:180 src/ui/views/mic.rs:209 src/ui/views/simple.rs:127
-#: src/ui/views/simple.rs:156
-msgid "Noise filter"
-msgstr "Filtro de ruído"
-
-#: src/ui/views/mic.rs:218 src/ui/views/simple.rs:165
-msgid ""
-"Removes background noise from your voice using AI. Higher intensity = "
-"stronger cleanup."
-msgstr ""
-"Remove o ruído de fundo da sua voz usando IA. Maior intensidade = limpeza "
-"mais forte."
-
-#: src/ui/views/mic.rs:235 src/ui/views/output.rs:77
-msgid "Neural model"
-msgstr "Modelo neural"
-
-#: src/ui/views/mic.rs:246 src/ui/views/output.rs:88
-msgid "Model"
-msgstr "Modelo"
-
-#: src/ui/views/mic.rs:253 src/ui/views/output.rs:95
-msgid "Voice presence"
-msgstr "Presença de voz"
-
-#: src/ui/views/mic.rs:255
-msgid ""
-"Restores high-frequency clarity (sibilants like \"s\", \"sh\") after "
-"suppression. Lower only if your voice already sounds harsh."
-msgstr ""
-"Restaura a clareza das altas frequências (sibilantes como \"s\", \"ch\") "
-"após a supressão. Reduza apenas se a sua voz já soar áspera."
-
-#: src/ui/views/mic.rs:261 src/ui/views/output.rs:107
-msgid "Recovery"
-msgstr "Recuperação"
-
-#: src/ui/views/mic.rs:283 src/ui/views/output.rs:129
-msgid "High-pass filter"
-msgstr "Filtro passa-alta"
-
-#: src/ui/views/mic.rs:284
-msgid "Cuts low-frequency rumble — AC, wind, mic-stand bumps."
-msgstr ""
-"Corta os ruídos graves — ar-condicionado, vento, batidas no pedestal do "
-"microfone."
-
-#: src/ui/views/mic.rs:301 src/ui/views/output.rs:147
-msgid "Silence gate"
-msgstr "Portão de silêncio"
-
-#: src/ui/views/mic.rs:303
-msgid ""
-"Mutes the mic during pauses so listeners hear silence instead of hiss. "
-"Higher = more aggressive."
-msgstr ""
-"Silencia o microfone nas pausas para que os ouvintes ouçam silêncio em vez "
-"de chiado. Mais alto = mais agressivo."
-
-#: src/ui/views/mic.rs:324 src/ui/views/output.rs:61
-msgid "Equalizer"
-msgstr "Equalizador"
-
-#: src/ui/views/mic.rs:326
-msgid ""
-"Fine-tune your voice tone across 10 frequency bands. Pick a preset or drag "
-"each band between -40 dB and +40 dB."
-msgstr ""
-"Ajuste o tom da sua voz em 10 faixas de frequência. Escolha uma predefinição "
-"ou arraste cada faixa entre -40 dB e +40 dB."
-
-#: src/ui/views/mic.rs:354
-msgid ""
-"Shifts the pitch of your voice without retiming. Left = deeper, right = "
-"higher. Center keeps your natural voice."
-msgstr ""
-"Altera o tom da sua voz sem mudar o ritmo. Esquerda = mais grave, direita = "
-"mais agudo. O centro mantém a sua voz natural."
-
-#: src/ui/views/mic.rs:372
-msgid "Deep"
-msgstr "Profundo"
-
-#: src/ui/views/mic.rs:373
-msgid "Lower"
-msgstr "Grave"
-
-#: src/ui/views/mic.rs:374
-msgid "Natural"
-msgstr "Natural"
-
-#: src/ui/views/mic.rs:375
-msgid "Higher"
-msgstr "Agudo"
-
-#: src/ui/views/mic.rs:376
-msgid "Chipmunk"
-msgstr "Agudíssimo"
-
-#: src/ui/views/mic.rs:387
-msgid "Pitch"
-msgstr "Tom"
-
-#: src/ui/views/mic.rs:394
-msgid "Self-listen delay"
-msgstr "Atraso da auto-escuta"
-
-#: src/ui/views/mic.rs:396
-msgid ""
-"Round-trip latency for the \"Hear my voice\" monitor. Raise only if the "
-"loopback sounds rushed or chops on your hardware."
-msgstr ""
-"Latência de ida e volta do monitor \"Ouvir minha voz\". Aumente apenas se o "
-"retorno soar acelerado ou cortado no seu hardware."
-
-#: src/ui/views/mic.rs:402
-msgid "Delay (ms)"
-msgstr "Atraso (ms)"
-
-#: src/ui/views/mic.rs:424 src/ui/views/output.rs:174
-msgid "Compressor"
-msgstr "Compressor"
-
-#: src/ui/views/mic.rs:425
-msgid ""
-"Evens out loud peaks and quiet parts so your voice stays at a steady volume."
-msgstr ""
-"Equilibra os picos altos e as partes baixas para que a sua voz fique em um "
-"volume constante."
 
 #: src/ui/views/output.rs:42
-msgid "AI noise reduction"
-msgstr "Redução de ruído com IA"
+#, fuzzy
+msgid "Stereo or lower CPU use"
+msgstr "Menor uso de CPU"
 
-#: src/ui/views/output.rs:46
-msgid "Audio enhancements"
-msgstr "Aprimoramentos de áudio"
-
-#: src/ui/views/output.rs:63
-msgid ""
-"10-band parametric EQ on what you hear. Pick a preset or drag each band "
-"between -40 dB and +40 dB."
+#: src/ui/views/advanced.rs:461
+msgid "Stop preview"
 msgstr ""
-"Equalizador paramétrico de 10 bandas no que você ouve. Escolha uma "
-"predefinição ou arraste cada banda entre -40 dB e +40 dB."
 
-#: src/ui/views/output.rs:97
-msgid ""
-"Restores high-frequency clarity after suppression. Lower only if the source "
-"already sounds harsh."
-msgstr ""
-"Restaura a clareza das altas frequências após a supressão. Reduza apenas se "
-"a fonte já soar áspera."
-
-#: src/ui/views/output.rs:130
-msgid "Cuts low-frequency rumble from playback — wind, AC noise."
-msgstr ""
-"Corta os ruídos graves da reprodução — vento, ruído de ar-condicionado."
-
-#: src/ui/views/output.rs:148
-msgid ""
-"Mutes playback during silent moments so you don't hear hiss between words."
-msgstr ""
-"Silencia a reprodução nos momentos de silêncio para que você não ouça chiado "
-"entre as palavras."
-
-#: src/ui/views/output.rs:176
-msgid ""
-"Evens out volume across loud and quiet speakers — useful for meetings with "
-"mixed mic levels."
-msgstr ""
-"Equilibra o volume entre quem fala alto e baixo — útil em reuniões com "
-"níveis de microfone variados."
-
-#: src/ui/views/simple.rs:107
-msgid "Other microphone effects are still active — see the Advanced view."
-msgstr ""
-"Outros efeitos de microfone ainda estão ativos — veja a exibição Avançada."
-
-#: src/ui/views/simple.rs:187
-msgid "Headphones only — speakers cause feedback."
-msgstr "Apenas com fones de ouvido — alto-falantes causam microfonia."
-
-#: src/ui/views/simple.rs:194
-msgid "Hear my voice"
-msgstr "Ouvir minha voz"
-
-#: src/ui/views/simple.rs:209
+#: src/ui/views/simple.rs:208
 msgid "System sound"
 msgstr "Som do sistema"
 
-#: src/ui/views/simple.rs:210
+#: usr/share/plasma/plasmoids/br.com.biglinux.micnoise/contents/ui/main.qml:156
+#, fuzzy
+msgid "System sound filter"
+msgstr "Som do sistema"
+
+#: src/ui/views/advanced.rs:438
 msgid ""
-"Cleans background noise from everything you hear before it reaches your "
-"speakers."
+"Temporarily changes the audio buffer for all applications. Stop the preview "
+"to return to the previous value."
 msgstr ""
-"Limpa o ruído de fundo de tudo o que você ouve antes de chegar aos alto-"
-"falantes."
 
-#: src/ui/widgets/eq_card.rs:60
-msgid "Equalizer enabled"
-msgstr "Equalizador ativado"
-
-#: src/ui/widgets/eq_card.rs:161
-msgid "Default voice"
-msgstr "Voz padrão"
-
-#: src/ui/widgets/eq_card.rs:162
-msgid "Flat"
-msgstr "Plano"
-
-#: src/ui/widgets/eq_card.rs:163
-msgid "Voice boost"
-msgstr "Realce de voz"
-
-#: src/ui/widgets/eq_card.rs:164
-msgid "Podcast"
-msgstr "Podcast"
-
-#: src/ui/widgets/eq_card.rs:165
-msgid "Warm"
-msgstr "Quente"
-
-#: src/ui/widgets/eq_card.rs:166
-msgid "Bright"
-msgstr "Brilhante"
-
-#: src/ui/widgets/eq_card.rs:167
-msgid "De-esser"
-msgstr "De-esser"
-
-#: src/ui/widgets/eq_card.rs:168
-msgid "Bass cut"
-msgstr "Corte de graves"
-
-#: src/ui/widgets/eq_card.rs:169
-msgid "Presence"
-msgstr "Presença"
-
-#: src/ui/widgets/eq_card.rs:170
-msgid "Custom"
-msgstr "Personalizado"
-
-#: src/ui/widgets/eq_card.rs:205
-msgid "Preset"
-msgstr "Predefinição"
-
-#: src/ui/widgets/eq_card.rs:230
-msgid "Equalizer band"
-msgstr "Faixa do equalizador"
-
-#: src/ui/widgets/model_picker.rs:98
+#: src/ui/views/advanced.rs:467
 msgid ""
-"DNS3 removes more noise but can smudge consonants. VCTK is gentler and "
-"lighter on CPU. Full-band models can sound cleaner when their LADSPA "
-"packages are installed, with higher CPU cost."
+"The audio preview could not be started or restored. Check the audio "
+"connection and try again."
 msgstr ""
-"O DNS3 remove mais ruído, mas pode borrar as consoantes. O VCTK é mais suave "
-"e mais leve para a CPU. Os modelos de banda completa podem soar mais limpos "
-"quando seus pacotes LADSPA estão instalados, com maior custo de CPU."
 
-#: src/ui/widgets/model_picker.rs:113
-msgid "{model} - not installed"
-msgstr "{model} - não instalado"
+#: src/ui/health.rs:46
+msgid "The audio system (PipeWire) is not responding."
+msgstr "O sistema de áudio (PipeWire) não está respondendo."
 
-#: src/ui/widgets/source_picker.rs:146
-msgid "Volume"
-msgstr "Volume"
+#: src/ui/mic_shell.rs:855
+msgid "The audio system check failed unexpectedly."
+msgstr "A verificação do sistema de áudio falhou inesperadamente."
 
-#: src/ui/widgets/source_picker.rs:206
-msgid "Could not switch microphone. Try again or run diagnostics."
-msgstr ""
-"Não foi possível trocar o microfone. Tente novamente ou execute o "
-"diagnóstico."
+#: src/ui/health.rs:73
+msgid "The background audio services are not installed."
+msgstr "Os serviços de áudio em segundo plano não estão instalados."
 
-#: src/ui/widgets/source_picker.rs:277
-msgid "Could not change microphone volume. Try again or run diagnostics."
-msgstr ""
-"Não foi possível alterar o volume do microfone. Tente novamente ou execute o "
-"diagnóstico."
-
-#: src/ui/widgets/spectrum.rs:69
-msgid "Microphone level meter"
-msgstr "Medidor de nível do microfone"
-
-#: src/ui/widgets/spectrum.rs:71
-msgid "Shows the live microphone input level and peak."
-msgstr "Mostra o nível de entrada e o pico do microfone ao vivo."
-
-#: src/ui/widgets/wp_override_warning.rs:74
-msgid "WirePlumber configuration overridden"
-msgstr "Configuração do WirePlumber sobreposta"
-
-#: src/ui/widgets/wp_override_warning.rs:75
-msgid "Keep"
-msgstr "Manter"
-
-#: src/ui/widgets/wp_override_warning.rs:77
-msgid "Remove override"
-msgstr "Remover sobreposição"
-
-#: src/ui/widgets/wp_override_warning.rs:90
-msgid "Don't warn again"
-msgstr "Não avisar de novo"
-
-#: src/ui/widgets/wp_override_warning.rs:159
-msgid "Override removed"
-msgstr "Substituição removida"
-
-#: src/ui/widgets/wp_override_warning.rs:161
+#: usr/share/plasma/plasmoids/br.com.biglinux.micnoise/contents/ui/main.qml:77
 msgid ""
-"The packaged audio routing will be used after WirePlumber restarts. Log out "
-"and back in, or run “systemctl --user restart wireplumber”. Audio keeps "
-"working in the meantime with the old routing."
+"The change could not be applied. Your previous choices have been kept where "
+"possible. Open settings for details."
 msgstr ""
-"O roteamento de áudio do pacote será usado após o WirePlumber reiniciar. "
-"Encerre a sessão e entre novamente, ou execute “systemctl --user restart "
-"wireplumber”. O áudio continua funcionando enquanto isso com o roteamento "
-"antigo."
-
-#: src/ui/widgets/wp_override_warning.rs:172
-msgid "Could not remove the override"
-msgstr "Não foi possível remover a substituição"
-
-#: src/ui/widgets/wp_override_warning.rs:175
-msgid "Remove the file manually, then restart WirePlumber."
-msgstr "Remova o arquivo manualmente, depois reinicie o WirePlumber."
 
 #: src/ui/widgets/wp_override_warning.rs:184
 msgid ""
@@ -888,14 +967,140 @@ msgstr ""
 "\n"
 "Recomendado: remova a sobreposição e reinicie o WirePlumber."
 
-#~ msgid "Restore default settings"
-#~ msgstr "Restaurar configurações padrão"
+#: src/ui/health.rs:64
+msgid "The noise-reduction engine cannot start."
+msgstr "O motor de redução de ruído não consegue iniciar."
 
-#~ msgid "About Filter noise"
-#~ msgstr "Sobre o Filtro de ruído"
+#: src/ui/health.rs:58
+msgid "The noise-reduction engine is not installed."
+msgstr "O motor de redução de ruído não está instalado."
 
-#~ msgid "Main menu"
-#~ msgstr "Menu principal"
+#: src/ui/widgets/wp_override_warning.rs:161
+msgid ""
+"The packaged audio routing will be used after WirePlumber restarts. Log out "
+"and back in, or run “systemctl --user restart wireplumber”. Audio keeps "
+"working in the meantime with the old routing."
+msgstr ""
+"O roteamento de áudio do pacote será usado após o WirePlumber reiniciar. "
+"Encerre a sessão e entre novamente, ou execute “systemctl --user restart "
+"wireplumber”. O áudio continua funcionando enquanto isso com o roteamento "
+"antigo."
+
+#: src/ui/views/advanced.rs:138 src/ui/views/advanced.rs:265
+msgid "The standard audio settings are in use."
+msgstr "As configurações de áudio padrão estão em uso."
+
+#: src/ui/mic_shell.rs:728 src/ui/mic_shell.rs:792
+msgid "Try again"
+msgstr "Tentar novamente"
+
+#: src/ui/views/advanced.rs:435 src/ui/views/advanced.rs:461
+#: src/ui/views/advanced.rs:487
+msgid "Try for 15 seconds"
+msgstr ""
+
+#: src/ui/views/advanced.rs:466
+#, fuzzy
+msgid "Try preview again"
+msgstr "Tentar novamente"
+
+#: src/ui/window.rs:98
+msgid "Tuning"
+msgstr "Ajustes"
+
+#: usr/share/plasma/plasmoids/br.com.biglinux.micnoise/contents/ui/main.qml:144
+msgid "Turning this off pauses the effects without erasing your preferences."
+msgstr ""
+
+#: src/ui/views/advanced.rs:498
+msgid "USB audio safety margin"
+msgstr "Margem de segurança do áudio USB"
+
+#: src/ui/views/advanced.rs:412
+msgid "Very fast (music production, ~5 ms)"
+msgstr "Muito rápido (produção musical, ~5 ms)"
+
+#: src/ui/widgets/eq_card.rs:163
+msgid "Voice boost"
+msgstr "Realce de voz"
+
+#: src/ui/views/mic.rs:58 src/ui/views/mic.rs:353
+msgid "Voice changer"
+msgstr "Modificador de voz"
+
+#: src/ui/views/mic.rs:52
+msgid "Voice enhancements"
+msgstr "Aprimoramentos de voz"
+
+#: src/ui/views/mic.rs:254 src/ui/views/output.rs:117
+msgid "Voice presence"
+msgstr "Presença de voz"
+
+#: src/ui/widgets/source_picker.rs:95
+msgid "Volume"
+msgstr "Volume"
+
+#: src/ui/widgets/eq_card.rs:165
+msgid "Warm"
+msgstr "Quente"
+
+#: src/ui/views/advanced.rs:298
+msgid ""
+"When you start a video or voice call, your Bluetooth headset can switch to a "
+"special call mode that turns on the microphone — but the sound becomes mono "
+"and lower quality, like an old phone. This is off by default so music and "
+"movies stay in full quality even when an app asks for the microphone. Turn "
+"it on if you rely on the headset's microphone for calls."
+msgstr ""
+"Quando você inicia uma chamada de vídeo ou voz, o seu fone Bluetooth pode "
+"alternar para um modo de chamada especial que liga o microfone — mas o som "
+"fica mono e com qualidade menor, como em um telefone antigo. Isso vem "
+"desligado por padrão para que músicas e filmes permaneçam em qualidade total "
+"mesmo quando um aplicativo pede o microfone. Ligue se você depende do "
+"microfone do fone para chamadas."
+
+#: src/ui/widgets/wp_override_warning.rs:74
+msgid "WirePlumber configuration overridden"
+msgstr "Configuração do WirePlumber sobreposta"
+
+#: src/ui/views/advanced.rs:367
+msgid ""
+"Your Bluetooth devices already use the best sound mode they support. Force "
+"this on if a headset stubbornly chooses lower quality, or off if you have a "
+"very old device that breaks with the high-quality mode."
+msgstr ""
+"Os seus dispositivos Bluetooth já usam o melhor modo de som que suportam. "
+"Force ligado se um fone insistir em escolher uma qualidade menor, ou "
+"desligado se você tiver um dispositivo muito antigo que não funciona com o "
+"modo de alta qualidade."
+
+#: src/ui/views/advanced.rs:263
+#, fuzzy
+msgid "Your audio settings are active."
+msgstr "As configurações de áudio padrão estão em uso."
+
+#: src/ui/widgets/model_picker.rs:113
+msgid "{model} - not installed"
+msgstr "{model} - não instalado"
+
+#~ msgid "Listen to it now"
+#~ msgstr "Ouvir agora"
+
+#~ msgid "Playing at this setting until you log out"
+#~ msgstr "Tocando com este ajuste até você sair da sessão"
+
+#~ msgid "This computer would not let it be tried"
+#~ msgstr "Este computador não permitiu testar"
+
+#~ msgid "Could not switch microphone. Try again or run diagnostics."
+#~ msgstr ""
+#~ "Não foi possível trocar o microfone. Tente novamente ou execute o "
+#~ "diagnóstico."
+
+#~ msgid "Could not change microphone volume. Try again or run diagnostics."
+#~ msgstr ""
+#~ "Não foi possível alterar o volume do microfone. Tente novamente ou "
+#~ "execute o diagnóstico."
 
 #~ msgid "Custom settings active. Click Apply to enable them."
 #~ msgstr ""
