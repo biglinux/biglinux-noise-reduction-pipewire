@@ -5,9 +5,10 @@
 
 
 GTK4/libadwaita configuration window plus a Plasma 6 system-tray
-applet, both backed by a single `~/.config/biglinux-microphone/settings.json`
-watched via `gio::FileMonitor` / `inotifywait` for instant bidirectional
-sync.
+applet, both backed by a single `$XDG_CONFIG_HOME/biglinux-microphone/settings.json` (default: `~/.config`)
+synchronized through file monitoring and bounded fallback polling. Concurrent
+writes use a stable lock and conflict-aware merging; saved intent is distinct
+from the observed audio graph.
 
 ## Features
 
@@ -32,10 +33,11 @@ sync.
 
 ### System sound filter
 - Cleans every sound the system plays before it reaches the speakers,
-  using the same GTCRN-based chain on the playback side.
+  with stereo preserved by default. Explicit mono mode trades channel
+  separation for lower processing cost on voice-centered material.
 
 ### Visualization & monitoring
-- **Spectrum analyzer** — 30 bands at 60 fps
+- **Spectrum analyzer** — 30 visual bands, bounded updates and an accessible level reading
 - **Headphone monitor** — hear the processed signal with adjustable delay
 - **Live parameter updates** — param-only changes are pushed via
   `pw-cli`; topology changes reload only the affected chain
@@ -95,6 +97,19 @@ The experimental Flatpak recipe under `packaging/flatpak/` builds with
 `--no-default-features` to use the SDK allocator. It requires a compatible GNOME
 SDK and separate host audio integration; it is not an installed-unit validation.
 
+## Choosing settings
+
+Start with the simple view and automatic quality. Advanced controls are optional;
+master bypass preserves individual preferences. Buffer previews are reversible,
+and expert affinity/memory policies are opt-in. See the
+[Portuguese quick guide](docs/guia-rapido.pt_BR.md) for practical choices.
+
+For Nix/NixOS, see [packaging/nix](packaging/nix/README.md). The experimental
+Flatpak recipe is not a complete host integration: sandbox permissions do not
+make host binaries/plugins appear at the sandbox's `/usr` paths. Do not treat
+manifest parsing as a working audio test or add unrestricted host execution as
+a shortcut. Native distribution packages remain the primary supported route.
+
 ## Source ownership
 
 This repository builds without another local checkout. `vendor/big-rust-components`
@@ -106,13 +121,13 @@ They are maintained with this application. The application remains GPL-3.0-or-la
 ## Contributing
 
 - Run the quality gate before sending a change: `./scripts/quality-check.sh`
-  (`--ci` mirrors the exact CI gate; `--fix` applies `cargo fmt`).
+  (`--ci` requires every portable tool; `--fix` formats Rust). Run
+  `scripts/test-ui.sh` separately for an isolated graphical session.
 - Source language is English. Translatable UI strings flow through
   gettext: `po/` is the only translation source of truth. Refresh the
   catalog with `./scripts/refresh-pot.sh` after touching user-facing text.
-- Tuning research and PipeWire/WirePlumber config rationale live in
-  [TIPS.md](TIPS.md). The offline calibration harness lives in
-  `scripts/calibrate/` (see its README).
+- Runtime ownership and validation boundaries are documented in
+  [ARCHITECTURE.md](ARCHITECTURE.md) and [REVIEW.md](REVIEW.md).
 
 ## Architecture
 
@@ -120,8 +135,8 @@ They are maintained with this application. The application remains GPL-3.0-or-la
 
 | Module | Responsibility |
 |---|---|
-| `config/`   | Settings model + atomic JSON persistence (`~/.config/biglinux-microphone/settings.json`) |
-| `pipeline/` | Filter-chain `.conf` generation + systemd unit orchestration |
+| `config/`   | Settings model + atomic JSON persistence (`$XDG_CONFIG_HOME/biglinux-microphone/settings.json` (default: `~/.config`)) |
+| `pipeline/` | Filter-chain module-argument generation and conservative migration |
 | `services/` | PipeWire / subprocess integration (`pw-cli`, `wpctl`), live param updates, audio monitor |
 | `ui/`       | GTK4/libadwaita views, widgets, and gettext i18n |
 | `bin/`      | The four entrypoints (`gui`, `cli`, `pwloader`, `probe`) |
