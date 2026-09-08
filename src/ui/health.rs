@@ -104,8 +104,10 @@ mod tests {
 
     #[test]
     fn bypass_does_not_require_disabled_microphone_services() {
-        let mut settings = AppSettings::default();
-        settings.mic_bypass = true;
+        let settings = AppSettings {
+            mic_bypass: true,
+            ..AppSettings::default()
+        };
         assert_eq!(check(&settings, true, |_| false, |_| false), Health::Ready);
     }
 }

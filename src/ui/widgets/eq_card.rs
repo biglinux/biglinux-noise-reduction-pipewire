@@ -267,21 +267,6 @@ fn format_freq(hz: u32) -> String {
 }
 
 #[cfg(test)]
-mod tests {
-    use super::*;
-
-    #[test]
-    fn preset_mutation_updates_id_and_bands_together() {
-        let mut equalizer = EqualizerConfig::default();
-
-        apply_eq_mutation(&mut equalizer, EqMutation::Preset("voice_boost"));
-
-        assert_eq!(equalizer.preset, "voice_boost");
-        assert_eq!(equalizer.bands, eq_preset_bands("voice_boost").unwrap());
-    }
-}
-
-#[cfg(test)]
 pub(in crate::ui) fn assert_interaction_contract() {
     fn find(widget: &gtk::Widget, name: &str) -> Option<gtk::Widget> {
         if widget.widget_name() == name {
@@ -323,4 +308,19 @@ pub(in crate::ui) fn assert_interaction_contract() {
     // Minimum requested width must not contain ten side-by-side columns.
     let minimum = root.measure(Orientation::Horizontal, -1).0;
     assert!(minimum < 400, "equalizer minimum width: {minimum}");
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn preset_mutation_updates_id_and_bands_together() {
+        let mut equalizer = EqualizerConfig::default();
+
+        apply_eq_mutation(&mut equalizer, EqMutation::Preset("voice_boost"));
+
+        assert_eq!(equalizer.preset, "voice_boost");
+        assert_eq!(equalizer.bands, eq_preset_bands("voice_boost").unwrap());
+    }
 }

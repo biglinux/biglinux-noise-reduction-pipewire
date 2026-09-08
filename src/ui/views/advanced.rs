@@ -525,7 +525,7 @@ fn quantum_card(selection: &Rc<TuningSelection>, banner: &adw::Banner) -> Didact
             .preview
             .borrow_mut()
             .as_mut()
-            .and_then(|preview| preview.completion());
+            .and_then(crate::services::preview::QuantumPreview::completion);
         if let Some(result) = completed {
             selection.preview.borrow_mut().take();
             *selection.preview_feedback.borrow_mut() = Some(match result {

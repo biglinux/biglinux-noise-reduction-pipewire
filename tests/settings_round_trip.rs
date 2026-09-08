@@ -37,9 +37,8 @@ fn save_then_load_restores_every_field() {
     let saved: serde_json::Value = serde_json::from_slice(&std::fs::read(&path).unwrap()).unwrap();
     assert_eq!(saved["noise_reduction"]["model"], 1);
     let loaded = AppSettings::load_from(&path);
-    if !s.noise_reduction.model.plugin_loadable() {
-        s.noise_reduction.model = biglinux_microphone::config::NoiseModel::default();
-    }
+    // Reading preferences must not silently replace the selected model when
+    // its runtime is unavailable. Availability is a separate worker decision.
     assert_eq!(loaded, s);
 }
 
