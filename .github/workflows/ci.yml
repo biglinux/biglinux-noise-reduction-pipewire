@@ -3,16 +3,17 @@ name: CI
 on:
   push:
     branches: [main, "**stable**", "**testing**"]
-    paths-ignore: ["**.md", "docs/**", ".github/dependabot.yml"]
   pull_request:
     branches: [main]
-    paths-ignore: ["**.md", "docs/**"]
+  workflow_dispatch:
 
 permissions:
   contents: read
 
+# Keep event types separate: a skipped duplicate push must NOT cancel its PR.
+# Within each event, a newer revision cancels obsolete queued/running work.
 concurrency:
-  group: ${{ github.workflow }}-${{ github.ref }}
+  group: ci-${{ github.event_name }}-${{ github.event.pull_request.number || github.ref }}
   cancel-in-progress: true
 
 env:
@@ -22,8 +23,40 @@ env:
   RUSTUP_TOOLCHAIN: "1.98.1"
 
 jobs:
+  plan:
+    name: Select checks for changed files
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    permissions:
+      contents: read
+      pull-requests: read
+    outputs:
+      rust: ${{ steps.plan.outputs.rust }}
+      native: ${{ steps.plan.outputs.native }}
+      dependencies: ${{ steps.plan.outputs.dependencies }}
+      i18n: ${{ steps.plan.outputs.i18n }}
+      shell: ${{ steps.plan.outputs.shell }}
+      flatpak: ${{ steps.plan.outputs.flatpak }}
+      plasma: ${{ steps.plan.outputs.plasma }}
+      spelling: ${{ steps.plan.outputs.spelling }}
+      secrets: ${{ steps.plan.outputs.secrets }}
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - name: Test CI selection policy
+        run: python3 -m unittest discover -s .github/ci -p 'test_*.py'
+      - id: plan
+        name: Compute one execution plan
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: python3 .github/ci/plan.py
+
   fmt:
     name: rustfmt
+    needs: plan
+    if: needs.plan.outputs.rust == 'true'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
@@ -36,7 +69,9 @@ jobs:
       - run: cargo fmt --all --check
 
   native:
-    name: Native contracts, GTK variants and private PipeWire graphs
+    name: Application contracts, GTK and private PipeWire graphs
+    needs: plan
+    if: needs.plan.outputs.native == 'true'
     runs-on: ubuntu-latest
     container: archlinux:latest
     timeout-minutes: 30
@@ -49,42 +84,41 @@ jobs:
         with:
           persist-credentials: false
       - uses: ./.github/actions/install-system-deps
-      - name: C23 allocator compatibility required by native packaging
-        run: bash scripts/ci-jemalloc.sh
       - uses: dtolnay/rust-toolchain@6bed0761d98439e5a578e2877258200ad565ba87
+        id: rust
         with:
           toolchain: "1.98.1"
           components: clippy
       - uses: Swatinem/rust-cache@6323deb102c322ba6fcbdcafc7e3dddab59af2b6
       - name: Strict Clippy, all targets and features
         run: cargo clippy --all-targets --all-features --locked -- -D warnings
+      # The distribution maintains and validates its own allocator fork.
+      # Run application behavior once with the runner's system allocator.
+      # No jemalloc rebuild, compatibility probe or allocator test matrix.
+      # MSRV and release jobs still compile the production feature set.
       - name: Unit, integration and documentation tests
-        if: '!cancelled()'
-        run: cargo test --all-features --locked -- --test-threads=1
-      - name: Independent GTK contracts with compatible jemalloc
-        if: '!cancelled()'
-        run: bash scripts/test-ui.sh 2>&1 | tee "$RUNNER_TEMP/gtk-jemalloc.log"
-      - name: Independent GTK contracts with the system allocator
-        if: '!cancelled()'
-        run: bash scripts/test-ui.sh --no-default-features 2>&1 | tee "$RUNNER_TEMP/gtk-system.log"
-      - name: System allocator build and tests
-        if: '!cancelled()'
+        if: '!cancelled() && steps.rust.outcome == ''success'''
         run: cargo test --no-default-features --locked -- --test-threads=1
-      - name: Real graph loading and independent recovery on a private PipeWire daemon
-        if: '!cancelled()'
-        run: bash scripts/test-pipewire.sh 2>&1 | tee "$RUNNER_TEMP/pipewire-runtime.log"
+      - name: Independent GTK application contracts
+        if: '!cancelled() && steps.rust.outcome == ''success'''
+        run: bash scripts/test-ui.sh --no-default-features 2>&1 | tee "$RUNNER_TEMP/gtk.log"
+      - name: Real graph loading and recovery on a private PipeWire daemon
+        if: '!cancelled() && steps.rust.outcome == ''success'''
+        run: bash scripts/test-pipewire.sh --no-default-features 2>&1 | tee "$RUNNER_TEMP/pipewire-runtime.log"
       - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
         if: always()
         with:
           name: native-contract-logs-${{ github.sha }}
           path: |
-            ${{ runner.temp }}/gtk-*.log
+            ${{ runner.temp }}/gtk.log
             ${{ runner.temp }}/pipewire-runtime.log
           retention-days: 7
           if-no-files-found: warn
 
   msrv:
     name: MSRV 1.97.1
+    needs: plan
+    if: needs.plan.outputs.rust == 'true'
     runs-on: ubuntu-latest
     container: archlinux:latest
     timeout-minutes: 25
@@ -99,11 +133,13 @@ jobs:
       - uses: dtolnay/rust-toolchain@6bed0761d98439e5a578e2877258200ad565ba87
         with:
           toolchain: "1.97.1"
-      - uses: Swatinem/rust-cache@v2
+      - uses: Swatinem/rust-cache@6323deb102c322ba6fcbdcafc7e3dddab59af2b6
       - run: cargo build --all-features --locked
 
   release-build:
     name: Release build
+    needs: plan
+    if: needs.plan.outputs.rust == 'true'
     runs-on: ubuntu-latest
     container: archlinux:latest
     timeout-minutes: 25
@@ -116,11 +152,13 @@ jobs:
       - uses: dtolnay/rust-toolchain@6bed0761d98439e5a578e2877258200ad565ba87
         with:
           toolchain: "1.98.1"
-      - uses: Swatinem/rust-cache@v2
+      - uses: Swatinem/rust-cache@6323deb102c322ba6fcbdcafc7e3dddab59af2b6
       - run: cargo build --release --locked
 
   deny:
-    name: Dependency advisories, licenses and sources
+    name: Dependency licenses, bans and sources
+    needs: plan
+    if: needs.plan.outputs.dependencies == 'true'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
@@ -129,10 +167,29 @@ jobs:
       - uses: taiki-e/install-action@v2
         with:
           tool: cargo-deny
-      - run: cargo deny check
+      # RustSec is owned by audit below, not scanned twice on the same event.
+      - run: cargo deny check bans licenses sources
+
+  audit:
+    name: RustSec vulnerabilities and unsound dependencies
+    needs: plan
+    if: needs.plan.outputs.dependencies == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          persist-credentials: false
+      - uses: taiki-e/install-action@v2
+        with:
+          tool: cargo-audit
+      - run: cargo audit --deny unsound
+      - run: cargo audit --deny unsound --file vendor/big-rust-components/Cargo.lock
 
   machete:
     name: Unused dependencies
+    needs: plan
+    if: needs.plan.outputs.rust == 'true'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
@@ -145,6 +202,8 @@ jobs:
 
   typos:
     name: Spelling and protocol-aware exceptions
+    needs: plan
+    if: needs.plan.outputs.spelling == 'true'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
@@ -154,6 +213,8 @@ jobs:
 
   complexity:
     name: Complexity and duplication
+    needs: plan
+    if: needs.plan.outputs.rust == 'true'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
@@ -166,6 +227,8 @@ jobs:
 
   i18n:
     name: Rust/QML extraction coverage and gettext catalogs
+    needs: plan
+    if: needs.plan.outputs.i18n == 'true'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
@@ -175,6 +238,9 @@ jobs:
         with:
           toolchain: "1.98.1"
       - run: sudo apt-get update && sudo apt-get install -y gettext
+      - uses: Swatinem/rust-cache@6323deb102c322ba6fcbdcafc7e3dddab59af2b6
+        with:
+          cache-targets: false
       - run: cargo install xtr --version 0.1.11 --locked
       - run: bash scripts/refresh-pot.sh --check
       - name: Validate every catalog
@@ -186,6 +252,8 @@ jobs:
 
   flatpak-manifest:
     name: Flatpak metadata and offline source consistency, not runtime approval
+    needs: plan
+    if: needs.plan.outputs.flatpak == 'true'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
@@ -208,6 +276,8 @@ jobs:
 
   shell:
     name: Shell scripts
+    needs: plan
+    if: needs.plan.outputs.shell == 'true'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
@@ -218,6 +288,8 @@ jobs:
 
   plasmoid-contracts:
     name: Plasma status transitions
+    needs: plan
+    if: needs.plan.outputs.plasma == 'true'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
@@ -225,14 +297,61 @@ jobs:
           persist-credentials: false
       - run: node --test tests/plasmoid_status.test.cjs
 
-  dependency-review:
-    name: Newly introduced dependency advisories
-    if: github.event_name == 'pull_request'
+  secrets:
+    name: Secret scan, including findings awaiting verification
+    needs: plan
+    if: needs.plan.outputs.secrets == 'true'
     runs-on: ubuntu-latest
+    timeout-minutes: 15
     steps:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
         with:
+          fetch-depth: 0
           persist-credentials: false
-      - uses: actions/dependency-review-action@v4
+      - uses: trufflesecurity/trufflehog@166bf18f3a3fe52a6db9e1770568f52a0c40ff07
         with:
-          fail-on-severity: high
+          version: '3.97.4'
+          extra_args: --results=verified,unknown
+
+  miri:
+    name: Miri, deterministic data-model contracts
+    needs: plan
+    if: needs.plan.outputs.rust == 'true'
+    runs-on: ubuntu-latest
+    container: archlinux:latest
+    timeout-minutes: 30
+    steps:
+      - run: pacman -Syu --noconfirm --needed git
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          persist-credentials: false
+      - uses: ./.github/actions/install-system-deps
+      - uses: dtolnay/rust-toolchain@6bed0761d98439e5a578e2877258200ad565ba87
+        with:
+          toolchain: nightly
+          components: miri
+      - uses: Swatinem/rust-cache@6323deb102c322ba6fcbdcafc7e3dddab59af2b6
+      - run: bash scripts/test-miri.sh
+
+  result:
+    name: CI result
+    if: always()
+    needs: [plan, fmt, native, msrv, release-build, deny, audit, machete, typos, complexity, i18n, flatpak-manifest, shell, plasmoid-contracts, secrets, miri]
+    runs-on: ubuntu-latest
+    timeout-minutes: 2
+    steps:
+      - name: Require success from every selected check
+        env:
+          RESULTS: ${{ toJSON(needs) }}
+        run: |
+          python3 - <<'PY'
+          import json, os
+          results = json.loads(os.environ['RESULTS'])
+          failed = {name: job['result'] for name, job in results.items()
+                    if job['result'] not in ('success', 'skipped')}
+          if results['plan']['result'] != 'success':
+              failed['plan'] = results['plan']['result']
+          if failed:
+              raise SystemExit(f'CI did not pass: {failed}')
+          print('All selected checks passed; non-applicable jobs were skipped.')
+          PY

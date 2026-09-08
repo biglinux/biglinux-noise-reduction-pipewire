@@ -4,105 +4,98 @@ Record the tested Git commit and dependency versions with every result. A
 workflow's own revision can differ from the application revision it checks out.
 A passing compilation is not evidence that ignored tests were executed.
 
-## Portable and headless checks
+## One owner for each automatic check
+
+`ci.yml` owns change-driven application tests and security scans. Its small
+planner uses the complete Git diff (including removed and renamed paths), not
+the GitHub path filter's truncated file list. Documentation-only and
+translation-only change sets do not start Rust builds. Unknown build inputs,
+new branches or unavailable history conservatively select every check.
+
+A push to a testing/stable branch with an open PR into main at the same SHA is
+covered by that PR. If discovery fails, push checks run rather than losing
+coverage. A push to main is never suppressed. PRs validate the merge checkout;
+post-merge builds validate the actual main revision. These are intentionally
+different integration points, not interchangeable success evidence.
+
+Concurrency cancels obsolete runs within an event and branch/PR. Push and PR
+concurrency groups are separate, so a duplicate push that does no work cannot
+cancel the real PR validation. Manual CI dispatch selects all checks.
+
+`Security` only performs scheduled/manual RustSec scans for newly published
+advisories. It does not repeat CI on every push or PR and no longer rebuilds
+Miri daily. Change-driven RustSec has one owner in CI: cargo-audit checks both
+lockfiles; cargo-deny checks licenses, bans and sources without repeating the
+advisory scan. Miri and the secret scan each run once under CI. CodeQL remains
+a distinct code-analysis tool; a dependency audit is not a replacement for it.
+
+The `CI result` check fails when planning or any selected job fails/cancels.
+Non-applicable jobs are visibly skipped, not represented as tests that ran.
+There is no workflow-wide documentation path exclusion leaving CI pending.
+Repositories using branch protection should require this aggregate check.
+The planner itself is covered by inexpensive Python unit tests.
+
+## Application checks, without an allocator matrix
 
 ```sh
+python3 -m unittest discover -s .github/ci -p 'test_*.py'
 cargo fmt --all --check
 cargo clippy --all-targets --all-features --locked -- -D warnings
-cargo test --all-features --locked -- --test-threads=1
 cargo test --no-default-features --locked -- --test-threads=1
+bash scripts/test-ui.sh --no-default-features
+bash scripts/test-pipewire.sh --no-default-features
 node --test tests/plasmoid_status.test.cjs
 bash scripts/refresh-pot.sh --check
 ```
 
-The ignored GTK and native PipeWire tests have separate entry points below.
-They deliberately do not start an audio daemon from the ordinary test suite.
+The maintainers validate their own jemalloc fork separately. This application
+CI does not rebuild upstream jemalloc, apply compatibility patches, run an
+allocator probe, or repeat the suites across allocator variants. Runtime tests
+use the runner's system allocator once. The application's default features,
+packaging dependency and fork are unchanged; MSRV/release compile the production
+configuration. A system-allocator test is not claimed as validation of the fork.
+
+The normal Rust suite leaves GTK and native PipeWire cases ignored. The two
+scripts above execute only their explicit ignored contracts in private
+sessions. Their `--no-run` compilation does not execute a second test suite;
+compiled artifacts are reused with the same features. Each GTK case needs its
+own process because GTK must stay on its initializing thread.
 
 ## GTK and libadwaita contracts
 
-```sh
-bash scripts/test-ui.sh
-bash scripts/test-ui.sh --no-default-features
-```
-
-Install Xvfb, xauth, a DBus session daemon, Python 3 and a usable font. The
-script builds the test executable once and discovers the `ui::tests::gtk_*`
-contracts. It fails if the suite is empty. Each contract runs in its own
-process, display, DBus session and private XDG directories. All cases are
-attempted and their failures are aggregated; one dialog failure cannot hide
-the meter, equalizer, capture recovery or navigation contracts.
-
-Tests initialize libadwaita before creating its widgets. GTK is confined to
-its initializing test thread. `--test-threads=1` alone is insufficient to make
-separate Rust tests share that thread, hence the process isolation.
-
-Warnings are fatal in the test process. The script does not inject that debug
-policy into unrelated DBus-activated services. PipeWire and PulseAudio runtime
-paths point at the private session, not the developer's microphone or speakers.
-
-### Native allocator requirement
-
-The default `gtk-jemalloc` build requires the compatible allocator declared by
-native packaging (`jemalloc-gtk-fixed`), not merely a library with the same
-SONAME. GLib's C23 deallocation calls permit NULL, including with a nonzero
-size. Incompatible sized-deallocation entry points can corrupt the allocator
-before a later GTK allocation crashes.
-
-`tests/jemalloc_compat.c` exercises the linked allocator's sized and
-aligned-sized NULL frees and subsequent allocation/deallocation cycles. CI
-runs it before the default-allocation graphical tests.
-
-On disposable GitHub Actions runners only, `scripts/ci-jemalloc.sh` first tests
-the installed allocator. If it fails, the script builds upstream jemalloc
-commit `81034ce1f1373e37dc865038e1bc8eeecf559ce8` with explicit NULL guards at
-both C23 entry points and tests that library. Its C++ operator replacements
-are not enabled; the C allocation ABI is the contract needed here. The complete
-source patch appears in the log. Library paths are changed only for that job;
-no system library is overwritten and the application receives no allocator
-shim or preload wrapper.
-
-This CI fixture validates that compatibility condition. It does not certify
-every patch in the distribution package or replace packaged-installation tests.
-The system-allocator variant remains an independent control.
+Install Xvfb, xauth, a DBus session daemon, Python 3 and a usable font.
+`test-ui.sh` builds once and discovers `ui::tests::gtk_*` cases. It fails if the
+suite is empty. Each case gets a private process, display, DBus session and XDG
+directories. All cases are attempted and failures are aggregated. Warnings are
+fatal in the test process, not injected into unrelated DBus-activated services.
+PipeWire and PulseAudio paths never point to the developer's devices.
 
 ## Real PipeWire module and lifecycle contracts
 
-```sh
-bash scripts/test-pipewire.sh
-```
-
-Requires PipeWire's audio modules and the SWH LADSPA plugins in addition to the
-build dependencies. The script uses a new private runtime directory and DBus
-session. The Rust fixture refuses an existing daemon socket and starts its own
-PipeWire daemon with the upstream configuration. It loads generated microphone,
-stereo playback and mono playback graphs using the production
-`biglinux-microphone-pwloader` executable.
-
-The test observes real node publication, removes and recreates the microphone
-chain while playback remains alive, and stops playback without removing the
-microphone. Child processes are reaped on success and unwinding; an outer
-process-group timeout bounds native hangs.
+Install PipeWire audio modules and the SWH LADSPA plugins. `test-pipewire.sh`
+creates a private runtime directory and DBus session. Its fixture refuses an
+existing daemon socket and loads generated microphone, stereo playback and
+mono playback graphs using the production module loader. It observes node
+publication, recreates the microphone while playback remains alive, and stops
+playback without removing the microphone. Children are reaped and a deadline
+bounds native hangs.
 
 No systemd user units, WirePlumber, physical devices or neural runtimes are
-started by this fixture. Consequently, passing it means that these generated
-graphs load and have the tested lifecycle, not that routing policy, denoising,
-audio samples, latency or sound quality have been validated.
+started by this fixture. Passing proves the tested graph loading/lifecycle,
+not routing policy, denoising, audio quality or hardware latency.
 
-## Release acceptance still required
+## Release acceptance
 
-Use a disposable desktop session for WirePlumber/systemd routing, selected
-neural models, device changes, buffer-preview restoration and recovery under
-load. Measure latency, XRUNs, actual completed denoising work, channel
-separation and distortion. A sample ceiling is not a true-peak limiter.
+Use a disposable desktop session for routing, selected models, device changes,
+preview restoration and recovery under load. Measure latency, XRUNs, completed
+denoising work, channel separation and distortion. Validate keyboard navigation,
+large text, contrast, AT-SPI/Orca and the real Plasma applet. A QML reducer test
+is not a Plasma interaction test. Installation/upgrades, NixOS and experimental
+Flatpak need independent acceptance. The CI policy is not release certification.
 
-Validate keyboard navigation, large text, contrast, AT-SPI/Orca and the real
-Plasma applet. A QML reducer test is not a Plasma interaction test. Validate
-native installation/upgrades, NixOS and experimental Flatpak independently.
+## Primary references
 
-## Primary API references
-
+- Workflow concurrency and filtering: https://docs.github.com/en/actions/reference/workflows-and-actions/workflow-syntax
+- Cargo test selection: https://doc.rust-lang.org/cargo/commands/cargo-test.html
 - Libadwaita initialization: https://gnome.pages.gitlab.gnome.org/libadwaita/doc/main/initialization.html
 - GTK threading: https://docs.gtk.org/gtk4/section-threading.html
-- GLib sized deallocation: https://docs.gtk.org/glib/func.free_sized.html
-- Pinned jemalloc source: https://github.com/jemalloc/jemalloc/blob/81034ce1f1373e37dc865038e1bc8eeecf559ce8/src/jemalloc.c
-- jemalloc build options: https://github.com/jemalloc/jemalloc/blob/81034ce1f1373e37dc865038e1bc8eeecf559ce8/INSTALL.md

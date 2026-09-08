@@ -2,11 +2,19 @@
 # Native graph tests must never connect to the developer's audio session.
 set -euo pipefail
 cd "$(dirname -- "${BASH_SOURCE[0]}")/.."
+features=(--all-features)
+case "${1:-}" in
+    '') ;;
+    --no-default-features) features=(--no-default-features) ;;
+    *) printf 'Usage: %s [--no-default-features]\n' "$0" >&2; exit 2 ;;
+esac
+[[ $# -le 1 ]] || { printf 'Unexpected arguments\n' >&2; exit 2; }
 for tool in cargo pipewire pw-dump dbus-run-session timeout; do
     command -v "$tool" >/dev/null || { printf 'Required audio test tool: %s\n' "$tool" >&2; exit 1; }
 done
 # Compile before entering the private session; no daemon is started by this step.
-cargo test --all-features --locked --test pipewire_runtime --no-run
+# The same feature set is used for compilation and execution.
+cargo test "${features[@]}" --locked --test pipewire_runtime --no-run
 session="$(mktemp -d)"
 trap 'rm -rf -- "$session"' EXIT
 mkdir -m 700 "$session/runtime" "$session/config" "$session/cache" "$session/data"
@@ -23,6 +31,6 @@ export LANG=C.UTF-8 LC_ALL=C.UTF-8
 # Each child is reaped by the Rust fixture; this process-group deadline also
 # covers an unexpected hang in a native module. It does not touch user services.
 timeout --kill-after=5s 120s dbus-run-session -- \
-    cargo test --all-features --locked --test pipewire_runtime \
+    cargo test "${features[@]}" --locked --test pipewire_runtime \
     -- --ignored --exact generated_graphs_load_and_recover_independently \
     --nocapture --test-threads=1
