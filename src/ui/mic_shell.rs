@@ -97,6 +97,8 @@ pub(super) enum MicInput {
     /// WebRTC echo-cancellation toggle.
     MicEchoModeChanged(crate::config::EchoMode),
     QualityChanged(crate::config::Quality),
+    PreferFastCpusChanged(bool),
+    ReserveMemoryChanged(bool),
     /// Mic neural-model selection.
     MicModelChanged(NoiseModel),
     /// Mic voice-presence (high-frequency recovery) intensity.
@@ -495,6 +497,12 @@ impl Component for MicShell {
             }
             MicInput::MicEchoModeChanged(mode) => {
                 self.mutate_settings(&sender, |s| s.echo_cancel.mode = mode);
+            }
+            MicInput::PreferFastCpusChanged(enabled) => {
+                self.mutate_settings(&sender, |settings| settings.runtime.prefer_fast_cpus = enabled);
+            }
+            MicInput::ReserveMemoryChanged(enabled) => {
+                self.mutate_settings(&sender, |settings| settings.runtime.reserve_memory = enabled);
             }
             MicInput::QualityChanged(quality) => {
                 self.mutate_settings(&sender, |s| s.quality = quality);

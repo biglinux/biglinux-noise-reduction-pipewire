@@ -22,6 +22,8 @@ mod paths;
 pub mod plugin_cost;
 mod processing;
 mod quality;
+mod runtime;
+pub use runtime::RuntimeConfig;
 pub mod storage;
 mod ui;
 
@@ -54,6 +56,7 @@ pub use ui::{UiConfig, WindowConfig};
 #[derive(Debug, Clone, Default, PartialEq, Serialize, Deserialize)]
 #[serde(default)]
 pub struct AppSettings {
+    pub runtime: RuntimeConfig,
     /// Temporary master bypass; individual effect preferences are retained.
     pub mic_bypass: bool,
     pub noise_reduction: NoiseReductionConfig,

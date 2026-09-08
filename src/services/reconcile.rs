@@ -102,6 +102,7 @@ pub fn apply(settings: &AppSettings, force: bool) -> io::Result<()> {
         .and_then(|bytes| serde_json::from_slice(&bytes).ok());
     let observed = observe()?;
     let live = pipewire::apply_live(settings)?;
+    let force = force || previous.as_ref().is_some_and(|old| old.runtime != settings.runtime);
     execute(settings, previous.as_ref(), observed, live, force)?;
     let bytes = serde_json::to_vec(settings).map_err(io::Error::other)?;
     let path = baseline_path();

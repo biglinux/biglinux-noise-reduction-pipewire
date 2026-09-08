@@ -45,6 +45,7 @@ pub fn build(state: &Rc<AppState>, input: &relm4::Sender<MicInput>) -> gtk::Widg
 
     content.append(&section_header(&i18n("Noise filter — fine-tune"), 16));
     content.append(quality_card(state, input).widget());
+    content.append(&resource_options(state, input));
     content.append(model_card(state, input).widget());
     content.append(voice_recovery_card(state, input).widget());
 
@@ -434,4 +435,28 @@ fn compressor_card(state: &Rc<AppState>, input: &relm4::Sender<MicInput>) -> Did
     });
     card.add_row(&row);
     card
+}
+
+fn resource_options(state: &Rc<AppState>, input: &relm4::Sender<MicInput>) -> adw::PreferencesGroup {
+    let group = adw::PreferencesGroup::new();
+    let details = adw::ExpanderRow::builder()
+        .title(i18n("Performance options"))
+        .subtitle(i18n("Leave these off unless audio still stutters. Changing them briefly restarts the filters."))
+        .build();
+    let fast = adw::SwitchRow::builder()
+        .title(i18n("Prefer faster processor cores"))
+        .subtitle(i18n("May help on some computers, but can use more power. The automatic system choice is usually best."))
+        .active(state.settings().runtime.prefer_fast_cpus).build();
+    let sender = input.clone();
+    fast.connect_active_notify(move |row| { let _ = sender.send(MicInput::PreferFastCpusChanged(row.is_active())); });
+    let memory = adw::SwitchRow::builder()
+        .title(i18n("Keep loaded audio data in memory"))
+        .subtitle(i18n("May reduce pauses under memory pressure, but leaves less RAM for other applications. This is optional and limited by the system."))
+        .active(state.settings().runtime.reserve_memory).build();
+    let sender = input.clone();
+    memory.connect_active_notify(move |row| { let _ = sender.send(MicInput::ReserveMemoryChanged(row.is_active())); });
+    details.add_row(&fast);
+    details.add_row(&memory);
+    group.add(&details);
+    group
 }
