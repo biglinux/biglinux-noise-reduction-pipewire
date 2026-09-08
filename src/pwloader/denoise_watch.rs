@@ -133,19 +133,30 @@ impl DenoiseWatch {
     }
 
     fn announce(degraded: bool, ratio: f64) {
-        let percent = ratio * 100.0;
-        if degraded {
-            eprintln!(
-                "MESSAGE_ID={MESSAGE_ID}\nPRIORITY=4\nDENOISE_RATIO={percent:.1}\n\
-                 the noise reduction is not keeping up: only {percent:.1}% of the \
-                 microphone was processed, the rest passed through raw"
-            );
-        } else {
-            eprintln!(
-                "MESSAGE_ID={MESSAGE_ID}\nPRIORITY=6\nDENOISE_RATIO={percent:.1}\n\
-                 the noise reduction is keeping up again: {percent:.1}% processed"
-            );
+        let message = journal_message(degraded, ratio);
+        let sent = std::os::unix::net::UnixDatagram::unbound().and_then(|socket| {
+            socket.set_nonblocking(true)?;
+            socket.send_to(message.as_bytes(), "/run/systemd/journal/socket")
+        });
+        if sent.is_err() {
+            eprintln!("noise reduction: {} ({:.1}% processed)",
+                if degraded { "not keeping up" } else { "recovered" }, ratio * 100.0);
         }
+    }
+
+}
+
+fn journal_message(degraded: bool, ratio: f64) -> String {
+    format!("MESSAGE_ID={MESSAGE_ID}\nPRIORITY={}\nDENOISE_RATIO={:.1}\nMESSAGE=Noise reduction {}\n",
+        if degraded { 4 } else { 6 }, ratio * 100.0,
+        if degraded { "is not keeping up" } else { "has recovered" })
+}
+
+impl Drop for DenoiseWatch {
+    fn drop(&mut self) {
+        // SAFETY: this is our owned dlopen reference. No callback outlives
+        // the watcher, and PipeWire owns its separate plugin reference.
+        unsafe { libc::dlclose(self._handle) };
     }
 }
 
@@ -230,5 +241,16 @@ mod tests {
     fn a_plugin_without_the_accessor_is_not_watched() {
         assert!(DenoiseWatch::open(Path::new("/usr/lib/ladspa/amp.so")).is_none());
         assert!(DenoiseWatch::open(Path::new("/does/not/exist.so")).is_none());
+    }
+}
+
+#[cfg(test)]
+mod journal_tests {
+    #[test]
+    fn journal_fields_belong_to_one_native_datagram() {
+        let message = super::journal_message(true, 0.85);
+        assert!(message.contains("\nPRIORITY=4\n"));
+        assert!(message.contains("\nDENOISE_RATIO=85.0\n"));
+        assert!(message.contains("\nMESSAGE=Noise reduction is not keeping up\n"));
     }
 }
