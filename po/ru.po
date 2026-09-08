@@ -24,7 +24,7 @@ msgstr ""
 "10-полосный параметрический эквалайзер для того, что вы слышите. Выберите "
 "пресет или перетащите каждую полосу в диапазоне от -40 дБ до +40 дБ."
 
-#: src/ui/views/advanced.rs:500
+#: src/ui/views/advanced.rs:520
 msgid ""
 "A small extra reserve for USB headsets, microphones and external audio "
 "interfaces. Increase only if you hear tiny cuts or pops on a USB device when "
@@ -37,7 +37,7 @@ msgstr ""
 msgid "AI noise reduction"
 msgstr "ИИ-снижение шума"
 
-#: src/ui/window.rs:262 src/ui/window.rs:427
+#: src/ui/window.rs:261 src/ui/window.rs:434
 msgid "About Filter noise"
 msgstr "О приложении «Фильтр шума»"
 
@@ -47,18 +47,18 @@ msgid ""
 "reaches the top."
 msgstr ""
 
-#: src/ui/views/advanced.rs:145
+#: src/ui/views/advanced.rs:162
 msgid ""
 "Adjust how the system drives your audio hardware. Each card starts on the "
 "default we tested across a wide range of machines — change a value only if "
 "you have a specific reason to."
 msgstr ""
 
-#: src/ui/window.rs:230 src/ui/window.rs:236
+#: src/ui/window.rs:229 src/ui/window.rs:235
 msgid "Advanced"
 msgstr "Дополнительно"
 
-#: src/ui/window.rs:296
+#: src/ui/window.rs:295
 msgid ""
 "All audio processing settings will return to their factory values. Your "
 "window size and view preferences are kept."
@@ -66,7 +66,7 @@ msgstr ""
 "Все настройки обработки звука будут сброшены к заводским значениям. Размер "
 "окна и предпочтения просмотра сохраняются."
 
-#: src/ui/views/advanced.rs:588
+#: src/ui/views/advanced.rs:608
 msgid ""
 "All audio runs at studio quality (48 kHz) by default. Hi-res music players "
 "and high-end USB DACs can play higher quality if you allow it here, but "
@@ -74,17 +74,17 @@ msgid ""
 "unless you actually own hi-res equipment."
 msgstr ""
 
-#: src/ui/views/advanced/apply.rs:118
+#: src/ui/views/advanced/apply.rs:147
 msgid ""
 "All your custom audio settings will be removed and the audio service will "
 "restart with the defaults."
 msgstr ""
 
-#: src/ui/views/advanced.rs:607
+#: src/ui/views/advanced.rs:627
 msgid "Allow hi-res audio (44.1 / 48 / 88.2 / 96 / 176.4 / 192 kHz)"
 msgstr ""
 
-#: src/ui/views/advanced.rs:620
+#: src/ui/views/advanced.rs:640
 msgid "Allowed quality"
 msgstr ""
 
@@ -92,7 +92,7 @@ msgstr ""
 msgid "Always"
 msgstr ""
 
-#: src/ui/views/advanced.rs:563
+#: src/ui/views/advanced.rs:583
 msgid "Always keep the speakers ready (recommended on desktops)"
 msgstr ""
 
@@ -107,13 +107,13 @@ msgstr ""
 msgid "Applies your selected effects to the sound you hear."
 msgstr ""
 
-#: src/ui/views/advanced.rs:244
+#: src/ui/views/advanced.rs:261
 msgid "Apply and restart audio"
 msgstr ""
 
 # File: biglinux-noise-reduction-
 # pipewire/src/biglinux_microphone/ui/main_view.py, line: 227
-#: src/ui/views/advanced.rs:259
+#: src/ui/views/advanced.rs:277
 #, fuzzy
 msgid "Applying audio settings…"
 msgstr "Применение настроек…"
@@ -126,12 +126,18 @@ msgstr "Аудио улучшения"
 msgid "Audio needs attention. Open the controls for details."
 msgstr ""
 
-#: src/ui/views/advanced.rs:400
+#: src/ui/views/advanced.rs:420
 msgid "Audio responsiveness"
 msgstr ""
 
-#: src/ui/views/advanced/apply.rs:101
+#: src/ui/views/advanced/apply.rs:130
 msgid "Audio service restart failed"
+msgstr ""
+
+#: src/ui/views/advanced.rs:135
+msgid ""
+"Audio settings could not be read. Check file permissions and reopen this "
+"window."
 msgstr ""
 
 #: src/ui/views/mic.rs:107 src/ui/views/mic.rs:142
@@ -150,11 +156,11 @@ msgid ""
 "stutters, or select a model in Advanced."
 msgstr ""
 
-#: src/ui/views/advanced.rs:549
+#: src/ui/views/advanced.rs:569
 msgid "Avoid the click at the start of sounds"
 msgstr ""
 
-#: src/ui/views/advanced.rs:415
+#: src/ui/views/advanced.rs:435
 msgid "Balanced (upstream PipeWire default, ~21 ms)"
 msgstr ""
 
@@ -162,7 +168,7 @@ msgstr ""
 msgid "Bass cut"
 msgstr "Срез басов"
 
-#: src/ui/views/advanced.rs:322
+#: src/ui/views/advanced.rs:342
 msgid "Behaviour"
 msgstr ""
 
@@ -171,22 +177,22 @@ msgid "Best quality"
 msgstr ""
 
 #. ── Bluetooth ────────────────────────────────────────────────────
-#: src/ui/views/advanced.rs:165
+#: src/ui/views/advanced.rs:182
 msgid "Bluetooth"
 msgstr ""
 
-#: src/ui/views/advanced.rs:329
+#: src/ui/views/advanced.rs:349
 msgid "Bluetooth audio buffer"
 msgstr ""
 
 # File: biglinux-noise-reduction-
 # pipewire/src/biglinux_microphone/ui/main_view.py, line: 533
-#: src/ui/views/advanced.rs:296
+#: src/ui/views/advanced.rs:316
 #, fuzzy
 msgid "Bluetooth call mode"
 msgstr "Режим Bluetooth-гарнитуры"
 
-#: src/ui/views/advanced.rs:331
+#: src/ui/views/advanced.rs:351
 msgid ""
 "Bluetooth needs a small audio reserve so the sound plays smoothly even when "
 "the wireless connection has tiny stutters. A bigger reserve hides hiccups "
@@ -198,29 +204,29 @@ msgstr ""
 msgid "Bright"
 msgstr "Яркий"
 
-#: src/ui/views/advanced.rs:358
+#: src/ui/views/advanced.rs:378
 msgid "Buffer size"
 msgstr ""
 
-#: src/ui/window.rs:336
+#: src/ui/window.rs:335
 msgid "Built on"
 msgstr "Основано на"
 
-#: src/ui/views/advanced.rs:523
+#: src/ui/views/advanced.rs:543
 msgid "Built-in audio safety margin"
 msgstr ""
 
-#: src/ui/views/advanced.rs:603
+#: src/ui/views/advanced.rs:623
 msgid "CD and standard quality (44.1 + 48 kHz)"
 msgstr ""
 
 # File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/window.py,
 # line: 175
-#: src/ui/window.rs:299 src/ui/views/advanced/apply.rs:121
+#: src/ui/window.rs:298 src/ui/views/advanced/apply.rs:150
 msgid "Cancel"
 msgstr "Отмена"
 
-#: src/ui/views/advanced.rs:261
+#: src/ui/views/advanced.rs:281
 msgid "Changes are not applied yet. Apply them when you are ready."
 msgstr ""
 
@@ -311,7 +317,7 @@ msgstr ""
 "Урезает низкочастотный гул — переменный ток, ветер, удары по микрофонной "
 "стойке."
 
-#: src/ui/widgets/model_picker.rs:98
+#: src/ui/widgets/model_picker.rs:112
 #, fuzzy
 msgid ""
 "DNS3 removes more noise but can smudge consonants. VCTK is gentler and "
@@ -333,7 +339,7 @@ msgstr "Глубокий"
 
 # File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/config.py,
 # line: 711
-#: src/ui/views/advanced.rs:636
+#: src/ui/views/advanced.rs:656
 #, fuzzy
 msgid "Default"
 msgstr "Голос по умолчанию"
@@ -393,11 +399,11 @@ msgstr ""
 "Выравнивает громкость между громкими и тихими колонками — полезно для встреч "
 "с разным уровнем микрофонов."
 
-#: src/ui/views/advanced/apply.rs:94
+#: src/ui/views/advanced/apply.rs:123
 msgid "Failed to write configuration"
 msgstr ""
 
-#: src/ui/mic_shell.rs:231 src/ui/window.rs:320
+#: src/ui/mic_shell.rs:231 src/ui/window.rs:319
 msgid "Filter noise"
 msgstr "Фильтр шума"
 
@@ -414,11 +420,11 @@ msgstr ""
 msgid "Flat"
 msgstr "Плоский"
 
-#: src/ui/views/advanced.rs:377
+#: src/ui/views/advanced.rs:397
 msgid "Force off (maximum compatibility)"
 msgstr ""
 
-#: src/ui/views/advanced.rs:376
+#: src/ui/views/advanced.rs:396
 msgid "Force on (high quality)"
 msgstr ""
 
@@ -438,7 +444,7 @@ msgstr "Слушать мой голос"
 msgid "High-pass filter"
 msgstr "Фильтр высоких частот"
 
-#: src/ui/views/advanced.rs:365
+#: src/ui/views/advanced.rs:385
 msgid "High-quality Bluetooth audio (SBC-XQ)"
 msgstr ""
 
@@ -446,11 +452,11 @@ msgstr ""
 msgid "Higher"
 msgstr "Выше"
 
-#: src/ui/views/advanced.rs:389
+#: src/ui/views/advanced.rs:409
 msgid "Higher Bluetooth audio quality (SBC-XQ)"
 msgstr ""
 
-#: src/ui/views/advanced.rs:402
+#: src/ui/views/advanced.rs:422
 msgid ""
 "How fast the system reacts to sound changes. Faster reaction is great for "
 "music production but uses more CPU; slower reaction makes playback steadier "
@@ -458,7 +464,7 @@ msgid ""
 "on most computers."
 msgstr ""
 
-#: src/ui/widgets/spectrum.rs:90
+#: src/ui/widgets/spectrum.rs:92
 msgid "Input level in decibels. Reduce microphone volume if it reaches zero."
 msgstr ""
 
@@ -502,11 +508,11 @@ msgstr ""
 msgid "LEVEL / PEAK"
 msgstr ""
 
-#: src/ui/views/advanced.rs:347
+#: src/ui/views/advanced.rs:367
 msgid "Large (steadiest, ~85 ms)"
 msgstr ""
 
-#: src/ui/views/advanced.rs:656
+#: src/ui/views/advanced.rs:676
 msgid "Large (virtual machines, ~42 ms)"
 msgstr ""
 
@@ -516,11 +522,11 @@ msgid ""
 "the filters."
 msgstr ""
 
-#: src/ui/views/advanced.rs:566
+#: src/ui/views/advanced.rs:586
 msgid "Let the speakers sleep when idle (default)"
 msgstr ""
 
-#: src/ui/widgets/spectrum.rs:144
+#: src/ui/widgets/spectrum.rs:165
 msgid "Level: {level} dB · Peak: {peak} dB"
 msgstr ""
 
@@ -528,7 +534,7 @@ msgstr ""
 msgid "Log out and back in, then reopen this window."
 msgstr ""
 
-#: src/ui/views/advanced.rs:413
+#: src/ui/views/advanced.rs:433
 #, fuzzy
 msgid "Low delay (~11 ms)"
 msgstr "Задержка (мс)"
@@ -541,13 +547,13 @@ msgstr "Ниже"
 msgid "Lower CPU use"
 msgstr ""
 
-#: src/ui/views/advanced.rs:342
+#: src/ui/views/advanced.rs:362
 msgid "Lower delay (needs a stable headset, ~11 ms)"
 msgstr ""
 
 # File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/window.py,
 # line: 202
-#: src/ui/window.rs:257
+#: src/ui/window.rs:256
 msgid "Main menu"
 msgstr "Главное меню"
 
@@ -558,11 +564,11 @@ msgstr "Главное меню"
 msgid "Manual model"
 msgstr "Нейронная модель"
 
-#: src/ui/views/advanced.rs:516 src/ui/views/advanced.rs:542
+#: src/ui/views/advanced.rs:536 src/ui/views/advanced.rs:562
 msgid "Margin"
 msgstr ""
 
-#: src/ui/views/advanced.rs:657
+#: src/ui/views/advanced.rs:677
 msgid "Maximum (last resort, ~85 ms)"
 msgstr ""
 
@@ -578,11 +584,11 @@ msgid ""
 "applications. This is optional and limited by the system."
 msgstr ""
 
-#: src/ui/views/advanced.rs:654
+#: src/ui/views/advanced.rs:674
 msgid "Medium (~11 ms)"
 msgstr ""
 
-#: src/ui/views/advanced.rs:345
+#: src/ui/views/advanced.rs:365
 msgid "Medium (~21 ms)"
 msgstr ""
 
@@ -597,7 +603,7 @@ msgstr ""
 #. `gettext` falls back to the input string verbatim. That is
 #. exactly the contract callers rely on at runtime when running
 #. outside an installed locale.
-#: src/ui/window.rs:86 src/ui/widgets/source_picker.rs:90 src/ui/i18n.rs:91
+#: src/ui/window.rs:86 src/ui/widgets/source_picker.rs:90 src/ui/i18n.rs:93
 msgid "Microphone"
 msgstr "Микрофон"
 
@@ -611,10 +617,18 @@ msgstr "Фильтр системного звука"
 msgid "Microphone filter"
 msgstr "Фильтр микрофона"
 
-#: src/ui/widgets/spectrum.rs:73 src/ui/widgets/spectrum.rs:88
+#: src/ui/widgets/spectrum.rs:73 src/ui/widgets/spectrum.rs:90
 #, fuzzy
 msgid "Microphone level meter"
 msgstr "Фильтр микрофона"
+
+#: src/ui/widgets/spectrum.rs:142
+msgid "Microphone monitoring is unavailable."
+msgstr ""
+
+#: src/ui/widgets/spectrum.rs:140
+msgid "Microphone unavailable. Reconnecting…"
+msgstr ""
 
 # File: biglinux-noise-reduction-
 # pipewire/src/biglinux_microphone/ui/main_view.py, line: 323
@@ -622,7 +636,7 @@ msgstr "Фильтр микрофона"
 msgid "Model"
 msgstr "Модель"
 
-#: src/ui/views/advanced.rs:420
+#: src/ui/views/advanced.rs:440
 msgid "Most stable (older or busy machines, ~85 ms)"
 msgstr ""
 
@@ -671,21 +685,21 @@ msgstr "Фильтр шума — тонкая настройка"
 msgid "Noise reduction quality"
 msgstr "Шумоподавление отключено"
 
-#: src/ui/views/advanced.rs:652
+#: src/ui/views/advanced.rs:672
 msgid "None"
 msgstr ""
 
-#: src/ui/views/advanced/apply.rs:96 src/ui/views/advanced/apply.rs:101
+#: src/ui/views/advanced/apply.rs:125 src/ui/views/advanced/apply.rs:130
 #: src/ui/widgets/wp_override_warning.rs:165
 #: src/ui/widgets/wp_override_warning.rs:177
 msgid "OK"
 msgstr ""
 
-#: src/ui/views/advanced.rs:311
+#: src/ui/views/advanced.rs:331
 msgid "Off — always keep stereo sound (default)"
 msgstr ""
 
-#: src/ui/views/advanced.rs:310
+#: src/ui/views/advanced.rs:330
 msgid "On — switch to call mode automatically"
 msgstr ""
 
@@ -737,11 +751,11 @@ msgstr "Наличие"
 msgid "Preset"
 msgstr "Предустановка"
 
-#: src/ui/views/advanced.rs:433
+#: src/ui/views/advanced.rs:453
 msgid "Reaction speed"
 msgstr ""
 
-#: src/ui/window.rs:329
+#: src/ui/window.rs:328
 msgid ""
 "Real-time noise filter for microphone capture and system audio playback. "
 "Powered by the GTCRN neural network running as a LADSPA plugin on top of "
@@ -787,38 +801,38 @@ msgstr ""
 "Удаляет фоновый шум из вашего голоса с помощью нейросети GTCRN. Чем выше "
 "интенсивность — тем сильнее очистка."
 
-#: src/ui/views/advanced/apply.rs:40
+#: src/ui/views/advanced/apply.rs:45
 msgid "Restarting audio…"
 msgstr ""
 
 # File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/window.py,
 # line: 176
-#: src/ui/views/advanced/apply.rs:123
+#: src/ui/views/advanced/apply.rs:152
 msgid "Restore"
 msgstr "Восстановить"
 
 # File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/window.py,
 # line: 172
-#: src/ui/views/advanced/apply.rs:116
+#: src/ui/views/advanced/apply.rs:145
 #, fuzzy
 msgid "Restore default audio settings?"
 msgstr "Восстановить настройки по умолчанию?"
 
 # File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/window.py,
 # line: 172
-#: src/ui/window.rs:261 src/ui/window.rs:426
+#: src/ui/window.rs:260 src/ui/window.rs:433
 msgid "Restore default settings"
 msgstr "Восстановить настройки по умолчанию"
 
 # File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/window.py,
 # line: 172
-#: src/ui/window.rs:294
+#: src/ui/window.rs:293
 msgid "Restore default settings?"
 msgstr "Восстановить настройки по умолчанию?"
 
 # File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/window.py,
 # line: 193
-#: src/ui/window.rs:301 src/ui/views/advanced.rs:239
+#: src/ui/window.rs:300 src/ui/views/advanced.rs:256
 msgid "Restore defaults"
 msgstr "Восстановить по умолчанию"
 
@@ -847,7 +861,7 @@ msgstr ""
 "Round-trip latency for the \"Hear my voice\" monitor. Raise only if the "
 "loopback sounds rushed or chops on your hardware."
 
-#: src/ui/views/advanced.rs:525
+#: src/ui/views/advanced.rs:545
 msgid ""
 "Same idea as the USB margin, but for the speakers and microphone built into "
 "your laptop or motherboard. Most people never need to change this — try it "
@@ -870,6 +884,11 @@ msgstr "Self-listen delay"
 msgid "Settings could not be saved"
 msgstr ""
 
+#: src/ui/views/advanced.rs:279
+msgid ""
+"Settings were saved, but audio still needs to restart. Apply to try again."
+msgstr ""
+
 #: src/ui/views/mic.rs:355
 msgid ""
 "Shifts the pitch of your voice without retiming. Left = deeper, right = "
@@ -878,7 +897,7 @@ msgstr ""
 "Изменяет высоту вашего голоса без изменения скорости. Влево — ниже, вправо — "
 "выше. Центр сохраняет естественный голос."
 
-#: src/ui/window.rs:235
+#: src/ui/window.rs:234
 msgid "Show every control individually"
 msgstr "Показать каждый элемент управления отдельно"
 
@@ -892,7 +911,7 @@ msgstr ""
 msgid "Silence gate"
 msgstr "Шумовой гейт"
 
-#: src/ui/views/advanced.rs:653
+#: src/ui/views/advanced.rs:673
 msgid "Small (~5 ms)"
 msgstr ""
 
@@ -900,7 +919,7 @@ msgstr ""
 msgid "Some audio filters are not ready. Open settings to check them."
 msgstr ""
 
-#: src/ui/views/advanced.rs:551
+#: src/ui/views/advanced.rs:571
 msgid ""
 "Some laptops and motherboards put the speakers to sleep after a few seconds "
 "of silence to save power. When the next sound arrives — a notification, a "
@@ -910,11 +929,11 @@ msgid ""
 msgstr ""
 
 #. ── Qualidade de som ─────────────────────────────────────────────
-#: src/ui/views/advanced.rs:178
+#: src/ui/views/advanced.rs:195
 msgid "Sound quality"
 msgstr ""
 
-#: src/ui/views/advanced.rs:586
+#: src/ui/views/advanced.rs:606
 msgid "Sound quality range"
 msgstr ""
 
@@ -922,28 +941,28 @@ msgstr ""
 msgid "Speak normally to check your microphone level."
 msgstr ""
 
-#: src/ui/views/advanced.rs:577
+#: src/ui/views/advanced.rs:597
 msgid "Speaker sleep"
 msgstr ""
 
 #. ── Estabilidade e desempenho ────────────────────────────────────
-#: src/ui/views/advanced.rs:171
+#: src/ui/views/advanced.rs:188
 msgid "Stability and performance"
 msgstr ""
 
-#: src/ui/views/advanced.rs:346
+#: src/ui/views/advanced.rs:366
 msgid "Standard (default, ~42 ms)"
 msgstr ""
 
-#: src/ui/views/advanced.rs:655
+#: src/ui/views/advanced.rs:675
 msgid "Standard (~21 ms)"
 msgstr ""
 
-#: src/ui/views/advanced.rs:599
+#: src/ui/views/advanced.rs:619
 msgid "Standard quality only (default, 48 kHz)"
 msgstr ""
 
-#: src/ui/views/advanced.rs:418
+#: src/ui/views/advanced.rs:438
 msgid "Steady (default, ~42 ms)"
 msgstr ""
 
@@ -957,7 +976,7 @@ msgstr ""
 msgid "Stereo or lower CPU use"
 msgstr ""
 
-#: src/ui/views/advanced.rs:461
+#: src/ui/views/advanced.rs:481
 msgid "Stop preview"
 msgstr ""
 
@@ -969,13 +988,13 @@ msgstr "Системный звук"
 msgid "System sound filter"
 msgstr "Фильтр системного звука"
 
-#: src/ui/views/advanced.rs:438
+#: src/ui/views/advanced.rs:458
 msgid ""
 "Temporarily changes the audio buffer for all applications. Stop the preview "
 "to return to the previous value."
 msgstr ""
 
-#: src/ui/views/advanced.rs:467
+#: src/ui/views/advanced.rs:487
 msgid ""
 "The audio preview could not be started or restored. Check the audio "
 "connection and try again."
@@ -1027,7 +1046,7 @@ msgid ""
 "working in the meantime with the old routing."
 msgstr ""
 
-#: src/ui/views/advanced.rs:138 src/ui/views/advanced.rs:265
+#: src/ui/views/advanced.rs:155 src/ui/views/advanced.rs:285
 msgid "The standard audio settings are in use."
 msgstr ""
 
@@ -1035,12 +1054,12 @@ msgstr ""
 msgid "Try again"
 msgstr ""
 
-#: src/ui/views/advanced.rs:435 src/ui/views/advanced.rs:461
-#: src/ui/views/advanced.rs:487
+#: src/ui/views/advanced.rs:455 src/ui/views/advanced.rs:481
+#: src/ui/views/advanced.rs:507
 msgid "Try for 15 seconds"
 msgstr ""
 
-#: src/ui/views/advanced.rs:466
+#: src/ui/views/advanced.rs:486
 msgid "Try preview again"
 msgstr ""
 
@@ -1052,11 +1071,11 @@ msgstr ""
 msgid "Turning this off pauses the effects without erasing your preferences."
 msgstr ""
 
-#: src/ui/views/advanced.rs:498
+#: src/ui/views/advanced.rs:518
 msgid "USB audio safety margin"
 msgstr ""
 
-#: src/ui/views/advanced.rs:412
+#: src/ui/views/advanced.rs:432
 msgid "Very fast (music production, ~5 ms)"
 msgstr ""
 
@@ -1094,7 +1113,7 @@ msgstr "Громкость"
 msgid "Warm"
 msgstr "Теплый"
 
-#: src/ui/views/advanced.rs:298
+#: src/ui/views/advanced.rs:318
 msgid ""
 "When you start a video or voice call, your Bluetooth headset can switch to a "
 "special call mode that turns on the microphone — but the sound becomes mono "
@@ -1107,18 +1126,18 @@ msgstr ""
 msgid "WirePlumber configuration overridden"
 msgstr ""
 
-#: src/ui/views/advanced.rs:367
+#: src/ui/views/advanced.rs:387
 msgid ""
 "Your Bluetooth devices already use the best sound mode they support. Force "
 "this on if a headset stubbornly chooses lower quality, or off if you have a "
 "very old device that breaks with the high-quality mode."
 msgstr ""
 
-#: src/ui/views/advanced.rs:263
+#: src/ui/views/advanced.rs:283
 msgid "Your audio settings are active."
 msgstr ""
 
-#: src/ui/widgets/model_picker.rs:113
+#: src/ui/widgets/model_picker.rs:127
 msgid "{model} - not installed"
 msgstr ""
 
