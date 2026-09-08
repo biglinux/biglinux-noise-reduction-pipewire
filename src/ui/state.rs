@@ -243,10 +243,17 @@ impl CloseWork {
 
 impl AppState {
     pub(super) fn tuning_page(&self) -> gtk::Widget {
-        self.tuning_page.borrow_mut().get_or_insert_with(super::views::advanced::build).clone()
+        self.tuning_page
+            .borrow_mut()
+            .get_or_insert_with(super::views::advanced::build)
+            .clone()
     }
-    pub(super) fn active_page(&self) -> String { self.active_page.borrow().clone() }
-    pub(super) fn remember_page(&self, name: &str) { *self.active_page.borrow_mut() = name.to_owned(); }
+    pub(super) fn active_page(&self) -> String {
+        self.active_page.borrow().clone()
+    }
+    pub(super) fn remember_page(&self, name: &str) {
+        *self.active_page.borrow_mut() = name.to_owned();
+    }
 
     pub(super) fn close_work(&self) -> CloseWork {
         CloseWork {

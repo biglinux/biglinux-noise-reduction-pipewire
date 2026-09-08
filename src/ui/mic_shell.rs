@@ -689,7 +689,9 @@ impl Component for MicShell {
                 let Some(tracking) = self.applies.complete_health(request) else {
                     return;
                 };
-                if !self.is_closing && let Some(next) = tracking.next {
+                if !self.is_closing
+                    && let Some(next) = tracking.next
+                {
                     self.spawn_apply_request(&sender, next);
                 }
                 if tracking.is_current && tracking.next.is_none() && !self.is_closing {

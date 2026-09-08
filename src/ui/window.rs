@@ -55,12 +55,18 @@ pub(super) fn populate_body(
     mode: Mode,
 ) {
     let previous_focus = body.root().and_then(|root| root.focus());
-    let focus_path = previous_focus.as_ref().and_then(|focus| child_path(body.upcast_ref(), focus));
+    let focus_path = previous_focus
+        .as_ref()
+        .and_then(|focus| child_path(body.upcast_ref(), focus));
     let scroll_positions = collect_scroll_positions(body.upcast_ref());
     let tuning = state.tuning_page();
     if let Some(old_stack) = body.first_child().and_downcast::<adw::ViewStack>() {
-        if let Some(name) = old_stack.visible_child_name() { state.remember_page(&name); }
-        if tuning.parent().as_ref() == Some(old_stack.upcast_ref()) { old_stack.remove(&tuning); }
+        if let Some(name) = old_stack.visible_child_name() {
+            state.remember_page(&name);
+        }
+        if tuning.parent().as_ref() == Some(old_stack.upcast_ref()) {
+            old_stack.remove(&tuning);
+        }
     }
     while let Some(child) = body.first_child() {
         body.remove(&child);
@@ -106,7 +112,9 @@ pub(super) fn populate_body(
                 let spectrum_container = spectrum_container.clone();
                 let weak_state = Rc::downgrade(state);
                 stack.connect_visible_child_name_notify(move |stack| {
-                    if let (Some(state), Some(name)) = (weak_state.upgrade(), stack.visible_child_name()) {
+                    if let (Some(state), Some(name)) =
+                        (weak_state.upgrade(), stack.visible_child_name())
+                    {
                         state.remember_page(&name);
                     }
                     sync_spectrum_visibility(&spectrum_container, stack);
@@ -118,16 +126,22 @@ pub(super) fn populate_body(
     }
     let weak_body = body.downgrade();
     glib::idle_add_local_once(move || {
-        let Some(body) = weak_body.upgrade() else { return; };
+        let Some(body) = weak_body.upgrade() else {
+            return;
+        };
         for (path, value) in scroll_positions {
-            if let Some(scroll) = child_at(body.upcast_ref(), &path).and_downcast::<gtk::ScrolledWindow>() {
+            if let Some(scroll) =
+                child_at(body.upcast_ref(), &path).and_downcast::<gtk::ScrolledWindow>()
+            {
                 scroll.vadjustment().set_value(value);
             }
         }
         if let Some(focus) = previous_focus.filter(|focus| focus.is_ancestor(&body)) {
             focus.grab_focus();
         } else if let Some((path, widget_type)) = focus_path {
-            if let Some(widget) = child_at(body.upcast_ref(), &path).filter(|widget| widget.type_() == widget_type) {
+            if let Some(widget) =
+                child_at(body.upcast_ref(), &path).filter(|widget| widget.type_() == widget_type)
+            {
                 widget.grab_focus();
             }
         }
@@ -156,7 +170,9 @@ fn child_at(root: &gtk::Widget, path: &[usize]) -> Option<gtk::Widget> {
     let mut widget = root.clone();
     for &index in path {
         let mut child = widget.first_child()?;
-        for _ in 0..index { child = child.next_sibling()?; }
+        for _ in 0..index {
+            child = child.next_sibling()?;
+        }
         widget = child;
     }
     Some(widget)
