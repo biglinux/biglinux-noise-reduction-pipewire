@@ -20,17 +20,18 @@ jobs:
     permissions:
       contents: write
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
         with:
           path: workbench
           persist-credentials: false
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
         with:
           ref: fix/review-reliability-accessibility-20260908
           path: project
           fetch-depth: 0
-      - uses: dtolnay/rust-toolchain@stable
+      - uses: dtolnay/rust-toolchain@6bed0761d98439e5a578e2877258200ad565ba87
         with:
+          toolchain: stable
           components: rustfmt
       - name: Apply patches and publish topic commits
         id: publish
@@ -55,21 +56,23 @@ jobs:
     runs-on: ubuntu-latest
     container: archlinux:latest
     timeout-minutes: 30
+    env:
+      RUSTUP_TOOLCHAIN: stable
     steps:
-      - run: pacman -Syu --noconfirm --needed git
-      - uses: actions/checkout@v4
+      - run: pacman -Syu --noconfirm --needed git xorg-server-xvfb xorg-xauth dbus
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
         with:
           ref: ${{ needs.apply.outputs.commit }}
           persist-credentials: false
       - uses: ./.github/actions/install-system-deps
-      - uses: dtolnay/rust-toolchain@stable
+      - uses: dtolnay/rust-toolchain@6bed0761d98439e5a578e2877258200ad565ba87
         with:
+          toolchain: stable
           components: clippy
       - uses: Swatinem/rust-cache@v2
         with:
           shared-key: review-workbench
       - name: Compile every target and collect lint diagnostics
-        id: lint
         shell: bash
         run: |
           set +e
@@ -100,3 +103,82 @@ jobs:
           grep -E '^test result:|^failures:|^----|^error|^thread |panicked|FAILED|assertion|left:|right:' /tmp/tests.out || true
           if [ "$status" -ne 0 ]; then tail -100 /tmp/tests.out; fi
           exit "$status"
+      - name: Isolated GTK display contracts
+        if: always()
+        shell: bash
+        run: |
+          set +e
+          bash scripts/test-ui.sh > /tmp/gui.out 2>&1
+          status=$?
+          tail -100 /tmp/gui.out
+          exit "$status"
+      - name: System allocator regression suite
+        if: always()
+        shell: bash
+        run: |
+          set +e
+          cargo +stable test --no-default-features --locked -- --test-threads=1 > /tmp/system-allocator.out 2>&1
+          status=$?
+          grep -E '^test result:|^failures:|^----|^error|^thread |panicked|FAILED|assertion|left:|right:' /tmp/system-allocator.out || true
+          if [ "$status" -ne 0 ]; then tail -100 /tmp/system-allocator.out; fi
+          exit "$status"
+  portable:
+    needs: apply
+    if: contains(github.event.head_commit.message, '[validate]')
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    env:
+      RUSTUP_TOOLCHAIN: stable
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          ref: ${{ needs.apply.outputs.commit }}
+          persist-credentials: false
+      - uses: dtolnay/rust-toolchain@6bed0761d98439e5a578e2877258200ad565ba87
+        with:
+          toolchain: stable
+      - run: sudo apt-get update -qq && sudo apt-get install -y -qq gettext python3-polib python3-yaml shellcheck nix-bin
+      - uses: taiki-e/install-action@v2
+        with:
+          tool: cargo-audit,cargo-deny,cargo-machete
+      - name: Dependency advisories including unsound code
+        run: cargo audit --deny unsound
+      - name: License and source policy
+        if: always()
+        run: cargo deny check
+      - name: Unused dependency check
+        if: always()
+        run: cargo machete --with-metadata
+      - name: Shell scripts and Nix syntax
+        if: always()
+        shell: bash
+        run: |
+          set -euo pipefail
+          find scripts -type f -name '*.sh' -print0 | xargs -0 -r shellcheck -e SC2034,SC2154
+          shellcheck packaging/flatpak/generate-cargo-sources.sh
+          nix-instantiate --parse default.nix >/dev/null
+          nix-instantiate --parse flake.nix >/dev/null
+          nix-instantiate --parse packaging/nix/module.nix >/dev/null
+      - name: Translation completeness and extraction
+        if: always()
+        shell: bash
+        run: |
+          set -euo pipefail
+          cargo install xtr --version 0.1.11 --locked
+          bash scripts/refresh-pot.sh --check
+          for po in po/*.po; do msgfmt --check --check-header -o /dev/null "$po"; done
+          /usr/bin/python3 - <<'PY'
+          import polib
+          po = polib.pofile('po/pt_BR.po')
+          active = [entry for entry in po if not entry.obsolete]
+          assert all(entry.translated() for entry in active)
+          print(f'pt_BR: {len(active)} current messages translated')
+          PY
+      - name: Complexity budget
+        if: always()
+        run: pipx run lizard src/ -l rust -C 25 -w
+      - name: Duplication budget
+        if: always()
+        run: npx --yes jscpd --min-lines 50 --min-tokens 100 --threshold 5 --reporters console --silent src/
+      - uses: crate-ci/typos@master
+        if: always()
