@@ -252,7 +252,7 @@ impl AppState {
         self.active_page.borrow().clone()
     }
     pub(super) fn remember_page(&self, name: &str) {
-        *self.active_page.borrow_mut() = name.to_owned();
+        name.clone_into(&mut self.active_page.borrow_mut());
     }
 
     pub(super) fn close_work(&self) -> CloseWork {

@@ -356,9 +356,11 @@ mod tests {
 
     #[test]
     fn coalesced_writes_precede_refreshes() {
-        let mut pending = Pending::default();
-        pending.refresh = true;
-        pending.volume = Some((12, 0.2));
+        let mut pending = Pending {
+            refresh: true,
+            volume: Some((12, 0.2)),
+            ..Pending::default()
+        };
         pending.volume = Some((12, 0.9));
         assert_eq!(pending.take(), Some(Operation::Volume(12, 0.9)));
         assert_eq!(pending.take(), Some(Operation::Refresh));

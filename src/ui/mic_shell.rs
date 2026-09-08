@@ -500,12 +500,12 @@ impl Component for MicShell {
             }
             MicInput::PreferFastCpusChanged(enabled) => {
                 self.mutate_settings(&sender, |settings| {
-                    settings.runtime.prefer_fast_cpus = enabled
+                    settings.runtime.prefer_fast_cpus = enabled;
                 });
             }
             MicInput::ReserveMemoryChanged(enabled) => {
                 self.mutate_settings(&sender, |settings| {
-                    settings.runtime.reserve_memory = enabled
+                    settings.runtime.reserve_memory = enabled;
                 });
             }
             MicInput::QualityChanged(quality) => {

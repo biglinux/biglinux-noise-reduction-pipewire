@@ -138,12 +138,11 @@ pub(super) fn populate_body(
         }
         if let Some(focus) = previous_focus.filter(|focus| focus.is_ancestor(&body)) {
             focus.grab_focus();
-        } else if let Some((path, widget_type)) = focus_path {
-            if let Some(widget) =
-                child_at(body.upcast_ref(), &path).filter(|widget| widget.type_() == widget_type)
-            {
-                widget.grab_focus();
-            }
+        } else if let Some((path, widget_type)) = focus_path
+            && let Some(widget) = child_at(body.upcast_ref(), &path)
+                .filter(|widget| widget.type_() == widget_type)
+        {
+            widget.grab_focus();
         }
     });
 }
