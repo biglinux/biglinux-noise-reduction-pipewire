@@ -32,6 +32,9 @@ caf = "caf"
 
 [files]
 extend-exclude = [
+    # Localized prose is not English; gettext catalogs have a separate gate.
+    # Keep English docs, Rust code, protocol identifiers and fixtures checked.
+    "docs/*.pt_BR.md",
     "target/**",
     "po/**/*.po",
     "po/*.pot",
