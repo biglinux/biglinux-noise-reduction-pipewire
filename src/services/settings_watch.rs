@@ -107,6 +107,9 @@ impl Drop for SettingsWatch {
     }
 }
 
+/// Longest wait between retries of a revision that failed to apply.
+const MAX_RETRY_BACKOFF: Duration = Duration::from_secs(30);
+
 /// Revision acknowledgement is independent of event delivery and retry timing.
 #[derive(Default)]
 struct ApplyCursor {
@@ -131,8 +134,8 @@ impl ApplyCursor {
     }
 
     fn failed(&mut self, now: Instant) {
-        let delay = Duration::from_millis(500 * (1_u64 << self.failures.min(6)))
-            .min(Duration::from_secs(30));
+        let delay =
+            Duration::from_millis(500 * (1_u64 << self.failures.min(6))).min(MAX_RETRY_BACKOFF);
         self.failures = self.failures.saturating_add(1);
         self.retry_at = Some(now + delay);
     }
@@ -153,7 +156,7 @@ mod tests {
         assert!(cursor.retry_due(now + Duration::from_millis(500)));
         cursor.succeeded(b"new".to_vec());
         assert!(!cursor.needs_apply(Some(b"new")));
-        assert!(!cursor.retry_due(now + Duration::from_secs(60)));
+        assert!(!cursor.retry_due(now + MAX_RETRY_BACKOFF * 2));
     }
 
     #[test]
