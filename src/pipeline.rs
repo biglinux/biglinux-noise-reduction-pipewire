@@ -167,7 +167,10 @@ pub fn apply_to_dir(settings: &AppSettings, args_dir: &Path) -> io::Result<()> {
     }
 
     // Keep output arguments ready, even while the output unit is disabled.
-    write_if_changed(&args_dir.join(OUTPUT_CONF_FILE), &output::build_output_conf(settings))?;
+    write_if_changed(
+        &args_dir.join(OUTPUT_CONF_FILE),
+        &output::build_output_conf(settings),
+    )?;
 
     let ec_path = args_dir.join(ECHO_CANCEL_CONF_FILE);
     if settings.echo_cancel.enabled {
@@ -209,7 +212,10 @@ mod tests {
         fs::create_dir_all(path.parent().unwrap()).unwrap();
         fs::write(&path, "my independent filter chain\n").unwrap();
         archive_legacy_under(dir.path());
-        assert_eq!(fs::read_to_string(path).unwrap(), "my independent filter chain\n");
+        assert_eq!(
+            fs::read_to_string(path).unwrap(),
+            "my independent filter chain\n"
+        );
     }
 
     #[test]
@@ -234,7 +240,11 @@ mod tests {
         let args = args_dir(&dir);
         apply_to_dir(&AppSettings::default(), &args).unwrap();
         assert!(fs::read_dir(&args).unwrap().all(|entry| {
-            !entry.unwrap().path().extension().is_some_and(|extension| extension == "tmp")
+            !entry
+                .unwrap()
+                .path()
+                .extension()
+                .is_some_and(|extension| extension == "tmp")
         }));
     }
 

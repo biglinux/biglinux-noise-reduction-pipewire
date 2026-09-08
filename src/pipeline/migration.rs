@@ -14,10 +14,15 @@ pub(super) fn archive(path: &Path) -> io::Result<()> {
         Err(error) => return Err(error),
     };
     if !metadata.file_type().is_file() {
-        return Err(io::Error::other("legacy path is not a regular file; left unchanged"));
+        return Err(io::Error::other(
+            "legacy path is not a regular file; left unchanged",
+        ));
     }
     let Some(name) = path.file_name() else {
-        return Err(io::Error::new(io::ErrorKind::InvalidInput, "missing filename"));
+        return Err(io::Error::new(
+            io::ErrorKind::InvalidInput,
+            "missing filename",
+        ));
     };
     let mut backup_name = name.to_os_string();
     backup_name.push(".biglinux-backup");
@@ -32,7 +37,10 @@ pub(super) fn archive(path: &Path) -> io::Result<()> {
     if let Some(parent) = path.parent() {
         std::fs::File::open(parent)?.sync_all()?;
     }
-    log::info!("pipeline: preserved legacy configuration at {}", backup.display());
+    log::info!(
+        "pipeline: preserved legacy configuration at {}",
+        backup.display()
+    );
     Ok(())
 }
 
@@ -47,7 +55,10 @@ mod tests {
         std::fs::write(&path, "user edits\n").unwrap();
         archive(&path).unwrap();
         assert!(!path.exists());
-        assert_eq!(std::fs::read_to_string(dir.path().join("biglinux.conf.biglinux-backup")).unwrap(), "user edits\n");
+        assert_eq!(
+            std::fs::read_to_string(dir.path().join("biglinux.conf.biglinux-backup")).unwrap(),
+            "user edits\n"
+        );
         archive(&path).unwrap();
     }
 
@@ -72,6 +83,9 @@ mod tests {
         std::os::unix::fs::symlink(&target, &link).unwrap();
         assert!(archive(&link).is_err());
         assert!(link.is_symlink());
-        assert_eq!(std::fs::read_to_string(target).unwrap(), "personal configuration");
+        assert_eq!(
+            std::fs::read_to_string(target).unwrap(),
+            "personal configuration"
+        );
     }
 }
