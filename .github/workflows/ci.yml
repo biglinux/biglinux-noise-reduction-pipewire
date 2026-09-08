@@ -26,7 +26,7 @@ jobs:
     name: rustfmt
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
         with:
           persist-credentials: false
       - uses: dtolnay/rust-toolchain@6bed0761d98439e5a578e2877258200ad565ba87
@@ -36,29 +36,52 @@ jobs:
       - run: cargo fmt --all --check
 
   native:
-    name: Native contracts and isolated GTK session
+    name: Native contracts, GTK variants and private PipeWire graphs
     runs-on: ubuntu-latest
     container: archlinux:latest
     timeout-minutes: 30
+    defaults:
+      run:
+        shell: bash
     steps:
-      - run: pacman -Syu --noconfirm --needed git xorg-server-xvfb xorg-xauth dbus
+      - run: pacman -Syu --noconfirm --needed git xorg-server-xvfb xorg-xauth dbus ttf-dejavu python pipewire-audio swh-plugins
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
         with:
           persist-credentials: false
       - uses: ./.github/actions/install-system-deps
+      - name: C23 allocator compatibility required by native packaging
+        run: bash scripts/ci-jemalloc.sh
       - uses: dtolnay/rust-toolchain@6bed0761d98439e5a578e2877258200ad565ba87
         with:
           toolchain: "1.98.1"
           components: clippy
-      - uses: Swatinem/rust-cache@v2
+      - uses: Swatinem/rust-cache@6323deb102c322ba6fcbdcafc7e3dddab59af2b6
       - name: Strict Clippy, all targets and features
         run: cargo clippy --all-targets --all-features --locked -- -D warnings
       - name: Unit, integration and documentation tests
+        if: '!cancelled()'
         run: cargo test --all-features --locked -- --test-threads=1
-      - name: Isolated graphical contracts, explicitly including ignored GUI test
-        run: bash scripts/test-ui.sh
+      - name: Independent GTK contracts with compatible jemalloc
+        if: '!cancelled()'
+        run: bash scripts/test-ui.sh 2>&1 | tee "$RUNNER_TEMP/gtk-jemalloc.log"
+      - name: Independent GTK contracts with the system allocator
+        if: '!cancelled()'
+        run: bash scripts/test-ui.sh --no-default-features 2>&1 | tee "$RUNNER_TEMP/gtk-system.log"
       - name: System allocator build and tests
+        if: '!cancelled()'
         run: cargo test --no-default-features --locked -- --test-threads=1
+      - name: Real graph loading and independent recovery on a private PipeWire daemon
+        if: '!cancelled()'
+        run: bash scripts/test-pipewire.sh 2>&1 | tee "$RUNNER_TEMP/pipewire-runtime.log"
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        if: always()
+        with:
+          name: native-contract-logs-${{ github.sha }}
+          path: |
+            ${{ runner.temp }}/gtk-*.log
+            ${{ runner.temp }}/pipewire-runtime.log
+          retention-days: 7
+          if-no-files-found: warn
 
   msrv:
     name: MSRV 1.97.1
