@@ -234,7 +234,6 @@ impl Component for MicShell {
         }
 
         let header = adw::HeaderBar::new();
-        header.set_decoration_layout(Some(":minimize,maximize,close"));
         let mode_picker = window::build_mode_picker(initial_mode);
         header.pack_start(&mode_picker.container);
         let primary_menu = build_flat_action_popover_button(&window::primary_menu_spec());
@@ -690,7 +689,7 @@ impl Component for MicShell {
                 let Some(tracking) = self.applies.complete_health(request) else {
                     return;
                 };
-                if let Some(next) = tracking.next {
+                if !self.is_closing && let Some(next) = tracking.next {
                     self.spawn_apply_request(&sender, next);
                 }
                 if tracking.is_current && tracking.next.is_none() && !self.is_closing {

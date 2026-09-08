@@ -192,6 +192,10 @@ impl ApplyCompletion {
 
 /// Shared GTK-main-thread state.
 pub struct AppState {
+    // The tuning page owns an independent draft and no Rc<AppState>. Keeping
+    // this widget avoids losing unapplied choices on external JSON updates.
+    tuning_page: RefCell<Option<gtk::Widget>>,
+    active_page: RefCell<String>,
     settings: RefCell<AppSettings>,
     /// Last snapshot that was successfully applied. Used to decide
     /// whether the current change needs an expensive mic-chain reload
@@ -238,6 +242,12 @@ impl CloseWork {
 }
 
 impl AppState {
+    pub(super) fn tuning_page(&self) -> gtk::Widget {
+        self.tuning_page.borrow_mut().get_or_insert_with(super::views::advanced::build).clone()
+    }
+    pub(super) fn active_page(&self) -> String { self.active_page.borrow().clone() }
+    pub(super) fn remember_page(&self, name: &str) { *self.active_page.borrow_mut() = name.to_owned(); }
+
     pub(super) fn close_work(&self) -> CloseWork {
         CloseWork {
             baseline: self
@@ -254,6 +264,8 @@ impl AppState {
     pub fn new(settings: AppSettings) -> Rc<Self> {
         let persisted = settings.clone();
         Rc::new(Self {
+            tuning_page: RefCell::new(None),
+            active_page: RefCell::new("mic".to_owned()),
             settings: RefCell::new(settings),
             last_applied: RefCell::new(None),
             last_persisted: RefCell::new(Some(persisted)),
