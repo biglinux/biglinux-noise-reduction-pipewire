@@ -147,9 +147,8 @@ fn reload_when_mic_hpf_toggles() {
 }
 
 #[test]
-fn mono_output_topology_unchanged_when_only_nr_enabled_toggles() {
-    // GTCRN stays in the output graph regardless of NR — toggling
-    // its Enable port is a live update, not a restart trigger.
+fn mono_nr_toggle_rebuilds_the_conditional_neural_stage() {
+    // Mono and stereo use the same conditional neural stage.
     let prev = AppSettings {
         output_filter: OutputFilterSettings {
             enabled: true,
@@ -164,7 +163,7 @@ fn mono_output_topology_unchanged_when_only_nr_enabled_toggles() {
     };
     let mut next = prev.clone();
     next.output_filter.noise_reduction.enabled = true;
-    assert!(!output_topology_changed(Some(&prev), &next));
+    assert!(output_topology_changed(Some(&prev), &next));
 }
 
 #[test]

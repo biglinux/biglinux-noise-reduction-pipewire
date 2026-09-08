@@ -351,24 +351,6 @@ fn reload_services() -> ExitCode {
     reconcile_saved(true)
 }
 
-/// Reconcile the mic loader unit with the master mic-side switches.
-/// The unit must be running whenever any mic filter is wanted; stop
-/// it otherwise so `mic-biglinux` doesn't hang around as a dead node.
-
-/// Reconcile the AEC loader unit. Independent lifecycle from the mic
-/// loader: when AEC is wanted the EC source must exist before the mic
-/// chain resolves its capture target, so callers run this *before*
-/// reconciling the mic unit.
-
-/// Bring the standalone output unit up when the user wants the chain
-/// running, and tear it down when they turn the master off so no idle
-/// `pipewire -c` worker remains. The conf carries `filter.smart = true`,
-/// so WirePlumber transparently inserts us before the current default sink.
-/// Stopping the unit
-/// removes the virtual sink — Chromium-based browsers pause playback
-/// when their target sink disappears, which is the accepted price for
-/// not keeping a dormant worker running.
-
 /// Push current settings into the already-loaded filter-chain without
 /// restarting any service. Safe to call repeatedly.
 fn live_update() -> ExitCode {
@@ -728,10 +710,9 @@ fn watch_echo() -> ExitCode {
         let settings = AppSettings::load();
         if settings.echo_cancel.mode == biglinux_microphone::config::EchoMode::Automatic
             && settings.echo_cancel.enabled != wanted
+            && autostart() != ExitCode::SUCCESS
         {
-            if autostart() != ExitCode::SUCCESS {
-                return ExitCode::FAILURE;
-            }
+            return ExitCode::FAILURE;
         }
     }
     let _ = child.wait();

@@ -105,9 +105,11 @@ mod tests {
     fn assert_model_picker_contract() {
         let picked_models = Rc::new(RefCell::new(Vec::new()));
         let picked_models_for_callback = Rc::clone(&picked_models);
-        let dropdown = super::widgets::model_picker::build(NoiseModel::GtcrnVctk, move |model| {
-            picked_models_for_callback.borrow_mut().push(model);
-        });
+        let dropdown = super::widgets::model_picker::build_with_availability(
+            NoiseModel::GtcrnVctk,
+            move |model| picked_models_for_callback.borrow_mut().push(model),
+            |_| true,
+        );
 
         assert_eq!(dropdown.selected(), 1);
         let model = dropdown.model().expect("model picker exposes a list model");

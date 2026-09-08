@@ -155,13 +155,13 @@ mod runtime_preferences;
 
 fn loader_preferences() -> runtime_preferences::RuntimeConfig {
     let Some(root) = dirs::config_dir() else {
-        return Default::default();
+        return runtime_preferences::RuntimeConfig::default();
     };
     let Some(value) = std::fs::read(root.join("biglinux-microphone/settings.json"))
         .ok()
         .and_then(|bytes| serde_json::from_slice::<serde_json::Value>(&bytes).ok())
     else {
-        return Default::default();
+        return runtime_preferences::RuntimeConfig::default();
     };
     serde_json::from_value(value["runtime"].clone()).unwrap_or_default()
 }
@@ -183,7 +183,7 @@ fn run() -> Result<(), String> {
     // Parse + read every (module, args-file) pair up front so a bad path
     // exits before we touch PipeWire.
     let mut modules: Vec<(CString, CString, String)> = Vec::with_capacity(raw_args.len() / 2);
-    for pair in raw_args.chunks_exact(2) {
+    for pair in raw_args.as_chunks::<2>().0 {
         let module_name = &pair[0];
         let args_path = resolve_args_path(&pair[1])?;
         let module_args =

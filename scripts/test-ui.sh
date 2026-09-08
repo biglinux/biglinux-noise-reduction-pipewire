@@ -14,6 +14,7 @@ export XDG_RUNTIME_DIR="$session/runtime" XDG_CONFIG_HOME="$session/config"
 export XDG_CACHE_HOME="$session/cache" XDG_DATA_HOME="$session/data"
 export DBUS_SYSTEM_BUS_ADDRESS="unix:path=$session/no-system-bus"
 export BIGLINUX_UI_SESSION_MODE=disposable
+export G_DEBUG=fatal-warnings
 export LANG=C.UTF-8 LC_ALL=C.UTF-8 LANGUAGE=C GDK_BACKEND=x11 GSK_RENDERER=cairo
 xvfb-run -a dbus-run-session -- cargo test --all-features --locked --lib \
     ui::tests::gtk_display_contracts_cover_dialogs_and_model_picker \

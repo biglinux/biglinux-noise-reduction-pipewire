@@ -165,11 +165,9 @@ fn master_off_forces_full_bypass_regardless_of_sub_flags() {
 }
 
 #[test]
-fn nr_off_with_master_on_keeps_gtcrn_with_enable_zero() {
-    // Master is on, sub-effects routed normally, but noise
-    // reduction is off — the GTCRN node must remain wired with
-    // Enable=0 so the user can re-toggle NR via the live path
-    // without a service restart.
+fn nr_off_with_master_on_uses_a_copy_without_neural_processing() {
+    // A disabled neural stage is a cheap copy in both channel modes.
+    // Changing NR therefore changes topology and requires one chain reload.
     let s = AppSettings {
         output_filter: crate::config::OutputFilterSettings {
             enabled: true,
@@ -184,9 +182,10 @@ fn nr_off_with_master_on_keeps_gtcrn_with_enable_zero() {
     };
     let conf = build_output_conf(&s);
     assert!(conf.contains("name = \"ai\""));
-    assert!(conf.contains("\"Enable\" = 0.0"));
-    assert!(conf.contains(r#"{ output = "hpf:Out" input = "ai:Input" }"#));
-    assert!(conf.contains(r#"{ output = "ai:Output" input = "gate:Input" }"#));
+    assert!(!conf.contains("libgtcrn"));
+    assert!(!conf.contains("\"Enable\""));
+    assert!(conf.contains(r#"{ output = "hpf:Out" input = "ai:In" }"#));
+    assert!(conf.contains(r#"{ output = "ai:Out" input = "gate:Input" }"#));
 }
 
 #[test]

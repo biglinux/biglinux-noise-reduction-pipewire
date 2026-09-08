@@ -84,7 +84,7 @@ impl DenoiseWatch {
             )
         };
         Some(Self {
-            handle: handle,
+            handle,
             hops,
             last: None,
             announced_degraded: false,
