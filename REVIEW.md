@@ -1,47 +1,73 @@
-# Review corrections — 2026-09-08
+# PR #30 follow-up review — 2026-09-08
 
-Reference audit: main at `f674c2006b97f91cfded5a5463f68f3714b10c87`.
-Implementation: pull request #30. Read the PR's latest validation summary and
-Actions runs for the exact tested commit; this file is not a test certificate.
-The June report is preserved under `docs/reviews/2026-06-19.md`, not carried
-forward as a current 10/10 score.
+The R01–R20 identifiers below refer to the review of PR #30 at
+`bf6cfca75bb43d94766d2925624067ae0673a4e2`. They are not the numbering of the
+original 50-item repository audit. Implementation coverage is not a claim that
+every original audit item or every platform has been certified.
 
-## Traceability
+## Finding-to-regression matrix
 
-| Finding | Implementation / regression surface |
-| --- | --- |
-| Preserve user configuration | `pipeline/migration.rs`, generic filter-chain preservation and no-overwrite backup tests |
-| Concurrent settings and corrupt files | `config/storage.rs`, stable lock, three-way merge, conflict and malformed-file tests |
-| Backend reduction versus gate | `pipeline/mic.rs`, `tests/review_audio.rs` |
-| Shared CLI/GUI graph reconciliation and honest failures | `services/reconcile.rs`, observed-state planner tests, CLI integration |
-| Close without a working audio server | `ui/mic_shell.rs`, monitor lifecycle contracts |
-| Device selection and volume off the UI thread | `ui/widgets/source_picker.rs` |
-| Applet process retries and accessibility | Plasma `main.qml`, explicit controls, bounded retry policy |
-| Reversible buffer preview | `services/preview.rs`, timed preview lease, cancellation and restoration |
-| Applied versus edited tuning, reset and context | advanced view/apply, retained tuning page, navigation restoration |
-| Preserve stereo or explicitly choose mono | `pipeline/output.rs`, `tests/review_stereo.rs` |
-| Preserve preferences while bypassing | runtime settings projection, `tests/review_master.rs` |
-| FFT scratch reuse and bounded monitoring | analyzer/capture/monitor modules and tests |
-| Structured journal diagnostics and measured quality | `pwloader/denoise_watch.rs`, `config/plugin_cost.rs` |
-| Optional resource tuning | `config/runtime.rs`, loader affinity/memory settings, collapsed advanced rows |
-| Meter values and reduced motion | native LevelBar/text value, accessible spectrum container |
-| Rust and QML translation coverage | extraction markers, `refresh-pot.sh --check`, merged gettext catalogs |
-| Subprocess allow-list, deadlines and output bounds | vendored `big-os-kit/subprocess`, `tests/review_subprocess.rs` |
-| XDG integration | loader arguments and `tests/review_xdg_units.rs` |
-| Dependency advisories | updated Cargo locks and synchronized Flatpak registry sources |
-| Real test coverage instead of silent skips | `scripts/test-ui.sh`, `scripts/test-miri.sh`, strict portable quality gate |
-| Nix closure and gettext | `default.nix`, `packaging/nix/` |
+| ID | Implemented correction | Regression surface |
+| --- | --- | --- |
+| R01 | Normalize the native GTK meter to 0..1; publish physical dB in visible and accessible text. | `ui::tests::assert_meter_range_contract`, executed by the isolated GTK entry point with fatal warnings. |
+| R02 | Separate recovering capture from terminal failure; keep the UI receiver alive and clear stale values. | `ui::tests::assert_monitor_binding_contract` injects frame, recovering and recovered frame events. |
+| R03 | Track observed and successfully persisted/applied byte revisions independently; retry failed revisions with bounded backoff. | `services::settings_watch::tests`: failed application, concurrent newer edit, bounded retries. |
+| R04 | Plan per-chain recovery after failed live controls; force repair bypasses the fast path and independent stops are still attempted. | `services::reconcile::tests`: failed push, forced repair, failed AEC with independent output repair. |
+| R05 | Keep byte-exact persisted tuning revisions separate from applied state; recognize own partial writes and retry a failed restart. | `services::pipewire::user_tweaks::transaction::tests`: partial writes, external conflicts, idempotent restart retry. |
+| R06 | Compare effective graph projections; unchanged suspended nodes do not require a push or a restart. | `unchanged_suspended_graphs_do_not_need_a_push_or_restart`. |
+| R07 | Synchronize model, quality and bypass controls after worker normalization without treating slider drags as structural UI changes. | `mirrored_choices_track_worker_normalization_but_not_slider_drags`; GTK navigation contracts. |
+| R08 | Expose an advanced master pause/resume control and explain preserved effect preferences; explicit enabling actions resume processing consistently. | `tests/review_master.rs`, settings intent and mirrored-choice tests. |
+| R09 | Preserve the preview child's exit result; retry transient restoration failures with fresh ownership comparisons and show errors. | `services::preview::tests`: transient reads, failed writes, external override, bounded persistent failure. |
+| R10 | Exclude Apply/Reset while preview startup is in flight; prevent a new preview during application and stop an existing preview before writes. | Shared `busy` / `preview_busy` transitions in the tuning controller; real event-order testing remains required. |
+| R11 | Resume an interrupted migration only when the backup and original are regular files referring to the same device/inode. | `interrupted_migration_resumes_without_overwriting`, different-backup and backup-symlink tests. |
+| R12 | Explicitly refresh runtime capabilities off the GTK thread; capability generations invalidate displayed availability. | Runtime capability refresh tests in `config/noise_model.rs`. |
+| R13 | Check only the neural models and services required by the effective configuration, not an unconditional GTCRN dependency. | `ui::health::tests`: alternate model, equalizer-only and bypass. |
+| R14 | Change the visible EQ preset to Custom on a manual band edit; reselecting a preset restores all bands without a signal loop. | `ui::widgets::eq_card::assert_interaction_contract` in the isolated GTK entry point. |
+| R15 | Use shared frequency boundaries, allow empty unresolved low bands, test actual peak-band indices and stop constant-input meter decay. | Analyzer known-tone tests across FFT sizes/rates; spectrum steady-input regression. |
+| R16 | Wrap EQ columns and use native font-scalable frequency labels plus theme-derived spectrum color. | EQ minimum-width GTK assertion. Large-text, contrast and screen-reader acceptance remain separate. |
+| R17 | Include model identity and controls in the cost cache; reject asynchronous measurements without demonstrated completed work; use a conservative automatic fallback. | Completed-work, shared-library variants, logarithmic LADSPA defaults and automatic-quality tests. |
+| R18 | Add default conservative headroom and a final sample ceiling, with an explicit advanced opt-out and matched live controls. | `pipeline::gain_safety::tests`, `tests/review_gain_safety.rs`; acoustic tests remain required. |
+| R19 | Disable allocator background threads at boot, quiesce any explicit override before locale setup, avoid GTK repeating setlocale, then enable requested background purging. | Native compilation plus startup isolation guard. Test GUI startup and allocator behavior in a real packaged session. |
+| R20 | Separate stale status-query errors from action failures; clear only an error superseded by a successful observation. | `node --test tests/plasmoid_status.test.cjs` runs the production QML status reducer. |
 
-## Validation boundaries
+The original non-destructive migration, stable settings lock, three-way merge,
+standalone gate independence, stereo default, bounded subprocess I/O, XDG loader
+paths and gettext extraction corrections remain in this PR.
 
-Compilation and pure regression tests do not measure sound quality, actual
-hardware latency, CPU improvement, assistive-technology usability or visual
-polish. Required before a production release: a disposable real PipeWire and
-WirePlumber session; GTK and Plasma keyboard/AT-SPI tests; long translations,
-large fonts and contrast themes; USB/Bluetooth hotplug and loaded-CPU audio;
-packaged installation and upgrade tests. NixOS and Flatpak require their own
-integration tests and are not certified by an Arch build.
+## Reproduction
 
-Do not dismiss a secret scanner's unverified finding as a false positive without
-locating and reviewing it. Unsupported Miri FFI is not evidence of undefined
-behavior, and an unavailable required tool is not a passing check.
+```sh
+cargo fmt --all --check
+cargo clippy --all-targets --all-features --locked -- -D warnings
+cargo test --all-features --locked -- --test-threads=1
+bash scripts/test-ui.sh
+cargo test --no-default-features --locked -- --test-threads=1
+node --test tests/plasmoid_status.test.cjs
+bash scripts/refresh-pot.sh --check
+bash scripts/quality-check.sh --ci
+```
+
+Use the PR validation comment and the artifact's `tested-commit.txt` for actual
+results. A workbench workflow's own commit can differ from its pinned application
+checkout; never infer the tested application revision from the workflow's SHA.
+A failed test step does not prove subsequent tests were executed.
+
+## Remaining acceptance boundaries
+
+GTK widget tests are not Orca/AT-SPI user acceptance. Node tests of a QML reducer
+do not instantiate Plasma. Generated graph assertions are not hardware audio,
+true-peak, latency, XRUN or intelligibility measurements. Nix syntax checks are
+not `nix build` or NixOS integration. Flatpak remains experimental.
+
+The gain guard is a sample ceiling, not an oversampled true-peak limiter. Its
+conservative headroom may lower volume substantially with large combined boosts.
+The clamp may distort an overloaded signal and cannot undo source distortion.
+Compare music, calls and recorded speech before promoting a release.
+
+Preview restoration retries are finite and preserve newer external overrides.
+No implementation can promise restoration after SIGKILL or permanent loss of
+the audio server. The UI must report an unconfirmed restoration rather than
+claiming success.
+
+The June readiness report remains historical under `docs/reviews/2026-06-19.md`.
+Neither that score nor this implementation matrix certifies a later revision.

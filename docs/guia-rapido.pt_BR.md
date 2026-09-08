@@ -79,3 +79,32 @@ valor atual e refaça a alteração pretendida.
 O diagnóstico de terminal está disponível em `biglinux-microphone-cli doctor`.
 Ao relatar um problema, inclua a versão, o dispositivo e a mensagem apresentada;
 não publique gravações privadas, credenciais ou um log inteiro sem revisá-lo.
+
+## Pausar sem perder os ajustes
+
+O controle **Efeitos do microfone** pausa ou retoma todos os efeitos. As opções
+individuais continuam salvas enquanto o processamento está pausado. A tela
+avançada mostra essa pausa; não é necessário restaurar cada efeito depois.
+
+Ao editar uma banda do equalizador, a predefinição passa a **Personalizado**.
+Escolher novamente uma predefinição restaura sua curva. Em janelas estreitas,
+as bandas se organizam em mais de uma linha.
+
+## Proteção de volume e picos
+
+A proteção de picos começa ligada. Ela reduz o ganho combinado dos efeitos e
+limita os picos das amostras de saída. Reforços grandes no equalizador podem
+reduzir o volume geral por causa dessa margem de segurança.
+
+Isso não recupera uma gravação já distorcida nem substitui um limitador de
+masterização. Limitar um sinal excessivo também pode alterar seu som. A opção
+avançada de desativação é para quem controla o ganho em outra ferramenta;
+não a use apenas para compensar um microfone com volume mal ajustado.
+
+## Quando a prévia terminar
+
+Confira a mensagem exibida. Se a restauração não for confirmada, a interface
+mostra o erro em vez de apresentar a operação como concluída com sucesso.
+Se outro programa mudou a reserva de áudio durante a prévia, essa escolha é
+preservada. Perda definitiva da conexão ou encerramento forçado podem impedir
+a restauração; nesse caso, confira o ajuste no seu gerenciador de áudio.
