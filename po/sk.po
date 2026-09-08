@@ -16,7 +16,7 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "X-Generator: attranslate\n"
 
-#: src/ui/views/output.rs:85
+#: src/ui/views/output.rs:86
 msgid ""
 "10-band parametric EQ on what you hear. Pick a preset or drag each band "
 "between -40 dB and +40 dB."
@@ -24,7 +24,7 @@ msgstr ""
 "10-pásmový parametrický ekvalizér na to, čo počujete. Vyberte prednastavenie "
 "alebo potiahnite každý pásmo medzi -40 dB a +40 dB."
 
-#: src/ui/views/advanced.rs:520
+#: src/ui/views/advanced.rs:568
 msgid ""
 "A small extra reserve for USB headsets, microphones and external audio "
 "interfaces. Increase only if you hear tiny cuts or pops on a USB device when "
@@ -33,11 +33,11 @@ msgstr ""
 
 # File: biglinux-noise-reduction-
 # pipewire/src/biglinux_microphone/ui/main_view.py, line: 310
-#: src/ui/views/output.rs:64
+#: src/ui/views/output.rs:65
 msgid "AI noise reduction"
 msgstr "AI redukcia šumu"
 
-#: src/ui/window.rs:261 src/ui/window.rs:434
+#: src/ui/window.rs:262 src/ui/window.rs:435
 msgid "About Filter noise"
 msgstr "O aplikácii Filtrovať šum"
 
@@ -47,18 +47,18 @@ msgid ""
 "reaches the top."
 msgstr ""
 
-#: src/ui/views/advanced.rs:162
+#: src/ui/views/advanced.rs:164
 msgid ""
 "Adjust how the system drives your audio hardware. Each card starts on the "
 "default we tested across a wide range of machines — change a value only if "
 "you have a specific reason to."
 msgstr ""
 
-#: src/ui/window.rs:229 src/ui/window.rs:235
+#: src/ui/window.rs:230 src/ui/window.rs:236
 msgid "Advanced"
 msgstr "Pokročilé"
 
-#: src/ui/window.rs:295
+#: src/ui/window.rs:296
 msgid ""
 "All audio processing settings will return to their factory values. Your "
 "window size and view preferences are kept."
@@ -66,7 +66,7 @@ msgstr ""
 "Všetky nastavenia spracovania zvuku sa vrátia na výrobné hodnoty. Veľkosť "
 "okna a preferencie zobrazenia zostanú zachované."
 
-#: src/ui/views/advanced.rs:608
+#: src/ui/views/advanced.rs:656
 msgid ""
 "All audio runs at studio quality (48 kHz) by default. Hi-res music players "
 "and high-end USB DACs can play higher quality if you allow it here, but "
@@ -74,125 +74,125 @@ msgid ""
 "unless you actually own hi-res equipment."
 msgstr ""
 
-#: src/ui/views/advanced/apply.rs:147
+#: src/ui/views/advanced/apply.rs:169
 msgid ""
 "All your custom audio settings will be removed and the audio service will "
 "restart with the defaults."
 msgstr ""
 
-#: src/ui/views/advanced.rs:627
+#: src/ui/views/advanced.rs:675
 msgid "Allow hi-res audio (44.1 / 48 / 88.2 / 96 / 176.4 / 192 kHz)"
 msgstr ""
 
-#: src/ui/views/advanced.rs:640
+#: src/ui/views/advanced.rs:688
 msgid "Allowed quality"
 msgstr ""
 
-#: src/ui/views/mic.rs:107
+#: src/ui/views/mic.rs:129
 msgid "Always"
 msgstr ""
 
-#: src/ui/views/advanced.rs:583
+#: src/ui/views/advanced.rs:631
 msgid "Always keep the speakers ready (recommended on desktops)"
 msgstr ""
 
-#: src/ui/mic_shell.rs:724
+#: src/ui/mic_shell.rs:755
 msgid ""
 "Another application may be changing the settings, or the settings file is "
 "not writable. Try again, keep this window open, or close without saving your "
 "latest changes."
 msgstr ""
 
-#: usr/share/plasma/plasmoids/br.com.biglinux.micnoise/contents/ui/main.qml:164
+#: usr/share/plasma/plasmoids/br.com.biglinux.micnoise/contents/ui/main.qml:166
 msgid "Applies your selected effects to the sound you hear."
 msgstr ""
 
-#: src/ui/views/advanced.rs:261
+#: src/ui/views/advanced.rs:263
 msgid "Apply and restart audio"
 msgstr ""
 
 # File: biglinux-noise-reduction-
 # pipewire/src/biglinux_microphone/ui/main_view.py, line: 227
-#: src/ui/views/advanced.rs:277
+#: src/ui/views/advanced.rs:279
 #, fuzzy
 msgid "Applying audio settings…"
 msgstr "Aplikovanie nastavení…"
 
-#: src/ui/views/output.rs:68
+#: src/ui/views/output.rs:69
 msgid "Audio enhancements"
 msgstr "Zvukové vylepšenia"
 
-#: usr/share/plasma/plasmoids/br.com.biglinux.micnoise/contents/ui/main.qml:120
+#: usr/share/plasma/plasmoids/br.com.biglinux.micnoise/contents/ui/main.qml:122
 msgid "Audio needs attention. Open the controls for details."
 msgstr ""
 
-#: src/ui/views/advanced.rs:420
+#: src/ui/views/advanced.rs:422
 msgid "Audio responsiveness"
 msgstr ""
 
-#: src/ui/views/advanced/apply.rs:130
+#: src/ui/views/advanced/apply.rs:152
 msgid "Audio service restart failed"
 msgstr ""
 
-#: src/ui/views/advanced.rs:135
+#: src/ui/views/advanced.rs:137
 msgid ""
 "Audio settings could not be read. Check file permissions and reopen this "
 "window."
 msgstr ""
 
-#: src/ui/views/mic.rs:107 src/ui/views/mic.rs:142
+#: src/ui/views/mic.rs:129 src/ui/views/mic.rs:164
 msgid "Automatic"
 msgstr ""
 
-#: src/ui/views/mic.rs:127
+#: src/ui/views/mic.rs:149
 msgid ""
 "Automatic cancels speaker echo and turns off cancellation when headphones "
 "are in use."
 msgstr ""
 
-#: src/ui/views/mic.rs:168
+#: src/ui/views/mic.rs:190
 msgid ""
 "Automatic chooses a model for this computer. Choose lower CPU use if sound "
 "stutters, or select a model in Advanced."
 msgstr ""
 
-#: src/ui/views/advanced.rs:569
+#: src/ui/views/advanced.rs:617
 msgid "Avoid the click at the start of sounds"
 msgstr ""
 
-#: src/ui/views/advanced.rs:435
+#: src/ui/views/advanced.rs:437
 msgid "Balanced (upstream PipeWire default, ~21 ms)"
 msgstr ""
 
-#: src/ui/widgets/eq_card.rs:168
+#: src/ui/widgets/eq_card.rs:182
 msgid "Bass cut"
 msgstr "Zníženie basov"
 
-#: src/ui/views/advanced.rs:342
+#: src/ui/views/advanced.rs:344
 msgid "Behaviour"
 msgstr ""
 
-#: src/ui/views/mic.rs:143
+#: src/ui/views/mic.rs:165
 msgid "Best quality"
 msgstr ""
 
 #. ── Bluetooth ────────────────────────────────────────────────────
-#: src/ui/views/advanced.rs:182
+#: src/ui/views/advanced.rs:184
 msgid "Bluetooth"
 msgstr ""
 
-#: src/ui/views/advanced.rs:349
+#: src/ui/views/advanced.rs:351
 msgid "Bluetooth audio buffer"
 msgstr ""
 
 # File: biglinux-noise-reduction-
 # pipewire/src/biglinux_microphone/ui/main_view.py, line: 533
-#: src/ui/views/advanced.rs:316
+#: src/ui/views/advanced.rs:318
 #, fuzzy
 msgid "Bluetooth call mode"
 msgstr "Režim Bluetooth slúchadiel"
 
-#: src/ui/views/advanced.rs:351
+#: src/ui/views/advanced.rs:353
 msgid ""
 "Bluetooth needs a small audio reserve so the sound plays smoothly even when "
 "the wireless connection has tiny stutters. A bigger reserve hides hiccups "
@@ -200,56 +200,67 @@ msgid ""
 "headset stutters or you need quicker audio."
 msgstr ""
 
-#: src/ui/widgets/eq_card.rs:166
+#: src/ui/widgets/eq_card.rs:180
 msgid "Bright"
 msgstr "Jasný"
 
-#: src/ui/views/advanced.rs:378
+#: src/ui/views/advanced.rs:380
 msgid "Buffer size"
 msgstr ""
 
-#: src/ui/window.rs:335
+#: src/ui/window.rs:336
 msgid "Built on"
 msgstr "Postavené na"
 
-#: src/ui/views/advanced.rs:543
+#: src/ui/views/advanced.rs:591
 msgid "Built-in audio safety margin"
 msgstr ""
 
-#: src/ui/views/advanced.rs:623
+#: src/ui/views/advanced.rs:671
 msgid "CD and standard quality (44.1 + 48 kHz)"
 msgstr ""
 
 # File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/window.py,
 # line: 175
-#: src/ui/window.rs:298 src/ui/views/advanced/apply.rs:150
+#: src/ui/window.rs:299 src/ui/views/advanced/apply.rs:172
 msgid "Cancel"
 msgstr "Zrušiť"
 
-#: src/ui/views/advanced.rs:281
+#: src/ui/views/advanced.rs:283
 msgid "Changes are not applied yet. Apply them when you are ready."
 msgstr ""
 
-#: src/ui/mic_shell.rs:383
+#: src/ui/mic_shell.rs:387
 msgid ""
 "Changes have not been saved. You can keep editing or close without saving."
 msgstr ""
 
-#: src/ui/mic_shell.rs:961
+#: src/ui/mic_shell.rs:993
 msgid "Check again"
 msgstr ""
 
-#: src/ui/mic_shell.rs:857
+#: src/ui/mic_shell.rs:889
 msgid "Check again, or run biglinux-microphone-cli doctor in a terminal."
 msgstr ""
 
-#: src/ui/mic_shell.rs:278 src/ui/mic_shell.rs:802
+#: src/ui/health.rs:34
+msgid ""
+"Check the audio connection, then check again. Your preferences are kept."
+msgstr ""
+
+#: src/ui/mic_shell.rs:282 src/ui/mic_shell.rs:833
 msgid "Checking the audio system…"
 msgstr ""
 
-#: src/ui/views/mic.rs:377
+#: src/ui/views/mic.rs:399
 msgid "Chipmunk"
 msgstr "Chipmunk"
+
+#: src/ui/health.rs:50
+msgid ""
+"Choose another installed model, or install this model and its required "
+"runtime, then check again."
+msgstr ""
 
 #: src/ui/views/simple.rs:209
 msgid ""
@@ -259,11 +270,11 @@ msgstr ""
 "Čistí šum na pozadí zo všetkého, čo počujete, ešte predtým, než to dosiahne "
 "vaše reproduktory."
 
-#: usr/share/plasma/plasmoids/br.com.biglinux.micnoise/contents/ui/main.qml:151
+#: usr/share/plasma/plasmoids/br.com.biglinux.micnoise/contents/ui/main.qml:153
 msgid "Cleans your voice for calls and recordings"
 msgstr "Vyčistí váš hlas pre hovory a nahrávky"
 
-#: src/ui/mic_shell.rs:727
+#: src/ui/mic_shell.rs:758
 msgid "Close without saving"
 msgstr ""
 
@@ -271,19 +282,19 @@ msgstr ""
 msgid "Combine to mono (lower CPU use)"
 msgstr ""
 
-#: src/ui/views/mic.rs:425 src/ui/views/output.rs:196
+#: src/ui/views/mic.rs:447 src/ui/views/output.rs:197
 msgid "Compressor"
 msgstr "Kompresor"
 
 # File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/window.py,
 # line: 172
-#: src/ui/mic_shell.rs:971
+#: src/ui/mic_shell.rs:1003
 #, fuzzy
 msgid "Could not apply the audio settings:"
 msgstr "Obnoviť predvolené nastavenia?"
 
-#: usr/share/plasma/plasmoids/br.com.biglinux.micnoise/contents/ui/main.qml:56
-#: usr/share/plasma/plasmoids/br.com.biglinux.micnoise/contents/ui/main.qml:73
+#: usr/share/plasma/plasmoids/br.com.biglinux.micnoise/contents/ui/main.qml:58
+#: usr/share/plasma/plasmoids/br.com.biglinux.micnoise/contents/ui/main.qml:75
 msgid "Could not read the audio status. Open settings to check the connection."
 msgstr ""
 
@@ -291,7 +302,7 @@ msgstr ""
 msgid "Could not remove the override"
 msgstr ""
 
-#: src/ui/mic_shell.rs:932
+#: src/ui/mic_shell.rs:964
 msgid ""
 "Could not stop the audio monitor safely. Close the window again to retry."
 msgstr ""
@@ -303,22 +314,22 @@ msgstr ""
 
 # File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/config.py,
 # line: 607
-#: src/ui/widgets/eq_card.rs:170
+#: src/ui/widgets/eq_card.rs:184
 msgid "Custom"
 msgstr "Vlastný"
 
-#: src/ui/views/output.rs:152
+#: src/ui/views/output.rs:153
 msgid "Cuts low-frequency rumble from playback — wind, AC noise."
 msgstr ""
 "Odstraňuje nízkofrekvenčný šum z prehrávania — vietor, hluk klimatizácie."
 
-#: src/ui/views/mic.rs:285
+#: src/ui/views/mic.rs:307
 msgid "Cuts low-frequency rumble — AC, wind, mic-stand bumps."
 msgstr ""
 "Odstraňuje nízkofrekvenčný šum — AC prúd, vietor, nárazy mikrofónneho "
 "stojana."
 
-#: src/ui/widgets/model_picker.rs:112
+#: src/ui/widgets/model_picker.rs:113
 #, fuzzy
 msgid ""
 "DNS3 removes more noise but can smudge consonants. VCTK is gentler and "
@@ -328,30 +339,30 @@ msgstr ""
 "DNS3 odstraňuje viac šumu, ale môže rozmazávať spoluhlásky. VCTK je jemnejší "
 "a menej zaťažuje CPU — vhodný na podcasty."
 
-#: src/ui/widgets/eq_card.rs:167
+#: src/ui/widgets/eq_card.rs:181
 msgid "De-esser"
 msgstr "Odstránenie sykaviek"
 
 # File: biglinux-noise-reduction-
 # pipewire/src/biglinux_microphone/ui/main_view.py, line: 1147
-#: src/ui/views/mic.rs:373
+#: src/ui/views/mic.rs:395
 msgid "Deep"
 msgstr "Hlboký"
 
 # File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/config.py,
 # line: 711
-#: src/ui/views/advanced.rs:656
+#: src/ui/views/advanced.rs:704
 #, fuzzy
 msgid "Default"
 msgstr "Predvolený hlas"
 
 # File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/config.py,
 # line: 711
-#: src/ui/widgets/eq_card.rs:161
+#: src/ui/widgets/eq_card.rs:175
 msgid "Default voice"
 msgstr "Predvolený hlas"
 
-#: src/ui/views/mic.rs:403
+#: src/ui/views/mic.rs:425
 msgid "Delay (ms)"
 msgstr "Onesorenie (ms)"
 
@@ -361,19 +372,19 @@ msgstr ""
 
 # File: biglinux-noise-reduction-
 # pipewire/src/biglinux_microphone/ui/main_view.py, line: 687
-#: src/ui/views/mic.rs:116 src/ui/views/mic.rs:125
+#: src/ui/views/mic.rs:138 src/ui/views/mic.rs:147
 msgid "Echo cancellation"
 msgstr "Potlačenie ozveny"
 
 # File: biglinux-noise-reduction-
 # pipewire/src/biglinux_microphone/ui/main_view.py, line: 477
-#: src/ui/views/mic.rs:325 src/ui/views/output.rs:83
+#: src/ui/views/mic.rs:347 src/ui/views/output.rs:84
 msgid "Equalizer"
 msgstr "Ekvalizér"
 
 # File: biglinux-noise-reduction-
 # pipewire/src/biglinux_microphone/ui/main_view.py, line: 477
-#: src/ui/widgets/eq_card.rs:230
+#: src/ui/widgets/eq_card.rs:244
 #, fuzzy
 msgid "Equalizer band"
 msgstr "Ekvalizér"
@@ -385,14 +396,14 @@ msgstr "Ekvalizér"
 msgid "Equalizer enabled"
 msgstr "Ekvalizér"
 
-#: src/ui/views/mic.rs:426
+#: src/ui/views/mic.rs:448
 msgid ""
 "Evens out loud peaks and quiet parts so your voice stays at a steady volume."
 msgstr ""
 "Vyrovnáva hlasné špičky a tiché časti, aby váš hlas zostal v stabilnej "
 "hlasitosti."
 
-#: src/ui/views/output.rs:198
+#: src/ui/views/output.rs:199
 msgid ""
 "Evens out volume across loud and quiet speakers — useful for meetings with "
 "mixed mic levels."
@@ -400,15 +411,15 @@ msgstr ""
 "Vyrovnáva hlasitosť medzi hlasnými a tichými reproduktormi — užitočné pre "
 "stretnutia s rôznymi úrovňami mikrofónov."
 
-#: src/ui/views/advanced/apply.rs:123
+#: src/ui/views/advanced/apply.rs:145
 msgid "Failed to write configuration"
 msgstr ""
 
-#: src/ui/mic_shell.rs:231 src/ui/window.rs:319
+#: src/ui/mic_shell.rs:235 src/ui/window.rs:320
 msgid "Filter noise"
 msgstr "Filtrovať šum"
 
-#: src/ui/views/mic.rs:327
+#: src/ui/views/mic.rs:349
 #, fuzzy
 msgid ""
 "Fine-tune your voice tone across 10 frequency bands. Pick a preset or drag "
@@ -417,15 +428,15 @@ msgstr ""
 "10-pásmový parametrický ekvalizér. Vyberte prednastavenie alebo potiahnite "
 "každý pásmo medzi -40 dB a +40 dB."
 
-#: src/ui/widgets/eq_card.rs:162
+#: src/ui/widgets/eq_card.rs:176
 msgid "Flat"
 msgstr "Rovný"
 
-#: src/ui/views/advanced.rs:397
+#: src/ui/views/advanced.rs:399
 msgid "Force off (maximum compatibility)"
 msgstr ""
 
-#: src/ui/views/advanced.rs:396
+#: src/ui/views/advanced.rs:398
 msgid "Force on (high quality)"
 msgstr ""
 
@@ -441,23 +452,23 @@ msgstr "Počuj môj hlas"
 
 # File: biglinux-noise-reduction-
 # pipewire/src/biglinux_microphone/ui/main_view.py, line: 477
-#: src/ui/views/mic.rs:284 src/ui/views/output.rs:151
+#: src/ui/views/mic.rs:306 src/ui/views/output.rs:152
 msgid "High-pass filter"
 msgstr "Hornopriepustný filter"
 
-#: src/ui/views/advanced.rs:385
+#: src/ui/views/advanced.rs:387
 msgid "High-quality Bluetooth audio (SBC-XQ)"
 msgstr ""
 
-#: src/ui/views/mic.rs:376
+#: src/ui/views/mic.rs:398
 msgid "Higher"
 msgstr "Vyššie"
 
-#: src/ui/views/advanced.rs:409
+#: src/ui/views/advanced.rs:411
 msgid "Higher Bluetooth audio quality (SBC-XQ)"
 msgstr ""
 
-#: src/ui/views/advanced.rs:422
+#: src/ui/views/advanced.rs:424
 msgid ""
 "How fast the system reacts to sound changes. Faster reaction is great for "
 "music production but uses more CPU; slower reaction makes playback steadier "
@@ -465,35 +476,25 @@ msgid ""
 "on most computers."
 msgstr ""
 
-#: src/ui/widgets/spectrum.rs:92
+#: src/ui/widgets/spectrum.rs:70
 msgid "Input level in decibels. Reduce microphone volume if it reaches zero."
-msgstr ""
-
-#: src/ui/health.rs:59
-msgid "Install the gtcrn-ladspa package, then check again."
 msgstr ""
 
 # File: biglinux-noise-reduction-
 # pipewire/src/biglinux_microphone/ui/main_view.py, line: 434
 # File: biglinux-noise-reduction-
 # pipewire/src/biglinux_microphone/ui/main_view.py, line: 472
-#: src/ui/views/mic.rs:89 src/ui/views/mic.rs:310 src/ui/views/mic.rs:430
-#: src/ui/views/output.rs:174 src/ui/views/output.rs:204
+#: src/ui/views/mic.rs:111 src/ui/views/mic.rs:332 src/ui/views/mic.rs:452
+#: src/ui/views/output.rs:175 src/ui/views/output.rs:205
 #: src/ui/views/simple.rs:78 src/ui/views/simple.rs:214
 msgid "Intensity"
 msgstr "Intenzita"
-
-#: src/ui/health.rs:66
-msgid ""
-"Its inference runtime is missing. Reinstall the gtcrn-ladspa package, then "
-"check again."
-msgstr ""
 
 #: src/ui/widgets/wp_override_warning.rs:75
 msgid "Keep"
 msgstr ""
 
-#: src/ui/views/mic.rs:458
+#: src/ui/views/mic.rs:480
 msgid "Keep loaded audio data in memory"
 msgstr ""
 
@@ -501,95 +502,94 @@ msgstr ""
 msgid "Keep stereo (recommended)"
 msgstr ""
 
-#: src/ui/mic_shell.rs:726
+#: src/ui/mic_shell.rs:757
 msgid "Keep window open"
 msgstr ""
 
-#: src/ui/widgets/spectrum.rs:43
-msgid "LEVEL / PEAK"
-msgstr ""
-
-#: src/ui/views/advanced.rs:367
+#: src/ui/views/advanced.rs:369
 msgid "Large (steadiest, ~85 ms)"
 msgstr ""
 
-#: src/ui/views/advanced.rs:676
+#: src/ui/views/advanced.rs:724
 msgid "Large (virtual machines, ~42 ms)"
 msgstr ""
 
-#: src/ui/views/mic.rs:447
+#: src/ui/views/mic.rs:469
 msgid ""
 "Leave these off unless audio still stutters. Changing them briefly restarts "
 "the filters."
 msgstr ""
 
-#: src/ui/views/advanced.rs:586
+#: src/ui/views/advanced.rs:634
 msgid "Let the speakers sleep when idle (default)"
 msgstr ""
 
-#: src/ui/widgets/spectrum.rs:165
+#: src/ui/widgets/spectrum.rs:148
 msgid "Level: {level} dB · Peak: {peak} dB"
 msgstr ""
 
-#: src/ui/health.rs:47
-msgid "Log out and back in, then reopen this window."
-msgstr ""
-
-#: src/ui/views/advanced.rs:433
+#: src/ui/views/advanced.rs:435
 #, fuzzy
 msgid "Low delay (~11 ms)"
 msgstr "Onesorenie (ms)"
 
-#: src/ui/views/mic.rs:374
+#: src/ui/views/mic.rs:396
 msgid "Lower"
 msgstr "Nižšie"
 
-#: src/ui/views/mic.rs:144
+#: src/ui/views/mic.rs:166
 msgid "Lower CPU use"
 msgstr ""
 
-#: src/ui/views/advanced.rs:362
+#: src/ui/views/advanced.rs:364
 msgid "Lower delay (needs a stable headset, ~11 ms)"
+msgstr ""
+
+#: src/ui/views/mic.rs:500
+msgid ""
+"Lowers large boosts and caps sample peaks for microphone and playback. This "
+"can reduce overall volume; it cannot repair distorted recordings. Leave on "
+"unless you manage gain in another audio tool."
 msgstr ""
 
 # File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/window.py,
 # line: 202
-#: src/ui/window.rs:256
+#: src/ui/window.rs:257
 msgid "Main menu"
 msgstr "Hlavné menu"
 
 # File: biglinux-noise-reduction-
 # pipewire/src/biglinux_microphone/ui/main_view.py, line: 326
-#: src/ui/views/mic.rs:145
+#: src/ui/views/mic.rs:167
 #, fuzzy
 msgid "Manual model"
 msgstr "Neurónový model"
 
-#: src/ui/views/advanced.rs:536 src/ui/views/advanced.rs:562
+#: src/ui/views/advanced.rs:584 src/ui/views/advanced.rs:610
 msgid "Margin"
 msgstr ""
 
-#: src/ui/views/advanced.rs:677
+#: src/ui/views/advanced.rs:725
 msgid "Maximum (last resort, ~85 ms)"
 msgstr ""
 
-#: src/ui/views/mic.rs:451
+#: src/ui/views/mic.rs:473
 msgid ""
 "May help on some computers, but can use more power. The automatic system "
 "choice is usually best."
 msgstr ""
 
-#: src/ui/views/mic.rs:459
+#: src/ui/views/mic.rs:481
 msgid ""
 "May reduce pauses under memory pressure, but leaves less RAM for other "
 "applications. This is optional and limited by the system."
 msgstr ""
 
-#: src/ui/views/advanced.rs:674
+#: src/ui/views/advanced.rs:722
 msgid "Medium (~11 ms)"
 msgstr ""
 
-#: src/ui/views/advanced.rs:365
+#: src/ui/views/advanced.rs:367
 msgid "Medium (~21 ms)"
 msgstr ""
 
@@ -604,50 +604,59 @@ msgstr ""
 #. `gettext` falls back to the input string verbatim. That is
 #. exactly the contract callers rely on at runtime when running
 #. outside an installed locale.
-#: src/ui/window.rs:86 src/ui/widgets/source_picker.rs:90 src/ui/i18n.rs:93
+#: src/ui/window.rs:86 src/ui/widgets/source_picker.rs:90 src/ui/i18n.rs:109
 msgid "Microphone"
 msgstr "Mikrofón"
 
-#: usr/share/plasma/plasmoids/br.com.biglinux.micnoise/contents/ui/main.qml:119
+#: usr/share/plasma/plasmoids/br.com.biglinux.micnoise/contents/ui/main.qml:121
 #, fuzzy
 msgid "Microphone and system sound filters"
 msgstr "Filter systémového zvuku"
 
-#: usr/share/plasma/plasmoids/br.com.biglinux.micnoise/contents/ui/main.qml:142
+#: src/ui/views/mic.rs:43
+#, fuzzy
+msgid "Microphone effects"
+msgstr "Filter mikrofónu"
+
+#: src/ui/views/mic.rs:58
+msgid "Microphone effects are paused. Your choices below are preserved."
+msgstr ""
+
+#: usr/share/plasma/plasmoids/br.com.biglinux.micnoise/contents/ui/main.qml:144
 #, fuzzy
 msgid "Microphone filter"
 msgstr "Filter mikrofónu"
 
-#: src/ui/widgets/spectrum.rs:73 src/ui/widgets/spectrum.rs:90
+#: src/ui/widgets/spectrum.rs:51 src/ui/widgets/spectrum.rs:68
 #, fuzzy
 msgid "Microphone level meter"
 msgstr "Filter mikrofónu"
 
-#: src/ui/widgets/spectrum.rs:142
+#: src/ui/widgets/spectrum.rs:125
 msgid "Microphone monitoring is unavailable."
 msgstr ""
 
-#: src/ui/widgets/spectrum.rs:140
+#: src/ui/widgets/spectrum.rs:123
 msgid "Microphone unavailable. Reconnecting…"
 msgstr ""
 
 # File: biglinux-noise-reduction-
 # pipewire/src/biglinux_microphone/ui/main_view.py, line: 323
-#: src/ui/views/mic.rs:247 src/ui/views/output.rs:110
+#: src/ui/views/mic.rs:269 src/ui/views/output.rs:111
 msgid "Model"
 msgstr "Model"
 
-#: src/ui/views/advanced.rs:440
+#: src/ui/views/advanced.rs:442
 msgid "Most stable (older or busy machines, ~85 ms)"
 msgstr ""
 
-#: src/ui/views/output.rs:170
+#: src/ui/views/output.rs:171
 msgid ""
 "Mutes playback during silent moments so you don't hear hiss between words."
 msgstr ""
 "Stlmí prehrávanie počas tichých momentov, aby ste nepočuli šum medzi slovami."
 
-#: src/ui/views/mic.rs:304
+#: src/ui/views/mic.rs:326
 msgid ""
 "Mutes the mic during pauses so listeners hear silence instead of hiss. "
 "Higher = more aggressive."
@@ -655,59 +664,59 @@ msgstr ""
 "Stlmí mikrofón počas prestávok, aby poslucháči počuli ticho namiesto šumu. "
 "Vyššie = agresívnejšie."
 
-#: src/ui/views/mic.rs:375
+#: src/ui/views/mic.rs:397
 msgid "Natural"
 msgstr "Prirodzené"
 
 # File: biglinux-noise-reduction-
 # pipewire/src/biglinux_microphone/ui/main_view.py, line: 326
-#: src/ui/views/mic.rs:236 src/ui/views/output.rs:99
+#: src/ui/views/mic.rs:258 src/ui/views/output.rs:100
 msgid "Neural model"
 msgstr "Neurónový model"
 
-#: src/ui/views/mic.rs:107
+#: src/ui/views/mic.rs:129
 msgid "Never"
 msgstr ""
 
-#: src/ui/views/mic.rs:181 src/ui/views/mic.rs:210 src/ui/views/simple.rs:127
+#: src/ui/views/mic.rs:203 src/ui/views/mic.rs:232 src/ui/views/simple.rs:127
 #: src/ui/views/simple.rs:156
 msgid "Noise filter"
 msgstr "Filter šumu"
 
-#: src/ui/views/mic.rs:46
+#: src/ui/views/mic.rs:67
 msgid "Noise filter — fine-tune"
 msgstr "Filter šumu — doladenie"
 
 # File: biglinux-noise-reduction-
 # pipewire/src/biglinux_microphone/ui/main_view.py, line: 930
-#: src/ui/views/mic.rs:156 src/ui/views/mic.rs:166
+#: src/ui/views/mic.rs:178 src/ui/views/mic.rs:188
 #, fuzzy
 msgid "Noise reduction quality"
 msgstr "Potlačenie šumu je vypnuté"
 
-#: src/ui/views/advanced.rs:672
+#: src/ui/views/advanced.rs:720
 msgid "None"
 msgstr ""
 
-#: src/ui/views/advanced/apply.rs:125 src/ui/views/advanced/apply.rs:130
+#: src/ui/views/advanced/apply.rs:147 src/ui/views/advanced/apply.rs:152
 #: src/ui/widgets/wp_override_warning.rs:165
 #: src/ui/widgets/wp_override_warning.rs:177
 msgid "OK"
 msgstr ""
 
-#: src/ui/views/advanced.rs:331
+#: src/ui/views/advanced.rs:333
 msgid "Off — always keep stereo sound (default)"
 msgstr ""
 
-#: src/ui/views/advanced.rs:330
+#: src/ui/views/advanced.rs:332
 msgid "On — switch to call mode automatically"
 msgstr ""
 
-#: usr/share/plasma/plasmoids/br.com.biglinux.micnoise/contents/ui/main.qml:120
+#: usr/share/plasma/plasmoids/br.com.biglinux.micnoise/contents/ui/main.qml:122
 msgid "Open audio filter controls"
 msgstr ""
 
-#: usr/share/plasma/plasmoids/br.com.biglinux.micnoise/contents/ui/main.qml:170
+#: usr/share/plasma/plasmoids/br.com.biglinux.micnoise/contents/ui/main.qml:172
 msgid "Open settings…"
 msgstr "Otvoriť nastavenia…"
 
@@ -723,39 +732,56 @@ msgstr "Výstupný filter"
 msgid "Override removed"
 msgstr ""
 
-#: src/ui/views/mic.rs:446
+#: src/ui/views/mic.rs:45
+msgid "Pause or resume all microphone effects without changing your choices."
+msgstr ""
+
+#: src/ui/views/mic.rs:468
 msgid "Performance options"
 msgstr ""
 
-#: src/ui/views/mic.rs:388
+#: src/ui/views/mic.rs:410
 msgid "Pitch"
 msgstr "Výška tónu"
 
-#: src/ui/widgets/eq_card.rs:164
+#: src/ui/widgets/eq_card.rs:178
 msgid "Podcast"
 msgstr "Podcast"
 
-#: src/ui/views/mic.rs:450
+#: src/ui/views/mic.rs:472
 msgid "Prefer faster processor cores"
 msgstr ""
 
 # File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/config.py,
 # line: 602
-#: src/ui/widgets/eq_card.rs:169
+#: src/ui/widgets/eq_card.rs:183
 msgid "Presence"
 msgstr "Prítomnosť"
 
 # File: biglinux-noise-reduction-
 # pipewire/src/biglinux_microphone/ui/main_view.py, line: 489
-#: src/ui/widgets/eq_card.rs:205
+#: src/ui/widgets/eq_card.rs:168 src/ui/widgets/eq_card.rs:218
 msgid "Preset"
 msgstr "Prednastavenie"
 
-#: src/ui/views/advanced.rs:453
+#: src/ui/views/advanced.rs:496
+msgid "Preview active. The previous buffer will be restored automatically."
+msgstr ""
+
+#: src/ui/views/advanced/apply.rs:113 src/ui/views/advanced.rs:497
+#: src/ui/views/advanced.rs:532
+msgid "Preview finished."
+msgstr ""
+
+#: src/ui/views/mic.rs:499
+msgid "Protect against excessive peaks"
+msgstr ""
+
+#: src/ui/views/advanced.rs:455
 msgid "Reaction speed"
 msgstr ""
 
-#: src/ui/window.rs:328
+#: src/ui/window.rs:329
 msgid ""
 "Real-time noise filter for microphone capture and system audio playback. "
 "Powered by the GTCRN neural network running as a LADSPA plugin on top of "
@@ -769,7 +795,7 @@ msgstr ""
 
 # File: biglinux-noise-reduction-
 # pipewire/src/biglinux_microphone/ui/main_view.py, line: 392
-#: src/ui/views/mic.rs:262 src/ui/views/output.rs:129
+#: src/ui/views/mic.rs:284 src/ui/views/output.rs:130
 msgid "Recovery"
 msgstr "Obnova"
 
@@ -779,7 +805,7 @@ msgid ""
 "effects without forgetting your choices."
 msgstr ""
 
-#: src/ui/health.rs:74
+#: src/ui/health.rs:65
 msgid "Reinstall Filter noise, then log out and back in."
 msgstr ""
 
@@ -791,7 +817,7 @@ msgstr ""
 msgid "Remove the file manually, then restart WirePlumber."
 msgstr ""
 
-#: src/ui/views/mic.rs:219
+#: src/ui/views/mic.rs:241
 #, fuzzy
 msgid ""
 "Removes background noise from your voice using AI. Higher intensity = "
@@ -800,42 +826,42 @@ msgstr ""
 "Odstraňuje šum z pozadia vášho hlasu pomocou neurónovej siete GTCRN. Vyššia "
 "intenzita = silnejšie čistenie."
 
-#: src/ui/views/advanced/apply.rs:45
+#: src/ui/views/advanced/apply.rs:53
 msgid "Restarting audio…"
 msgstr ""
 
 # File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/window.py,
 # line: 176
-#: src/ui/views/advanced/apply.rs:152
+#: src/ui/views/advanced/apply.rs:174
 msgid "Restore"
 msgstr "Obnoviť"
 
 # File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/window.py,
 # line: 172
-#: src/ui/views/advanced/apply.rs:145
+#: src/ui/views/advanced/apply.rs:167
 #, fuzzy
 msgid "Restore default audio settings?"
 msgstr "Obnoviť predvolené nastavenia?"
 
 # File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/window.py,
 # line: 172
-#: src/ui/window.rs:260 src/ui/window.rs:433
+#: src/ui/window.rs:261 src/ui/window.rs:434
 msgid "Restore default settings"
 msgstr "Obnoviť predvolené nastavenia"
 
 # File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/window.py,
 # line: 172
-#: src/ui/window.rs:293
+#: src/ui/window.rs:294
 msgid "Restore default settings?"
 msgstr "Obnoviť predvolené nastavenia?"
 
 # File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/window.py,
 # line: 193
-#: src/ui/window.rs:300 src/ui/views/advanced.rs:256
+#: src/ui/window.rs:301 src/ui/views/advanced.rs:258
 msgid "Restore defaults"
 msgstr "Obnoviť predvolené hodnoty"
 
-#: src/ui/views/mic.rs:256
+#: src/ui/views/mic.rs:278
 msgid ""
 "Restores high-frequency clarity (sibilants like \"s\", \"sh\") after "
 "suppression. Lower only if your voice already sounds harsh."
@@ -843,7 +869,7 @@ msgstr ""
 "Obnovuje jasnosť vysokých frekvencií (sibilanty ako „s“, „š“) po potlačení. "
 "Znížte len v prípade, že váš hlas už znie drsne."
 
-#: src/ui/views/output.rs:119
+#: src/ui/views/output.rs:120
 msgid ""
 "Restores high-frequency clarity after suppression. Lower only if the source "
 "already sounds harsh."
@@ -851,7 +877,11 @@ msgstr ""
 "Obnovuje jasnosť vysokých frekvencií po potlačení. Znížte len ak zdroj už "
 "znie tvrdo."
 
-#: src/ui/views/mic.rs:397
+#: src/ui/views/advanced/apply.rs:45 src/ui/views/advanced.rs:476
+msgid "Restoring the previous audio buffer…"
+msgstr ""
+
+#: src/ui/views/mic.rs:419
 #, fuzzy
 msgid ""
 "Round-trip latency for the \"Hear my voice\" monitor. Raise only if the "
@@ -860,7 +890,7 @@ msgstr ""
 "Round-trip latency for the \"Hear my voice\" monitor. Raise only if the "
 "loopback sounds rushed or chops on your hardware."
 
-#: src/ui/views/advanced.rs:545
+#: src/ui/views/advanced.rs:593
 msgid ""
 "Same idea as the USB margin, but for the speakers and microphone built into "
 "your laptop or motherboard. Most people never need to change this — try it "
@@ -869,26 +899,26 @@ msgstr ""
 
 # File: biglinux-noise-reduction-
 # pipewire/src/biglinux_microphone/ui/main_view.py, line: 227
-#: src/ui/mic_shell.rs:885
+#: src/ui/mic_shell.rs:917
 #, fuzzy
 msgid "Saving settings…"
 msgstr "Aplikovanie nastavení…"
 
-#: src/ui/views/mic.rs:395
+#: src/ui/views/mic.rs:417
 #, fuzzy
 msgid "Self-listen delay"
 msgstr "Self-listen delay"
 
-#: src/ui/mic_shell.rs:723
+#: src/ui/mic_shell.rs:754
 msgid "Settings could not be saved"
 msgstr ""
 
-#: src/ui/views/advanced.rs:279
+#: src/ui/views/advanced.rs:281
 msgid ""
 "Settings were saved, but audio still needs to restart. Apply to try again."
 msgstr ""
 
-#: src/ui/views/mic.rs:355
+#: src/ui/views/mic.rs:377
 msgid ""
 "Shifts the pitch of your voice without retiming. Left = deeper, right = "
 "higher. Center keeps your natural voice."
@@ -896,29 +926,29 @@ msgstr ""
 "Posúva výšku vášho hlasu bez zmeny tempa. Doľava = hlbší, doprava = vyšší. "
 "Stred zachováva váš prirodzený hlas."
 
-#: src/ui/window.rs:234
+#: src/ui/window.rs:235
 msgid "Show every control individually"
 msgstr "Zobraziť každý ovládač samostatne"
 
-#: src/ui/widgets/spectrum.rs:75
+#: src/ui/widgets/spectrum.rs:53
 msgid "Shows the live microphone input level and peak."
 msgstr ""
 
 # File: biglinux-noise-reduction-
 # pipewire/src/biglinux_microphone/ui/main_view.py, line: 308
-#: src/ui/views/mic.rs:302 src/ui/views/output.rs:169
+#: src/ui/views/mic.rs:324 src/ui/views/output.rs:170
 msgid "Silence gate"
 msgstr "Brána ticha"
 
-#: src/ui/views/advanced.rs:673
+#: src/ui/views/advanced.rs:721
 msgid "Small (~5 ms)"
 msgstr ""
 
-#: usr/share/plasma/plasmoids/br.com.biglinux.micnoise/contents/ui/main.qml:136
+#: usr/share/plasma/plasmoids/br.com.biglinux.micnoise/contents/ui/main.qml:138
 msgid "Some audio filters are not ready. Open settings to check them."
 msgstr ""
 
-#: src/ui/views/advanced.rs:571
+#: src/ui/views/advanced.rs:619
 msgid ""
 "Some laptops and motherboards put the speakers to sleep after a few seconds "
 "of silence to save power. When the next sound arrives — a notification, a "
@@ -928,40 +958,44 @@ msgid ""
 msgstr ""
 
 #. ── Qualidade de som ─────────────────────────────────────────────
-#: src/ui/views/advanced.rs:195
+#: src/ui/views/advanced.rs:197
 msgid "Sound quality"
 msgstr ""
 
-#: src/ui/views/advanced.rs:606
+#: src/ui/views/advanced.rs:654
 msgid "Sound quality range"
 msgstr ""
 
-#: src/ui/widgets/spectrum.rs:81
+#: src/ui/widgets/spectrum.rs:59
 msgid "Speak normally to check your microphone level."
 msgstr ""
 
-#: src/ui/views/advanced.rs:597
+#: src/ui/views/advanced.rs:645
 msgid "Speaker sleep"
 msgstr ""
 
 #. ── Estabilidade e desempenho ────────────────────────────────────
-#: src/ui/views/advanced.rs:188
+#: src/ui/views/advanced.rs:190
 msgid "Stability and performance"
 msgstr ""
 
-#: src/ui/views/advanced.rs:366
+#: src/ui/views/advanced.rs:368
 msgid "Standard (default, ~42 ms)"
 msgstr ""
 
-#: src/ui/views/advanced.rs:675
+#: src/ui/views/advanced.rs:723
 msgid "Standard (~21 ms)"
 msgstr ""
 
-#: src/ui/views/advanced.rs:619
+#: src/ui/views/advanced.rs:667
 msgid "Standard quality only (default, 48 kHz)"
 msgstr ""
 
-#: src/ui/views/advanced.rs:438
+#: src/ui/views/advanced.rs:477
+msgid "Starting the audio preview…"
+msgstr ""
+
+#: src/ui/views/advanced.rs:440
 msgid "Steady (default, ~42 ms)"
 msgstr ""
 
@@ -975,7 +1009,7 @@ msgstr ""
 msgid "Stereo or lower CPU use"
 msgstr ""
 
-#: src/ui/views/advanced.rs:481
+#: src/ui/views/advanced.rs:545
 msgid "Stop preview"
 msgstr ""
 
@@ -983,35 +1017,36 @@ msgstr ""
 msgid "System sound"
 msgstr "Zvuk systému"
 
-#: usr/share/plasma/plasmoids/br.com.biglinux.micnoise/contents/ui/main.qml:156
+#: usr/share/plasma/plasmoids/br.com.biglinux.micnoise/contents/ui/main.qml:158
 msgid "System sound filter"
 msgstr "Filter systémového zvuku"
 
-#: src/ui/views/advanced.rs:458
+#: src/ui/views/advanced.rs:460
 msgid ""
 "Temporarily changes the audio buffer for all applications. Stop the preview "
 "to return to the previous value."
 msgstr ""
 
-#: src/ui/views/advanced.rs:487
+#: src/ui/views/advanced/apply.rs:116 src/ui/views/advanced.rs:503
+#: src/ui/views/advanced.rs:536
 msgid ""
 "The audio preview could not be started or restored. Check the audio "
 "connection and try again."
 msgstr ""
 
-#: src/ui/health.rs:46
+#: src/ui/health.rs:33
 msgid "The audio system (PipeWire) is not responding."
 msgstr ""
 
-#: src/ui/mic_shell.rs:855
+#: src/ui/mic_shell.rs:887
 msgid "The audio system check failed unexpectedly."
 msgstr ""
 
-#: src/ui/health.rs:73
+#: src/ui/health.rs:64
 msgid "The background audio services are not installed."
 msgstr ""
 
-#: usr/share/plasma/plasmoids/br.com.biglinux.micnoise/contents/ui/main.qml:77
+#: usr/share/plasma/plasmoids/br.com.biglinux.micnoise/contents/ui/main.qml:79
 msgid ""
 "The change could not be applied. Your previous choices have been kept where "
 "possible. Open settings for details."
@@ -1030,14 +1065,6 @@ msgstr ""
 "\n"
 "Recommended: remove the override and restart WirePlumber."
 
-#: src/ui/health.rs:64
-msgid "The noise-reduction engine cannot start."
-msgstr ""
-
-#: src/ui/health.rs:58
-msgid "The noise-reduction engine is not installed."
-msgstr ""
-
 #: src/ui/widgets/wp_override_warning.rs:161
 msgid ""
 "The packaged audio routing will be used after WirePlumber restarts. Log out "
@@ -1045,60 +1072,59 @@ msgid ""
 "working in the meantime with the old routing."
 msgstr ""
 
-#: src/ui/views/advanced.rs:155 src/ui/views/advanced.rs:285
+#: src/ui/health.rs:47
+msgid "The selected noise model is unavailable: {model}."
+msgstr ""
+
+#: src/ui/views/advanced.rs:157 src/ui/views/advanced.rs:287
 msgid "The standard audio settings are in use."
 msgstr ""
 
-#: src/ui/mic_shell.rs:728 src/ui/mic_shell.rs:792
+#: src/ui/mic_shell.rs:759 src/ui/mic_shell.rs:823
 msgid "Try again"
 msgstr ""
 
-#: src/ui/views/advanced.rs:455 src/ui/views/advanced.rs:481
-#: src/ui/views/advanced.rs:507
+#: src/ui/views/advanced.rs:457 src/ui/views/advanced.rs:547
 msgid "Try for 15 seconds"
-msgstr ""
-
-#: src/ui/views/advanced.rs:486
-msgid "Try preview again"
 msgstr ""
 
 #: src/ui/window.rs:98
 msgid "Tuning"
 msgstr ""
 
-#: usr/share/plasma/plasmoids/br.com.biglinux.micnoise/contents/ui/main.qml:144
+#: usr/share/plasma/plasmoids/br.com.biglinux.micnoise/contents/ui/main.qml:146
 msgid "Turning this off pauses the effects without erasing your preferences."
 msgstr ""
 
-#: src/ui/views/advanced.rs:518
+#: src/ui/views/advanced.rs:566
 msgid "USB audio safety margin"
 msgstr ""
 
-#: src/ui/views/advanced.rs:432
+#: src/ui/views/advanced.rs:434
 msgid "Very fast (music production, ~5 ms)"
 msgstr ""
 
 # File: biglinux-noise-reduction-
 # pipewire/src/biglinux_microphone/ui/main_view.py, line: 442
-#: src/ui/widgets/eq_card.rs:163
+#: src/ui/widgets/eq_card.rs:177
 msgid "Voice boost"
 msgstr "Zvýšenie hlasu"
 
 # File: biglinux-noise-reduction-
 # pipewire/src/biglinux_microphone/ui/main_view.py, line: 438
-#: src/ui/views/mic.rs:58 src/ui/views/mic.rs:353
+#: src/ui/views/mic.rs:80 src/ui/views/mic.rs:375
 msgid "Voice changer"
 msgstr "Zmena hlasu"
 
 # File: biglinux-noise-reduction-
 # pipewire/src/biglinux_microphone/ui/main_view.py, line: 581
-#: src/ui/views/mic.rs:52
+#: src/ui/views/mic.rs:74
 msgid "Voice enhancements"
 msgstr "Vylepšenia hlasu"
 
 # File: biglinux-noise-reduction-
 # pipewire/src/biglinux_microphone/ui/main_view.py, line: 392
-#: src/ui/views/mic.rs:254 src/ui/views/output.rs:117
+#: src/ui/views/mic.rs:276 src/ui/views/output.rs:118
 msgid "Voice presence"
 msgstr "Prítomnosť hlasu"
 
@@ -1108,11 +1134,11 @@ msgstr "Prítomnosť hlasu"
 msgid "Volume"
 msgstr "Hlasitosť"
 
-#: src/ui/widgets/eq_card.rs:165
+#: src/ui/widgets/eq_card.rs:179
 msgid "Warm"
 msgstr "Teplý"
 
-#: src/ui/views/advanced.rs:318
+#: src/ui/views/advanced.rs:320
 msgid ""
 "When you start a video or voice call, your Bluetooth headset can switch to a "
 "special call mode that turns on the microphone — but the sound becomes mono "
@@ -1125,18 +1151,18 @@ msgstr ""
 msgid "WirePlumber configuration overridden"
 msgstr ""
 
-#: src/ui/views/advanced.rs:387
+#: src/ui/views/advanced.rs:389
 msgid ""
 "Your Bluetooth devices already use the best sound mode they support. Force "
 "this on if a headset stubbornly chooses lower quality, or off if you have a "
 "very old device that breaks with the high-quality mode."
 msgstr ""
 
-#: src/ui/views/advanced.rs:283
+#: src/ui/views/advanced.rs:285
 msgid "Your audio settings are active."
 msgstr ""
 
-#: src/ui/widgets/model_picker.rs:127
+#: src/ui/widgets/model_picker.rs:128
 msgid "{model} - not installed"
 msgstr ""
 
