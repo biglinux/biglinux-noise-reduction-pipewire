@@ -36,12 +36,13 @@ mod tests {
 
     #[cfg(not(miri))]
     #[test]
+    #[ignore = "requires isolated display; run scripts/test-ui.sh"]
     fn gtk_display_contracts_cover_dialogs_and_model_picker() {
         let session_mode = std::env::var("BIGLINUX_UI_SESSION_MODE").unwrap_or_default();
-        if !matches!(session_mode.as_str(), "headless" | "vm" | "disposable") {
-            eprintln!("skip: GTK display contracts require KWin headless, VM, or disposable UI");
-            return;
-        }
+        assert!(
+            matches!(session_mode.as_str(), "headless" | "vm" | "disposable"),
+            "GTK contracts require an isolated session; run scripts/test-ui.sh"
+        );
         gtk::init().expect("isolated GTK session is available");
         assert_window_reset_dialog_contract();
         assert_tuning_reset_dialog_contract();
