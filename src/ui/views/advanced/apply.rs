@@ -7,16 +7,21 @@ use crate::services::system_audio::restart_pipewire_user_stack;
 
 use super::super::super::app_kit_edges::dialogs;
 use super::super::super::i18n::i18n;
-use super::{TuningSelection, UserTweaks, refresh_banner};
+use super::{TuningRevision, TuningSelection, UserTweaks, refresh_banner};
 
 // ── Apply / Reset ────────────────────────────────────────────────────
 
 /// Outcome of the apply worker, distinguishing a config-write failure
 /// from a service-restart failure so the UI can show the right message.
-enum ApplyOutcome {
+enum ApplyStatus {
     Ok,
     WriteFailed(String),
     RestartFailed(String),
+}
+
+struct ApplyOutcome {
+    persisted: Option<TuningRevision>,
+    status: ApplyStatus,
 }
 
 pub(super) fn apply_clicked(
@@ -27,7 +32,7 @@ pub(super) fn apply_clicked(
     if selection.busy.replace(true) {
         return;
     }
-    let expected = selection.applied.borrow().clone();
+    let expected = selection.persisted.borrow().clone();
     let tweaks = selection.borrow().clone();
     let applied = tweaks.clone();
     let preview = selection.preview.borrow_mut().take();
@@ -48,31 +53,55 @@ pub(super) fn apply_clicked(
         // daemons that re-read it) is preserved off the main loop —
         // offloading the write separately could race it past the restart.
         let outcome = gio::spawn_blocking(move || {
-            if let Some(mut preview) = preview && let Err(error) = preview.stop() {
-                return ApplyOutcome::RestartFailed(error.to_string());
+            if let Some(mut preview) = preview
+                && let Err(error) = preview.stop()
+            {
+                return ApplyOutcome {
+                    persisted: None,
+                    status: ApplyStatus::RestartFailed(error.to_string()),
+                };
             }
-            let guard = crate::config::storage::SettingsLock::acquire();
-            let _guard = match guard {
+            let _guard = match crate::config::storage::SettingsLock::acquire() {
                 Ok(guard) => guard,
-                Err(error) => return ApplyOutcome::WriteFailed(error.to_string()),
+                Err(error) => {
+                    return ApplyOutcome {
+                        persisted: None,
+                        status: ApplyStatus::WriteFailed(error.to_string()),
+                    };
+                }
             };
-            if UserTweaks::load_from_disk() != expected {
-                return ApplyOutcome::WriteFailed("Audio settings changed in another application. Reopen the tuning page before applying.".to_owned());
-            }
-            if let Err(e) = tweaks.apply() {
-                return ApplyOutcome::WriteFailed(e.to_string());
-            }
-            match restart_pipewire_user_stack() {
-                Ok(()) => ApplyOutcome::Ok,
-                Err(e) => ApplyOutcome::RestartFailed(e.to_string()),
+            let persisted = match tweaks.apply_checked(&expected) {
+                Ok(persisted) => persisted,
+                Err(failure) => {
+                    return ApplyOutcome {
+                        persisted: failure.persisted,
+                        status: ApplyStatus::WriteFailed(failure.error.to_string()),
+                    };
+                }
+            };
+            let status = match restart_pipewire_user_stack() {
+                Ok(()) => ApplyStatus::Ok,
+                Err(error) => ApplyStatus::RestartFailed(error.to_string()),
+            };
+            ApplyOutcome {
+                persisted: Some(persisted),
+                status,
             }
         })
         .await
-        .unwrap_or_else(|_| ApplyOutcome::RestartFailed("worker thread panicked".to_owned()));
+        .unwrap_or_else(|_| ApplyOutcome {
+            persisted: None,
+            status: ApplyStatus::RestartFailed("worker thread panicked".into()),
+        });
 
         selection.busy.set(false);
-        if matches!(outcome, ApplyOutcome::Ok) {
+        if let Some(persisted) = outcome.persisted {
+            *selection.persisted.borrow_mut() = persisted;
+            selection.restart_pending.set(true);
+        }
+        if matches!(outcome.status, ApplyStatus::Ok) {
             *selection.applied.borrow_mut() = applied;
+            selection.restart_pending.set(false);
         }
         if let Some(content) = selection.content.upgrade() {
             content.set_sensitive(true);
@@ -87,9 +116,9 @@ pub(super) fn apply_clicked(
             refresh_banner(&banner, &selection);
         }
 
-        match outcome {
-            ApplyOutcome::Ok => {}
-            ApplyOutcome::WriteFailed(message) => {
+        match outcome.status {
+            ApplyStatus::Ok => {}
+            ApplyStatus::WriteFailed(message) => {
                 dialogs::error_dialog(
                     &i18n("Failed to write configuration"),
                     &message,
@@ -97,7 +126,7 @@ pub(super) fn apply_clicked(
                 )
                 .present(Some(&button));
             }
-            ApplyOutcome::RestartFailed(message) => {
+            ApplyStatus::RestartFailed(message) => {
                 dialogs::error_dialog(&i18n("Audio service restart failed"), &message, &i18n("OK"))
                     .present(Some(&button));
             }

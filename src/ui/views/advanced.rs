@@ -38,7 +38,7 @@ use adw::prelude::*;
 use gtk::{Box as GtkBox, Orientation, ScrolledWindow, gio, glib};
 
 use super::super::i18n::i18n;
-use crate::services::pipewire::user_tweaks::{SampleRates, UserTweaks};
+use crate::services::pipewire::user_tweaks::{SampleRates, TuningRevision, UserTweaks};
 use apply::apply_clicked;
 pub(in crate::ui) use apply::reset_audio_settings_dialog;
 #[cfg(test)]
@@ -51,6 +51,8 @@ use super::super::widgets::didactic::{DidacticCard, labelled_row, section_header
 pub(super) struct TuningSelection {
     current: RefCell<UserTweaks>,
     applied: RefCell<UserTweaks>,
+    persisted: RefCell<TuningRevision>,
+    restart_pending: Cell<bool>,
     busy: Cell<bool>,
     content: glib::WeakRef<GtkBox>,
     apply_button: RefCell<glib::WeakRef<gtk::Button>>,
@@ -63,6 +65,8 @@ pub(super) struct TuningSelection {
 impl TuningSelection {
     fn new(initial: UserTweaks) -> Self {
         Self {
+            persisted: RefCell::new(TuningRevision::from_settings(&initial)),
+            restart_pending: Cell::new(false),
             applied: RefCell::new(initial.clone()),
             current: RefCell::new(initial),
             busy: Cell::new(false),
@@ -119,11 +123,21 @@ pub fn build() -> gtk::Widget {
     // once the read lands (empty until then).
     let content_weak = content.downgrade();
     glib::spawn_future_local(async move {
-        let tweaks = gio::spawn_blocking(UserTweaks::load_from_disk)
-            .await
-            .unwrap_or_default();
+        let result = gio::spawn_blocking(UserTweaks::load_snapshot).await;
         if let Some(content) = content_weak.upgrade() {
-            populate_tuning_page(&content, tweaks);
+            match result {
+                Ok(Ok((tweaks, revision))) => {
+                    populate_tuning_page(&content, tweaks, Some(revision))
+                }
+                other => {
+                    log::warn!("tuning configuration could not be read: {other:?}");
+                    let label = gtk::Label::new(Some(&i18n(
+                        "Audio settings could not be read. Check file permissions and reopen this window.",
+                    )));
+                    label.set_wrap(true);
+                    content.append(&label);
+                }
+            }
         }
     });
     scroll.upcast()
@@ -131,8 +145,11 @@ pub fn build() -> gtk::Widget {
 
 /// Build the Tuning page cards from the already-loaded on-disk selection. Split
 /// from [`build`] so the disk read can run off the main loop first.
-fn populate_tuning_page(content: &GtkBox, initial: UserTweaks) {
+fn populate_tuning_page(content: &GtkBox, initial: UserTweaks, revision: Option<TuningRevision>) {
     let selection = Rc::new(TuningSelection::new(initial));
+    if let Some(revision) = revision {
+        *selection.persisted.borrow_mut() = revision;
+    }
 
     let banner = adw::Banner::builder()
         .title(i18n("The standard audio settings are in use."))
@@ -252,11 +269,14 @@ fn action_toolbar() -> ActionToolbar {
 }
 
 fn refresh_banner(banner: &adw::Banner, selection: &Rc<TuningSelection>) {
-    let dirty = *selection.borrow() != *selection.applied.borrow();
+    let dirty =
+        *selection.borrow() != *selection.applied.borrow() || selection.restart_pending.get();
     let modified = selection.borrow().is_modified();
     let busy = selection.busy.get();
     let title = if busy {
         i18n("Applying audio settings…")
+    } else if selection.restart_pending.get() {
+        i18n("Settings were saved, but audio still needs to restart. Apply to try again.")
     } else if dirty {
         i18n("Changes are not applied yet. Apply them when you are ready.")
     } else if modified {
@@ -705,7 +725,7 @@ pub(in crate::ui) fn refresh_banner_contract(banner: &adw::Banner, tweaks: UserT
 #[cfg(test)]
 pub(in crate::ui) fn build_tuning_page_contract(tweaks: UserTweaks) -> GtkBox {
     let content = GtkBox::builder().orientation(Orientation::Vertical).build();
-    populate_tuning_page(&content, tweaks);
+    populate_tuning_page(&content, tweaks, None);
     content
 }
 
