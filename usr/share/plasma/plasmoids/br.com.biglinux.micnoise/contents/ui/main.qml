@@ -16,6 +16,7 @@ PlasmoidItem {
     property bool audioAvailable: false
     property bool busy: false
     property string actionError: ""
+    property string statusError: ""
     property int fastPolls: 0
     property bool watcherDisabled: false
     property int watcherBackoff: 1000
@@ -51,9 +52,10 @@ PlasmoidItem {
             audioAvailable = data.audio_available === true
             micReady = data.mic_running === true
             outputReady = data.output_running === true
+            statusError = ""
         } catch (error) {
             audioAvailable = false
-            actionError = i18nd("biglinux-microphone", "Could not read the audio status. Open settings to check the connection.")
+            statusError = i18nd("biglinux-microphone", "Could not read the audio status. Open settings to check the connection.")
         }
     }
 
@@ -70,7 +72,7 @@ PlasmoidItem {
                 if (data["exit code"] === 0) root.parseStatus(data["stdout"])
                 else {
                     root.audioAvailable = false
-                    root.actionError = i18nd("biglinux-microphone", "Could not read the audio status. Open settings to check the connection.")
+                    root.statusError = i18nd("biglinux-microphone", "Could not read the audio status. Open settings to check the connection.")
                 }
             } else if (sourceName !== root.openConfigCommand) {
                 root.busy = false
@@ -132,8 +134,8 @@ PlasmoidItem {
             wrapMode: Text.WordWrap
         }
         PlasmaComponents.Label {
-            visible: root.actionError.length > 0 || root.needsAttention
-            text: root.actionError.length > 0 ? root.actionError : i18nd("biglinux-microphone", "Some audio filters are not ready. Open settings to check them.")
+            visible: root.actionError.length > 0 || root.statusError.length > 0 || root.needsAttention
+            text: root.actionError.length > 0 ? root.actionError : root.statusError.length > 0 ? root.statusError : i18nd("biglinux-microphone", "Some audio filters are not ready. Open settings to check them.")
             Layout.fillWidth: true
             wrapMode: Text.WordWrap
             Accessible.name: text
