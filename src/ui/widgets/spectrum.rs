@@ -86,7 +86,9 @@ impl Spectrum {
         level.add_offset_value("full", -1.0);
         level.update_property(&[
             gtk::accessible::Property::Label(&i18n("Microphone level meter")),
-            gtk::accessible::Property::Description(&i18n("Input level in decibels. Reduce microphone volume if it reaches zero.")),
+            gtk::accessible::Property::Description(&i18n(
+                "Input level in decibels. Reduce microphone volume if it reaches zero.",
+            )),
         ]);
         root.append(&readout);
         root.append(&level);
@@ -130,7 +132,11 @@ impl Spectrum {
     pub fn push_frame(&self, frame: &SpectrumFrame) {
         self.state.borrow_mut().update_targets(frame);
         let now = std::time::Instant::now();
-        if self.last_meter_update.get().is_none_or(|previous| now.duration_since(previous) >= Duration::from_millis(250)) {
+        if self
+            .last_meter_update
+            .get()
+            .is_none_or(|previous| now.duration_since(previous) >= Duration::from_millis(250))
+        {
             self.last_meter_update.set(Some(now));
             let rms = finite_db(frame.rms_db);
             let peak = finite_db(frame.peak_db);
@@ -172,7 +178,8 @@ impl Spectrum {
         if !self.area.is_mapped() {
             return;
         }
-        let animate = gtk::Settings::default().is_none_or(|settings| settings.is_gtk_enable_animations());
+        let animate =
+            gtk::Settings::default().is_none_or(|settings| settings.is_gtk_enable_animations());
         if !animate {
             self.area.queue_draw();
             return;
@@ -184,7 +191,11 @@ impl Spectrum {
 }
 
 fn finite_db(value: f32) -> f32 {
-    if value.is_finite() { value.clamp(-60.0, 0.0) } else { -60.0 }
+    if value.is_finite() {
+        value.clamp(-60.0, 0.0)
+    } else {
+        -60.0
+    }
 }
 
 impl Drop for Spectrum {

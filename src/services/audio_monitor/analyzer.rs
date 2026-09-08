@@ -54,14 +54,23 @@ pub struct Analyzer {
 impl Analyzer {
     #[must_use]
     pub fn new(configuration: AnalyzerConfig) -> Self {
-        assert!(configuration.fft_size >= 4, "FFT window must contain at least four samples");
+        assert!(
+            configuration.fft_size >= 4,
+            "FFT window must contain at least four samples"
+        );
         assert!(configuration.sample_rate > 0, "sample rate must be nonzero");
-        assert!(configuration.band_count > 0 && configuration.band_count <= configuration.fft_size / 2,
-            "band count must fit the FFT bins");
-        assert!(configuration.min_hz.is_finite() && configuration.max_hz.is_finite()
-            && configuration.min_hz > 0.0 && configuration.max_hz > configuration.min_hz
-            && configuration.min_hz < configuration.sample_rate as f32 / 2.0,
-            "frequency range must be finite, ordered and below Nyquist");
+        assert!(
+            configuration.band_count > 0 && configuration.band_count <= configuration.fft_size / 2,
+            "band count must fit the FFT bins"
+        );
+        assert!(
+            configuration.min_hz.is_finite()
+                && configuration.max_hz.is_finite()
+                && configuration.min_hz > 0.0
+                && configuration.max_hz > configuration.min_hz
+                && configuration.min_hz < configuration.sample_rate as f32 / 2.0,
+            "frequency range must be finite, ordered and below Nyquist"
+        );
         let mut planner = FftPlanner::<f32>::new();
         let fft = planner.plan_fft_forward(configuration.fft_size);
         let window = hann_window(configuration.fft_size);
@@ -99,7 +108,8 @@ impl Analyzer {
             self.scratch[i] = Complex32::new(s * self.window[i], 0.0);
         }
 
-        self.fft.process_with_scratch(&mut self.scratch, &mut self.fft_workspace);
+        self.fft
+            .process_with_scratch(&mut self.scratch, &mut self.fft_workspace);
 
         // Magnitude spectrum, normalised for the Hann window sum so a
         // full-scale tone at bin `k` reads close to 0 dBFS.
@@ -232,11 +242,22 @@ mod tests {
     fn repeated_analysis_reuses_its_working_storage() {
         let mut analyzer = Analyzer::new(AnalyzerConfig::default());
         let input = vec![0.0; analyzer.configuration.fft_size];
-        let buffers = (analyzer.scratch.as_ptr(), analyzer.fft_workspace.as_ptr(), analyzer.magnitudes.as_ptr());
+        let buffers = (
+            analyzer.scratch.as_ptr(),
+            analyzer.fft_workspace.as_ptr(),
+            analyzer.magnitudes.as_ptr(),
+        );
         for _ in 0..100 {
             let frame = analyzer.analyze_samples(&input);
             assert!(frame.bands_db.iter().all(|value| value.is_finite()));
-            assert_eq!(buffers, (analyzer.scratch.as_ptr(), analyzer.fft_workspace.as_ptr(), analyzer.magnitudes.as_ptr()));
+            assert_eq!(
+                buffers,
+                (
+                    analyzer.scratch.as_ptr(),
+                    analyzer.fft_workspace.as_ptr(),
+                    analyzer.magnitudes.as_ptr()
+                )
+            );
         }
     }
 

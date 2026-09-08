@@ -148,7 +148,6 @@ impl Capture {
         out.extend_from_slice(&self.ring[self.write_pos..]);
         out.extend_from_slice(&self.ring[..self.write_pos]);
     }
-
 }
 
 impl Drop for Capture {
