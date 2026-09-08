@@ -31,7 +31,7 @@ use std::collections::HashMap;
 use std::io;
 
 use big_os_kit::subprocess::{BigSubprocessOutputMode, BigSubprocessSpec};
-use log::{debug, trace};
+use log::debug;
 use serde_json::Value;
 
 use crate::config::{AppSettings, deepfilter_attenuation_db, gtcrn_speech_strength};
@@ -64,39 +64,78 @@ impl LiveOutcome {
     }
 }
 
-/// Push live control updates for both the mic and (when enabled) the
-/// output filter chain. See [`LiveOutcome`] for the semantics of the
-/// returned value.
+/// Select only chains whose effective parameters changed.
+#[derive(Debug, Default, Clone, Copy)]
+pub(crate) struct UpdateTargets {
+    pub microphone: bool,
+    pub output: bool,
+}
+
+/// A failed fast path belongs to one chain, not to the whole transaction.
+#[derive(Debug, Default)]
+pub(crate) struct LiveReport {
+    pub pushed: LiveOutcome,
+    pub failures: Vec<String>,
+}
+
 pub fn apply_live(settings: &AppSettings) -> io::Result<LiveOutcome> {
-    let live = live_filter_nodes()?;
-
-    // Target the **capture-side** node: that's where the filter-chain
-    // module exposes its LADSPA control surface. The outward-facing
-    // `mic-biglinux` node is just the audio-adapter wrapper and its
-    // `Props` only carries channel-mix / resampler settings.
-    let mic_pushed = if let Some(&id) = live.get(MIC_CAPTURE_NODE_NAME) {
-        set_props(id, &mic_params(settings))?;
-        true
-    } else {
-        trace!("live: mic filter-chain not live, skipping");
-        false
+    let effective = settings.runtime_settings();
+    let graph = graph_snapshot()?;
+    let targets = UpdateTargets {
+        microphone: mic_chain_wanted(&effective),
+        output: effective.output_filter.enabled,
     };
-
-    // Try the output controls even when the master switch is off. The
-    // node may still exist briefly while the service is being stopped,
-    // and `output_params` supplies safe bypass values for that transition.
-    let output_pushed = if let Some(&id) = live.get(OUTPUT_NODE_NAME) {
-        set_props(id, &output_params(settings))?;
-        true
+    let report = apply_live_to_graph(&effective, &graph, targets);
+    if report.failures.is_empty() {
+        Ok(report.pushed)
     } else {
-        trace!("live: output filter-chain not live, skipping");
-        false
-    };
+        Err(io::Error::other(report.failures.join("; ")))
+    }
+}
 
-    Ok(LiveOutcome {
-        mic_pushed,
-        output_pushed,
-    })
+/// The reconciler reuses its graph snapshot and may repair failed pushes.
+pub(crate) fn apply_live_to_graph(
+    settings: &AppSettings,
+    graph: &[Value],
+    targets: UpdateTargets,
+) -> LiveReport {
+    let nodes = parse_live_filter_nodes(graph);
+    let mut report = LiveReport::default();
+    if targets.microphone {
+        report.pushed.mic_pushed = push_one(
+            nodes.get(MIC_CAPTURE_NODE_NAME).copied(),
+            || mic_params(settings),
+            "microphone",
+            &mut report.failures,
+        );
+    }
+    if targets.output {
+        report.pushed.output_pushed = push_one(
+            nodes.get(OUTPUT_NODE_NAME).copied(),
+            || output_params(settings),
+            "output",
+            &mut report.failures,
+        );
+    }
+    report
+}
+
+fn push_one(
+    id: Option<u32>,
+    controls: impl FnOnce() -> Vec<(String, f64)>,
+    chain: &str,
+    failures: &mut Vec<String>,
+) -> bool {
+    let Some(id) = id else {
+        return false;
+    };
+    match set_props(id, &controls()) {
+        Ok(()) => true,
+        Err(error) => {
+            failures.push(format!("{chain} live update: {error}"));
+            false
+        }
+    }
 }
 
 /// `node.name` → object id for every node whose filter graph is set up.
@@ -114,11 +153,12 @@ pub fn apply_live(settings: &AppSettings) -> io::Result<LiveOutcome> {
 /// Verified on PipeWire 1.6.8: a `Props` push to a suspended node leaves the
 /// value unchanged in `pw-dump`, while the same push on a running node takes
 /// effect.
-fn live_filter_nodes() -> io::Result<HashMap<String, u32>> {
+pub(crate) fn graph_snapshot() -> io::Result<Vec<Value>> {
     let output = BigSubprocessSpec::builder()
         .program("/usr/bin/pw-dump")
         .stderr(BigSubprocessOutputMode::Null)
         .allow_list(["/usr/bin/pw-dump"])
+        .timeout(std::time::Duration::from_secs(2))
         .build()
         .run()
         .map_err(io::Error::other)?;
@@ -128,17 +168,14 @@ fn live_filter_nodes() -> io::Result<HashMap<String, u32>> {
             output.status.code(),
         )));
     }
-    let graph: Vec<Value> = serde_json::from_slice(&output.stdout).map_err(io::Error::other)?;
-    let live = parse_live_filter_nodes(&graph);
-    debug!("live: {} node(s) ready for a Props push", live.len());
-    Ok(live)
+    serde_json::from_slice(&output.stdout).map_err(io::Error::other)
 }
 
 fn parse_live_filter_nodes(graph: &[Value]) -> HashMap<String, u32> {
     graph
         .iter()
         .filter(|object| object["type"] == "PipeWire:Interface:Node")
-        .filter(|object| object["info"]["state"] != "suspended")
+        .filter(|object| matches!(object["info"]["state"].as_str(), Some("running" | "idle")))
         .filter_map(|object| {
             let name = object["info"]["props"]["node.name"].as_str()?;
             let id = u32::try_from(object["id"].as_u64()?).ok()?;
@@ -157,6 +194,7 @@ fn set_props(node_id: u32, controls: &[(String, f64)]) -> io::Result<()> {
     let output = BigSubprocessSpec::builder()
         .program("/usr/bin/pw-cli")
         .args(["s", &node_id.to_string(), "Props", &payload])
+        .timeout(std::time::Duration::from_secs(2))
         .stdout(BigSubprocessOutputMode::Null)
         .allow_list(["/usr/bin/pw-cli"])
         .build()

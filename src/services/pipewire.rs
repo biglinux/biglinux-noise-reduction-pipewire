@@ -9,6 +9,7 @@ pub mod user_tweaks;
 use std::io;
 
 pub use live::{LiveOutcome, apply_live};
+pub(crate) use live::{UpdateTargets, apply_live_to_graph, graph_snapshot};
 pub use module::{
     AEC_UNIT, MIC_UNIT, OUTPUT_UNIT, restart_aec_service, restart_mic_service,
     restart_output_service, start_aec_service, start_mic_service, start_output_service,
