@@ -303,8 +303,8 @@ fn conf_minimal_chain_links_hpf_directly_to_copies() {
     s.stereo.enabled = false;
     let conf = build_mic_conf(&s);
     assert!(conf.contains("{ output = \"hpf:Out\" input = \"ai:Input\" }"));
-    assert!(conf.contains("{ output = \"ai:Output\" input = \"copy_l:In\" }"));
-    assert!(conf.contains("{ output = \"ai:Output\" input = \"copy_r:In\" }"));
+    assert!(conf.contains("{ output = \"sample_ceiling:Out\" input = \"copy_l:In\" }"));
+    assert!(conf.contains("{ output = \"sample_ceiling:Out\" input = \"copy_r:In\" }"));
 }
 
 #[test]
@@ -379,8 +379,8 @@ fn conf_wires_full_chain_links_without_pitch() {
         "{ output = \"hpf:Out\" input = \"ai:Input\" }",
         "{ output = \"ai:Output\" input = \"compressor:Input\" }",
         "{ output = \"compressor:Output\" input = \"eq:In 1\" }",
-        "{ output = \"eq:Out 1\" input = \"copy_l:In\" }",
-        "{ output = \"eq:Out 1\" input = \"copy_r:In\" }",
+        "{ output = \"sample_ceiling:Out\" input = \"copy_l:In\" }",
+        "{ output = \"sample_ceiling:Out\" input = \"copy_r:In\" }",
     ] {
         assert!(conf.contains(link), "missing link: {link}\n{conf}");
     }
@@ -412,7 +412,7 @@ fn conf_voice_changer_emits_pitch_node_and_rewires_chain() {
     // 2.0x pitch attenuates by 3 dB
     assert!(conf.contains("\"Amps gain (dB)\" = -3.0"));
     // Copies must now feed off the gain stage, not the EQ directly.
-    assert!(conf.contains("{ output = \"pitch_gain:Output\" input = \"copy_l:In\" }"));
+    assert!(conf.contains("{ output = \"sample_ceiling:Out\" input = \"copy_l:In\" }"));
     assert!(!conf.contains("{ output = \"eq:Out 1\" input = \"copy_l:In\" }"));
 }
 

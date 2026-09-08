@@ -67,6 +67,7 @@ pub fn build(state: &Rc<AppState>, input: &relm4::Sender<MicInput>) -> gtk::Widg
     content.append(&section_header(&i18n("Noise filter — fine-tune"), 16));
     content.append(quality_card(state, input).widget());
     content.append(&resource_options(state, input));
+    content.append(&gain_safety_card(state, input));
     content.append(model_card(state, input).widget());
     content.append(voice_recovery_card(state, input).widget());
 
@@ -486,5 +487,23 @@ fn resource_options(
     details.add_row(&fast);
     details.add_row(&memory);
     group.add(&details);
+    group
+}
+
+pub(super) fn gain_safety_card(
+    state: &Rc<AppState>,
+    input: &relm4::Sender<MicInput>,
+) -> adw::PreferencesGroup {
+    let group = adw::PreferencesGroup::new();
+    let row = adw::SwitchRow::builder()
+        .title(i18n("Protect against excessive peaks"))
+        .subtitle(i18n("Lowers large boosts and caps sample peaks for microphone and playback. This can reduce overall volume; it cannot repair distorted recordings. Leave on unless you manage gain in another audio tool."))
+        .active(state.settings().gain_safety == crate::config::GainSafety::Automatic)
+        .build();
+    let input = input.clone();
+    row.connect_active_notify(move |row| {
+        let _ = input.send(MicInput::GainSafetyChanged(row.is_active()));
+    });
+    group.add(&row);
     group
 }

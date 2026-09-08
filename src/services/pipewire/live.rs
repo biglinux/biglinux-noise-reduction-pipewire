@@ -318,6 +318,9 @@ fn mic_params(s: &AppSettings) -> Vec<(String, f64)> {
         s.compressor,
         s.compressor.enabled,
     );
+    if s.gain_safety == crate::config::GainSafety::Automatic {
+        params.push(("headroom:Mult".into(), crate::pipeline::mic_headroom(s)));
+    }
     params
 }
 
@@ -413,6 +416,9 @@ fn output_params_mono(s: &AppSettings) -> Vec<(String, f64)> {
     ]);
 
     append_compressor_params(&mut params, "compressor", of.compressor, comp_enabled);
+    if s.gain_safety == crate::config::GainSafety::Automatic {
+        params.push(("headroom:Mult".into(), crate::pipeline::output_headroom(s)));
+    }
     params
 }
 

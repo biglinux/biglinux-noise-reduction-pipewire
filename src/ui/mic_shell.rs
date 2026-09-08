@@ -99,6 +99,7 @@ pub(super) enum MicInput {
     QualityChanged(crate::config::Quality),
     PreferFastCpusChanged(bool),
     ReserveMemoryChanged(bool),
+    GainSafetyChanged(bool),
     /// Mic neural-model selection.
     MicModelChanged(NoiseModel),
     /// Mic voice-presence (high-frequency recovery) intensity.
@@ -506,6 +507,15 @@ impl Component for MicShell {
             MicInput::PreferFastCpusChanged(enabled) => {
                 self.mutate_settings(&sender, |settings| {
                     settings.runtime.prefer_fast_cpus = enabled;
+                });
+            }
+            MicInput::GainSafetyChanged(enabled) => {
+                self.mutate_settings(&sender, |settings| {
+                    settings.gain_safety = if enabled {
+                        crate::config::GainSafety::Automatic
+                    } else {
+                        crate::config::GainSafety::Unrestricted
+                    };
                 });
             }
             MicInput::ReserveMemoryChanged(enabled) => {

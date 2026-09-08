@@ -149,7 +149,7 @@ impl Plan {
                 pipeline::mic_chain_wanted(settings),
                 observed.mic_present,
                 previous.is_some_and(pipeline::mic_chain_wanted),
-                changes.mic_topology,
+                changes.mic_topology && changes.microphone,
                 changes.force,
                 live.mic_pushed || !changes.microphone,
             ),
@@ -157,7 +157,7 @@ impl Plan {
                 settings.output_filter.enabled,
                 observed.output_present,
                 previous.is_some_and(|s| s.output_filter.enabled),
-                changes.output_topology,
+                changes.output_topology && changes.output,
                 changes.force,
                 live.output_pushed || !changes.output,
             ),
@@ -353,7 +353,8 @@ pub fn needs_mic_reload(prev: Option<&AppSettings>, now: &AppSettings) -> bool {
         // pass-through node when disabled — toggling it adds/removes
         // `hpf_pre` from the graph, so we must reload, not live-update.
         let hpf_topology_changed = p.hpf.enabled != now.hpf.enabled;
-        p.equalizer.bands != now.equalizer.bands
+        p.gain_safety != now.gain_safety
+            || p.equalizer.bands != now.equalizer.bands
             || p.equalizer.preset != now.equalizer.preset
             || p.equalizer.enabled != now.equalizer.enabled
             || p.compressor.enabled != now.compressor.enabled
@@ -374,7 +375,8 @@ pub fn output_topology_changed(prev: Option<&AppSettings>, now: &AppSettings) ->
     // different denoiser backend (GTCRN vs attenuation-only) since the LADSPA
     // plugin and port names differ.
     prev.is_none_or(|p| {
-        p.output_filter.channel_mode != now.output_filter.channel_mode
+        p.gain_safety != now.gain_safety
+            || p.output_filter.channel_mode != now.output_filter.channel_mode
             || p.output_filter.noise_reduction.enabled != now.output_filter.noise_reduction.enabled
             || p.output_filter.equalizer.bands != now.output_filter.equalizer.bands
             || p.output_filter.equalizer.preset != now.output_filter.equalizer.preset

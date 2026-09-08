@@ -5,7 +5,9 @@
 //! own processing threads. Generated arguments follow XDG_CONFIG_HOME.
 
 mod echo_cancel;
+mod gain_safety;
 mod graph;
+pub(crate) use gain_safety::{mic_headroom, output_headroom};
 mod mic;
 mod migration;
 mod nodes;

@@ -57,8 +57,8 @@ fn conf_full_chain_is_linked() {
         r#"{ output = "ai:Output" input = "gate:Input" }"#,
         r#"{ output = "gate:Output" input = "compressor:Input" }"#,
         r#"{ output = "compressor:Output" input = "eq:In 1" }"#,
-        r#"{ output = "eq:Out 1" input = "copy_l:In" }"#,
-        r#"{ output = "eq:Out 1" input = "copy_r:In" }"#,
+        r#"{ output = "sample_ceiling:Out" input = "copy_l:In" }"#,
+        r#"{ output = "sample_ceiling:Out" input = "copy_r:In" }"#,
     ] {
         assert!(conf.contains(link), "missing link: {link}");
     }

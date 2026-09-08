@@ -60,6 +60,7 @@ pub fn build(state: &Rc<AppState>, input: &relm4::Sender<MicInput>) -> gtk::Widg
     let group = adw::PreferencesGroup::new();
     group.add(&channels);
     content.append(&group);
+    content.append(&super::mic::gain_safety_card(state, input));
 
     content.append(&section_header(&i18n("AI noise reduction"), 16));
     content.append(model_card(state, input).widget());

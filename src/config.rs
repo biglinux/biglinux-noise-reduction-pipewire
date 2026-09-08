@@ -14,6 +14,8 @@ mod audio;
 pub mod dynamics;
 mod echo_cancel;
 mod equalizer;
+mod gain_safety;
+pub use gain_safety::GainSafety;
 pub mod noise_model;
 mod output_filter;
 mod paths;
@@ -57,6 +59,7 @@ pub use ui::{UiConfig, WindowConfig};
 #[serde(default)]
 pub struct AppSettings {
     pub runtime: RuntimeConfig,
+    pub gain_safety: GainSafety,
     /// Temporary master bypass; individual effect preferences are retained.
     pub mic_bypass: bool,
     pub noise_reduction: NoiseReductionConfig,

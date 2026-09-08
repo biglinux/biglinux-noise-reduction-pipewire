@@ -209,6 +209,7 @@ fn mic_nodes(settings: &AppSettings) -> Vec<Node> {
         );
     }
 
+    nodes.extend(super::gain_safety::nodes(settings, false));
     nodes.push(Node::builtin("copy_l", LABEL_COPY));
     nodes.push(Node::builtin("copy_r", LABEL_COPY));
     nodes
