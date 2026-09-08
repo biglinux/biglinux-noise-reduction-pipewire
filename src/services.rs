@@ -18,3 +18,5 @@ pub mod echo;
 pub mod reconcile;
 
 pub mod preview;
+
+pub mod settings_watch;

@@ -679,6 +679,10 @@ fn print_streams(streams: &[biglinux_microphone::services::pipewire::AppStream])
 }
 
 fn watch_echo() -> ExitCode {
+    let _settings_watch = match biglinux_microphone::services::settings_watch::SettingsWatch::start() {
+        Ok(watch) => watch,
+        Err(error) => return exit_with_error(&error.to_string()),
+    };
     use biglinux_microphone::services::echo::RouteWatch;
 
     if autostart() != ExitCode::SUCCESS {
