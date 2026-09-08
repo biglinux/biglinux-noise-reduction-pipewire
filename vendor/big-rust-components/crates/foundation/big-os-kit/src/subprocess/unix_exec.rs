@@ -180,9 +180,18 @@ fn write_input(pipe: &mut Option<ChildStdin>, bytes: &[u8], sent: &mut usize) ->
     };
     let end = sent.saturating_add(16 * 1024).min(bytes.len());
     match writer.write(&bytes[*sent..end]) {
-        Ok(0) => return Err(io::Error::new(io::ErrorKind::WriteZero, "subprocess input closed")),
+        Ok(0) => {
+            return Err(io::Error::new(
+                io::ErrorKind::WriteZero,
+                "subprocess input closed",
+            ));
+        }
         Ok(count) => *sent += count,
-        Err(error) if matches!(error.kind(), io::ErrorKind::WouldBlock | io::ErrorKind::Interrupted) => {}
+        Err(error)
+            if matches!(
+                error.kind(),
+                io::ErrorKind::WouldBlock | io::ErrorKind::Interrupted
+            ) => {}
         Err(error) if error.kind() == io::ErrorKind::BrokenPipe => {
             pipe.take();
         }
@@ -197,7 +206,11 @@ fn write_input(pipe: &mut Option<ChildStdin>, bytes: &[u8], sent: &mut usize) ->
 fn poll(descriptors: [Option<(RawFd, i16)>; 3], duration: Duration) -> io::Result<()> {
     let mut fds = descriptors.map(|descriptor| {
         let (fd, events) = descriptor.unwrap_or((-1, 0));
-        libc::pollfd { fd, events, revents: 0 }
+        libc::pollfd {
+            fd,
+            events,
+            revents: 0,
+        }
     });
     let timeout = i32::try_from(duration.as_millis()).unwrap_or(20).max(1);
     // SAFETY: the array contains exactly three initialized entries. Their
