@@ -5,6 +5,7 @@ fn enabled_settings() -> AppSettings {
     AppSettings {
         output_filter: crate::config::OutputFilterSettings {
             enabled: true,
+            channel_mode: crate::config::OutputChannelMode::Mono,
             ..crate::config::OutputFilterSettings::default()
         },
         ..mono_settings()
@@ -77,6 +78,7 @@ fn output_conf_is_a_bare_module_args_body() {
                 enabled: true,
                 ..crate::config::NoiseReductionConfig::default()
             },
+            channel_mode: crate::config::OutputChannelMode::Mono,
             ..crate::config::OutputFilterSettings::default()
         },
         ..mono_settings()
@@ -175,6 +177,7 @@ fn nr_off_with_master_on_keeps_gtcrn_with_enable_zero() {
                 enabled: false,
                 ..crate::config::NoiseReductionConfig::default()
             },
+            channel_mode: crate::config::OutputChannelMode::Mono,
             ..crate::config::OutputFilterSettings::default()
         },
         ..mono_settings()
@@ -199,6 +202,7 @@ fn master_on_eq_off_renders_flat_regardless_of_preset() {
                 preset: "vocal-boost".to_owned(),
                 bands: vec![6.0; EQ_BAND_COUNT],
             },
+            channel_mode: crate::config::OutputChannelMode::Mono,
             ..crate::config::OutputFilterSettings::default()
         },
         ..mono_settings()
@@ -257,6 +261,7 @@ fn ai_processing_on_renders_gtcrn_enable_one() {
                 enabled: true,
                 ..crate::config::NoiseReductionConfig::default()
             },
+            channel_mode: crate::config::OutputChannelMode::Mono,
             ..crate::config::OutputFilterSettings::default()
         },
         ..mono_settings()
@@ -298,6 +303,7 @@ fn output_eq_prefers_explicit_bands_over_preset() {
                 preset: "voice_boost".to_owned(),
                 bands,
             },
+            channel_mode: crate::config::OutputChannelMode::Mono,
             ..crate::config::OutputFilterSettings::default()
         },
         ..mono_settings()

@@ -147,7 +147,7 @@ fn reload_when_mic_hpf_toggles() {
 }
 
 #[test]
-fn output_topology_unchanged_when_only_nr_enabled_toggles() {
+fn mono_output_topology_unchanged_when_only_nr_enabled_toggles() {
     // GTCRN stays in the output graph regardless of NR — toggling
     // its Enable port is a live update, not a restart trigger.
     let prev = AppSettings {
@@ -157,6 +157,7 @@ fn output_topology_unchanged_when_only_nr_enabled_toggles() {
                 enabled: false,
                 ..NoiseReductionConfig::default()
             },
+            channel_mode: crate::config::OutputChannelMode::Mono,
             ..OutputFilterSettings::default()
         },
         ..AppSettings::default()
@@ -270,4 +271,18 @@ fn file_monitor_cannot_roll_newer_edits_back_to_an_in_flight_local_snapshot() {
     let _next_work = state.apply_work(next_request);
     assert!(!state.external_replace(local_snapshot));
     assert_eq!(state.settings().noise_reduction.strength, 0.73);
+}
+
+#[test]
+fn stereo_nr_toggle_rebuilds_the_conditional_neural_stage() {
+    let prev = AppSettings {
+        output_filter: OutputFilterSettings {
+            enabled: true,
+            ..OutputFilterSettings::default()
+        },
+        ..AppSettings::default()
+    };
+    let mut next = prev.clone();
+    next.output_filter.noise_reduction.enabled = !prev.output_filter.noise_reduction.enabled;
+    assert!(output_topology_changed(Some(&prev), &next));
 }

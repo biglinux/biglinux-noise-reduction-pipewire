@@ -478,7 +478,10 @@ fn each_filter_flag_alone_keeps_chain_wanted() {
         ("noise_reduction", |s| s.noise_reduction.enabled = true),
         ("gate", |s| s.gate.enabled = true),
         ("hpf", |s| s.hpf.enabled = true),
-        ("stereo", |s| s.stereo.enabled = true),
+        ("voice changer", |s| {
+            s.stereo.enabled = true;
+            s.stereo.mode = crate::config::StereoMode::VoiceChanger;
+        }),
         ("equalizer", |s| s.equalizer.enabled = true),
         ("compressor", |s| s.compressor.enabled = true),
         ("echo_cancel", |s| s.echo_cancel.enabled = true),
