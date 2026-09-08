@@ -38,8 +38,9 @@ pub struct SpectrumFrame {
 pub enum Event {
     /// New spectrum frame computed from the capture stream.
     Frame(SpectrumFrame),
-    /// The underlying `pw-cat` process or reader thread died. The service
-    /// is inoperative; the consumer should surface the error and stop
-    /// visualising.
+    /// Capture is temporarily unavailable. Keep receiving: the worker retries.
+    Recovering(String),
+    /// The monitor cannot continue (for example, its thread could not start).
+    /// Surface the error and stop visualising; this is not a reconnect event.
     Fatal(String),
 }

@@ -238,7 +238,7 @@ fn run_worker(
                 }
                 Err(error) => {
                     if tx
-                        .force_send(Event::Fatal(format!(
+                        .force_send(Event::Recovering(format!(
                             "Microphone monitoring unavailable: {error}"
                         )))
                         .is_err()
@@ -260,7 +260,7 @@ fn run_worker(
             }
             if active.load(Ordering::Acquire) && !stop.load(Ordering::Acquire) {
                 if tx
-                    .force_send(Event::Fatal(format!(
+                    .force_send(Event::Recovering(format!(
                         "Microphone monitoring interrupted: {error}"
                     )))
                     .is_err()

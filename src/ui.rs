@@ -298,6 +298,28 @@ mod tests {
         }
 
         assert!(spectrum.target_peak_for_contract() > 0.0);
+        events_tx
+            .try_send(Event::Recovering("test disconnection".into()))
+            .unwrap();
+        for _ in 0..20 {
+            while gtk::glib::MainContext::default().iteration(false) {}
+        }
+        assert!(!spectrum.meter_for_contract().0.is_sensitive());
+        assert_eq!(spectrum.target_peak_for_contract(), 0.0);
+        events_tx
+            .try_send(Event::Frame(SpectrumFrame {
+                bands_db: vec![-24.0; 30],
+                rms_db: -30.0,
+                peak_db: -12.0,
+                seq: 2,
+            }))
+            .unwrap();
+        for _ in 0..20 {
+            while gtk::glib::MainContext::default().iteration(false) {}
+        }
+        assert!(spectrum.meter_for_contract().0.is_sensitive());
+        assert_eq!(spectrum.meter_for_contract().0.value(), 0.5);
+        assert!(spectrum.target_peak_for_contract() > 0.0);
     }
 
     #[cfg(not(miri))]

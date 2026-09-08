@@ -368,7 +368,15 @@ pub(super) fn bind_spectrum_to_monitor(spectrum: &Rc<Spectrum>, monitor: &Rc<Aud
             };
             match evt {
                 MonitorEvent::Frame(frame) => spectrum.push_frame(&frame),
-                MonitorEvent::Fatal(_) => break,
+                MonitorEvent::Recovering(cause) => {
+                    log::warn!("microphone meter reconnecting: {cause}");
+                    spectrum.set_unavailable(true);
+                }
+                MonitorEvent::Fatal(cause) => {
+                    log::error!("microphone meter stopped: {cause}");
+                    spectrum.set_unavailable(false);
+                    break;
+                }
             }
         }
     });

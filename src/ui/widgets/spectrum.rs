@@ -129,6 +129,24 @@ impl Spectrum {
         self.root.upcast_ref()
     }
 
+    /// Clear stale readings during disconnection. A subsequent frame recovers
+    /// the same widget and updates its accessible reading immediately.
+    pub fn set_unavailable(&self, retrying: bool) {
+        *self.state.borrow_mut() = SpectrumState::default();
+        self.last_meter_update.set(None);
+        self.level.set_value(0.0);
+        self.level.set_sensitive(false);
+        let message = if retrying {
+            i18n("Microphone unavailable. Reconnecting…")
+        } else {
+            i18n("Microphone monitoring is unavailable.")
+        };
+        self.readout.set_text(&message);
+        self.level
+            .update_property(&[gtk::accessible::Property::ValueText(&message)]);
+        self.area.queue_draw();
+    }
+
     /// Push a new frame from the audio monitor. Only stores the target
     /// values — the 30 Hz timer drives the interpolation.
     pub fn push_frame(&self, frame: &SpectrumFrame) {
@@ -140,6 +158,7 @@ impl Spectrum {
             .is_none_or(|previous| now.duration_since(previous) >= Duration::from_millis(250))
         {
             self.last_meter_update.set(Some(now));
+            self.level.set_sensitive(true);
             let rms = finite_db(frame.rms_db);
             let peak = finite_db(frame.peak_db);
             self.level.set_value(meter_fraction(rms));
