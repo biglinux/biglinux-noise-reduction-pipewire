@@ -13,8 +13,8 @@ pub const fn mark(message: &'static str) -> &'static str { message }
     path = 'src/ui/window.rs'
     replace(path, 'use super::i18n::i18n;', 'use super::i18n::{i18n, mark};')
     replace(path, 'const PRIMARY_MENU_LABEL: &str = "Main menu";', 'const PRIMARY_MENU_LABEL: &str = mark("Main menu");')
-    replace(path, '("Restore default settings", "win.reset-defaults")', '(mark("Restore default settings"), "win.reset-defaults")')
-    replace(path, '("About Filter noise", "win.about")', '(mark("About Filter noise"), "win.about")')
+    replace(path, '("Restore default settings", "win.reset-defaults")', '(mark("Restore default settings"), "win.reset-defaults")', count=2)
+    replace(path, '("About Filter noise", "win.about")', '(mark("About Filter noise"), "win.about")', count=2)
     path = 'src/ui/widgets/spectrum.rs'
     replace(path, 'use crate::ui::i18n::i18n;', 'use crate::ui::i18n::{i18n, mark};')
     replace(path, 'const PEAK_METER_CAPTION_MSGID: &str = "LEVEL / PEAK";', 'const PEAK_METER_CAPTION_MSGID: &str = mark("LEVEL / PEAK");')
@@ -63,12 +63,12 @@ for catalog in po/*.po; do
     msgmerge --quiet --update --backup=none "$catalog" "$pot"
 done
 ''')
-    # Keep new source files in extraction, without scanning vendored examples.
     path = Path('po/POTFILES.in')
     old = path.read_text().splitlines()
     present = set(old)
     for source in sorted(Path('src/ui').rglob('*.rs')):
         if any(word in source.read_text() for word in ('i18n(', 'mark(')) and not source.stem.endswith('_tests'):
-            if str(source) not in present: old.append(str(source))
+            if str(source) not in present:
+                old.append(str(source))
     path.write_text('\n'.join(old)+'\n')
     commit(TITLE, ['src/ui/i18n.rs','src/ui/window.rs','src/ui/widgets/spectrum.rs','scripts/refresh-pot.sh','po/POTFILES.in'])
