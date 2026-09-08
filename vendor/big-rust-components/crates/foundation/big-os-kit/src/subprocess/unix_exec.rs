@@ -91,7 +91,9 @@ impl<R: Read + AsRawFd> Capture<R> {
     }
 
     fn descriptor(&self) -> Option<(RawFd, i16)> {
-        self.reader.as_ref().map(|pipe| (pipe.as_raw_fd(), libc::POLLIN))
+        self.reader
+            .as_ref()
+            .map(|pipe| (pipe.as_raw_fd(), libc::POLLIN))
     }
 }
 
