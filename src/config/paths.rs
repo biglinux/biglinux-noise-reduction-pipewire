@@ -4,12 +4,10 @@
 //! codebase. Tests that need a synthetic config root override via
 //! `AppSettings::load_from` / `save_to`.
 
-use std::path::{Path, PathBuf};
+use std::path::PathBuf;
 
 pub const EQ_BANDS_HZ: [u32; 10] = [31, 63, 125, 250, 500, 1000, 2000, 4000, 8000, 16000];
-use crate::config::noise_model::{
-    DEEPFILTER_LADSPA_PATH, GTCRN_LADSPA_PATH, LADSPA_DIR_PATH, NoiseModel,
-};
+use crate::config::noise_model::GTCRN_LADSPA_PATH;
 
 /// D-Bus / desktop application identifier.
 pub const APP_ID: &str = "br.com.biglinux.microphone";
@@ -42,33 +40,10 @@ pub fn settings_file() -> PathBuf {
     config_dir().join("settings.json")
 }
 
-/// System LADSPA directory.
-#[must_use]
-pub fn ladspa_dir() -> &'static Path {
-    Path::new(LADSPA_DIR_PATH)
-}
-
 /// Path to the GTCRN LADSPA plugin shared object.
 #[must_use]
 pub fn gtcrn_plugin() -> PathBuf {
     PathBuf::from(GTCRN_LADSPA_PATH)
-}
-
-/// Path to the DeepFilterNet3 LADSPA plugin shared object. Shipped by
-/// the optional `deepfilternet-ladspa` package — call
-/// [`deepfilter_available`] before assuming it exists.
-#[must_use]
-pub fn deepfilter_plugin() -> PathBuf {
-    PathBuf::from(DEEPFILTER_LADSPA_PATH)
-}
-
-/// Whether the DeepFilterNet3 LADSPA plugin is currently installed.
-/// Used by the UI to gate the DFN3 option in the model selector and by
-/// the settings loader to fall back to GTCRN when an installed system
-/// previously had DFN3 selected and then uninstalled the package.
-#[must_use]
-pub fn deepfilter_available() -> bool {
-    NoiseModel::DeepFilterNet3.plugin_available()
 }
 
 /// Package version read from `Cargo.toml`.

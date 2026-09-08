@@ -29,15 +29,13 @@ fn read_bounded(path: &Path, max_bytes: u64) -> std::io::Result<Vec<u8>> {
 
 use crate::config::{AppSettings, gtcrn_plugin};
 use crate::pipeline;
+use crate::services::pipewire::{AEC_UNIT, MIC_UNIT, OUTPUT_UNIT};
 
 const SC4_MONO_PLUGIN: &str = "/usr/lib/ladspa/sc4m_1916.so";
 const SWH_GATE_PLUGIN: &str = "/usr/lib/ladspa/gate_1410.so";
 const MIC_NODE_TAG: &str = "\"mic-biglinux\"";
 const OUTPUT_NODE_TAG: &str = "\"output-biglinux\"";
 const EC_NODE_TAG: &str = "\"echo-cancel-source\"";
-const MIC_UNIT: &str = "biglinux-microphone-mic.service";
-const AEC_UNIT: &str = "biglinux-microphone-aec.service";
-const OUTPUT_UNIT: &str = "biglinux-microphone-output.service";
 const WP_PACKAGED_LUA: &str = "/usr/share/wireplumber/scripts/biglinux/echo-cancel-routing.lua";
 const WP_USER_LUA_RELATIVE: &str =
     ".local/share/wireplumber/scripts/biglinux/echo-cancel-routing.lua";
@@ -187,15 +185,7 @@ fn check_echo_cancel(report: &mut Report, settings: &AppSettings) {
         ec_path.exists(),
         &ec_path.display().to_string(),
     );
-    let graph_dump = BigSubprocessSpec::builder()
-        .program("/usr/bin/pw-cli")
-        .args(["ls", "Node"])
-        .stderr(BigSubprocessOutputMode::Null)
-        .allow_list(["/usr/bin/pw-cli"])
-        .build()
-        .run()
-        .map(|o| o.stdout_lossy())
-        .unwrap_or_default();
+    let graph_dump = crate::services::pipewire::graph_nodes_dump();
     report.check(
         "echo-cancel-source node visible",
         graph_dump.contains(EC_NODE_TAG),
@@ -274,15 +264,7 @@ fn check_wireplumber_script(report: &mut Report) {
 }
 
 fn check_graph_nodes(report: &mut Report, settings: &AppSettings) {
-    let graph_dump = BigSubprocessSpec::builder()
-        .program("/usr/bin/pw-cli")
-        .args(["ls", "Node"])
-        .stderr(BigSubprocessOutputMode::Null)
-        .allow_list(["/usr/bin/pw-cli"])
-        .build()
-        .run()
-        .map(|o| o.stdout_lossy())
-        .unwrap_or_default();
+    let graph_dump = crate::services::pipewire::graph_nodes_dump();
     // Judge the graph against the *desired* state: a node that the user
     // turned off is correctly absent, not a failure.
     if pipeline::mic_chain_wanted(settings) {
@@ -333,7 +315,10 @@ fn print_unit_state(settings: &AppSettings) {
     }
 }
 
-fn command_succeeds(cmd: &str, args: &[&str]) -> bool {
+/// Run a command purely for its exit status. Shared with the startup
+/// health probe so the banner and `doctor` cannot disagree about whether
+/// the same check passed.
+pub(crate) fn command_succeeds(cmd: &str, args: &[&str]) -> bool {
     BigSubprocessSpec::builder()
         .program(cmd)
         .args(args.iter().copied())
@@ -345,7 +330,8 @@ fn command_succeeds(cmd: &str, args: &[&str]) -> bool {
         .is_ok_and(|o| o.status.success())
 }
 
-fn unit_known(name: &str) -> bool {
+/// Whether systemd can find the unit file at all.
+pub(crate) fn unit_known(name: &str) -> bool {
     command_succeeds("/usr/bin/systemctl", &["--user", "cat", name])
 }
 

@@ -21,6 +21,7 @@
 use std::io;
 use std::process::ExitCode;
 
+use big_os_kit::subprocess::{BigSubprocessOutputMode, BigSubprocessSpec};
 use biglinux_microphone::config::AppSettings;
 use biglinux_microphone::pipeline;
 use biglinux_microphone::services::pipewire::{StreamDirection, current_streams};
@@ -88,19 +89,19 @@ impl Key {
     const NAMES: &'static str = "mic, mic-intensity, voice-clarity, echo, output-voices, \
                                  equalizer, voice-changer, voice-pitch, quality, eq-preset";
 
-    /// Whether this key takes a percentage rather than on/off.
-    fn is_a_quantity(self) -> bool {
-        matches!(
-            self,
-            Self::MicIntensity | Self::VoiceClarity | Self::VoicePitch
-        )
-    }
-
     /// Whether honouring this key means a filter chain has to come or go.
     /// Everything else is a port of a chain that is already loaded, which
     /// `apply_live` moves without an interruption.
+    ///
+    /// `voice-pitch` is a percentage and still belongs here: the pitch
+    /// shifter is two nodes the graph only carries while the voice changer is
+    /// on, and `mic_params` deliberately pushes no `pitch:` control (the
+    /// phase vocoder is a topology change, which is what `needs_mic_reload`
+    /// says about the same field). Classifying it as a mere quantity meant
+    /// the args were rewritten and nothing ever reloaded, so the new pitch
+    /// never reached the running chain.
     fn changes_the_graph(self) -> bool {
-        !self.is_a_quantity()
+        !matches!(self, Self::MicIntensity | Self::VoiceClarity)
     }
 }
 
@@ -187,13 +188,30 @@ fn print_models() -> ExitCode {
     // attenuation blend at anything less mixes the model's output with the
     // input, which is a different question.
 
+    // Serialized rather than assembled by hand: the filter string carries
+    // plugin paths and labels, and escaping those into JSON with a pair of
+    // `replace` calls is a rule that has to be maintained against whatever
+    // a future path contains.
+    #[derive(serde::Serialize)]
+    struct ModelRow {
+        id: u8,
+        plugin: &'static str,
+        label: &'static str,
+        sample_rate: u32,
+        attenuation_only: bool,
+        realtime: bool,
+        loadable: bool,
+        ffmpeg_filter: String,
+    }
+
     let mut rows = Vec::new();
     for value in 0..=8_u8 {
         let Ok(model) = NoiseModel::try_from(value) else {
             continue;
         };
         let (plugin, label) = model.plugin_and_label();
-        let filter = if !model.plugin_loadable() {
+        let loadable = model.plugin_loadable_cached();
+        let ffmpeg_filter = if !loadable {
             String::new()
         } else if model.is_attenuation_only() {
             format!("ladspa=file={plugin}:plugin={label}:controls=c0=100.00")
@@ -203,19 +221,24 @@ fn print_models() -> ExitCode {
                 model.ladspa_control()
             )
         };
-        rows.push(format!(
-            "    {{\"id\": {value}, \"plugin\": \"{plugin}\", \"label\": \"{label}\", \
-             \"sample_rate\": {}, \"attenuation_only\": {}, \"realtime\": {}, \
-             \"loadable\": {}, \"ffmpeg_filter\": \"{}\"}}",
-            model.lavfi_sample_rate(),
-            model.is_attenuation_only(),
-            model.is_realtime_lavfi_supported(),
-            model.plugin_loadable(),
-            filter.replace('\\', "\\\\").replace('"', "\\\""),
-        ));
+        rows.push(ModelRow {
+            id: value,
+            plugin,
+            label,
+            sample_rate: model.lavfi_sample_rate(),
+            attenuation_only: model.is_attenuation_only(),
+            realtime: model.is_realtime_lavfi_supported(),
+            loadable,
+            ffmpeg_filter,
+        });
     }
-    println!("[\n{}\n]", rows.join(",\n"));
-    ExitCode::SUCCESS
+    match serde_json::to_string_pretty(&rows) {
+        Ok(json) => {
+            println!("{json}");
+            ExitCode::SUCCESS
+        }
+        Err(error) => exit_with_error(&format!("models: {error}")),
+    }
 }
 
 fn main() -> ExitCode {
@@ -352,8 +375,7 @@ fn autostart() -> ExitCode {
     // does not rewrite its settings file at every login.
     let before = (settings.noise_reduction.model, settings.echo_cancel.enabled);
     biglinux_microphone::services::echo::settle(&mut settings.echo_cancel);
-    let machine = biglinux_microphone::config::Machine::read(settings.filters_running());
-    settings.settle_quality(&machine);
+    settings.settle_quality();
     if (settings.noise_reduction.model, settings.echo_cancel.enabled) != before
         && let Err(e) = settings.save()
     {
@@ -566,18 +588,9 @@ fn set_one(key: Option<String>, value: Option<String>) -> ExitCode {
         // it is — whoever can see which device the sound is going to is what decides, and
         // this program cannot.
         Key::Echo => match biglinux_microphone::config::EchoMode::parse(&value) {
-            Some(mode) => {
-                settings.echo_cancel.mode = mode;
-                match mode {
-                    biglinux_microphone::config::EchoMode::Always => {
-                        settings.echo_cancel.enabled = true;
-                    }
-                    biglinux_microphone::config::EchoMode::Never => {
-                        settings.echo_cancel.enabled = false;
-                    }
-                    biglinux_microphone::config::EchoMode::Automatic => {}
-                }
-            }
+            // Only the mode: `settle` below derives `enabled` from it, so
+            // setting the flag here as well duplicated the rule that owns it.
+            Some(mode) => settings.echo_cancel.mode = mode,
             None => {
                 return exit_with_error(&format!(
                     "set {name}: `{value}` is not one of auto, on, off"
@@ -651,9 +664,7 @@ fn set_one(key: Option<String>, value: Option<String>) -> ExitCode {
         Key::Quality => match biglinux_microphone::config::Quality::parse(&value) {
             Some(wanted) => {
                 settings.quality = wanted;
-                let machine =
-                    biglinux_microphone::config::Machine::read(settings.filters_running());
-                settings.settle_quality(&machine);
+                settings.settle_quality();
             }
             None => {
                 return exit_with_error(&format!(
@@ -782,9 +793,9 @@ fn repair() -> ExitCode {
             .build()
             .run();
     };
-    reset("biglinux-microphone-mic.service");
-    reset("biglinux-microphone-aec.service");
-    reset("biglinux-microphone-output.service");
+    reset(biglinux_microphone::services::pipewire::MIC_UNIT);
+    reset(biglinux_microphone::services::pipewire::AEC_UNIT);
+    reset(biglinux_microphone::services::pipewire::OUTPUT_UNIT);
 
     reconcile_aec_service(&settings);
     reconcile_mic_chain(&settings);
@@ -820,28 +831,48 @@ fn print_streams(streams: &[biglinux_microphone::services::pipewire::AppStream])
 }
 
 fn watch_echo() -> ExitCode {
+    use biglinux_microphone::services::echo::RouteWatch;
+
     let _ = autostart();
-    let mut child = match std::process::Command::new("/usr/bin/pw-dump")
+    let mut child = match BigSubprocessSpec::builder()
+        .program("/usr/bin/pw-dump")
         .arg("--monitor")
-        .stdout(std::process::Stdio::piped())
+        .allow_list(["/usr/bin/pw-dump"])
+        .stdout(BigSubprocessOutputMode::Capture)
+        .build()
         .spawn()
     {
         Ok(child) => child,
         Err(error) => return exit_with_error(&format!("watch: {error}")),
     };
-    let stdout = child.stdout.take().expect("piped monitor stdout");
+    let stdout = child.take_stdout().expect("piped monitor stdout");
+
+    // The monitor stream *is* the graph, so the answer comes out of it rather
+    // than out of another `pw-dump`. Asking cost the session dearly: one dump
+    // connects a client, the monitor reports that three times, and each report
+    // spawned another dump — the watcher fed itself and the fork count grew
+    // without a single user action.
+    let mut route = RouteWatch::default();
     for event in serde_json::Deserializer::from_reader(std::io::BufReader::new(stdout))
         .into_iter::<Vec<serde_json::Value>>()
     {
-        if let Err(error) = event {
-            let _ = child.kill();
-            let _ = child.wait();
-            return exit_with_error(&format!("watch: {error}"));
-        }
+        let batch = match event {
+            Ok(batch) => batch,
+            Err(error) => {
+                let _ = child.kill();
+                let _ = child.wait();
+                return exit_with_error(&format!("watch: {error}"));
+            }
+        };
+        // Only a route change is worth reading settings for; anything else and
+        // this loop would `dlopen` the inference runtimes once per event.
+        let Some(wanted) = route.absorb(batch) else {
+            continue;
+        };
         let settings = AppSettings::load();
-        let mut echo = settings.echo_cancel.clone();
-        biglinux_microphone::services::echo::settle(&mut echo);
-        if echo != settings.echo_cancel {
+        if settings.echo_cancel.mode == biglinux_microphone::config::EchoMode::Automatic
+            && settings.echo_cancel.enabled != wanted
+        {
             let _ = autostart();
         }
     }

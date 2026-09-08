@@ -1,12 +1,12 @@
 use crate::services::audio_monitor::SpectrumFrame;
 
 use super::constants::{
-    BAND_COUNT, DB_FLOOR, METER_HOLD_DECAY, METER_HOLD_TICKS, METER_PEAK_DECAY, PEAK_DECAY,
-    PEAK_HOLD_TICKS, SMOOTH_FACTOR,
+    BAND_COUNT, DB_FLOOR, DB_SPAN, METER_HOLD_DECAY, METER_HOLD_TICKS, METER_PEAK_DECAY,
+    PEAK_DECAY, PEAK_HOLD_TICKS, SMOOTH_FACTOR,
 };
 
 pub(super) fn db_to_norm(db: f32) -> f32 {
-    ((db - DB_FLOOR) / 60.0).clamp(0.0, 1.0)
+    ((db - DB_FLOOR) / DB_SPAN).clamp(0.0, 1.0)
 }
 
 pub(super) fn resampled_band_targets(input_bands_db: &[f32]) -> [f32; BAND_COUNT] {

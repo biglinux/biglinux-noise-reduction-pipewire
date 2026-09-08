@@ -24,6 +24,10 @@ fn cascade_mic_off_drops_every_filter_chain_dependency() {
 
     assert!(!s.noise_reduction.enabled);
     assert!(!s.echo_cancel.enabled);
+    // The mode is the intent; the flag is derived from it by
+    // `services::echo::settle`, which runs before the graph is written and
+    // would put an `Automatic` flag straight back to `true`.
+    assert_eq!(s.echo_cancel.mode, crate::config::EchoMode::Never);
     assert!(!s.gate.enabled);
     assert!(!s.hpf.enabled);
     assert!(!s.stereo.enabled);

@@ -118,9 +118,15 @@ pub fn set_source_volume(node_id: u32, volume: f32) -> io::Result<()> {
 
 // ── Parsers ──────────────────────────────────────────────────────────
 
-fn pw_cli_ls_node() -> io::Result<String> {
-    // `pw-cli ls Node` output can exceed 64 KiB on a busy graph — the shared
-    // spec drains stdout/stderr concurrently, avoiding the pipe-fill deadlock.
+/// The graph as `pw-cli ls Node` renders it.
+///
+/// Shared, because four callers had built this same spec by hand and none of
+/// the copies carried the reason below — so the next one had no reason not to
+/// reach for `std::process::Command`.
+///
+/// `pw-cli ls Node` output can exceed 64 KiB on a busy graph; the shared spec
+/// drains stdout/stderr concurrently, avoiding the pipe-fill deadlock.
+pub(crate) fn pw_cli_ls_node() -> io::Result<String> {
     let output = BigSubprocessSpec::builder()
         .program("/usr/bin/pw-cli")
         .args(["ls", "Node"])

@@ -7,7 +7,7 @@
 /// A gentle starting point: enough makeup gain and ratio to even out a
 /// voice track but far from the aggressive curves used for broadcast-style
 /// presets.
-pub const COMPRESSOR_INTENSITY_DEFAULT: f64 = 0.25;
+pub const COMPRESSOR_INTENSITY_DEFAULT: f32 = 0.25;
 
 /// Resolved noise-gate parameters derived from a single intensity value.
 ///
@@ -63,25 +63,6 @@ impl GateDerived {
     }
 }
 
-macro_rules! compressor_curve {
-    ($intensity:expr) => {{
-        let intensity = if $intensity.is_nan() {
-            0.0
-        } else {
-            $intensity.clamp(0.0, 1.0)
-        };
-        (
-            -15.0 - intensity * 15.0,
-            2.0 + intensity * 4.0,
-            10.0,
-            100.0,
-            2.0 + intensity * 8.0,
-            3.0 + intensity * 5.0,
-            0.0,
-        )
-    }};
-}
-
 /// SC4 LADSPA controls derived with the plugin UI's native f32 precision.
 #[derive(Debug, Clone, Copy, PartialEq)]
 pub struct Sc4CompressorControls {
@@ -103,18 +84,25 @@ pub struct Sc4CompressorControls {
 
 impl Sc4CompressorControls {
     /// Derive bit-stable SC4 controls from a unit-interval intensity.
+    ///
+    /// `intensity` is clamped to `0.0..=1.0`, with `NaN` treated as zero.
     #[must_use]
     pub fn from_unit_intensity(intensity: f32) -> Self {
-        let (threshold_db, ratio, attack_ms, release_ms, makeup_gain_db, knee_db, rms_peak) =
-            compressor_curve!(intensity);
+        let n = if intensity.is_nan() {
+            0.0
+        } else {
+            intensity.clamp(0.0, 1.0)
+        };
+        // Named fields rather than a positional 7-tuple: two `f32` curve
+        // values could be swapped in the destructuring and still compile.
         Self {
-            threshold_db,
-            ratio,
-            attack_ms,
-            release_ms,
-            makeup_gain_db,
-            knee_db,
-            rms_peak,
+            threshold_db: -15.0 - n * 15.0,
+            ratio: 2.0 + n * 4.0,
+            attack_ms: 10.0,
+            release_ms: 100.0,
+            makeup_gain_db: 2.0 + n * 8.0,
+            knee_db: 3.0 + n * 5.0,
+            rms_peak: 0.0,
         }
     }
 }

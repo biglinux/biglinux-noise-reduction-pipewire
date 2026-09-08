@@ -11,21 +11,18 @@ from __future__ import annotations
 
 import argparse
 import json
-import os
 import sys
 from pathlib import Path
 
 # Allow running as a script without installing the package.
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 
-from lib import metrics, signals  # noqa: E402
+from lib import cache_root, metrics, signals  # noqa: E402
 
 
 def _default_dnsmos() -> Path | None:
-    cache = Path(
-        os.environ.get("XDG_CACHE_HOME", str(Path.home() / ".cache"))
-    ) / "biglinux-microphone/calibration/models/dnsmos/sig_bak_ovr.onnx"
-    return cache if cache.exists() else None
+    model = cache_root() / "models/dnsmos/sig_bak_ovr.onnx"
+    return model if model.exists() else None
 
 
 def main() -> int:

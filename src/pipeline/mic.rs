@@ -54,11 +54,9 @@
 
 use std::fmt::Write as _;
 
-use crate::config::dynamics::GateDerived;
-
 use crate::config::{
-    AppSettings, EQ_BAND_COUNT, EQ_BANDS_HZ, GATE_INTENSITY_MAX, StereoMode,
-    deepfilter_attenuation_db, eq_preset_bands, gtcrn_speech_strength,
+    AppSettings, EQ_BAND_COUNT, EQ_BANDS_HZ, EchoMode, StereoMode, deepfilter_attenuation_db,
+    eq_preset_bands, gtcrn_speech_strength,
 };
 
 use super::graph::{Graph, Link};
@@ -119,6 +117,13 @@ pub fn build_mic_conf(settings: &AppSettings) -> String {
 /// does not call this.
 pub fn cascade_mic_off(settings: &mut AppSettings) {
     settings.noise_reduction.enabled = false;
+    // `echo_cancel.enabled` is derived from the mode and the current output
+    // route, and `services::echo::settle` re-derives it before the graph is
+    // written — so clearing only the flag was a write nothing read. The mode
+    // is the intent, and `mic_chain_wanted` counts the flag, so without this
+    // one "off" click left the virtual source and the AEC loader up on every
+    // machine with speakers. The mode row in the mic view is how it comes back.
+    settings.echo_cancel.mode = EchoMode::Never;
     settings.echo_cancel.enabled = false;
     settings.gate.enabled = false;
     settings.hpf.enabled = false;
@@ -231,9 +236,7 @@ fn denoiser_node(settings: &AppSettings) -> Node {
 fn gtcrn_node(settings: &AppSettings) -> Node {
     let nr = &settings.noise_reduction;
     let gate = &settings.gate;
-    let gate_derived = GateDerived::from_unit_intensity(
-        f64::from(gate.intensity.min(GATE_INTENSITY_MAX)) / f64::from(GATE_INTENSITY_MAX),
-    );
+    let gate_derived = gate.ladspa_controls();
     let threshold_db = if gate.enabled {
         gate_derived.threshold_db
     } else {
@@ -276,9 +279,7 @@ fn attenuation_denoiser_node(settings: &AppSettings) -> Node {
 }
 
 fn standalone_gate_node(settings: &AppSettings) -> Node {
-    let gate_d = GateDerived::from_unit_intensity(
-        f64::from(settings.gate.intensity.min(GATE_INTENSITY_MAX)) / f64::from(GATE_INTENSITY_MAX),
-    );
+    let gate_d = settings.gate.ladspa_controls();
     Node::ladspa("gate", LADSPA_SWH_GATE, LABEL_SWH_GATE).with_controls([
         ("Threshold (dB)", gate_d.threshold_db),
         ("Attack (ms)", gate_d.attack_ms),
@@ -398,12 +399,6 @@ fn capture_props(settings: &AppSettings) -> String {
     // The node name must stay in sync with [`MIC_CAPTURE_NODE_NAME`] —
     // live parameter updates target this name, not the outward-facing
     // `Audio/Source` wrapper.
-    // The same block with or without the canceller. 1024 was neither a multiple of the
-    // canceller's 480-sample frame nor of any model's analysis hop, so every callback
-    // straddled a hop boundary and the work per wake-up alternated; it also measured the
-    // worst p99 of the three sizes tried.
-    let latency = super::echo_cancel::AEC_NODE_LATENCY;
-
     // `node.lock-quantum = true` keeps PipeWire from re-negotiating the
     // graph quantum while this chain is active. Without the lock, the
     // graph re-negotiates every time an app connects/disconnects (call
@@ -419,7 +414,10 @@ fn capture_props(settings: &AppSettings) -> String {
     let mut props = vec![
         "node.name = \"mic-biglinux-capture\"".to_owned(),
         "node.passive = true".to_owned(),
-        format!("node.latency = \"{latency}\""),
+        format!(
+            "node.latency = \"{}\"",
+            super::echo_cancel::AEC_NODE_LATENCY
+        ),
         "node.pause-on-idle = false".to_owned(),
         "node.lock-quantum = true".to_owned(),
         "audio.rate = 48000".to_owned(),
@@ -459,17 +457,14 @@ fn playback_props() -> String {
     // Stereo fan-out (FL / FR via `copy_l` / `copy_r`) keeps apps that
     // require a two-channel source happy; the internal chain is mono
     // and the copies just duplicate the signal.
-    // The same block with or without the canceller. 1024 was neither a multiple of the
-    // canceller's 480-sample frame nor of any model's analysis hop, so every callback
-    // straddled a hop boundary and the work per wake-up alternated; it also measured the
-    // worst p99 of the three sizes tried.
-    let latency = super::echo_cancel::AEC_NODE_LATENCY;
-
     let props = vec![
         format!("node.name = \"{MIC_NODE_NAME}\""),
         format!("node.description = \"{MIC_DESCRIPTION}\""),
         "media.class = Audio/Source".to_owned(),
-        format!("node.latency = \"{latency}\""),
+        format!(
+            "node.latency = \"{}\"",
+            super::echo_cancel::AEC_NODE_LATENCY
+        ),
         "node.pause-on-idle = false".to_owned(),
         "node.lock-quantum = true".to_owned(),
         "audio.rate = 48000".to_owned(),

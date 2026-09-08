@@ -592,8 +592,16 @@ SimpleEventHook {
       return
     end
     local source = event:get_source ()
+    -- Only the closed→open transition needs this. With another recorder
+    -- already open the AEC is linked, and `linking/rescan-trigger` — which
+    -- this hook runs before — schedules a rescan for the new linkable
+    -- anyway, so every extra recorder was paying for a second full pass.
+    local om = source:call ("get-object-manager", "session-item")
+    if has_real_capture_consumer (om, si.id) then
+      return
+    end
     source:call ("schedule-rescan", "linking")
-    log:info ("AEC gate: recording stream appeared; scheduled rescan")
+    log:info ("AEC gate: first recording stream appeared; scheduled rescan")
   end
 }:register ()
 

@@ -8,18 +8,22 @@
 //! source (subprocess / file stat), never from assumptions:
 //!
 //! 1. Is PipeWire answering? (`pw-cli info 0`)
-//! 2. Is the default denoiser plugin installed? (LADSPA path stat via
-//!    [`NoiseModel::plugin_available`])
+//! 2. Can the default denoiser actually run? (LADSPA path stat plus the
+//!    `dlopen` of its inference runtime, via
+//!    [`NoiseModel::plugin_loadable_cached`])
 //! 3. Are the pwloader user units installed? (`systemctl --user cat`)
+//!
+//! The probes themselves are `diagnostics`' — the banner and `doctor` must
+//! not be able to disagree about whether the same check passed.
 //!
 //! Runs on a worker thread (subprocess latency); the shell shows a
 //! "Checking…" banner until the result lands and downgrades the window
 //! to an explained, insensitive Unavailable state when a probe fails —
 //! cause + next action, per the screen contract.
 
-use big_os_kit::subprocess::{BigSubprocessOutputMode, BigSubprocessSpec};
-
 use crate::config::NoiseModel;
+use crate::diagnostics::{command_succeeds, unit_known};
+use crate::services::pipewire::MIC_UNIT;
 
 use super::i18n::i18n;
 
@@ -43,13 +47,16 @@ pub fn probe() -> Health {
             hint: i18n("Log out and back in, then reopen this window."),
         };
     }
-    if !NoiseModel::default().plugin_available() {
+    // Loadability, not bare presence. A stat passes with the plugin file
+    // installed and its runtime missing, and the plugins pass audio through
+    // instead of failing — so the window said Ready while nothing denoised.
+    if !NoiseModel::default().plugin_loadable_cached() {
         return Health::Unavailable {
             cause: i18n("The noise-reduction engine is not installed."),
             hint: i18n("Install the gtcrn-ladspa package, then check again."),
         };
     }
-    if !mic_unit_installed() {
+    if !unit_known(MIC_UNIT) {
         return Health::Unavailable {
             cause: i18n("The background audio services are not installed."),
             hint: i18n("Reinstall Filter noise, then log out and back in."),
@@ -61,27 +68,7 @@ pub fn probe() -> Health {
 /// `pw-cli info 0` succeeds only when a PipeWire daemon answers on the
 /// user's socket — the same transport every apply/live-update uses.
 fn pipewire_reachable() -> bool {
-    probe_command("/usr/bin/pw-cli", &["info", "0"])
-}
-
-/// `systemctl --user cat` exits non-zero when the unit file is missing
-/// from every systemd search path (dev builds, broken installs).
-fn mic_unit_installed() -> bool {
-    probe_command(
-        "/usr/bin/systemctl",
-        &["--user", "cat", "biglinux-microphone-mic.service"],
-    )
-}
-
-fn probe_command(program: &str, args: &[&str]) -> bool {
-    BigSubprocessSpec::builder()
-        .program(program)
-        .args(args.iter().copied())
-        .stdout(BigSubprocessOutputMode::Null)
-        .allow_list([program])
-        .build()
-        .run()
-        .is_ok_and(|o| o.status.success())
+    command_succeeds("/usr/bin/pw-cli", &["info", "0"])
 }
 
 #[cfg(test)]

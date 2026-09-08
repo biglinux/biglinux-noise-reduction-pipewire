@@ -348,8 +348,7 @@ fn run_apply(
     // kept whatever model was already there until their next login. It belongs here and
     // not on the main thread: reading the machine times the model, which takes seconds
     // the first time a plugin is seen.
-    let machine = crate::config::Machine::read(snapshot.filters_running());
-    snapshot.settle_quality(&machine);
+    snapshot.settle_quality();
     crate::services::echo::settle(&mut snapshot.echo_cancel);
 
     // Tier 1 — persist settings.

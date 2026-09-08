@@ -1,5 +1,5 @@
 use super::constants::{
-    BAND_COUNT, BAR_SPACING, BG_RADIUS, CORNER_RADIUS, DB_FLOOR, PEAK_METER_TICK_VALUES,
+    BAND_COUNT, BAR_SPACING, BG_RADIUS, CORNER_RADIUS, DB_FLOOR, DB_SPAN, PEAK_METER_TICK_VALUES,
 };
 use super::state::SpectrumState;
 
@@ -64,8 +64,7 @@ fn draw_bars(
 ) {
     let background_gradient = zone_gradient_vertical(area_y + area_height, area_y, 0.2);
     let foreground_gradient = zone_gradient_vertical(area_y + area_height, area_y, 1.0);
-    let total_spacing = BAR_SPACING * (BAND_COUNT as f64 - 1.0);
-    let bar_width = ((area_width - total_spacing) / BAND_COUNT as f64).max(2.0);
+    let bar_width = bar_width(area_width);
 
     for band_index in 0..BAND_COUNT {
         let x = area_x + band_index as f64 * (bar_width + BAR_SPACING);
@@ -224,7 +223,7 @@ fn draw_peak_meter(
     );
     cairo_context.set_font_size(9.0);
     for (tick_index, db) in PEAK_METER_TICK_VALUES.into_iter().enumerate() {
-        let ratio = (f64::from(db) - f64::from(DB_FLOOR)) / 60.0;
+        let ratio = (f64::from(db) - f64::from(DB_FLOOR)) / f64::from(DB_SPAN);
         let x = track_x + ratio * track_width;
         cairo_context.set_source_rgba(0.0, 0.0, 0.0, 0.5);
         cairo_context.move_to(x, track_y);
@@ -264,7 +263,7 @@ fn draw_db_grid(
     cairo_context.set_font_size(9.0);
 
     for (label, db) in [("-20", -20.0), ("-40", -40.0)] {
-        let ratio = (db - f64::from(DB_FLOOR)) / 60.0;
+        let ratio = (db - f64::from(DB_FLOOR)) / f64::from(DB_SPAN);
         let y = area_y + area_height * (1.0 - ratio);
         cairo_context.set_source_rgba(1.0, 1.0, 1.0, 0.08);
         cairo_context.move_to(area_x, y);
@@ -301,8 +300,7 @@ fn draw_frequency_labels(
     );
     cairo_context.set_font_size(9.0);
     cairo_context.set_source_rgba(0.5, 0.5, 0.5, 0.9);
-    let total_spacing = BAR_SPACING * (BAND_COUNT as f64 - 1.0);
-    let bar_width = ((area_width - total_spacing) / BAND_COUNT as f64).max(2.0);
+    let bar_width = bar_width(area_width);
 
     for (band_index, label) in MARKERS {
         if let Ok(extents) = cairo_context.text_extents(label) {
@@ -314,7 +312,14 @@ fn draw_frequency_labels(
 }
 
 fn norm_to_db(norm: f32) -> f32 {
-    (DB_FLOOR + norm * 60.0).clamp(DB_FLOOR, 0.0)
+    (DB_FLOOR + norm * DB_SPAN).clamp(DB_FLOOR, 0.0)
+}
+
+/// Width of one band's bar. The bars and the frequency labels underneath
+/// have to land on the same grid, and each computed it separately.
+fn bar_width(area_width: f64) -> f64 {
+    let total_spacing = BAR_SPACING * (BAND_COUNT as f64 - 1.0);
+    ((area_width - total_spacing) / BAND_COUNT as f64).max(2.0)
 }
 
 fn set_level_color(cairo_context: &cairo::Context, db: f32) {

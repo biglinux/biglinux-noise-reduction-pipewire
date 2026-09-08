@@ -39,9 +39,9 @@ import soundfile as sf
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 
-from lib import dnsmos, metrics, shipped  # noqa: E402
+from lib import cache_root, dnsmos, metrics, shipped  # noqa: E402
 
-CACHE = Path.home() / ".cache/biglinux-microphone/calibration"
+CACHE = cache_root()
 DATASET = CACHE / "datasets/voicebank_demand"
 DNSMOS_MODEL = CACHE / "models/dnsmos/sig_bak_ovr.onnx"
 

@@ -800,7 +800,7 @@ impl MicShell {
             sender.oneshot_command(async { MicCommandOutput::MonitorStopped });
             return;
         };
-        let monitor = match take_unique_monitor(monitor) {
+        let monitor = match Rc::try_unwrap(monitor) {
             Ok(monitor) => monitor,
             Err(monitor) => {
                 log::error!(
@@ -857,10 +857,6 @@ fn current_window_dimension(actual: i32, persisted: u32) -> u32 {
         .ok()
         .filter(|dimension| *dimension > 0)
         .unwrap_or(persisted)
-}
-
-fn take_unique_monitor(monitor: Rc<AudioMonitor>) -> Result<AudioMonitor, Rc<AudioMonitor>> {
-    Rc::try_unwrap(monitor)
 }
 
 fn spawn_apply_work(sender: &ComponentSender<MicShell>, work: ApplyWork) {

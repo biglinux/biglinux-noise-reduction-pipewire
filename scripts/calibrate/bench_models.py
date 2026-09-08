@@ -25,7 +25,7 @@ import numpy as np
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 
-from lib import denoisers, metrics, signals  # noqa: E402
+from lib import cache_root, denoisers, metrics, signals  # noqa: E402
 
 
 @dataclass
@@ -35,10 +35,7 @@ class ModelEntry:
 
 
 def _default_cache() -> Path:
-    return (
-        Path(os.environ.get("XDG_CACHE_HOME", str(Path.home() / ".cache")))
-        / "biglinux-microphone/calibration"
-    )
+    return cache_root()
 
 
 def _discover_models(cache: Path) -> list[ModelEntry]:

@@ -19,6 +19,8 @@
 use std::ffi::{CString, c_char, c_int, c_ulong, c_void};
 use std::time::{Duration, Instant};
 
+use big_os_kit::subprocess::{BigSubprocessOutputMode, BigSubprocessSpec};
+
 use crate::config::noise_model::NoiseModel;
 
 /// Audio timed, after the warm-up. Long enough for a p99 to mean something and short
@@ -261,42 +263,45 @@ pub fn audio_thread_share_cached(model: NoiseModel) -> Option<f32> {
     let key = format!("{path}:{}:{:?}", stamp.0, stamp.1);
     let cache = cache_file();
 
-    if let Ok(text) = std::fs::read_to_string(&cache) {
-        for line in text.lines() {
-            if let Some((stored, value)) = line.rsplit_once(' ')
-                && stored == key
-                && let Ok(share) = value.parse::<f32>()
-            {
-                return Some(share);
-            }
+    // Read once and keep it: the same file was read again below to rebuild
+    // the retained entries.
+    let stored_entries = std::fs::read_to_string(&cache).unwrap_or_default();
+    for line in stored_entries.lines() {
+        if let Some((stored, value)) = line.rsplit_once(' ')
+            && stored == key
+            && let Ok(share) = value.parse::<f32>()
+        {
+            return Some(share);
         }
     }
 
     // Native inference runtimes may load allocators with private symbol binding.
     // Keep their benchmark out of the jemalloc GUI process.
+    //
+    // Through the shared subprocess boundary rather than `Command::output()`:
+    // the measurement takes seconds by design, and a child that never exits
+    // would otherwise hold the apply worker forever.
     let cli = std::env::current_exe()
         .ok()?
         .with_file_name("biglinux-microphone-cli");
-    let output = std::process::Command::new(cli)
+    let output = BigSubprocessSpec::builder()
+        .program(cli.to_str()?)
         .args(["measure-model", &(model as u8).to_string()])
-        .stderr(std::process::Stdio::null())
-        .output()
+        .stderr(BigSubprocessOutputMode::Null)
+        .allow_list([cli.to_str()?])
+        .build()
+        .run()
         .ok()?;
     if !output.status.success() {
         return None;
     }
-    let share = std::str::from_utf8(&output.stdout)
-        .ok()?
-        .trim()
-        .parse::<f32>()
-        .ok()?;
+    let share = output.stdout_lossy().trim().parse::<f32>().ok()?;
     if !share.is_finite() || share < 0.0 {
         return None;
     }
     // Keep only the entries that still describe a file on this machine, so a cache that
     // has seen a year of updates does not grow without bound.
-    let kept: String = std::fs::read_to_string(&cache)
-        .unwrap_or_default()
+    let kept: String = stored_entries
         .lines()
         .filter(|line| line.rsplit_once(' ').is_some_and(|(k, _)| k != key))
         .take(16)

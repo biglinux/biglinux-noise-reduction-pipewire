@@ -36,9 +36,13 @@ use big_os_kit::subprocess::{BigSubprocessOutputMode, BigSubprocessSpec};
 
 use log::debug;
 
-const MIC_UNIT: &str = "biglinux-microphone-mic.service";
-const AEC_UNIT: &str = "biglinux-microphone-aec.service";
-const OUTPUT_UNIT: &str = "biglinux-microphone-output.service";
+/// The three loader units this module starts, restarts and stops. Shared
+/// with `diagnostics`, the startup health probe and `cli repair`, which all
+/// name the same units — four hand-written copies of the mic one had to be
+/// found and edited together on a rename.
+pub const MIC_UNIT: &str = "biglinux-microphone-mic.service";
+pub const AEC_UNIT: &str = "biglinux-microphone-aec.service";
+pub const OUTPUT_UNIT: &str = "biglinux-microphone-output.service";
 
 /// Restart the AEC loader. Only the `echo-cancel-source` virtual
 /// source briefly disappears from the graph; the mic loader picks it

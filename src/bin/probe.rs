@@ -20,7 +20,11 @@ fn main() -> ExitCode {
 }
 
 fn run() -> Result<(), String> {
-    let duration = parse_duration(std::env::args().skip(1))?;
+    let args: Vec<String> = std::env::args().skip(1).collect();
+    let Some(duration) = parse_duration(&args)? else {
+        // `--help` printed the usage; there is nothing to watch.
+        return Ok(());
+    };
     let settings = AppSettings::load();
     println!(
         "probe pipeline config_dir={} mic_wanted={} output_wanted={} echo_cancel={}",
@@ -41,31 +45,31 @@ fn run() -> Result<(), String> {
     result
 }
 
-fn parse_duration(args: impl Iterator<Item = String>) -> Result<Duration, String> {
-    let mut duration = Duration::from_secs(5);
-    let mut pending_duration = false;
-    for arg in args {
-        if pending_duration {
-            let millis = arg
-                .parse::<u64>()
-                .map_err(|error| format!("--duration-ms value: {error}"))?;
-            duration = Duration::from_millis(millis);
-            pending_duration = false;
-        } else {
-            match arg.as_str() {
-                "--duration-ms" => pending_duration = true,
-                "--help" | "-h" => {
-                    print_help();
-                    return Ok(Duration::from_millis(0));
-                }
-                other => return Err(format!("unknown argument: {other}")),
-            }
+/// `Ok(None)` means `--help` was asked for and printed.
+///
+/// Two flags do not need a state machine walking the iterator, and the help
+/// case does not need a zero-duration sentinel that a second function has to
+/// know means "do not run".
+fn parse_duration(args: &[String]) -> Result<Option<Duration>, String> {
+    const DEFAULT: Duration = Duration::from_secs(5);
+    match args
+        .iter()
+        .map(String::as_str)
+        .collect::<Vec<_>>()
+        .as_slice()
+    {
+        [] => Ok(Some(DEFAULT)),
+        ["--help" | "-h"] => {
+            print_help();
+            Ok(None)
         }
+        ["--duration-ms", value] => value
+            .parse::<u64>()
+            .map(|millis| Some(Duration::from_millis(millis)))
+            .map_err(|error| format!("--duration-ms value: {error}")),
+        ["--duration-ms"] => Err("--duration-ms requires a value".to_owned()),
+        [other, ..] => Err(format!("unknown argument: {other}")),
     }
-    if pending_duration {
-        return Err("--duration-ms requires a value".to_owned());
-    }
-    Ok(duration)
 }
 
 fn print_help() {
@@ -77,10 +81,6 @@ fn print_help() {
 }
 
 fn run_pipewire_probe(duration: Duration) -> Result<(), String> {
-    if duration.is_zero() {
-        return Ok(());
-    }
-
     let main_loop =
         pw::main_loop::MainLoopRc::new(None).map_err(|error| format!("MainLoop::new: {error}"))?;
     let main_loop_weak = main_loop.downgrade();

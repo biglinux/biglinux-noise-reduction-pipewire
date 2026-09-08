@@ -5,14 +5,12 @@
 //! module projects the user intensity onto a coherent parameter set using
 //! curve shapes tuned for voice capture.
 
-use crate::config::dynamics::{
-    COMPRESSOR_INTENSITY_DEFAULT as SHARED_COMPRESSOR_INTENSITY_DEFAULT, Sc4CompressorControls,
-};
+use crate::config::dynamics::Sc4CompressorControls;
 use serde::{Deserialize, Serialize};
 
 // ── Compressor config + derived parameters ───────────────────────────
 
-pub const COMPRESSOR_INTENSITY_DEFAULT: f32 = SHARED_COMPRESSOR_INTENSITY_DEFAULT as f32;
+pub use crate::config::dynamics::COMPRESSOR_INTENSITY_DEFAULT;
 
 #[derive(Debug, Clone, Copy, PartialEq, Serialize, Deserialize)]
 #[serde(default)]

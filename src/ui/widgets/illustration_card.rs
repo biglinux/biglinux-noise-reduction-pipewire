@@ -21,10 +21,6 @@ pub struct BigIllustrationSource(pub PathBuf);
 /// Data needed to build an illustrated settings card.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct BigIllustrationCardSpec {
-    /// Resource prefix.
-    pub resource_prefix: String,
-    /// Illustration name.
-    pub illustration_name: String,
     /// Source.
     pub source: BigIllustrationSource,
     /// Title.
@@ -50,8 +46,6 @@ impl BigIllustrationCardSpec {
         description: impl Into<String>,
     ) -> Self {
         Self {
-            resource_prefix: String::new(),
-            illustration_name: String::new(),
             source: BigIllustrationSource(illustration_path.into()),
             title: title.into(),
             description: description.into(),
@@ -73,35 +67,17 @@ impl BigIllustrationCardSpec {
         self
     }
 
-    /// Resolve the spec into its display-free runtime form.
+    /// Picture width, clamped to something drawable.
     #[must_use]
-    pub fn resolved(&self) -> BigIllustrationCardResolved {
-        BigIllustrationCardResolved {
-            source: self.source.clone(),
-            resource_path: self.source.0.to_string_lossy().into_owned(),
-            picture_width: self.picture_width.max(1),
-            picture_height: self.picture_height.max(1),
-            inner_margin: self.inner_margin.max(0),
-            outer_margin_bottom: self.outer_margin_bottom.max(0),
-        }
+    pub fn drawable_width(&self) -> i32 {
+        self.picture_width.max(1)
     }
-}
 
-/// Pure card contract. Safe for no-display tests.
-#[derive(Debug, Clone, PartialEq, Eq)]
-pub struct BigIllustrationCardResolved {
-    /// Source.
-    pub source: BigIllustrationSource,
-    /// Resource path.
-    pub resource_path: String,
-    /// Picture width.
-    pub picture_width: i32,
-    /// Picture height.
-    pub picture_height: i32,
-    /// Inner margin.
-    pub inner_margin: i32,
-    /// Outer margin bottom.
-    pub outer_margin_bottom: i32,
+    /// Picture height, clamped to something drawable.
+    #[must_use]
+    pub fn drawable_height(&self) -> i32 {
+        self.picture_height.max(1)
+    }
 }
 
 /// Built card plus slots for app wiring.
@@ -115,13 +91,13 @@ impl BigIllustrationCard {
     /// Creates a new optional.
     #[must_use]
     pub fn new_optional(spec: BigIllustrationCardSpec, control: Option<&gtk::Widget>) -> Self {
-        let resolved = spec.resolved();
-        let root = card_root(resolved.outer_margin_bottom);
-        let row = card_row(resolved.inner_margin);
+        let (width, height) = (spec.drawable_width(), spec.drawable_height());
+        let root = card_root(spec.outer_margin_bottom.max(0));
+        let row = card_row(spec.inner_margin.max(0));
 
-        let picture = picture_for_source(&resolved.source);
-        apply_picture_size(&picture, resolved.picture_width, resolved.picture_height);
-        let picture_slot = picture_slot(resolved.picture_width, resolved.picture_height);
+        let picture = gtk::Picture::for_filename(&spec.source.0);
+        apply_picture_size(&picture, width, height);
+        let picture_slot = picture_slot(width, height);
         picture_slot.append(&picture);
         row.append(&picture_slot);
 
@@ -277,10 +253,6 @@ fn row_label(label: &str) -> gtk::Label {
         .build()
 }
 
-fn picture_for_source(source: &BigIllustrationSource) -> gtk::Picture {
-    gtk::Picture::for_filename(&source.0)
-}
-
 fn apply_picture_size(picture: &gtk::Picture, width: i32, height: i32) {
     picture.set_size_request(width, height);
     picture.set_can_shrink(true);
@@ -309,24 +281,22 @@ mod tests {
 
     #[test]
     fn the_spec_keeps_the_file_it_was_given_and_sanitises_sizes() {
-        let resolved = BigIllustrationCardSpec::from_file("/tmp/x.svg", "Title", "Body")
-            .picture_size(0, -1)
-            .resolved();
+        let spec =
+            BigIllustrationCardSpec::from_file("/tmp/x.svg", "Title", "Body").picture_size(0, -1);
 
         assert_eq!(
-            resolved.source,
+            spec.source,
             BigIllustrationSource(PathBuf::from("/tmp/x.svg"))
         );
-        assert_eq!(resolved.resource_path, "/tmp/x.svg");
-        assert_eq!(resolved.picture_width, 1, "a size must stay drawable");
-        assert_eq!(resolved.picture_height, 1);
+        assert_eq!(spec.drawable_width(), 1, "a size must stay drawable");
+        assert_eq!(spec.drawable_height(), 1);
     }
 
     #[test]
     fn default_sizes_survive_the_move_into_this_app() {
-        let resolved = BigIllustrationCardSpec::from_file("/tmp/x.svg", "Title", "Body").resolved();
+        let spec = BigIllustrationCardSpec::from_file("/tmp/x.svg", "Title", "Body");
 
-        assert_eq!(resolved.picture_width, 92);
-        assert_eq!(resolved.picture_height, 68);
+        assert_eq!(spec.drawable_width(), 92);
+        assert_eq!(spec.drawable_height(), 68);
     }
 }

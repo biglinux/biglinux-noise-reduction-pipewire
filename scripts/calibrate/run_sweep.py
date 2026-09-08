@@ -12,7 +12,6 @@ from __future__ import annotations
 
 import argparse
 import csv
-import os
 import sys
 from dataclasses import replace
 from pathlib import Path
@@ -21,14 +20,11 @@ import numpy as np
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 
-from lib import chain, metrics, signals  # noqa: E402
+from lib import cache_root, chain, metrics, signals  # noqa: E402
 
 
 def _default_cache() -> Path:
-    return (
-        Path(os.environ.get("XDG_CACHE_HOME", str(Path.home() / ".cache")))
-        / "biglinux-microphone/calibration"
-    )
+    return cache_root()
 
 
 def _discover_samples(*roots: Path) -> list[Path]:

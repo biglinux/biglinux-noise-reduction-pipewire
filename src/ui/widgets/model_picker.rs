@@ -35,7 +35,7 @@ where
     // Loadability, not bare file presence: a present-but-unloadable
     // plugin (broken native dependency) must not be selectable — picking
     // it would crash-loop the mic unit.
-    let choices = model_choices(crate::config::noise_model_loadable);
+    let choices = model_choices(NoiseModel::plugin_loadable_cached);
     let labels: Vec<&str> = choices.iter().map(|choice| choice.label.as_str()).collect();
     let string_model = gtk::StringList::new(&labels);
 
@@ -61,10 +61,12 @@ where
             };
             label.set_label(&string.string());
 
-            let row_interaction = row_interaction(bound_list_item.position(), &choices);
-            bound_list_item.set_selectable(row_interaction.is_selectable);
-            bound_list_item.set_activatable(row_interaction.is_activatable);
-            if row_interaction.is_dimmed {
+            // One question — is this row's plugin missing — drove three
+            // fields of a struct whose only reader was right here.
+            let is_disabled = selected_index_unavailable(bound_list_item.position(), &choices);
+            bound_list_item.set_selectable(!is_disabled);
+            bound_list_item.set_activatable(!is_disabled);
+            if is_disabled {
                 label.add_css_class("dimmed");
             } else {
                 label.remove_css_class("dimmed");
@@ -99,13 +101,6 @@ pub fn description() -> String {
     )
 }
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
-struct ModelRowInteraction {
-    is_selectable: bool,
-    is_activatable: bool,
-    is_dimmed: bool,
-}
-
 fn model_choices(is_available: impl Fn(NoiseModel) -> bool) -> Vec<ModelChoice> {
     REALTIME_LAVFI_MODELS
         .iter()
@@ -137,15 +132,6 @@ fn model_label(model: NoiseModel) -> &'static str {
         | NoiseModel::DpdfnetV2
         | NoiseModel::DpdfnetV4
         | NoiseModel::DpdfnetV8 => "Offline-only DPDFNet",
-    }
-}
-
-fn row_interaction(row_position: u32, choices: &[ModelChoice]) -> ModelRowInteraction {
-    let is_disabled = selected_index_unavailable(row_position, choices);
-    ModelRowInteraction {
-        is_selectable: !is_disabled,
-        is_activatable: !is_disabled,
-        is_dimmed: is_disabled,
     }
 }
 
@@ -227,14 +213,7 @@ mod tests {
                 .label
                 .contains("not installed")
         );
-        assert_eq!(
-            row_interaction(deepfilter_index, &choices),
-            ModelRowInteraction {
-                is_selectable: false,
-                is_activatable: false,
-                is_dimmed: true,
-            }
-        );
+        assert!(selected_index_unavailable(deepfilter_index, &choices));
     }
 
     #[test]

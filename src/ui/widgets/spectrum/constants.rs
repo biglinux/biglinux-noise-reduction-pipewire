@@ -27,4 +27,11 @@ pub(super) const CORNER_RADIUS: f64 = 2.0;
 pub(super) const BG_RADIUS: f64 = 12.0;
 
 pub(super) const DB_FLOOR: f32 = -60.0;
+/// Height of the displayed range, floor to 0 dBFS.
+///
+/// Derived rather than written out: the span was spelled `60.0` at four
+/// separate sites, so retuning `DB_FLOOR` rescaled the bars while leaving
+/// the peak-meter ticks and the grid labels on the old range — the labels
+/// stop annotating the bars they sit next to.
+pub(super) const DB_SPAN: f32 = -DB_FLOOR;
 pub(super) const PEAK_METER_TICK_VALUES: [i32; 5] = [-50, -40, -30, -20, -10];

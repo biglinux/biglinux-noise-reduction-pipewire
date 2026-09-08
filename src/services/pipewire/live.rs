@@ -27,15 +27,14 @@
 //! changes — adding/removing a filter, swapping the model — because
 //! only the control values can be updated live.
 
+use std::collections::HashMap;
 use std::io;
 
-use crate::config::dynamics::GateDerived;
 use big_os_kit::subprocess::{BigSubprocessOutputMode, BigSubprocessSpec};
 use log::{debug, trace};
+use serde_json::Value;
 
-use crate::config::{
-    AppSettings, GATE_INTENSITY_MAX, deepfilter_attenuation_db, gtcrn_speech_strength,
-};
+use crate::config::{AppSettings, deepfilter_attenuation_db, gtcrn_speech_strength};
 use crate::pipeline::{
     MIC_CAPTURE_NODE_NAME, OUTPUT_NODE_NAME, ai_node_in_mic_chain, mic_chain_wanted,
     output_ai_processing,
@@ -69,11 +68,13 @@ impl LiveOutcome {
 /// output filter chain. See [`LiveOutcome`] for the semantics of the
 /// returned value.
 pub fn apply_live(settings: &AppSettings) -> io::Result<LiveOutcome> {
+    let live = live_filter_nodes()?;
+
     // Target the **capture-side** node: that's where the filter-chain
     // module exposes its LADSPA control surface. The outward-facing
     // `mic-biglinux` node is just the audio-adapter wrapper and its
     // `Props` only carries channel-mix / resampler settings.
-    let mic_pushed = if let Some(id) = find_live_node(MIC_CAPTURE_NODE_NAME)? {
+    let mic_pushed = if let Some(&id) = live.get(MIC_CAPTURE_NODE_NAME) {
         set_props(id, &mic_params(settings))?;
         true
     } else {
@@ -84,7 +85,7 @@ pub fn apply_live(settings: &AppSettings) -> io::Result<LiveOutcome> {
     // Try the output controls even when the master switch is off. The
     // node may still exist briefly while the service is being stopped,
     // and `output_params` supplies safe bypass values for that transition.
-    let output_pushed = if let Some(id) = find_live_node(OUTPUT_NODE_NAME)? {
+    let output_pushed = if let Some(&id) = live.get(OUTPUT_NODE_NAME) {
         set_props(id, &output_params(settings))?;
         true
     } else {
@@ -98,103 +99,52 @@ pub fn apply_live(settings: &AppSettings) -> io::Result<LiveOutcome> {
     })
 }
 
-/// Resolve a `node.name` to the id of a node that can actually take a
-/// Props update, or `None` when the chain is not there yet.
+/// `node.name` → object id for every node whose filter graph is set up.
 ///
-/// A filter-chain node that never had a consumer sits in `suspended`:
-/// its filter graph is only set up at format negotiation, and until
-/// then PipeWire accepts the `set-param` and drops it — `pw-cli` still
-/// exits 0 and the control keeps its load-time value. Reporting `None`
-/// makes the caller fall back to a loader restart, which re-reads the
-/// args file the reconciler just wrote. Verified on PipeWire 1.6.8:
-/// a `Props` push to a suspended node leaves the value unchanged in
-/// `pw-dump`, while the same push on a running node takes effect.
-fn find_live_node(node_name: &str) -> io::Result<Option<u32>> {
-    let Some(id) = find_node_id(node_name)? else {
-        return Ok(None);
-    };
-    if node_state(id)?.as_deref() == Some("suspended") {
-        debug!("live: node {node_name} ({id}) is suspended, needs a loader restart");
-        return Ok(None);
-    }
-    Ok(Some(id))
-}
-
-/// Read a node's state (`suspended` / `idle` / `running`) from
-/// `pw-cli info <id>`. `None` when the object disappeared between the
-/// lookup and this call, or when the output has no state line.
-fn node_state(node_id: u32) -> io::Result<Option<String>> {
+/// One `pw-dump` for the whole question. Resolving a name and then its state
+/// through `pw-cli` cost four spawns per apply — `ls Node` plus `info <id>`,
+/// once per chain — and `ls Node` renders the entire graph as text anyway,
+/// which the module below warns can exceed 64 KiB on a busy graph.
+///
+/// Nodes still `suspended` are deliberately absent: their filter graph is
+/// only set up at format negotiation, and until then PipeWire accepts the
+/// `set-param` and drops it — `pw-cli` still exits 0 and the control keeps
+/// its load-time value. Leaving them out makes the caller fall back to a
+/// loader restart, which re-reads the args file the reconciler just wrote.
+/// Verified on PipeWire 1.6.8: a `Props` push to a suspended node leaves the
+/// value unchanged in `pw-dump`, while the same push on a running node takes
+/// effect.
+fn live_filter_nodes() -> io::Result<HashMap<String, u32>> {
     let output = BigSubprocessSpec::builder()
-        .program("/usr/bin/pw-cli")
-        .args(["info", &node_id.to_string()])
+        .program("/usr/bin/pw-dump")
         .stderr(BigSubprocessOutputMode::Null)
-        .allow_list(["/usr/bin/pw-cli"])
-        .build()
-        .run()
-        .map_err(io::Error::other)?;
-    if !output.status.success() {
-        return Ok(None);
-    }
-    Ok(parse_node_state(&output.stdout_lossy()))
-}
-
-/// Pull the state out of `pw-cli info` output. The line is rendered as
-/// `*\tstate: "running"`, with the `*` marking a changed field.
-fn parse_node_state(stdout: &str) -> Option<String> {
-    stdout.lines().find_map(|line| {
-        line.trim_start_matches(['*', ' ', '\t'])
-            .strip_prefix("state: ")
-            .map(|state| state.trim().trim_matches('"').to_owned())
-    })
-}
-
-/// Resolve a `node.name` to its current PipeWire object id by parsing
-/// `pw-cli ls Node`. Returns `None` when no matching node exists.
-///
-/// The expected output shape is:
-///
-/// ```text
-///         id 123, type PipeWire:Interface:Node/3
-///   …
-///                 node.name = "mic-biglinux"
-///   …
-/// ```
-///
-/// The parser tracks the most recent id header so we can associate the
-/// `node.name` line that follows it with the right object.
-fn find_node_id(node_name: &str) -> io::Result<Option<u32>> {
-    let output = BigSubprocessSpec::builder()
-        .program("/usr/bin/pw-cli")
-        .args(["ls", "Node"])
-        .stderr(BigSubprocessOutputMode::Null)
-        .allow_list(["/usr/bin/pw-cli"])
+        .allow_list(["/usr/bin/pw-dump"])
         .build()
         .run()
         .map_err(io::Error::other)?;
     if !output.status.success() {
         return Err(io::Error::other(format!(
-            "pw-cli ls Node exited with {:?}",
+            "pw-dump exited with {:?}",
             output.status.code(),
         )));
     }
-    let stdout = output.stdout_lossy();
-    Ok(parse_node_id(&stdout, node_name))
+    let graph: Vec<Value> = serde_json::from_slice(&output.stdout).map_err(io::Error::other)?;
+    let live = parse_live_filter_nodes(&graph);
+    debug!("live: {} node(s) ready for a Props push", live.len());
+    Ok(live)
 }
 
-fn parse_node_id(stdout: &str, node_name: &str) -> Option<u32> {
-    let mut current_id: Option<u32> = None;
-    let needle = format!("node.name = \"{node_name}\"");
-    for line in stdout.lines() {
-        let trimmed = line.trim_start();
-        if let Some(rest) = trimmed.strip_prefix("id ") {
-            // "id 123, type …"
-            let id_token = rest.split(',').next().unwrap_or("").trim();
-            current_id = id_token.parse().ok();
-        } else if trimmed.contains(&needle) {
-            return current_id;
-        }
-    }
-    None
+fn parse_live_filter_nodes(graph: &[Value]) -> HashMap<String, u32> {
+    graph
+        .iter()
+        .filter(|object| object["type"] == "PipeWire:Interface:Node")
+        .filter(|object| object["info"]["state"] != "suspended")
+        .filter_map(|object| {
+            let name = object["info"]["props"]["node.name"].as_str()?;
+            let id = u32::try_from(object["id"].as_u64()?).ok()?;
+            Some((name.to_owned(), id))
+        })
+        .collect()
 }
 
 /// Push a set of control values to a node via `pw-cli s <id> Props`.
@@ -258,9 +208,7 @@ fn format_f64(v: f64) -> String {
 fn mic_params(s: &AppSettings) -> Vec<(String, f64)> {
     let nr = &s.noise_reduction;
     let gate = &s.gate;
-    let gate_derived = GateDerived::from_unit_intensity(
-        f64::from(gate.intensity.min(GATE_INTENSITY_MAX)) / f64::from(GATE_INTENSITY_MAX),
-    );
+    let gate_derived = gate.ladspa_controls();
     let threshold_db = if gate.enabled {
         gate_derived.threshold_db
     } else {
@@ -348,9 +296,7 @@ fn output_params(s: &AppSettings) -> Vec<(String, f64)> {
     let gate_enabled = master && gate.enabled;
     let hpf_enabled = master && of.hpf.enabled;
     let comp_enabled = master && of.compressor.enabled;
-    let gate_derived = GateDerived::from_unit_intensity(
-        f64::from(gate.intensity.min(GATE_INTENSITY_MAX)) / f64::from(GATE_INTENSITY_MAX),
-    );
+    let gate_derived = gate.ladspa_controls();
     let hpf_freq = if hpf_enabled {
         f64::from(of.hpf.frequency)
     } else {
@@ -537,42 +483,34 @@ mod tests {
     }
 
     #[test]
-    fn parse_node_id_extracts_correct_id() {
-        let stdout = "\t\tid 12, type PipeWire:Interface:Node/3\n\
-                      \t\t\tfactory.id = \"9\"\n\
-                      \t\t\tnode.name = \"alsa_input.usb\"\n\
-                      \t\tid 42, type PipeWire:Interface:Node/3\n\
-                      \t\t\tnode.name = \"mic-biglinux\"\n\
-                      \t\t\tmedia.class = \"Audio/Source\"\n";
-        assert_eq!(parse_node_id(stdout, "mic-biglinux"), Some(42));
-        assert_eq!(parse_node_id(stdout, "alsa_input.usb"), Some(12));
-        assert_eq!(parse_node_id(stdout, "does-not-exist"), None);
+    fn parse_live_filter_nodes_indexes_names_and_skips_suspended() {
+        let graph = serde_json::json!([
+            {"id":12,"type":"PipeWire:Interface:Node",
+             "info":{"state":"running","props":{"node.name":"alsa_input.usb"}}},
+            {"id":42,"type":"PipeWire:Interface:Node",
+             "info":{"state":"idle","props":{"node.name":"mic-biglinux-capture"}}},
+            {"id":43,"type":"PipeWire:Interface:Node",
+             "info":{"state":"suspended","props":{"node.name":"output-biglinux"}}},
+            // Not a node, and carries no props: must not land in the map.
+            {"id":31,"type":"PipeWire:Interface:Metadata",
+             "metadata":[{"key":"default.audio.sink"}]}
+        ]);
+        let live = parse_live_filter_nodes(graph.as_array().unwrap());
+
+        assert_eq!(live.get("mic-biglinux-capture"), Some(&42));
+        assert_eq!(live.get("alsa_input.usb"), Some(&12));
+        // `idle` is set up and takes a push; `suspended` silently drops it.
+        assert_eq!(
+            live.get("output-biglinux"),
+            None,
+            "a suspended node must look absent so the caller restarts the loader"
+        );
+        assert_eq!(live.len(), 2);
     }
 
     #[test]
-    fn parse_node_id_handles_empty_output() {
-        assert_eq!(parse_node_id("", "mic-biglinux"), None);
-    }
-
-    #[test]
-    fn parse_node_state_reads_the_starred_state_line() {
-        // `pw-cli info <id>` marks changed fields with a leading `*`
-        // and quotes the state value.
-        let stdout = "\tid: 79\n\
-                      \tpermissions: rwxm-\n\
-                      \ttype: PipeWire:Interface:Node/3\n\
-                      *\tinput ports: 1/129\n\
-                      *\tstate: \"running\"\n";
-        assert_eq!(parse_node_state(stdout), Some("running".to_owned()));
-
-        let suspended = "*\tstate: \"suspended\"\n";
-        assert_eq!(parse_node_state(suspended), Some("suspended".to_owned()));
-    }
-
-    #[test]
-    fn parse_node_state_handles_output_without_a_state_line() {
-        assert_eq!(parse_node_state(""), None);
-        assert_eq!(parse_node_state("\tid: 79\n\tpermissions: rwxm-\n"), None);
+    fn parse_live_filter_nodes_handles_an_empty_graph() {
+        assert!(parse_live_filter_nodes(&[]).is_empty());
     }
 
     #[test]

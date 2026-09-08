@@ -39,11 +39,9 @@
 
 use std::fmt::Write as _;
 
-use crate::config::dynamics::GateDerived;
-
 use crate::config::{
-    AppSettings, EQ_BAND_COUNT, EQ_BANDS_HZ, GATE_INTENSITY_MAX, deepfilter_attenuation_db,
-    eq_preset_bands, gtcrn_speech_strength,
+    AppSettings, EQ_BAND_COUNT, EQ_BANDS_HZ, deepfilter_attenuation_db, eq_preset_bands,
+    gtcrn_speech_strength,
 };
 
 use super::graph::{Graph, Link};
@@ -158,9 +156,7 @@ fn output_nodes(settings: &AppSettings) -> Vec<Node> {
         ])
     };
 
-    let gate_d = GateDerived::from_unit_intensity(
-        f64::from(of.gate.intensity.min(GATE_INTENSITY_MAX)) / f64::from(GATE_INTENSITY_MAX),
-    );
+    let gate_d = of.gate.ladspa_controls();
     let gate_threshold = if gate_enabled {
         gate_d.threshold_db
     } else {

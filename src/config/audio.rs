@@ -4,6 +4,7 @@
 //! `#[serde(default)]` so missing keys fall back to the constants below,
 //! letting new fields ship without breaking existing files.
 
+use crate::config::dynamics::GateDerived;
 pub use crate::config::noise_model::{NoiseModel, deepfilter_attenuation_db};
 use serde::{Deserialize, Serialize};
 
@@ -91,6 +92,22 @@ pub struct GateConfig {
     /// Intensity scale 0..=50. Mapped to LADSPA parameters
     /// (threshold / range / hold / release) by `big-audio-effects`.
     pub intensity: u8,
+}
+
+impl GateConfig {
+    /// Resolve the slider position into the plugin's threshold, range and
+    /// timing values.
+    ///
+    /// The 0..=`GATE_INTENSITY_MAX` scale is normalised here and nowhere else:
+    /// both filter-chain generators and the live control pusher have to agree
+    /// on the number, or the same slider produces one gate while the graph is
+    /// running and a different one after a reload.
+    #[must_use]
+    pub fn ladspa_controls(&self) -> GateDerived {
+        GateDerived::from_unit_intensity(
+            f64::from(self.intensity.min(GATE_INTENSITY_MAX)) / f64::from(GATE_INTENSITY_MAX),
+        )
+    }
 }
 
 impl Default for GateConfig {

@@ -8,13 +8,11 @@ pub mod user_tweaks;
 
 use std::io;
 
-use big_os_kit::subprocess::{BigSubprocessOutputMode, BigSubprocessSpec};
-
 pub use live::{LiveOutcome, apply_live};
 pub use module::{
-    restart_aec_service, restart_mic_service, restart_output_service, start_aec_service,
-    start_mic_service, start_output_service, stop_aec_service, stop_mic_service,
-    stop_output_service,
+    AEC_UNIT, MIC_UNIT, OUTPUT_UNIT, restart_aec_service, restart_mic_service,
+    restart_output_service, start_aec_service, start_mic_service, start_output_service,
+    stop_aec_service, stop_mic_service, stop_output_service,
 };
 pub use sources::{
     Source, preview_quantum, set_default_source, set_source_volume, snapshot as snapshot_sources,
@@ -27,21 +25,15 @@ pub use types::{AppStream, StreamDirection};
 /// — it only emits an [`AppStream`] for entries that expose both a
 /// `media.class` we can route and a numeric id header.
 pub fn current_streams() -> io::Result<Vec<AppStream>> {
-    let output = BigSubprocessSpec::builder()
-        .program("/usr/bin/pw-cli")
-        .args(["ls", "Node"])
-        .stderr(BigSubprocessOutputMode::Null)
-        .allow_list(["/usr/bin/pw-cli"])
-        .build()
-        .run()
-        .map_err(io::Error::other)?;
-    if !output.status.success() {
-        return Err(io::Error::other(format!(
-            "pw-cli ls Node exited with {:?}",
-            output.status.code(),
-        )));
-    }
-    Ok(parse_pw_cli_nodes(&output.stdout_lossy()))
+    Ok(parse_pw_cli_nodes(&sources::pw_cli_ls_node()?))
+}
+
+/// The raw `pw-cli ls Node` text, or an empty string when the daemon does not
+/// answer. For `diagnostics`, which greps it for node names and treats an
+/// unreachable daemon as "the node is not there".
+#[must_use]
+pub fn graph_nodes_dump() -> String {
+    sources::pw_cli_ls_node().unwrap_or_default()
 }
 
 fn parse_pw_cli_nodes(stdout: &str) -> Vec<AppStream> {

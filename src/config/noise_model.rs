@@ -3,11 +3,10 @@
 //! Persisted denoiser identities and the installed LADSPA runtime contract.
 
 use std::path::Path;
+use std::sync::OnceLock;
 
 use serde::{Deserialize, Serialize};
 
-/// Filesystem directory that hosts BigLinux LADSPA plugins.
-pub const LADSPA_DIR_PATH: &str = "/usr/lib/ladspa";
 /// Absolute path of the GTCRN LADSPA plugin shared object.
 pub const GTCRN_LADSPA_PATH: &str = "/usr/lib/ladspa/libgtcrn_ladspa.so";
 /// Absolute path of the DeepFilterNet LADSPA plugin shared object.
@@ -53,15 +52,6 @@ pub const REALTIME_LAVFI_MODELS: [NoiseModel; 5] = [
     NoiseModel::DeepFilterNet3,
     NoiseModel::DpdfnetV2Hr,
     NoiseModel::DpdfnetV8Hr,
-];
-
-/// Human-readable labels matching [`REALTIME_LAVFI_MODELS`].
-pub const REALTIME_LAVFI_MODEL_LABELS: [&str; 5] = [
-    "GTCRN - DNS3",
-    "GTCRN - VCTK",
-    "DeepFilterNet3",
-    "DPDFNet-2 HR",
-    "DPDFNet-8 HR",
 ];
 
 /// Stable identifier of a noise-reduction model.
@@ -128,25 +118,24 @@ impl From<NoiseModel> for u8 {
 }
 
 impl NoiseModel {
-    /// Resolve an arbitrary `i32` (e.g. from a settings file) to a model.
-    ///
-    /// Values that do not match any variant fall back to
-    /// [`NoiseModel::default`] so corrupt or out-of-range settings never
-    /// crash the UI.
-    #[must_use]
-    pub fn from_i32_or_default(value: i32) -> Self {
-        u8::try_from(value)
-            .ok()
-            .and_then(|v| Self::try_from(v).ok())
-            .unwrap_or_default()
-    }
-
     /// Indicates the model can be driven from the realtime LAVFI
     /// playback graph (vs offline-only ffmpeg pipelines); the UI uses
     /// this to filter the dropdown shown in the live denoise panel.
+    ///
+    /// Spelled out rather than derived from [`REALTIME_LAVFI_MODELS`] so a
+    /// new variant fails the build here, next to the other exhaustive
+    /// matches in this `impl`. Asking the list instead compiled clean and
+    /// left the model offline-only and invisible in the picker.
     #[must_use]
     pub fn is_realtime_lavfi_supported(self) -> bool {
-        REALTIME_LAVFI_MODELS.contains(&self)
+        match self {
+            Self::GtcrnDns3
+            | Self::GtcrnVctk
+            | Self::DeepFilterNet3
+            | Self::DpdfnetV2Hr
+            | Self::DpdfnetV8Hr => true,
+            Self::DpdfnetBaseline | Self::DpdfnetV2 | Self::DpdfnetV4 | Self::DpdfnetV8 => false,
+        }
     }
 
     /// LADSPA `model` control-port value to select this variant.
@@ -204,14 +193,14 @@ impl NoiseModel {
     #[must_use]
     pub fn runtime_library(self) -> Option<&'static str> {
         match self {
-            Self::GtcrnDns3 | Self::GtcrnVctk => Some("libonnxruntime.so"),
+            Self::GtcrnDns3 | Self::GtcrnVctk => Some(ONNX_RUNTIME_LIBRARY),
             Self::DeepFilterNet3 => None,
             Self::DpdfnetV2Hr
             | Self::DpdfnetV8Hr
             | Self::DpdfnetBaseline
             | Self::DpdfnetV2
             | Self::DpdfnetV4
-            | Self::DpdfnetV8 => Some("libopenvino_c.so"),
+            | Self::DpdfnetV8 => Some(OPENVINO_RUNTIME_LIBRARY),
         }
     }
 
@@ -229,10 +218,30 @@ impl NoiseModel {
     /// instead of aborting — so this predicate exists to stop us *offering* a
     /// model that would silently do nothing.
     ///
-    /// Runs a `dlopen`; callers on a hot path must cache the result.
+    /// Runs a `dlopen`. Use [`NoiseModel::plugin_loadable_cached`] anywhere
+    /// the answer is asked for repeatedly; this uncached form is for
+    /// `doctor`, which a user runs *after* installing the missing runtime.
     #[must_use]
     pub fn plugin_loadable(self) -> bool {
         self.plugin_available() && self.runtime_library().is_none_or(runtime_loadable)
+    }
+
+    /// [`NoiseModel::plugin_loadable`] resolved once per runtime library, for
+    /// the whole process.
+    ///
+    /// The `dlopen`/`dlclose` pair fully maps, relocates and runs the static
+    /// initialisers of ONNX Runtime or OpenVINO and then unmaps all of it,
+    /// because the close drops the refcount to zero every time. Five
+    /// realtime models share two runtimes, so building the model picker used
+    /// to pay four of those cycles on the GTK main loop — and the body is
+    /// rebuilt on the Advanced toggle, on every external settings change and
+    /// on Restore defaults. `AppSettings::load` paid two more per call.
+    ///
+    /// Only the library lookup is memoised: `plugin_available` is a `stat`,
+    /// so a plugin installed mid-session is still noticed.
+    #[must_use]
+    pub fn plugin_loadable_cached(self) -> bool {
+        self.plugin_available() && self.runtime_library().is_none_or(runtime_loadable_cached)
     }
 
     /// Whether the plugin uses a single attenuation control port.
@@ -278,6 +287,26 @@ pub fn deepfilter_attenuation_db(strength: f32) -> f64 {
         strength.clamp(0.0, 1.0)
     };
     f64::from(strength * strength) * 100.0
+}
+
+/// Inference runtime the GTCRN plugins load at first use.
+const ONNX_RUNTIME_LIBRARY: &str = "libonnxruntime.so";
+/// Inference runtime the DPDFNet plugins load at first use.
+const OPENVINO_RUNTIME_LIBRARY: &str = "libopenvino_c.so";
+
+/// [`runtime_loadable`] resolved once per library, for the whole process.
+///
+/// Two libraries cover every model, so two slots are the whole cache. An
+/// unrecognised name is asked directly — there is nothing to amortise.
+fn runtime_loadable_cached(name: &'static str) -> bool {
+    static ONNX: OnceLock<bool> = OnceLock::new();
+    static OPENVINO: OnceLock<bool> = OnceLock::new();
+    let slot = match name {
+        ONNX_RUNTIME_LIBRARY => &ONNX,
+        OPENVINO_RUNTIME_LIBRARY => &OPENVINO,
+        _ => return runtime_loadable(name),
+    };
+    *slot.get_or_init(|| runtime_loadable(name))
 }
 
 fn runtime_loadable(name: &str) -> bool {

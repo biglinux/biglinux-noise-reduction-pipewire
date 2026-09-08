@@ -43,8 +43,7 @@ pub use equalizer::{
 pub use output_filter::OutputFilterSettings;
 pub use paths::{
     APP_DATA_DIR, APP_ID, EQ_BANDS_HZ, GETTEXT_PACKAGE, app_id, app_version, config_dir,
-    deepfilter_available, deepfilter_plugin, gettext_package, gtcrn_plugin, illustrations_dir,
-    ladspa_dir, settings_file,
+    gettext_package, gtcrn_plugin, illustrations_dir, settings_file,
 };
 pub use processing::CompressorConfig;
 pub use quality::{Machine, Quality};
@@ -146,7 +145,7 @@ impl AppSettings {
 
     /// Settings may persist an optional model from a previous run while
     /// its LADSPA package has since been uninstalled — or left present
-    /// but unloadable (see [`noise_model_loadable`]). Demote silently
+    /// but unloadable (see [`NoiseModel::plugin_loadable_cached`]). Demote silently
     /// to the default GTCRN variant so the rendered filter-chain
     /// doesn't reference a broken .so.
     fn demote_unavailable_models(&mut self) {
@@ -160,13 +159,20 @@ impl AppSettings {
     /// Called where the graph is about to be built, never on load — a policy that ran on
     /// every read would move the model while somebody was looking at the list of them.
     /// Leaves a hand-picked model alone, which is what `Quality::Manual` means.
-    pub fn settle_quality(&mut self, machine: &Machine) {
+    ///
+    /// The machine is read here rather than by the caller, and only past the
+    /// guard: `Machine::read` walks `/sys/class/power_supply` and, the first
+    /// time it sees a plugin, forks `measure-model` and blocks for seconds.
+    /// A `Manual` install chose its model by hand and must pay none of that,
+    /// yet all three callers used to read it before asking.
+    pub fn settle_quality(&mut self) {
         if !self.quality.decides_the_model() {
             return;
         }
+        let machine = Machine::read(self.filters_running());
         let wanted = quality::loadable(quality::choose(
             self.quality,
-            machine,
+            &machine,
             Some(self.noise_reduction.model),
         ));
         self.noise_reduction.model = wanted;
@@ -209,7 +215,7 @@ impl AppSettings {
 }
 
 fn available_or_default(model: NoiseModel) -> NoiseModel {
-    if model == NoiseModel::default() || noise_model_loadable(model) {
+    if model == NoiseModel::default() || model.plugin_loadable_cached() {
         model
     } else {
         NoiseModel::default()
@@ -233,18 +239,6 @@ pub(crate) fn atomic_write_private(path: &Path, bytes: &[u8]) -> io::Result<()> 
         )
         .map_err(io::Error::other)?;
     std::fs::File::open(parent)?.sync_all()
-}
-
-/// Whether a model's LADSPA plugin is present **and** actually
-/// loadable. `NoiseModel::plugin_available` only stats the .so; the
-/// DPDFNet plugins link OpenVINO, and a distro soname bump leaves the
-/// file present but dlopen-dead — the filter-chain module then fails
-/// and the mic unit crash-loops (observed with `libopenvino_c.so.2610`
-/// after the 2026.2 update shipped `.so.2620`). `ldd` resolves the
-/// dynamic section without executing plugin code, so a missing
-/// dependency is caught before the model is offered or rendered.
-pub fn noise_model_loadable(model: NoiseModel) -> bool {
-    model.plugin_loadable()
 }
 
 #[cfg(test)]

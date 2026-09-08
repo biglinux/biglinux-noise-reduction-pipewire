@@ -56,16 +56,6 @@ impl EchoMode {
             _ => return None,
         })
     }
-
-    /// The word this writes back, which is the one `parse` prefers.
-    #[must_use]
-    pub const fn word(self) -> &'static str {
-        match self {
-            Self::Automatic => "auto",
-            Self::Always => "on",
-            Self::Never => "off",
-        }
-    }
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]

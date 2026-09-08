@@ -181,19 +181,6 @@ fn actual_window_dimension_wins_and_invalid_values_use_persisted_size() {
 }
 
 #[test]
-fn monitor_shutdown_requires_the_root_to_own_the_only_strong_handle() {
-    let (monitor, _events) = AudioMonitor::contract_handle();
-    let monitor = Rc::new(monitor);
-    let unexpected_owner = Rc::clone(&monitor);
-
-    assert!(take_unique_monitor(monitor).is_err());
-    drop(unexpected_owner);
-
-    let (monitor, _events) = AudioMonitor::contract_handle();
-    assert!(take_unique_monitor(Rc::new(monitor)).is_ok());
-}
-
-#[test]
 fn advanced_toggle_persists_into_settings() {
     let state = AppState::new(AppSettings::default());
     state.mutate(|s| s.ui.show_advanced = true);
