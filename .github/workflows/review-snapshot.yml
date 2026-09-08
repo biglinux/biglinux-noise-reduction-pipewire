@@ -13,17 +13,17 @@ jobs:
     steps:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
         with:
-          ref: bf6cfca75bb43d94766d2925624067ae0673a4e2
+          ref: dcd1da89e2b5e725a8e0f74fbfc46b89c42791aa
           persist-credentials: false
-      - name: Export tracked source only, never credentials or the Git directory
+      - name: Export tracked source only
         run: |
           set -euo pipefail
-          test "$(git rev-parse HEAD)" = bf6cfca75bb43d94766d2925624067ae0673a4e2
+          test "$(git rev-parse HEAD)" = dcd1da89e2b5e725a8e0f74fbfc46b89c42791aa
           git archive --format=tar.gz --output="$RUNNER_TEMP/pr30-source.tar.gz" HEAD
           sha256sum "$RUNNER_TEMP/pr30-source.tar.gz"
       - uses: actions/upload-artifact@v4
         with:
-          name: pr30-source-bf6cfca
+          name: pr30-source-dcd1da8
           path: ${{ runner.temp }}/pr30-source.tar.gz
           retention-days: 1
           if-no-files-found: error
