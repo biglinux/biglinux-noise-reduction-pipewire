@@ -341,7 +341,7 @@ mod tests {
         );
         assert_eq!(
             banner.title().as_str(),
-            "Custom settings active. Click Apply to enable them."
+            "Your audio settings are active."
         );
         assert!(banner.is_revealed());
     }

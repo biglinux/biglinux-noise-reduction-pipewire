@@ -1,4 +1,3 @@
-use std::cell::RefCell;
 use std::rc::Rc;
 
 use adw::prelude::*;
@@ -8,7 +7,7 @@ use crate::services::system_audio::restart_pipewire_user_stack;
 
 use super::super::super::app_kit_edges::dialogs;
 use super::super::super::i18n::i18n;
-use super::{UserTweaks, refresh_banner};
+use super::{TuningSelection, UserTweaks, refresh_banner};
 
 // ── Apply / Reset ────────────────────────────────────────────────────
 
@@ -22,10 +21,16 @@ enum ApplyOutcome {
 
 pub(super) fn apply_clicked(
     button: &gtk::Button,
-    selection: &Rc<RefCell<UserTweaks>>,
+    selection: &Rc<TuningSelection>,
     banner: &adw::Banner,
 ) {
+    if selection.busy.replace(true) { return; }
+    let expected = selection.applied.borrow().clone();
     let tweaks = selection.borrow().clone();
+    let applied = tweaks.clone();
+    let preview = selection.preview.borrow_mut().take();
+    let old_label = button.label();
+    if let Some(content) = selection.content.upgrade() { content.set_sensitive(false); }
 
     button.set_sensitive(false);
     button.set_label(&i18n("Restarting audio…"));
@@ -39,6 +44,17 @@ pub(super) fn apply_clicked(
         // daemons that re-read it) is preserved off the main loop —
         // offloading the write separately could race it past the restart.
         let outcome = gio::spawn_blocking(move || {
+            if let Some(mut preview) = preview && let Err(error) = preview.stop() {
+                return ApplyOutcome::RestartFailed(error.to_string());
+            }
+            let guard = crate::config::storage::SettingsLock::acquire();
+            let _guard = match guard {
+                Ok(guard) => guard,
+                Err(error) => return ApplyOutcome::WriteFailed(error.to_string()),
+            };
+            if UserTweaks::load_from_disk() != expected {
+                return ApplyOutcome::WriteFailed("Audio settings changed in another application. Reopen the tuning page before applying.".to_owned());
+            }
             if let Err(e) = tweaks.apply() {
                 return ApplyOutcome::WriteFailed(e.to_string());
             }
@@ -50,11 +66,14 @@ pub(super) fn apply_clicked(
         .await
         .unwrap_or_else(|_| ApplyOutcome::RestartFailed("worker thread panicked".to_owned()));
 
+        selection.busy.set(false);
+        if matches!(outcome, ApplyOutcome::Ok) { *selection.applied.borrow_mut() = applied; }
+        if let Some(content) = selection.content.upgrade() { content.set_sensitive(true); }
         let Some(button) = button_weak.upgrade() else {
             return;
         };
         button.set_sensitive(true);
-        button.set_label(&i18n("Apply and restart audio"));
+        button.set_label(old_label.as_deref().unwrap_or(""));
 
         if let Some(banner) = banner_weak.upgrade() {
             refresh_banner(&banner, &selection);
@@ -80,7 +99,7 @@ pub(super) fn apply_clicked(
 
 #[cfg(test)]
 pub(in crate::ui) fn trigger_apply_button_contract(button: &gtk::Button, banner: &adw::Banner) {
-    let selection = Rc::new(RefCell::new(UserTweaks::default()));
+    let selection = Rc::new(TuningSelection::new(UserTweaks::default()));
     apply_clicked(button, &selection, banner);
 }
 
