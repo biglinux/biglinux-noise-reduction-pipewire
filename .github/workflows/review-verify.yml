@@ -1,0 +1,85 @@
+name: PR30 read-only verification
+on:
+  push:
+    branches: [fix/review-audio-reliability-20260908]
+    paths: [.github/workflows/review-verify.yml]
+permissions:
+  contents: read
+jobs:
+  native:
+    if: github.repository == 'biglinux/biglinux-noise-reduction-pipewire'
+    runs-on: ubuntu-latest
+    container: archlinux:latest
+    timeout-minutes: 25
+    env:
+      RUSTUP_TOOLCHAIN: 1.98.1
+      CARGO_TERM_COLOR: never
+    steps:
+      - run: pacman -Syu --noconfirm --needed git gdb xorg-server-xvfb xorg-xauth dbus ttf-dejavu python shellcheck
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          ref: 0e129fc0d5e71b524e3e896c47a00e9fb461871b
+          persist-credentials: false
+      - uses: ./.github/actions/install-system-deps
+      - uses: dtolnay/rust-toolchain@6bed0761d98439e5a578e2877258200ad565ba87
+        with:
+          toolchain: 1.98.1
+          components: clippy,rustfmt
+      - uses: Swatinem/rust-cache@6323deb102c322ba6fcbdcafc7e3dddab59af2b6
+        with:
+          shared-key: review-workbench
+          cache-on-failure: true
+      - name: Source identity and formatting
+        shell: bash
+        run: |
+          set -euo pipefail
+          git -c safe.directory="$GITHUB_WORKSPACE" rev-parse HEAD
+          cargo fmt --all --check
+          shellcheck scripts/test-ui.sh
+      - name: Strict Clippy
+        if: '!cancelled()'
+        shell: bash
+        run: |
+          set -o pipefail
+          cargo clippy --all-targets --all-features --locked -- -D warnings > /tmp/clippy.log 2>&1
+      - name: All default-feature regressions
+        if: '!cancelled()'
+        shell: bash
+        run: |
+          set -o pipefail
+          cargo test --all-features --locked -- --test-threads=1 > /tmp/regressions.log 2>&1
+      - name: GTK contracts with jemalloc
+        if: '!cancelled()'
+        shell: bash
+        run: timeout --kill-after=10s 600s bash scripts/test-ui.sh > /tmp/gtk-jemalloc.log 2>&1
+      - name: GTK contracts with the system allocator
+        if: '!cancelled()'
+        shell: bash
+        run: timeout --kill-after=10s 600s bash scripts/test-ui.sh --no-default-features > /tmp/gtk-system.log 2>&1
+      - name: System allocator regressions
+        if: '!cancelled()'
+        shell: bash
+        run: cargo test --no-default-features --locked -- --test-threads=1 > /tmp/system-regressions.log 2>&1
+      - name: Summarize exact diagnostics
+        if: always()
+        shell: bash
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          for name in ('clippy', 'regressions', 'gtk-jemalloc', 'gtk-system', 'system-regressions'):
+              path = Path('/tmp/' + name + '.log')
+              print('\n=== ' + name + ' ===')
+              if not path.exists():
+                  print('NOT EXECUTED')
+                  continue
+              lines = path.read_text(errors='replace').splitlines()
+              for i, line in enumerate(lines):
+                  if any(word in line for word in ('error', 'FAILED', 'FAIL:', 'PASS:', 'panicked', 'SIGSEGV', 'Gtk-', 'Adwaita-', 'test result:', 'GTK contracts:')):
+                      print('\n'.join(lines[max(0, i-1):min(len(lines), i+5)]))
+          PY
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        if: always()
+        with:
+          name: verification-0e129fc
+          path: /tmp/*.log
+          retention-days: 3
