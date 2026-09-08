@@ -7,7 +7,7 @@
 
 use std::rc::Rc;
 
-use gtk::prelude::*;
+use adw::prelude::*;
 use gtk::{Align, Box as GtkBox, Label, Orientation, ScrolledWindow};
 
 use crate::config::{GATE_INTENSITY_MAX, StereoMode};
