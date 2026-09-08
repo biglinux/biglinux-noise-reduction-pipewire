@@ -83,7 +83,14 @@ fn fixture_process(directory: &Path, mode: &str) -> ! {
     }
     let mut descendant = Command::new(std::env::current_exe().unwrap())
         .args(["--exact", ENTRY, "--nocapture"])
-        .env(ROLE, if mode == "timeout" { "holder" } else { "writer" })
+        .env(
+            ROLE,
+            if mode == "timeout" {
+                "holder"
+            } else {
+                "writer"
+            },
+        )
         .stdin(Stdio::null())
         .stdout(Stdio::inherit())
         .stderr(Stdio::inherit())

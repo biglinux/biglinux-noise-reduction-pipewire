@@ -92,7 +92,12 @@ jobs:
           toolchain: "1.98.1"
           components: clippy
       - uses: Swatinem/rust-cache@6323deb102c322ba6fcbdcafc7e3dddab59af2b6
-      - name: Record the exact tested source and native versions
+        with:
+          # New cache generation after inconsistent compiled/source diagnostics.
+          # Keep this constant; do not invalidate all dependencies on every push.
+          prefix-key: native-source-identity-v1
+      - name: Record and verify the exact build inputs
+        id: identity
         env:
           PR_HEAD: ${{ github.event.pull_request.head.sha || github.sha }}
         run: |
@@ -102,25 +107,24 @@ jobs:
             rustc --version
             pkg-config --modversion gtk4 libadwaita-1 libpipewire-0.3
           } > .ci-results/native/environment.txt
+          python3 .github/ci/build_identity.py
       - name: Strict Clippy, all targets and features
         run: cargo clippy --all-targets --all-features --locked -- -D warnings 2>&1 | tee .ci-results/native/clippy.log
       # Keep the distribution's allocator fork and production feature set.
       # Application tests run once using the runner's system allocator.
       - name: Unit, integration and documentation tests
-        if: '!cancelled() && steps.rust.outcome == ''success'''
+        if: '!cancelled() && steps.identity.outcome == ''success'''
         run: cargo test --no-default-features --locked -- --test-threads=1 2>&1 | tee .ci-results/native/tests.log
       - name: Independent GTK application contracts
-        if: '!cancelled() && steps.rust.outcome == ''success'''
+        if: '!cancelled() && steps.identity.outcome == ''success'''
         run: bash scripts/test-ui.sh --no-default-features 2>&1 | tee .ci-results/native/gtk.log
       - name: Real graph loading and recovery on a private PipeWire daemon
-        if: '!cancelled() && steps.rust.outcome == ''success'''
+        if: '!cancelled() && steps.identity.outcome == ''success'''
         run: bash scripts/test-pipewire.sh --no-default-features 2>&1 | tee .ci-results/native/pipewire-runtime.log
       - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
         if: always()
         with:
           name: native-contract-logs-${{ github.sha }}
-          # Workspace-relative paths work both in the container and in the
-          # action host. Do not mix RUNNER_TEMP with a host runner.temp path.
           path: .ci-results/native/
           include-hidden-files: true
           retention-days: 7
@@ -129,8 +133,7 @@ jobs:
   msrv:
     name: MSRV 1.97.1
     needs: plan
-    # An explicit release-candidate label includes full builds even in a
-    # draft. Adding it does not start a second run; the next push owns CI.
+    # Adding the candidate label does not create a second workflow run.
     if: needs.plan.outputs.rust == 'true' && (github.event_name != 'pull_request' || github.event.pull_request.draft == false || contains(github.event.pull_request.labels.*.name, 'release-candidate'))
     runs-on: ubuntu-latest
     container: archlinux:latest
@@ -171,8 +174,7 @@ jobs:
         with:
           toolchain: "1.98.1"
       - uses: Swatinem/rust-cache@6323deb102c322ba6fcbdcafc7e3dddab59af2b6
-      # Calls the real PKGBUILD build()/package() once, not cargo test or
-      # makepkg check(). The native job is the sole owner of application tests.
+      # Calls the real recipe once; no second execution of application tests.
       - name: Build, stage and validate the package payload
         run: bash scripts/test-package.sh .ci-results/release 2>&1 | tee .ci-results/release/build.log
       - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
