@@ -39,7 +39,10 @@ pub fn run() -> glib::ExitCode {
     if let Some(result) = early_cli(&std::env::args_os().collect::<Vec<_>>()) {
         return result;
     }
-    init_gettext();
+    if let Err(error) = init_gettext() {
+        eprintln!("Could not initialize translations safely: {error}");
+        return glib::ExitCode::FAILURE;
+    }
     let app = adw::Application::builder().application_id(app_id()).build();
     let state = AppState::new(AppSettings::load());
     let monitor = Rc::new(AudioMonitor::start(MonitorConfig::default()));

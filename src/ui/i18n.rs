@@ -27,21 +27,37 @@ pub fn i18n(s: &str) -> String {
 ///
 /// Must be called from `main`'s thread before any other thread starts —
 /// see the `setlocale` call below.
-pub fn init_gettext() {
-    // SAFETY: `setlocale` mutates process-global locale state that C
-    // library calls read without synchronisation, so it is sound only
-    // while this process is single-threaded (RUSTSEC-2026-0244).
-    //
-    // `ui::run` calls this before `AudioMonitor::start` spawns the
-    // capture thread and before `RelmApp::run` enters GTK, and the only
-    // code ahead of it is argument inspection. This is also the sole
-    // `setlocale` call in the crate and in the vendored components, so
-    // nothing else can be racing it.
+pub fn init_gettext() -> Result<(), String> {
+    #[cfg(feature = "gtk-jemalloc")]
+    big_jemalloc::set_background_threads(false).map_err(|code| {
+        format!("could not stop allocator workers before locale initialization: {code}")
+    })?;
+
+    // This standalone entry point must execute before any application worker.
+    // Refuse a known multi-threaded startup rather than calling unsafe FFI on it.
+    let threads = std::fs::read_dir("/proc/self/task")
+        .map_err(|error| format!("could not verify locale startup: {error}"))?
+        .collect::<Result<Vec<_>, _>>()
+        .map_err(|error| error.to_string())?;
+    if threads.len() != 1 {
+        return Err("Locale must be initialized before starting application threads".into());
+    }
+    // SAFETY: standalone startup, application workers have not started and
+    // jemalloc background workers were synchronously terminated above. GTK is
+    // instructed not to repeat setlocale after those workers are restarted.
     unsafe {
         setlocale(LocaleCategory::LcAll, "");
     }
+    gtk::disable_setlocale();
     bind_domain();
-    gettextrs::textdomain(GETTEXT_PACKAGE).expect("textdomain");
+    gettextrs::textdomain(GETTEXT_PACKAGE).map_err(|error| error.to_string())?;
+    #[cfg(feature = "gtk-jemalloc")]
+    if big_jemalloc::background_threads_requested()
+        && let Err(code) = big_jemalloc::set_background_threads(true)
+    {
+        log::warn!("background memory purging unavailable: {code}");
+    }
+    Ok(())
 }
 
 fn bind_domain() {
