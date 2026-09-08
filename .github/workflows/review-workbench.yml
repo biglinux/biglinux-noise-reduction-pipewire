@@ -1,0 +1,50 @@
+name: Review workbench
+
+# Temporary development helper. It can write only to the review branch and
+# never runs on pull_request, fork, issue, or user-supplied command input.
+on:
+  push:
+    branches: [fix/review-audio-reliability-20260908]
+    paths: [.github/review/**, .github/workflows/review-workbench.yml]
+permissions:
+  contents: read
+concurrency:
+  group: review-workbench-20260908
+  cancel-in-progress: false
+jobs:
+  apply:
+    if: github.repository == 'biglinux/biglinux-noise-reduction-pipewire'
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          path: workbench
+          persist-credentials: false
+      - uses: actions/checkout@v4
+        with:
+          ref: fix/review-reliability-accessibility-20260908
+          path: project
+          fetch-depth: 0
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          components: rustfmt
+      - name: Apply reviewed patches and publish topic commits
+        working-directory: project
+        run: |
+          set -euo pipefail
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          for patch in ../workbench/.github/review/apply_*.py; do
+            python3 "$patch"
+          done
+          cargo +stable fmt --all
+          git diff --check
+          if ! git diff --quiet; then
+            git add -- '*.rs'
+            git commit -m 'style: format review fixes with rustfmt'
+          fi
+          git push origin HEAD:refs/heads/fix/review-reliability-accessibility-20260908
+          git log -12 --oneline
