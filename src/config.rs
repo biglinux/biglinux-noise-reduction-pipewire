@@ -233,13 +233,23 @@ impl AppSettings {
     }
 
     pub fn save_to(&self, path: &Path) -> io::Result<()> {
+        self.save_to_revision(path).map(|_| ())
+    }
+
+    /// Return exactly the bytes this operation persisted, not a later read
+    /// that could acknowledge a concurrent writer's still-unapplied revision.
+    pub(crate) fn save_with_revision(&self) -> io::Result<Vec<u8>> {
+        self.save_to_revision(&settings_file())
+    }
+
+    fn save_to_revision(&self, path: &Path) -> io::Result<Vec<u8>> {
         let json = storage::serialized_preserving_unknown(self, path)?;
         if !path.is_symlink() && std::fs::read(path).is_ok_and(|existing| existing == json) {
-            return Ok(());
+            return Ok(json);
         }
         atomic_write_private(path, &json)?;
         debug!("settings: saved to {}", path.display());
-        Ok(())
+        Ok(json)
     }
 }
 
