@@ -45,10 +45,14 @@ for signature in (
 path.write_text(text, encoding="utf-8")
 PY
 git -C "$source_dir" diff --check
-git -C "$source_dir" diff --stat
+git -C "$source_dir" diff -- src/jemalloc.c
 (
     cd "$source_dir"
-    ./autogen.sh --prefix="$prefix" --with-version="5.3.1-0-g$revision" > configure-ci.log 2>&1 || {
+    # Only the C allocation ABI is required here. Omit C++ new/delete
+    # overrides, whose upstream 5.3.1 implementation uses a private helper
+    # removed from newer libstdc++ headers. Do not patch C++ library internals.
+    ./autogen.sh --disable-cxx --prefix="$prefix" \
+        --with-version="5.3.1-0-g$revision" > configure-ci.log 2>&1 || {
         cat configure-ci.log >&2; exit 1;
     }
     make -j2 > build-ci.log 2>&1 || { tail -100 build-ci.log >&2; exit 1; }
