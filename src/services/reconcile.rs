@@ -13,9 +13,9 @@ use std::time::{Duration, Instant};
 use big_os_kit::subprocess::{BigSubprocessOutputMode, BigSubprocessSpec};
 use serde_json::Value;
 
+use super::pipewire::{self, LiveOutcome};
 use crate::config::AppSettings;
 use crate::pipeline;
-use super::pipewire::{self, LiveOutcome};
 
 #[derive(Debug, Default, Clone, Copy, PartialEq, Eq, serde::Serialize)]
 pub struct Observed {
@@ -30,7 +30,9 @@ pub fn observe() -> io::Result<Observed> {
         .allow_list(["/usr/bin/pw-dump"])
         .stderr(BigSubprocessOutputMode::Null)
         .timeout(Duration::from_secs(2))
-        .build().run().map_err(io::Error::other)?;
+        .build()
+        .run()
+        .map_err(io::Error::other)?;
     if !output.status.success() {
         return Err(io::Error::other("PipeWire is not responding"));
     }
@@ -39,24 +41,41 @@ pub fn observe() -> io::Result<Observed> {
 }
 
 fn from_graph(graph: &[Value]) -> Observed {
-    let nodes: HashSet<&str> = graph.iter()
+    let nodes: HashSet<&str> = graph
+        .iter()
         .filter(|object| object["type"] == "PipeWire:Interface:Node")
         .filter(|object| object["info"]["state"] != "error")
         .filter_map(|object| object["info"]["props"]["node.name"].as_str())
         .collect();
     Observed {
-        mic_present: nodes.contains(pipeline::MIC_NODE_NAME) && nodes.contains(pipeline::MIC_CAPTURE_NODE_NAME),
+        mic_present: nodes.contains(pipeline::MIC_NODE_NAME)
+            && nodes.contains(pipeline::MIC_CAPTURE_NODE_NAME),
         output_present: nodes.contains(pipeline::OUTPUT_NODE_NAME),
         aec_present: nodes.contains(pipeline::EC_SOURCE_NAME),
     }
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
-enum Action { Keep, Restart, Stop }
+enum Action {
+    Keep,
+    Restart,
+    Stop,
+}
 
-fn action(wanted: bool, present: bool, was_wanted: bool, changed: bool, force: bool, pushed: bool) -> Action {
+fn action(
+    wanted: bool,
+    present: bool,
+    was_wanted: bool,
+    changed: bool,
+    force: bool,
+    pushed: bool,
+) -> Action {
     if !wanted {
-        if present || was_wanted { Action::Stop } else { Action::Keep }
+        if present || was_wanted {
+            Action::Stop
+        } else {
+            Action::Keep
+        }
     } else if force || changed || !present || !pushed {
         // systemctl restart also starts an inactive unit; unlike start it
         // repairs an active process whose expected node disappeared.
@@ -67,14 +86,17 @@ fn action(wanted: bool, present: bool, was_wanted: bool, changed: bool, force: b
 }
 
 fn baseline_path() -> PathBuf {
-    dirs::runtime_dir().map(|path| path.join("biglinux-microphone"))
-        .unwrap_or_else(crate::config::config_dir).join("last-applied.json")
+    dirs::runtime_dir()
+        .map(|path| path.join("biglinux-microphone"))
+        .unwrap_or_else(crate::config::config_dir)
+        .join("last-applied.json")
 }
 
 /// Apply saved settings and propagate every required service failure.
 pub fn apply(settings: &AppSettings, force: bool) -> io::Result<()> {
     pipeline::apply(settings)?;
-    let previous: Option<AppSettings> = std::fs::read(baseline_path()).ok()
+    let previous: Option<AppSettings> = std::fs::read(baseline_path())
+        .ok()
         .and_then(|bytes| serde_json::from_slice(&bytes).ok());
     let observed = observe()?;
     let live = pipewire::apply_live(settings)?;
@@ -87,19 +109,46 @@ pub fn apply(settings: &AppSettings, force: bool) -> io::Result<()> {
     Ok(())
 }
 
-fn execute(settings: &AppSettings, previous: Option<&AppSettings>, observed: Observed, live: LiveOutcome, force: bool) -> io::Result<()> {
-    let aec = action(settings.echo_cancel.enabled, observed.aec_present,
-        previous.is_some_and(|s| s.echo_cancel.enabled), false, force, true);
-    let mic = action(pipeline::mic_chain_wanted(settings), observed.mic_present,
-        previous.is_some_and(pipeline::mic_chain_wanted), needs_mic_reload(previous, settings), force, live.mic_pushed);
-    let output = action(settings.output_filter.enabled, observed.output_present,
-        previous.is_some_and(|s| s.output_filter.enabled), output_topology_changed(previous, settings), force, live.output_pushed);
+fn execute(
+    settings: &AppSettings,
+    previous: Option<&AppSettings>,
+    observed: Observed,
+    live: LiveOutcome,
+    force: bool,
+) -> io::Result<()> {
+    let aec = action(
+        settings.echo_cancel.enabled,
+        observed.aec_present,
+        previous.is_some_and(|s| s.echo_cancel.enabled),
+        false,
+        force,
+        true,
+    );
+    let mic = action(
+        pipeline::mic_chain_wanted(settings),
+        observed.mic_present,
+        previous.is_some_and(pipeline::mic_chain_wanted),
+        needs_mic_reload(previous, settings),
+        force,
+        live.mic_pushed,
+    );
+    let output = action(
+        settings.output_filter.enabled,
+        observed.output_present,
+        previous.is_some_and(|s| s.output_filter.enabled),
+        output_topology_changed(previous, settings),
+        force,
+        live.output_pushed,
+    );
 
     // The cleaned source must be published before a microphone chain pins it.
     match aec {
         Action::Restart => {
             pipewire::restart_aec_service()?;
-            wait_for(|state| state.aec_present, "echo-cancellation source did not appear")?;
+            wait_for(
+                |state| state.aec_present,
+                "echo-cancellation source did not appear",
+            )?;
         }
         Action::Stop => pipewire::stop_aec_service()?,
         Action::Keep => {}
@@ -115,11 +164,14 @@ fn execute(settings: &AppSettings, previous: Option<&AppSettings>, observed: Obs
         Action::Keep => {}
     }
     if [aec, mic, output].iter().any(|step| *step != Action::Keep) {
-        wait_for(|state| {
-            state.mic_present == pipeline::mic_chain_wanted(settings)
-                && state.output_present == settings.output_filter.enabled
-                && state.aec_present == settings.echo_cancel.enabled
-        }, "The audio services did not reach the requested state")?;
+        wait_for(
+            |state| {
+                state.mic_present == pipeline::mic_chain_wanted(settings)
+                    && state.output_present == settings.output_filter.enabled
+                    && state.aec_present == settings.echo_cancel.enabled
+            },
+            "The audio services did not reach the requested state",
+        )?;
     }
     Ok(())
 }
@@ -127,7 +179,9 @@ fn execute(settings: &AppSettings, previous: Option<&AppSettings>, observed: Obs
 fn wait_for(predicate: impl Fn(Observed) -> bool, failure: &str) -> io::Result<()> {
     let started = Instant::now();
     loop {
-        if predicate(observe()?) { return Ok(()); }
+        if predicate(observe()?) {
+            return Ok(());
+        }
         if started.elapsed() >= Duration::from_secs(3) {
             return Err(io::Error::new(io::ErrorKind::TimedOut, failure.to_owned()));
         }
@@ -197,15 +251,20 @@ pub fn output_topology_changed(prev: Option<&AppSettings>, now: &AppSettings) ->
     })
 }
 
-
 #[cfg(test)]
 mod tests {
     use super::*;
 
     #[test]
     fn a_missing_enabled_output_or_aec_is_recovered_without_a_setting_change() {
-        assert_eq!(action(true, false, true, false, false, false), Action::Restart);
-        assert_eq!(action(true, false, true, false, false, true), Action::Restart);
+        assert_eq!(
+            action(true, false, true, false, false, false),
+            Action::Restart
+        );
+        assert_eq!(
+            action(true, false, true, false, false, true),
+            Action::Restart
+        );
         assert_eq!(action(true, true, true, false, false, true), Action::Keep);
         assert_eq!(action(true, true, true, true, false, true), Action::Restart);
         assert_eq!(action(false, true, true, false, false, false), Action::Stop);

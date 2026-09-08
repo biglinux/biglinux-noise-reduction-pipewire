@@ -87,8 +87,6 @@ impl Key {
 
     const NAMES: &'static str = "mic, mic-intensity, voice-clarity, echo, output-voices, \
                                  equalizer, voice-changer, voice-pitch, quality, eq-preset";
-
-
 }
 
 impl Cmd {
@@ -352,12 +350,10 @@ fn reload_services() -> ExitCode {
 /// The unit must be running whenever any mic filter is wanted; stop
 /// it otherwise so `mic-biglinux` doesn't hang around as a dead node.
 
-
 /// Reconcile the AEC loader unit. Independent lifecycle from the mic
 /// loader: when AEC is wanted the EC source must exist before the mic
 /// chain resolves its capture target, so callers run this *before*
 /// reconciling the mic unit.
-
 
 /// Bring the standalone output unit up when the user wants the chain
 /// running, and tear it down when they turn the master off so no idle
@@ -367,7 +363,6 @@ fn reload_services() -> ExitCode {
 /// removes the virtual sink — Chromium-based browsers pause playback
 /// when their target sink disappears, which is the accepted price for
 /// not keeping a dormant worker running.
-
 
 /// Push current settings into the already-loaded filter-chain without
 /// restarting any service. Safe to call repeatedly.
@@ -712,8 +707,8 @@ fn watch_echo() -> ExitCode {
             && settings.echo_cancel.enabled != wanted
         {
             if autostart() != ExitCode::SUCCESS {
-        return ExitCode::FAILURE;
-    }
+                return ExitCode::FAILURE;
+            }
         }
     }
     let _ = child.wait();
@@ -738,7 +733,10 @@ fn reconcile_saved(force: bool) -> ExitCode {
         Err(error) => return exit_with_error(&error.to_string()),
     };
     match apply_settings(&mut settings, force) {
-        Ok(()) => { println!("audio settings applied and verified"); ExitCode::SUCCESS }
+        Ok(()) => {
+            println!("audio settings applied and verified");
+            ExitCode::SUCCESS
+        }
         Err(error) => exit_with_error(&error),
     }
 }

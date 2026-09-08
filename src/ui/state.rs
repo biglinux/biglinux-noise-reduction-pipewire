@@ -423,7 +423,12 @@ fn run_apply(
         Ok(loopback) => (loopback, ApplyStatus::Applied),
         Err(error) => (None, ApplyStatus::Failed(error)),
     };
-    ApplyOutcome { snapshot, loopback, was_persisted: true, status }
+    ApplyOutcome {
+        snapshot,
+        loopback,
+        was_persisted: true,
+        status,
+    }
 }
 
 /// Spawn or kill the `pw-loopback` subprocess so the user can hear their own
