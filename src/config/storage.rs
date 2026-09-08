@@ -160,7 +160,9 @@ pub(super) fn serialized_preserving_unknown(
     let mut stored = match existing {
         Ok(bytes) => serde_json::from_slice::<Value>(&bytes)
             .map_err(|error| io::Error::new(io::ErrorKind::InvalidData, error))?,
-        Err(error) if error.kind() == io::ErrorKind::NotFound => Value::Object(serde_json::Map::default()),
+        Err(error) if error.kind() == io::ErrorKind::NotFound => {
+            Value::Object(serde_json::Map::default())
+        }
         Err(error) => return Err(error),
     };
     if !stored.is_object() {
