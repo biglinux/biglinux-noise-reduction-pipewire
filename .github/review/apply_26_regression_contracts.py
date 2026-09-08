@@ -28,11 +28,11 @@ if not done(TITLE):
     source = path.read_text()
     old = '''        let mut pending = Pending::default();
         pending.refresh = true;
-        pending.volume = Some((12, 0.9));'''
+        pending.volume = Some((12, 0.2));'''
     assert source.count(old) == 1
     path.write_text(source.replace(old, '''        let mut pending = Pending {
             refresh: true,
-            volume: Some((12, 0.9)),
+            volume: Some((12, 0.2)),
             ..Pending::default()
         };'''))
     commit(TITLE, ['src/ui/mic_shell.rs','src/ui/state.rs','src/ui/window.rs','src/pipeline.rs',str(path)])
@@ -53,8 +53,6 @@ if not done(TITLE):
             s.stereo.enabled = true;
             s.stereo.mode = crate::config::StereoMode::VoiceChanger;
         }),''')
-    # Stereo NR-off now omits the expensive neural stage entirely. Keep the
-    # previous no-reload contract for the explicit legacy mono topology.
     path = Path('src/ui/state_tests.rs')
     text = path.read_text()
     start = text.index('fn output_topology_unchanged_when_only_nr_enabled_toggles()')
