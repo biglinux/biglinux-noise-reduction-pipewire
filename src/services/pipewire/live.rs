@@ -243,15 +243,6 @@ fn mic_params(s: &AppSettings) -> Vec<(String, f64)> {
             // The gate (when enabled) lives in a separate `gate:` SWH-gate node.
             let atten_db = deepfilter_attenuation_db(nr.strength);
             params.push(("ai:Attenuation Limit (dB)".to_owned(), atten_db));
-            if s.gate.enabled {
-                params.extend([
-                    ("gate:Threshold (dB)".to_owned(), gate_derived.threshold_db),
-                    ("gate:Attack (ms)".to_owned(), gate_derived.attack_ms),
-                    ("gate:Hold (ms)".to_owned(), gate_derived.hold_ms),
-                    ("gate:Decay (ms)".to_owned(), gate_derived.release_ms),
-                    ("gate:Range (dB)".to_owned(), gate_derived.range_db),
-                ]);
-            }
         } else {
             params.extend([
                 ("ai:Enable".to_owned(), if nr.enabled { 1.0 } else { 0.0 }),
@@ -274,6 +265,15 @@ fn mic_params(s: &AppSettings) -> Vec<(String, f64)> {
         }
     }
 
+    if nr.model.is_attenuation_only() && gate.enabled {
+        params.extend([
+            ("gate:Threshold (dB)".to_owned(), gate_derived.threshold_db),
+            ("gate:Attack (ms)".to_owned(), gate_derived.attack_ms),
+            ("gate:Hold (ms)".to_owned(), gate_derived.hold_ms),
+            ("gate:Decay (ms)".to_owned(), gate_derived.release_ms),
+            ("gate:Range (dB)".to_owned(), gate_derived.range_db),
+        ]);
+    }
     append_compressor_params(
         &mut params,
         "compressor",
@@ -511,6 +511,17 @@ mod tests {
     #[test]
     fn parse_live_filter_nodes_handles_an_empty_graph() {
         assert!(parse_live_filter_nodes(&[]).is_empty());
+    }
+
+    #[test]
+    fn attenuation_gate_updates_without_a_neural_node() {
+        let mut settings = AppSettings::default();
+        settings.noise_reduction.model = crate::config::NoiseModel::DeepFilterNet3;
+        settings.noise_reduction.enabled = false;
+        settings.gate.enabled = true;
+        let controls = mic_params(&settings);
+        assert!(!controls.iter().any(|(key, _)| key.starts_with("ai:")));
+        assert!(controls.iter().any(|(key, _)| key == "gate:Threshold (dB)"));
     }
 
     #[test]

@@ -158,7 +158,8 @@ pub fn mic_chain_wanted(settings: &AppSettings) -> bool {
 /// pipeline entirely — both expensive and a transient-smearing source.
 #[must_use]
 pub fn ai_node_in_mic_chain(settings: &AppSettings) -> bool {
-    settings.noise_reduction.enabled || settings.gate.enabled
+    settings.noise_reduction.enabled
+        || (settings.gate.enabled && !settings.noise_reduction.model.is_attenuation_only())
 }
 
 fn mic_nodes(settings: &AppSettings) -> Vec<Node> {
@@ -180,12 +181,11 @@ fn mic_nodes(settings: &AppSettings) -> Vec<Node> {
 
     if ai_node_in_mic_chain(settings) {
         nodes.push(denoiser_node(settings));
-        // DFN3 has no integrated gate, unlike GTCRN. When the user wants
-        // the silence gate alongside DFN3 we wire a standalone SWH gate
-        // immediately after it (same plugin the output chain uses).
-        if settings.noise_reduction.model.is_attenuation_only() && settings.gate.enabled {
-            nodes.push(standalone_gate_node(settings));
-        }
+    }
+    // Attenuation-only backends have an independent gate. Keeping the gate
+    // enabled must not keep the neural network running after NR is disabled.
+    if settings.noise_reduction.model.is_attenuation_only() && settings.gate.enabled {
+        nodes.push(standalone_gate_node(settings));
     }
 
     if settings.compressor.enabled {
