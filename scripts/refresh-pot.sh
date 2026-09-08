@@ -1,84 +1,44 @@
 #!/usr/bin/env bash
-# Regenerate po/biglinux-noise-reduction-pipewire.pot from sources listed
-# in po/POTFILES.in, then msgmerge every locale catalog. Idempotent —
-# safe to run as part of release prep.
-#
-# Requires: xtr (cargo install xtr), gettext (msgmerge / msgcmp).
-
+# Extract Rust + QML into the shared gettext domain, then preserve every
+# existing translation with msgmerge. --check validates source coverage
+# without modifying the tracked POT or any translator's catalog.
 set -euo pipefail
-
 ROOT="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")/.." && pwd)"
-PO_DIR="$ROOT/po"
-POT="$PO_DIR/biglinux-noise-reduction-pipewire.pot"
-POTFILES="$PO_DIR/POTFILES.in"
-
 cd "$ROOT"
-
-if [[ ! -f "$POTFILES" ]]; then
-	printf 'refresh-pot: missing %s\n' "$POTFILES" >&2
-	exit 1
-fi
-
-if ! command -v xtr >/dev/null 2>&1; then
-	# shellcheck disable=SC2016  # backticks are literal text in the message
-	printf 'refresh-pot: xtr not found — install with `cargo install xtr`\n' >&2
-	exit 1
-fi
-
-# Collect source paths from POTFILES.in, skipping comments / blanks.
-# xtr only parses Rust; .qml strings are extracted by Plasma's own
-# build pipeline (KI18n) and don't belong in the cargo-side POT.
-mapfile -t SOURCES < <(grep -vE '^\s*(#|$)' "$POTFILES" | grep -E '\.rs$')
-if [[ ${#SOURCES[@]} -eq 0 ]]; then
-	printf 'refresh-pot: POTFILES.in has no Rust sources\n' >&2
-	exit 1
-fi
-
-xtr \
-	--keywords=i18n \
-	--package-name=biglinux-noise-reduction-pipewire \
-	--package-version="$(awk -F\" '/^version[[:space:]]*=/{print $2; exit}' Cargo.toml)" \
-	--copyright-holder='BigLinux Team' \
-	--omit-header \
-	--output "$POT" \
-	"${SOURCES[@]}"
-
-# xtr's --omit-header drops the canonical preamble; restore a minimal
-# one so msgmerge stays happy and existing `.po` files keep applying.
-temporary_pot_file="$(mktemp)"
-trap 'rm -f "$temporary_pot_file"' EXIT
-{
-	printf '# SOME DESCRIPTIVE TITLE.\n'
-	printf '# Copyright (C) YEAR BigLinux Team\n'
-	printf '# This file is distributed under the same license as the biglinux-noise-reduction-pipewire package.\n'
-	printf '# FIRST AUTHOR <EMAIL@ADDRESS>, YEAR.\n'
-	printf '#\n'
-	printf '#, fuzzy\n'
-	printf 'msgid ""\n'
-	printf 'msgstr ""\n'
-	printf '"Project-Id-Version: biglinux-noise-reduction-pipewire %s\\n"\n' \
-		"$(awk -F\" '/^version[[:space:]]*=/{print $2; exit}' Cargo.toml)"
-	printf '"Report-Msgid-Bugs-To: \\n"\n'
-	printf '"POT-Creation-Date: %s\\n"\n' "$(date -u +'%Y-%m-%d %H:%M+0000')"
-	printf '"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\\n"\n'
-	printf '"Last-Translator: FULL NAME <EMAIL@ADDRESS>\\n"\n'
-	printf '"Language-Team: LANGUAGE <LL@li.org>\\n"\n'
-	printf '"Language: \\n"\n'
-	printf '"MIME-Version: 1.0\\n"\n'
-	printf '"Content-Type: text/plain; charset=UTF-8\\n"\n'
-	printf '"Content-Transfer-Encoding: 8bit\\n"\n'
-	printf '\n'
-	cat "$POT"
-} >"$temporary_pot_file"
-mv "$temporary_pot_file" "$POT"
-trap - EXIT
-
-# Merge into every locale catalog, preserving translations.
-shopt -s nullglob
-for po in "$PO_DIR"/*.po; do
-	msgmerge --quiet --update --backup=none "$po" "$POT"
+for tool in xtr xgettext msgcat msgcmp msgmerge; do
+    command -v "$tool" >/dev/null || { printf 'Missing translation tool: %s\n' "$tool" >&2; exit 1; }
 done
-shopt -u nullglob
-
-printf 'refresh-pot: %s regenerated, %d catalogs merged\n' \
-	"$POT" "$(find "$PO_DIR" -maxdepth 1 -name '*.po' | wc -l)"
+work="$(mktemp -d)"
+trap 'rm -rf -- "$work"' EXIT
+mapfile -t rust_sources < <(grep -vE '^\s*(#|$)' po/POTFILES.in | grep -E '\.rs$')
+mapfile -t qml_sources < <(grep -vE '^\s*(#|$)' po/POTFILES.in | grep -E '\.qml$')
+((${#rust_sources[@]} > 0)) || { echo 'POTFILES.in has no Rust sources' >&2; exit 1; }
+version="$(awk -F\" '/^version[[:space:]]*=/{print $2; exit}' Cargo.toml)"
+xtr --keywords=i18n --keywords=mark --package-name=biglinux-noise-reduction-pipewire \
+    --package-version="$version" --copyright-holder='BigLinux Team' --omit-header \
+    --output "$work/rust.pot" "${rust_sources[@]}"
+{
+    printf 'msgid ""\nmsgstr ""\n'
+    printf '"Project-Id-Version: biglinux-noise-reduction-pipewire %s\\n"\n' "$version"
+    printf '"MIME-Version: 1.0\\n"\n"Content-Type: text/plain; charset=UTF-8\\n"\n"Content-Transfer-Encoding: 8bit\\n"\n\n'
+    cat "$work/rust.pot"
+} > "$work/combined.pot"
+if ((${#qml_sources[@]} > 0)); then
+    xgettext --language=JavaScript --from-code=UTF-8 --keyword=i18nd:2 \
+        --package-name=biglinux-noise-reduction-pipewire --package-version="$version" \
+        --omit-header --output="$work/qml.pot" "${qml_sources[@]}"
+    msgcat --use-first --sort-output "$work/combined.pot" "$work/qml.pot" -o "$work/all.pot"
+else
+    msgcat --sort-output "$work/combined.pot" -o "$work/all.pot"
+fi
+pot=po/biglinux-noise-reduction-pipewire.pot
+if [[ "${1:-}" == --check ]]; then
+    msgcmp --use-untranslated --use-fuzzy "$work/all.pot" "$pot"
+    msgcmp --use-untranslated --use-fuzzy "$pot" "$work/all.pot"
+    exit 0
+fi
+[[ $# == 0 ]] || { echo 'Usage: scripts/refresh-pot.sh [--check]' >&2; exit 2; }
+cat "$work/all.pot" > "$pot"
+for catalog in po/*.po; do
+    msgmerge --quiet --update --backup=none "$catalog" "$pot"
+done

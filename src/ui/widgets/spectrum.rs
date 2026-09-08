@@ -32,7 +32,7 @@ use glib::SourceId;
 use gtk::prelude::*;
 
 use crate::services::audio_monitor::SpectrumFrame;
-use crate::ui::i18n::i18n;
+use crate::ui::i18n::{i18n, mark};
 
 #[allow(unused_imports)]
 pub use constants::BAND_COUNT;
@@ -40,7 +40,7 @@ use constants::{ANIMATION_FPS, WIDGET_HEIGHT};
 use rendering::draw;
 use state::SpectrumState;
 
-const PEAK_METER_CAPTION_MSGID: &str = "LEVEL / PEAK";
+const PEAK_METER_CAPTION_MSGID: &str = mark("LEVEL / PEAK");
 
 #[cfg(test)]
 use constants::{

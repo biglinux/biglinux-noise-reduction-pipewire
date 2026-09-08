@@ -34,7 +34,7 @@ use crate::config::{AppSettings, app_id, app_version};
 use crate::services::audio_monitor::{AudioMonitor, Event as MonitorEvent};
 
 use super::app_kit_edges::{desktop, dialogs};
-use super::i18n::i18n;
+use super::i18n::{i18n, mark};
 use super::mic_shell::MicInput;
 use super::state::AppState;
 use super::views::{Mode, mic, output, simple};
@@ -254,12 +254,12 @@ pub(super) fn primary_menu_spec() -> BigHamburgerMenuSpec {
     )
 }
 
-const PRIMARY_MENU_LABEL: &str = "Main menu";
+const PRIMARY_MENU_LABEL: &str = mark("Main menu");
 
 fn primary_menu_action_specs() -> [(&'static str, &'static str); 2] {
     [
-        ("Restore default settings", "win.reset-defaults"),
-        ("About Filter noise", "win.about"),
+        (mark("Restore default settings"), "win.reset-defaults"),
+        (mark("About Filter noise"), "win.about"),
     ]
 }
 
@@ -423,8 +423,8 @@ mod tests {
         assert_eq!(
             primary_menu_action_specs(),
             [
-                ("Restore default settings", "win.reset-defaults"),
-                ("About Filter noise", "win.about"),
+                (mark("Restore default settings"), "win.reset-defaults"),
+                (mark("About Filter noise"), "win.about"),
             ]
         );
     }
