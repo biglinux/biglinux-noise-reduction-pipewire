@@ -3,17 +3,14 @@
 
 pkgname=biglinux-noise-reduction-pipewire
 pkgdesc="AI-powered microphone noise reduction with GTK4/libadwaita interface for PipeWire"
-# BigLinux rolling-release convention: pkgver is derived from the build
-# date so every CI build is uniquely identifiable. pkgrel stays numeric.
+# BigLinux rolling-release convention; these are package build identifiers.
 pkgver=$(date +%y.%m.%d)
 pkgrel=$(date +%H%M)
 arch=('x86_64')
 url="https://github.com/biglinux/${pkgname}"
 license=('GPL-3.0-or-later')
 depends=(
-	# The GUI binary links jemalloc (big-jemalloc crate): GTK4 only returns freed
-	# memory to the OS under it. Pulls the free_sized-correct build, not stock
-	# jemalloc (which crashes GLib under glibc 2.41+). Not inherited by children.
+	# Keep the distribution's maintained allocator; do not replace it in CI.
 	'jemalloc-gtk-fixed'
 	'pipewire>=1.4'
 	'wireplumber>=0.5'
@@ -36,8 +33,10 @@ makedepends=(
 	'appstream'
 	'pkgconf'
 	'clang'
-	# libjemalloc.so for the `-ljemalloc` link of the GUI binary.
 	'jemalloc-gtk-fixed'
+	# git is required by the remote source URL, rsync by local preparation.
+	'git'
+	'rsync'
 )
 optdepends=(
 	'inotify-tools: instant Plasma applet sync with the GTK config window'
@@ -48,21 +47,15 @@ optdepends=(
 	'libplasma: Plasma 6 system tray applet host'
 	'plasma5support: Plasma 6 system tray applet legacy support module'
 )
-# This package provides the noise-reduction LADSPA host and the
-# per-app output filter integration.
 provides=('biglinux-microphone')
 conflicts=('biglinux-microphone')
 replaces=('biglinux-microphone')
 install="${pkgname}.install"
 
-# ---------------------------------------------------------------------------
-# Local-source detection (dev fast path). PKGBUILD lives in
-# packaging/arch/, so the repo root is two levels up.
-# Falls back to git+upstream for CI / remote builds.
-# ---------------------------------------------------------------------------
 _has_workspace_files() {
 	local root="$1"
-	[ -f "${root}/Cargo.toml" ] && [ -d "${root}/src" ] && [ -d "${root}/po" ]
+	[ -f "${root}/Cargo.toml" ] && [ -f "${root}/Cargo.lock" ] &&
+		[ -d "${root}/src" ] && [ -d "${root}/po" ]
 }
 
 _local_root=""
@@ -91,43 +84,53 @@ prepare() {
 	if [ -z "${_local_root}" ]; then
 		return 0
 	fi
-	msg2 "Mirroring local source tree from ${_local_root}"
-	mkdir -p "${srcdir}/${pkgname}"
-	if command -v rsync >/dev/null 2>&1; then
-		rsync -a --delete \
-			--exclude='/target' \
-			--exclude='/.git' \
-			--exclude='/packaging/arch/pkg' \
-			--exclude='/packaging/arch/src' \
-			--exclude='*.pkg.tar.*' \
-			--exclude='*.log' \
-			"${_local_root}/" "${srcdir}/${pkgname}/"
-	else
-		cp -a "${_local_root}/." "${srcdir}/${pkgname}/"
-		rm -rf \
-			"${srcdir}/${pkgname}/target" \
-			"${srcdir}/${pkgname}/.git" \
-			"${srcdir}/${pkgname}/packaging/arch/pkg" \
-			"${srcdir}/${pkgname}/packaging/arch/src"
+	# Never fall back to cp -a: the normal makepkg source directory lives
+	# inside this checkout, so a recursive copy would copy into itself.
+	# Resolve both paths before --delete, including custom SRCDEST layouts.
+	local root destination
+	local nested_exclusion=()
+	root=$(realpath -e -- "${_local_root}") || return 1
+	destination=$(realpath -m -- "${srcdir}/${pkgname}") || return 1
+	if [[ "$root" == "$destination" || "$root" == "$destination/"* ]]; then
+		printf 'Refusing a package source destination containing the checkout: %s\n' "$destination" >&2
+		return 1
 	fi
+	if [[ "$destination" == "$root/"* ]]; then
+		nested_exclusion=("--exclude=/${destination#"$root/"}/")
+	fi
+	command -v rsync >/dev/null || {
+		printf 'Missing build dependency: rsync\n' >&2
+		return 1
+	}
+	msg2 "Mirroring local source tree from ${root}"
+	mkdir -p "$destination"
+	rsync -a --delete \
+		--exclude='/target' \
+		--exclude='/.git' \
+		--exclude='/.ci-results' \
+		--exclude='/build-locale' \
+		--exclude='/packaging/arch/pkg' \
+		--exclude='/packaging/arch/src' \
+		--exclude='*.pkg.tar.*' \
+		--exclude='*.log' \
+		"${nested_exclusion[@]}" \
+		"${root}/" "${destination}/"
 }
 
 build() {
 	cd "${srcdir}/${pkgname}" || exit 1
 	cargo build --release --locked
 
-	# Compile translations (.po → .mo). The .mo basename MUST match the
-	# textdomain bound by the Rust binary (`biglinux-microphone`,
-	# defined in src/config/paths.rs::GETTEXT_PACKAGE) — gettext looks
-	# up `<locale>/LC_MESSAGES/<textdomain>.mo`. Naming after $pkgname
-	# would silently install unreachable catalogs.
-	_textdomain='biglinux-microphone'
-	install -d "${srcdir}/${pkgname}/build-locale"
+	# The catalog domain must match config::GETTEXT_PACKAGE. Remove only
+	# generated catalogs, otherwise a deleted language survives a rebuild.
+	local po lang
+	rm -rf -- build-locale
+	install -d build-locale
 	for po in po/*.po; do
 		[ -f "$po" ] || continue
 		lang=$(basename "$po" .po)
 		install -d "build-locale/${lang}/LC_MESSAGES"
-		msgfmt --check "$po" -o "build-locale/${lang}/LC_MESSAGES/${_textdomain}.mo"
+		msgfmt --check "$po" -o "build-locale/${lang}/LC_MESSAGES/biglinux-microphone.mo"
 	done
 }
 
@@ -140,91 +143,25 @@ check() {
 
 package() {
 	cd "${srcdir}/${pkgname}" || exit 1
+	local binary mo
+	for binary in biglinux-microphone biglinux-microphone-cli biglinux-microphone-probe biglinux-microphone-pwloader; do
+		install -Dm755 "target/release/${binary}" "${pkgdir}/usr/bin/${binary}"
+	done
 
-	# Binaries
-	install -Dm755 target/release/biglinux-microphone \
-		"${pkgdir}/usr/bin/biglinux-microphone"
-	install -Dm755 target/release/biglinux-microphone-cli \
-		"${pkgdir}/usr/bin/biglinux-microphone-cli"
-	install -Dm755 target/release/biglinux-microphone-probe \
-		"${pkgdir}/usr/bin/biglinux-microphone-probe"
-	# Each filter graph (mic, AEC, output) runs in its own pwloader
-	# process — a small PipeWire client that calls
-	# `pw_context_load_module()` so the graph is hosted by the main
-	# daemon's data-loop. Single shared clock across every chain.
-	install -Dm755 target/release/biglinux-microphone-pwloader \
-		"${pkgdir}/usr/bin/biglinux-microphone-pwloader"
+	# usr/ is the versioned package payload: units, WirePlumber policy,
+	# desktop metadata, icons, Plasma applet and didactic illustrations.
+	# Install the complete tree so new resources cannot be omitted by an
+	# outdated list of individual install commands.
+	install -d "${pkgdir}/usr"
+	cp -a usr/. "${pkgdir}/usr/"
 
-	# Desktop / metainfo / icons
-	install -Dm644 usr/share/applications/br.com.biglinux.microphone.desktop \
-		"${pkgdir}/usr/share/applications/br.com.biglinux.microphone.desktop"
-	install -Dm644 usr/share/metainfo/br.com.biglinux.microphone.metainfo.xml \
-		"${pkgdir}/usr/share/metainfo/br.com.biglinux.microphone.metainfo.xml"
-
-	# systemd user units. One unit per pwloader instance so each
-	# filter graph (mic, AEC, output) has its own lifecycle —
-	# toggling AEC on/off no longer reloads the mic chain.
-	install -Dm644 usr/lib/systemd/user/biglinux-microphone.service \
-		"${pkgdir}/usr/lib/systemd/user/biglinux-microphone.service"
-	install -Dm644 usr/lib/systemd/user/biglinux-microphone-mic.service \
-		"${pkgdir}/usr/lib/systemd/user/biglinux-microphone-mic.service"
-	install -Dm644 usr/lib/systemd/user/biglinux-microphone-aec.service \
-		"${pkgdir}/usr/lib/systemd/user/biglinux-microphone-aec.service"
-	install -Dm644 usr/lib/systemd/user/biglinux-microphone-output.service \
-		"${pkgdir}/usr/lib/systemd/user/biglinux-microphone-output.service"
-
-	# WirePlumber policy hook: keeps the echo-cancel capture stream on
-	# the selected physical microphone while devices/defaults change.
-	install -Dm644 usr/share/wireplumber/scripts/biglinux/echo-cancel-routing.lua \
-		"${pkgdir}/usr/share/wireplumber/scripts/biglinux/echo-cancel-routing.lua"
-	install -Dm644 usr/share/wireplumber/wireplumber.conf.d/60-biglinux-echo-cancel-routing.conf \
-		"${pkgdir}/usr/share/wireplumber/wireplumber.conf.d/60-biglinux-echo-cancel-routing.conf"
-
-	# Broad ALSA headroom rule (api.alsa.headroom = 1024 frames,
-	# ~21 ms at 48 kHz) on USB / PCI-HDA devices. Absorbs short
-	# scheduling stalls now that all filter chains share the
-	# daemon's data-loop (no cross-process drift), without forcing
-	# a global quantum/rate (which broke other machines).
-	# Bluetooth nodes are tuned in pipewire-biglinux-config's
-	# 51-bluez-config.conf via node.latency, not via headroom.
-	# Daemon-level defaults (default.clock.quantum etc.) also live
-	# in pipewire-biglinux-config so they apply to every BigLinux
-	# install regardless of whether this package is present.
-	install -Dm644 usr/share/wireplumber/wireplumber.conf.d/61-biglinux-alsa-headroom.conf \
-		"${pkgdir}/usr/share/wireplumber/wireplumber.conf.d/61-biglinux-alsa-headroom.conf"
-
-	# App icon (must match the .desktop Icon= and AppStream <id>)
-	install -Dm644 usr/share/icons/hicolor/scalable/apps/br.com.biglinux.microphone.svg \
-		"${pkgdir}/usr/share/icons/hicolor/scalable/apps/br.com.biglinux.microphone.svg"
-	# Status icons used by the Plasma applet for tray feedback
-	install -Dm644 usr/share/icons/hicolor/scalable/status/big-noise-reduction-on.svg \
-		"${pkgdir}/usr/share/icons/hicolor/scalable/status/big-noise-reduction-on.svg"
-	install -Dm644 usr/share/icons/hicolor/scalable/status/big-noise-reduction-off.svg \
-		"${pkgdir}/usr/share/icons/hicolor/scalable/status/big-noise-reduction-off.svg"
-
-	# Plasma 6 system-tray applet
-	install -Dm644 usr/share/plasma/plasmoids/br.com.biglinux.micnoise/metadata.json \
-		"${pkgdir}/usr/share/plasma/plasmoids/br.com.biglinux.micnoise/metadata.json"
-	install -Dm644 usr/share/plasma/plasmoids/br.com.biglinux.micnoise/contents/ui/main.qml \
-		"${pkgdir}/usr/share/plasma/plasmoids/br.com.biglinux.micnoise/contents/ui/main.qml"
-
-	# SVG illustrations rendered inside the GTK didactic cards
-	install -d "${pkgdir}/usr/share/biglinux-microphone/illustrations"
-	install -m644 usr/share/biglinux-microphone/illustrations/*.svg \
-		"${pkgdir}/usr/share/biglinux-microphone/illustrations/"
-
-	# Translations
 	for mo in build-locale/*/LC_MESSAGES/*.mo; do
 		[ -f "$mo" ] || continue
 		install -Dm644 "$mo" "${pkgdir}/usr/share/${mo#build-}"
 	done
 
-	# License + docs
 	install -Dm644 LICENSE-MIT "${pkgdir}/usr/share/licenses/${pkgname}/LICENSE-MIT"
-	if [ -f LICENSE ]; then
-		install -Dm644 LICENSE "${pkgdir}/usr/share/licenses/${pkgname}/LICENSE"
-	fi
-	if [ -f README.md ]; then
-		install -Dm644 README.md "${pkgdir}/usr/share/doc/${pkgname}/README.md"
-	fi
+	install -Dm644 LICENSE "${pkgdir}/usr/share/licenses/${pkgname}/LICENSE"
+	install -Dm644 README.md "${pkgdir}/usr/share/doc/${pkgname}/README.md"
+	install -Dm644 docs/guia-rapido.pt_BR.md "${pkgdir}/usr/share/doc/${pkgname}/guia-rapido.pt_BR.md"
 }

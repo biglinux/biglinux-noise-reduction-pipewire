@@ -11,8 +11,8 @@ on:
 permissions:
   contents: read
 
-# Keep event types separate: a skipped duplicate push must NOT cancel its PR.
-# Within each event, a newer revision cancels obsolete queued/running work.
+# A skipped duplicate push must not cancel its PR. Superseded revisions of
+# the same event do cancel obsolete work; no secondary validation workflow.
 concurrency:
   group: ci-${{ github.event_name }}-${{ github.event.pull_request.number || github.ref }}
   cancel-in-progress: true
@@ -46,7 +46,7 @@ jobs:
         with:
           fetch-depth: 0
           persist-credentials: false
-      - name: Test CI selection policy
+      - name: Test CI selection and release-gate policy
         run: python3 -m unittest discover -s .github/ci -p 'test_*.py'
       - id: plan
         name: Compute one execution plan
@@ -84,6 +84,7 @@ jobs:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
         with:
           persist-credentials: false
+      - run: mkdir -p .ci-results/native
       - uses: ./.github/actions/install-system-deps
       - uses: dtolnay/rust-toolchain@6bed0761d98439e5a578e2877258200ad565ba87
         id: rust
@@ -91,37 +92,46 @@ jobs:
           toolchain: "1.98.1"
           components: clippy
       - uses: Swatinem/rust-cache@6323deb102c322ba6fcbdcafc7e3dddab59af2b6
+      - name: Record the exact tested source and native versions
+        env:
+          PR_HEAD: ${{ github.event.pull_request.head.sha || github.sha }}
+        run: |
+          {
+            printf 'PR head: %s\n' "$PR_HEAD"
+            git -c safe.directory="$PWD" rev-parse HEAD
+            rustc --version
+            pkg-config --modversion gtk4 libadwaita-1 libpipewire-0.3
+          } > .ci-results/native/environment.txt
       - name: Strict Clippy, all targets and features
-        run: cargo clippy --all-targets --all-features --locked -- -D warnings
-      # The distribution maintains and validates its own allocator fork.
-      # Run application behavior once with the runner's system allocator.
-      # No jemalloc rebuild, compatibility probe or allocator test matrix.
-      # MSRV and release jobs still compile the production feature set.
+        run: cargo clippy --all-targets --all-features --locked -- -D warnings 2>&1 | tee .ci-results/native/clippy.log
+      # Keep the distribution's allocator fork and production feature set.
+      # Application tests run once using the runner's system allocator.
       - name: Unit, integration and documentation tests
         if: '!cancelled() && steps.rust.outcome == ''success'''
-        run: cargo test --no-default-features --locked -- --test-threads=1
+        run: cargo test --no-default-features --locked -- --test-threads=1 2>&1 | tee .ci-results/native/tests.log
       - name: Independent GTK application contracts
         if: '!cancelled() && steps.rust.outcome == ''success'''
-        run: bash scripts/test-ui.sh --no-default-features 2>&1 | tee "$RUNNER_TEMP/gtk.log"
+        run: bash scripts/test-ui.sh --no-default-features 2>&1 | tee .ci-results/native/gtk.log
       - name: Real graph loading and recovery on a private PipeWire daemon
         if: '!cancelled() && steps.rust.outcome == ''success'''
-        run: bash scripts/test-pipewire.sh --no-default-features 2>&1 | tee "$RUNNER_TEMP/pipewire-runtime.log"
+        run: bash scripts/test-pipewire.sh --no-default-features 2>&1 | tee .ci-results/native/pipewire-runtime.log
       - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
         if: always()
         with:
           name: native-contract-logs-${{ github.sha }}
-          path: |
-            ${{ runner.temp }}/gtk.log
-            ${{ runner.temp }}/pipewire-runtime.log
+          # Workspace-relative paths work both in the container and in the
+          # action host. Do not mix RUNNER_TEMP with a host runner.temp path.
+          path: .ci-results/native/
+          include-hidden-files: true
           retention-days: 7
-          if-no-files-found: warn
+          if-no-files-found: error
 
   msrv:
     name: MSRV 1.97.1
     needs: plan
-    # Compile distinct production profiles for ready PRs, protected-branch
-    # pushes and manual validation, not every intermediate draft revision.
-    if: needs.plan.outputs.rust == 'true' && (github.event_name != 'pull_request' || github.event.pull_request.draft == false)
+    # An explicit release-candidate label includes full builds even in a
+    # draft. Adding it does not start a second run; the next push owns CI.
+    if: needs.plan.outputs.rust == 'true' && (github.event_name != 'pull_request' || github.event.pull_request.draft == false || contains(github.event.pull_request.labels.*.name, 'release-candidate'))
     runs-on: ubuntu-latest
     container: archlinux:latest
     timeout-minutes: 25
@@ -140,23 +150,39 @@ jobs:
       - run: cargo build --all-features --locked
 
   release-build:
-    name: Release build
+    name: Release build and staged native package
     needs: plan
-    if: needs.plan.outputs.rust == 'true' && (github.event_name != 'pull_request' || github.event.pull_request.draft == false)
+    if: needs.plan.outputs.rust == 'true' && (github.event_name != 'pull_request' || github.event.pull_request.draft == false || contains(github.event.pull_request.labels.*.name, 'release-candidate'))
     runs-on: ubuntu-latest
     container: archlinux:latest
-    timeout-minutes: 25
+    timeout-minutes: 30
+    defaults:
+      run:
+        shell: bash
     steps:
-      - run: pacman -Syu --noconfirm --needed git
+      - run: pacman -Syu --noconfirm --needed git rsync python gettext desktop-file-utils appstream
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
         with:
           persist-credentials: false
+      - run: mkdir -p .ci-results/release
       - uses: ./.github/actions/install-system-deps
       - uses: dtolnay/rust-toolchain@6bed0761d98439e5a578e2877258200ad565ba87
+        id: rust
         with:
           toolchain: "1.98.1"
       - uses: Swatinem/rust-cache@6323deb102c322ba6fcbdcafc7e3dddab59af2b6
-      - run: cargo build --release --locked
+      # Calls the real PKGBUILD build()/package() once, not cargo test or
+      # makepkg check(). The native job is the sole owner of application tests.
+      - name: Build, stage and validate the package payload
+        run: bash scripts/test-package.sh .ci-results/release 2>&1 | tee .ci-results/release/build.log
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        if: always()
+        with:
+          name: release-package-evidence-${{ github.sha }}
+          path: .ci-results/release/
+          include-hidden-files: true
+          retention-days: 7
+          if-no-files-found: error
 
   deny:
     name: Dependency licenses, bans and sources
@@ -170,7 +196,6 @@ jobs:
       - uses: taiki-e/install-action@v2
         with:
           tool: cargo-deny
-      # RustSec is owned by audit below, not scanned twice on the same event.
       - run: cargo deny check bans licenses sources
 
   audit:
@@ -278,7 +303,7 @@ jobs:
           PY
 
   shell:
-    name: Shell scripts
+    name: Shell scripts and package recipe
     needs: plan
     if: needs.plan.outputs.shell == 'true'
     runs-on: ubuntu-latest
@@ -287,7 +312,7 @@ jobs:
         with:
           persist-credentials: false
       - run: sudo apt-get update && sudo apt-get install -y shellcheck
-      - run: shellcheck -e SC2034,SC2154 scripts/*.sh packaging/flatpak/generate-cargo-sources.sh
+      - run: shellcheck -e SC2034,SC2154 scripts/*.sh packaging/flatpak/generate-cargo-sources.sh packaging/arch/PKGBUILD packaging/arch/*.install
 
   plasmoid-contracts:
     name: Plasma status transitions
@@ -323,18 +348,11 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 2
     steps:
-      - name: Require success from every selected check
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          persist-credentials: false
+      - name: Require execution and success from every selected check
         env:
           RESULTS: ${{ toJSON(needs) }}
-        run: |
-          python3 - <<'PY'
-          import json, os
-          results = json.loads(os.environ['RESULTS'])
-          failed = {name: job['result'] for name, job in results.items()
-                    if job['result'] not in ('success', 'skipped')}
-          if results['plan']['result'] != 'success':
-              failed['plan'] = results['plan']['result']
-          if failed:
-              raise SystemExit(f'CI did not pass: {failed}')
-          print('All selected checks passed; non-applicable or deferred jobs were skipped.')
-          PY
+          RELEASE_REQUIRED: ${{ github.event_name != 'pull_request' || github.event.pull_request.draft == false || contains(github.event.pull_request.labels.*.name, 'release-candidate') }}
+        run: python3 .github/ci/result.py

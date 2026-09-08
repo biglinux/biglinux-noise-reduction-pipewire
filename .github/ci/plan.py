@@ -49,6 +49,8 @@ def classify(paths: list[str] | None) -> dict[str, bool]:
             result["rust"] = result["native"] = result["i18n"] = True
         elif path.startswith("vendor/"):
             result["rust"] = result["native"] = True
+        elif path.startswith("packaging/arch/") or path in ("scripts/test-package.sh", "scripts/verify-package.py"):
+            result["rust"] = result["native"] = result["shell"] = True
         elif path.startswith("packaging/flatpak/"):
             result["flatpak"] = True
             result["shell"] |= path.endswith(".sh")
@@ -68,7 +70,6 @@ def classify(paths: list[str] | None) -> dict[str, bool]:
         elif path.startswith(".github/workflows/") or path == "_typos.toml":
             continue
         else:
-            # Never silently miss a new build input or a new test language.
             return all_checks()
     return result
 
