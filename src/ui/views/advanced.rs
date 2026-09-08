@@ -63,19 +63,33 @@ pub(super) struct TuningSelection {
 impl TuningSelection {
     fn new(initial: UserTweaks) -> Self {
         Self {
-            applied: RefCell::new(initial.clone()), current: RefCell::new(initial),
-            busy: Cell::new(false), content: glib::WeakRef::new(),
+            applied: RefCell::new(initial.clone()),
+            current: RefCell::new(initial),
+            busy: Cell::new(false),
+            content: glib::WeakRef::new(),
             apply_button: RefCell::new(glib::WeakRef::new()),
             reset_button: RefCell::new(glib::WeakRef::new()),
-            dropdowns: RefCell::new(Vec::new()), preview: RefCell::new(None),
+            dropdowns: RefCell::new(Vec::new()),
+            preview: RefCell::new(None),
             preview_busy: Cell::new(false),
         }
     }
-    fn borrow(&self) -> std::cell::Ref<'_, UserTweaks> { self.current.borrow() }
-    fn borrow_mut(&self) -> std::cell::RefMut<'_, UserTweaks> { self.current.borrow_mut() }
-    fn register(&self, dropdown: &gtk::DropDown) { self.dropdowns.borrow_mut().push(dropdown.downgrade()); }
+    fn borrow(&self) -> std::cell::Ref<'_, UserTweaks> {
+        self.current.borrow()
+    }
+    fn borrow_mut(&self) -> std::cell::RefMut<'_, UserTweaks> {
+        self.current.borrow_mut()
+    }
+    fn register(&self, dropdown: &gtk::DropDown) {
+        self.dropdowns.borrow_mut().push(dropdown.downgrade());
+    }
     fn reset_controls(&self) {
-        for dropdown in self.dropdowns.borrow().iter().filter_map(glib::WeakRef::upgrade) {
+        for dropdown in self
+            .dropdowns
+            .borrow()
+            .iter()
+            .filter_map(glib::WeakRef::upgrade)
+        {
             dropdown.set_selected(0);
         }
     }
@@ -252,7 +266,9 @@ fn refresh_banner(banner: &adw::Banner, selection: &Rc<TuningSelection>) {
     };
     banner.set_title(&title);
     banner.set_revealed(dirty || modified || busy);
-    if let Some(button) = selection.apply_button.borrow().upgrade() { button.set_sensitive(dirty && !busy); }
+    if let Some(button) = selection.apply_button.borrow().upgrade() {
+        button.set_sensitive(dirty && !busy);
+    }
     if let Some(button) = selection.reset_button.borrow().upgrade() {
         button.set_sensitive((modified || selection.applied.borrow().is_modified()) && !busy);
     }
@@ -457,10 +473,15 @@ fn quantum_card(selection: &Rc<TuningSelection>, banner: &adw::Banner) -> Didact
     let weak_selection = Rc::downgrade(selection);
     let weak_button = listen.downgrade();
     glib::timeout_add_local(std::time::Duration::from_millis(500), move || {
-        let (Some(selection), Some(button)) = (weak_selection.upgrade(), weak_button.upgrade()) else {
+        let (Some(selection), Some(button)) = (weak_selection.upgrade(), weak_button.upgrade())
+        else {
             return glib::ControlFlow::Break;
         };
-        let expired = selection.preview.borrow_mut().as_mut().is_some_and(|preview| !preview.is_alive());
+        let expired = selection
+            .preview
+            .borrow_mut()
+            .as_mut()
+            .is_some_and(|preview| !preview.is_alive());
         if expired {
             selection.preview.borrow_mut().take();
             button.set_label(&i18n("Try for 15 seconds"));

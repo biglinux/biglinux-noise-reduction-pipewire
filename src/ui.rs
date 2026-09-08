@@ -339,10 +339,7 @@ mod tests {
                 ..UserTweaks::default()
             },
         );
-        assert_eq!(
-            banner.title().as_str(),
-            "Your audio settings are active."
-        );
+        assert_eq!(banner.title().as_str(), "Your audio settings are active.");
         assert!(banner.is_revealed());
     }
 

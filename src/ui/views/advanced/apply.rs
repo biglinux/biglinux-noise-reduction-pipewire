@@ -24,13 +24,17 @@ pub(super) fn apply_clicked(
     selection: &Rc<TuningSelection>,
     banner: &adw::Banner,
 ) {
-    if selection.busy.replace(true) { return; }
+    if selection.busy.replace(true) {
+        return;
+    }
     let expected = selection.applied.borrow().clone();
     let tweaks = selection.borrow().clone();
     let applied = tweaks.clone();
     let preview = selection.preview.borrow_mut().take();
     let old_label = button.label();
-    if let Some(content) = selection.content.upgrade() { content.set_sensitive(false); }
+    if let Some(content) = selection.content.upgrade() {
+        content.set_sensitive(false);
+    }
 
     button.set_sensitive(false);
     button.set_label(&i18n("Restarting audio…"));
@@ -67,8 +71,12 @@ pub(super) fn apply_clicked(
         .unwrap_or_else(|_| ApplyOutcome::RestartFailed("worker thread panicked".to_owned()));
 
         selection.busy.set(false);
-        if matches!(outcome, ApplyOutcome::Ok) { *selection.applied.borrow_mut() = applied; }
-        if let Some(content) = selection.content.upgrade() { content.set_sensitive(true); }
+        if matches!(outcome, ApplyOutcome::Ok) {
+            *selection.applied.borrow_mut() = applied;
+        }
+        if let Some(content) = selection.content.upgrade() {
+            content.set_sensitive(true);
+        }
         let Some(button) = button_weak.upgrade() else {
             return;
         };
