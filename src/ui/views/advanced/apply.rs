@@ -23,6 +23,7 @@ enum ApplyStatus {
 
 struct ApplyOutcome {
     persisted: Option<TuningRevision>,
+    preview_restored: Option<bool>,
     status: ApplyStatus,
 }
 
@@ -31,13 +32,18 @@ pub(super) fn apply_clicked(
     selection: &Rc<TuningSelection>,
     banner: &adw::Banner,
 ) {
-    if selection.busy.replace(true) {
+    if selection.preview_busy.get() || selection.busy.replace(true) {
         return;
     }
     let expected = selection.persisted.borrow().clone();
     let tweaks = selection.borrow().clone();
     let applied = tweaks.clone();
     let preview = selection.preview.borrow_mut().take();
+    let had_preview = preview.is_some();
+    if had_preview {
+        *selection.preview_feedback.borrow_mut() =
+            Some(i18n("Restoring the previous audio buffer…"));
+    }
     let old_label = button.label();
     if let Some(content) = selection.content.upgrade() {
         content.set_sensitive(false);
@@ -60,6 +66,7 @@ pub(super) fn apply_clicked(
             {
                 return ApplyOutcome {
                     persisted: None,
+                    preview_restored: Some(false),
                     status: ApplyStatus::RestartFailed(error.to_string()),
                 };
             }
@@ -68,6 +75,7 @@ pub(super) fn apply_clicked(
                 Err(error) => {
                     return ApplyOutcome {
                         persisted: None,
+                        preview_restored: had_preview.then_some(true),
                         status: ApplyStatus::WriteFailed(error.to_string()),
                     };
                 }
@@ -77,6 +85,7 @@ pub(super) fn apply_clicked(
                 Err(failure) => {
                     return ApplyOutcome {
                         persisted: failure.persisted,
+                        preview_restored: had_preview.then_some(true),
                         status: ApplyStatus::WriteFailed(failure.error.to_string()),
                     };
                 }
@@ -87,16 +96,27 @@ pub(super) fn apply_clicked(
             };
             ApplyOutcome {
                 persisted: Some(persisted),
+                preview_restored: had_preview.then_some(true),
                 status,
             }
         })
         .await
         .unwrap_or_else(|_| ApplyOutcome {
             persisted: None,
+            preview_restored: had_preview.then_some(false),
             status: ApplyStatus::RestartFailed("worker thread panicked".into()),
         });
 
         selection.busy.set(false);
+        if let Some(restored) = outcome.preview_restored {
+            *selection.preview_feedback.borrow_mut() = Some(if restored {
+                i18n("Preview finished.")
+            } else {
+                i18n(
+                    "The audio preview could not be started or restored. Check the audio connection and try again.",
+                )
+            });
+        }
         if let Some(persisted) = outcome.persisted {
             *selection.persisted.borrow_mut() = persisted;
             selection.restart_pending.set(true);

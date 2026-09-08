@@ -14,6 +14,10 @@ use big_os_kit::subprocess::{BigSubprocessChild, BigSubprocessOutputMode, BigSub
 use serde_json::Value;
 
 const LIFETIME: Duration = Duration::from_secs(15);
+// Three attempts have at most three two-second commands each, plus backoff.
+// The parent must not kill the child before that restoration budget expires.
+const CLEANUP_TIMEOUT: Duration = Duration::from_secs(25);
+const RESTORE_ATTEMPTS: usize = 3;
 const VALUES: &[u32] = &[0, 256, 512, 1024, 2048, 4096];
 
 pub struct QuantumPreview {
@@ -69,10 +73,18 @@ impl QuantumPreview {
         Ok(preview)
     }
 
-    pub fn is_alive(&mut self) -> bool {
-        self.child
-            .as_mut()
-            .is_some_and(|child| matches!(child.try_wait(), Ok(None)))
+    /// Nonblocking completion with the restoration status intact.
+    pub fn completion(&mut self) -> Option<io::Result<()>> {
+        let child = self.child.as_mut()?;
+        match child.try_wait() {
+            Ok(None) => None,
+            Ok(Some(status)) => {
+                self.child.take();
+                self.cancellation.take();
+                Some(completion_status(status.success()))
+            }
+            Err(error) => Some(Err(io::Error::other(error))),
+        }
     }
 
     /// Cancel and reap on a worker. The child restores the previous override.
@@ -101,13 +113,9 @@ fn finish_child(mut child: BigSubprocessChild) -> io::Result<()> {
     let started = Instant::now();
     loop {
         if let Some(status) = child.try_wait().map_err(io::Error::other)? {
-            return if status.success() {
-                Ok(())
-            } else {
-                Err(io::Error::other("preview restoration failed"))
-            };
+            return completion_status(status.success());
         }
-        if started.elapsed() >= Duration::from_secs(6) {
+        if started.elapsed() >= CLEANUP_TIMEOUT {
             let _ = child.kill();
             let _ = child.wait();
             return Err(io::Error::new(
@@ -131,21 +139,19 @@ pub fn run_child(argument: Option<String>) -> ExitCode {
         let lock_path = crate::config::settings_file().with_file_name("quantum-preview.lock");
         let _guard = crate::config::storage::SettingsLock::at(&lock_path, Duration::ZERO)?;
         let previous = current_quantum()?;
-        set_quantum(frames)?;
+        if let Err(error) = set_quantum(frames) {
+            // A timed-out command may already have changed metadata.
+            // Restore only after confirming the value is still ours.
+            let restored = restore_override(previous, frames);
+            return restored.and(Err(error));
+        }
         let waiting = (|| -> io::Result<()> {
             println!("READY");
             io::stdout().flush()?;
             poll_readable(io::stdin().as_raw_fd(), LIFETIME)?;
             Ok(())
         })();
-        // Do not erase an explicit override set by another application while
-        // the user was listening. There is no compare-and-set in this API.
-        let restored = if current_quantum()? == frames {
-            set_quantum(previous)
-        } else {
-            Ok(())
-        };
-        restored.and(waiting)
+        restore_override(previous, frames).and(waiting)
     })();
     match result {
         Ok(()) => ExitCode::SUCCESS,
@@ -154,6 +160,56 @@ pub fn run_child(argument: Option<String>) -> ExitCode {
             ExitCode::FAILURE
         }
     }
+}
+
+fn completion_status(success: bool) -> io::Result<()> {
+    if success {
+        Ok(())
+    } else {
+        Err(io::Error::other("preview restoration failed"))
+    }
+}
+
+fn restore_override(previous: u32, temporary: u32) -> io::Result<()> {
+    restore_with(
+        previous,
+        temporary,
+        current_quantum,
+        set_quantum,
+        std::thread::sleep,
+    )
+}
+
+/// Retrying a read or write does not grant ownership over another app's
+/// override. Every write is preceded by a fresh comparison, and verified.
+fn restore_with(
+    previous: u32,
+    temporary: u32,
+    mut read: impl FnMut() -> io::Result<u32>,
+    mut write: impl FnMut(u32) -> io::Result<()>,
+    mut pause: impl FnMut(Duration),
+) -> io::Result<()> {
+    let mut failure = io::Error::other("preview restoration was not confirmed");
+    for attempt in 0..RESTORE_ATTEMPTS {
+        let result = (|| {
+            if read()? != temporary {
+                return Ok(());
+            }
+            write(previous)?;
+            if read()? == temporary && previous != temporary {
+                return Err(io::Error::other("temporary audio buffer is still active"));
+            }
+            Ok(())
+        })();
+        match result {
+            Ok(()) => return Ok(()),
+            Err(error) => failure = error,
+        }
+        if attempt + 1 < RESTORE_ATTEMPTS {
+            pause(Duration::from_millis(150));
+        }
+    }
+    Err(failure)
 }
 
 fn poll_readable(fd: std::os::fd::RawFd, timeout: Duration) -> io::Result<bool> {
@@ -255,5 +311,101 @@ mod tests {
     fn previous_explicit_override_is_preserved() {
         let graph = serde_json::json!([{"type":"PipeWire:Interface:Metadata", "props":{"metadata.name":"settings"}, "metadata":[{"key":"clock.force-quantum","value":"512"}]}]);
         assert_eq!(quantum_from_graph(graph.as_array().unwrap()), Some(512));
+    }
+}
+
+#[cfg(test)]
+mod restoration_tests {
+    use super::*;
+    use std::cell::Cell;
+
+    #[test]
+    fn transient_read_failure_does_not_abandon_the_override() {
+        let value = Cell::new(256);
+        let reads = Cell::new(0);
+        restore_with(
+            1024,
+            256,
+            || {
+                reads.set(reads.get() + 1);
+                if reads.get() == 1 {
+                    Err(io::Error::other("temporarily unavailable"))
+                } else {
+                    Ok(value.get())
+                }
+            },
+            |v| {
+                value.set(v);
+                Ok(())
+            },
+            |_| {},
+        )
+        .unwrap();
+        assert_eq!(value.get(), 1024);
+    }
+
+    #[test]
+    fn another_app_override_is_never_replaced_during_retry() {
+        let reads = Cell::new(0);
+        restore_with(
+            1024,
+            256,
+            || {
+                reads.set(reads.get() + 1);
+                if reads.get() == 1 {
+                    Err(io::Error::other("busy"))
+                } else {
+                    Ok(512)
+                }
+            },
+            |_| panic!("external override must be preserved"),
+            |_| {},
+        )
+        .unwrap();
+    }
+
+    #[test]
+    fn failed_write_is_retried_and_read_back() {
+        let value = Cell::new(256);
+        let writes = Cell::new(0);
+        restore_with(
+            1024,
+            256,
+            || Ok(value.get()),
+            |v| {
+                writes.set(writes.get() + 1);
+                if writes.get() == 1 {
+                    Err(io::Error::other("temporary write failure"))
+                } else {
+                    value.set(v);
+                    Ok(())
+                }
+            },
+            |_| {},
+        )
+        .unwrap();
+        assert_eq!(writes.get(), 2);
+        assert_eq!(value.get(), 1024);
+    }
+
+    #[test]
+    fn persistent_failure_is_bounded_and_remains_an_error() {
+        let reads = Cell::new(0);
+        assert!(
+            restore_with(
+                1024,
+                256,
+                || {
+                    reads.set(reads.get() + 1);
+                    Err(io::Error::other("unavailable"))
+                },
+                |_| Ok(()),
+                |_| {}
+            )
+            .is_err()
+        );
+        assert_eq!(reads.get(), RESTORE_ATTEMPTS);
+        assert!(completion_status(false).is_err());
+        assert!(completion_status(true).is_ok());
     }
 }

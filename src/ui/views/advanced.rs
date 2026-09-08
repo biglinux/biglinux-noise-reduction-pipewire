@@ -60,6 +60,7 @@ pub(super) struct TuningSelection {
     dropdowns: RefCell<Vec<glib::WeakRef<gtk::DropDown>>>,
     preview: RefCell<Option<crate::services::preview::QuantumPreview>>,
     preview_busy: Cell<bool>,
+    preview_feedback: RefCell<Option<String>>,
 }
 
 impl TuningSelection {
@@ -76,6 +77,7 @@ impl TuningSelection {
             dropdowns: RefCell::new(Vec::new()),
             preview: RefCell::new(None),
             preview_busy: Cell::new(false),
+            preview_feedback: RefCell::new(None),
         }
     }
     fn borrow(&self) -> std::cell::Ref<'_, UserTweaks> {
@@ -272,7 +274,7 @@ fn refresh_banner(banner: &adw::Banner, selection: &Rc<TuningSelection>) {
     let dirty =
         *selection.borrow() != *selection.applied.borrow() || selection.restart_pending.get();
     let modified = selection.borrow().is_modified();
-    let busy = selection.busy.get();
+    let busy = selection.busy.get() || selection.preview_busy.get();
     let title = if busy {
         i18n("Applying audio settings…")
     } else if selection.restart_pending.get() {
@@ -456,14 +458,26 @@ fn quantum_card(selection: &Rc<TuningSelection>, banner: &adw::Banner) -> Didact
         .halign(gtk::Align::Start)
         .build();
     listen.set_tooltip_text(Some(&i18n("Temporarily changes the audio buffer for all applications. Stop the preview to return to the previous value.")));
+    let feedback = gtk::Label::builder()
+        .xalign(0.0)
+        .wrap(true)
+        .visible(false)
+        .build();
     {
         let selection = Rc::clone(selection);
+        let banner = banner.clone();
         listen.connect_clicked(move |button| {
-            if selection.preview_busy.replace(true) { return; }
+            if selection.busy.get() || selection.preview_busy.replace(true) { return; }
+            refresh_banner(&banner, &selection);
             let previous = selection.preview.borrow_mut().take();
+            let stopping = previous.is_some();
             let frames = selection.borrow().quantum.unwrap_or(0);
+            *selection.preview_feedback.borrow_mut() = Some(if stopping {
+                i18n("Restoring the previous audio buffer…")
+            } else { i18n("Starting the audio preview…") });
             button.set_sensitive(false);
             let weak_button = button.downgrade();
+            let weak_banner = banner.downgrade();
             let selection = Rc::clone(&selection);
             glib::spawn_future_local(async move {
                 let result = gio::spawn_blocking(move || {
@@ -478,37 +492,71 @@ fn quantum_card(selection: &Rc<TuningSelection>, banner: &adw::Banner) -> Didact
                 button.set_sensitive(true);
                 match result {
                     Ok(preview) => {
-                        button.set_label(&if preview.is_some() { i18n("Stop preview") } else { i18n("Try for 15 seconds") });
+                        *selection.preview_feedback.borrow_mut() = Some(if preview.is_some() {
+                            i18n("Preview active. The previous buffer will be restored automatically.")
+                        } else { i18n("Preview finished.") });
                         *selection.preview.borrow_mut() = preview;
                     }
                     Err(error) => {
                         log::warn!("buffer preview: {error}");
-                        button.set_label(&i18n("Try preview again"));
-                        button.set_tooltip_text(Some(&i18n("The audio preview could not be started or restored. Check the audio connection and try again.")));
+                        *selection.preview_feedback.borrow_mut() = Some(i18n(
+                            "The audio preview could not be started or restored. Check the audio connection and try again."));
                     }
+                }
+                if let Some(banner) = weak_banner.upgrade() {
+                    refresh_banner(&banner, &selection);
                 }
             });
         });
     }
     let weak_selection = Rc::downgrade(selection);
     let weak_button = listen.downgrade();
+    let weak_feedback = feedback.downgrade();
+    let weak_dropdown = dropdown.downgrade();
     glib::timeout_add_local(std::time::Duration::from_millis(500), move || {
-        let (Some(selection), Some(button)) = (weak_selection.upgrade(), weak_button.upgrade())
-        else {
+        let (Some(selection), Some(button), Some(feedback)) = (
+            weak_selection.upgrade(),
+            weak_button.upgrade(),
+            weak_feedback.upgrade(),
+        ) else {
             return glib::ControlFlow::Break;
         };
-        let expired = selection
+        let completed = selection
             .preview
             .borrow_mut()
             .as_mut()
-            .is_some_and(|preview| !preview.is_alive());
-        if expired {
+            .and_then(|preview| preview.completion());
+        if let Some(result) = completed {
             selection.preview.borrow_mut().take();
-            button.set_label(&i18n("Try for 15 seconds"));
+            *selection.preview_feedback.borrow_mut() = Some(match result {
+                Ok(()) => i18n("Preview finished."),
+                Err(error) => {
+                    log::warn!("preview restoration: {error}");
+                    i18n(
+                        "The audio preview could not be started or restored. Check the audio connection and try again.",
+                    )
+                }
+            });
+        }
+        let active = selection.preview.borrow().is_some();
+        let busy = selection.preview_busy.get() || selection.busy.get();
+        button.set_sensitive(!busy);
+        button.set_label(&if active {
+            i18n("Stop preview")
+        } else {
+            i18n("Try for 15 seconds")
+        });
+        if let Some(dropdown) = weak_dropdown.upgrade() {
+            dropdown.set_sensitive(!active && !busy);
+        }
+        if let Some(message) = selection.preview_feedback.borrow().as_ref() {
+            feedback.set_text(message);
+            feedback.set_visible(true);
         }
         glib::ControlFlow::Continue
     });
     card.add_row(&listen);
+    card.add_row(&feedback);
     card
 }
 
