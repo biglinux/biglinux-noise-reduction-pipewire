@@ -1,5 +1,5 @@
 name: Review workbench
-# Temporary, branch-scoped tooling; not part of the application PR.
+# Temporary branch-scoped tooling, never part of the application PR.
 on:
   push:
     branches: [fix/review-audio-reliability-20260908]
@@ -34,7 +34,7 @@ jobs:
           components: rustfmt
       - run: sudo apt-get update -qq && sudo apt-get install -y -qq gettext python3-polib
       - run: cargo install xtr --version 0.1.11 --locked
-      - name: Verify exact base, replay topic commits and publish a fast-forward
+      - name: Verify base and tree, then publish topic commits
         id: publish
         working-directory: project
         shell: bash
@@ -51,10 +51,16 @@ jobs:
           assert re.fullmatch(r'batch-[0-9]+\.b64', request['patch'])
           assert run('git', 'rev-parse', 'HEAD') == request['base'], 'PR branch moved; refusing stale patches'
           payload = Path('../workbench/.github/review/followup', request['patch']).read_text()
+          # Text transport corrections are explicit and checked against both
+          # the compressed payload and the expected uncompressed patch hash.
+          for correction in request.get('transport_corrections', []):
+              at, old, new = correction
+              assert len(old) == len(new) == 1 and payload[at] == old
+              payload = payload[:at] + new + payload[at+1:]
           patch = gzip.decompress(base64.b64decode(payload, validate=False))
           assert hashlib.sha256(patch).hexdigest() == request['sha256'], 'Patch checksum mismatch'
           subprocess.run(['git', 'am', '--keep-cr'], input=patch, check=True)
-          assert run('git', 'rev-parse', 'HEAD^{tree}') == request['tree'], 'Replayed tree differs from offline source'
+          assert run('git', 'rev-parse', 'HEAD^{tree}') == request['tree'], 'Replayed source tree mismatch'
           PY
           cargo fmt --all --check
           git diff --check
@@ -125,7 +131,7 @@ jobs:
         run: |
           set -o pipefail
           cargo test --no-default-features --locked -- --test-threads=1 2>&1 | tee /tmp/system-allocator.log
-      - name: Source and diagnostic evidence for this exact checkout
+      - name: Source and diagnostic evidence
         if: always()
         shell: bash
         run: |
