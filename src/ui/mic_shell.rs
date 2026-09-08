@@ -614,7 +614,9 @@ impl Component for MicShell {
                     return;
                 }
                 if std::mem::take(&mut self.settings_reload_pending) && !self.is_closing {
-                    let _ = sender.input_sender().send(MicInput::ExternalSettingsChanged);
+                    let _ = sender
+                        .input_sender()
+                        .send(MicInput::ExternalSettingsChanged);
                 }
 
                 if self.is_closing {

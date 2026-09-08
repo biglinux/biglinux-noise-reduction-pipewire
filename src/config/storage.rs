@@ -20,7 +20,10 @@ pub struct SettingsLock {
 
 impl SettingsLock {
     pub fn acquire() -> io::Result<Self> {
-        Self::at(&super::settings_file().with_extension("lock"), Duration::from_secs(5))
+        Self::at(
+            &super::settings_file().with_extension("lock"),
+            Duration::from_secs(5),
+        )
     }
 
     pub fn at(path: &Path, timeout: Duration) -> io::Result<Self> {
@@ -46,8 +49,10 @@ impl SettingsLock {
                     std::thread::sleep(Duration::from_millis(10));
                 }
                 Err(TryLockError::WouldBlock) => {
-                    return Err(io::Error::new(io::ErrorKind::WouldBlock,
-                        "Another settings change is still being applied. Try again."));
+                    return Err(io::Error::new(
+                        io::ErrorKind::WouldBlock,
+                        "Another settings change is still being applied. Try again.",
+                    ));
                 }
                 Err(TryLockError::Error(error)) => return Err(error),
             }
@@ -57,7 +62,11 @@ impl SettingsLock {
 
 /// Merge only fields changed since `baseline`. A conflict on the same field
 /// is an error, not permission to silently overwrite another process's edit.
-pub fn merge(baseline: &AppSettings, desired: &AppSettings, latest: &AppSettings) -> io::Result<AppSettings> {
+pub fn merge(
+    baseline: &AppSettings,
+    desired: &AppSettings,
+    latest: &AppSettings,
+) -> io::Result<AppSettings> {
     let base = serde_json::to_value(baseline).map_err(io::Error::other)?;
     let local = serde_json::to_value(desired).map_err(io::Error::other)?;
     let remote = serde_json::to_value(latest).map_err(io::Error::other)?;
@@ -72,24 +81,41 @@ fn merge_value(base: &Value, local: &Value, remote: &Value, path: &str) -> io::R
     if remote == base || remote == local {
         return Ok(local.clone());
     }
-    if let (Some(base), Some(local), Some(remote)) = (base.as_object(), local.as_object(), remote.as_object()) {
+    if let (Some(base), Some(local), Some(remote)) =
+        (base.as_object(), local.as_object(), remote.as_object())
+    {
         let mut merged = remote.clone();
         for (key, value) in local {
             let old = base.get(key).unwrap_or(&Value::Null);
             let current = remote.get(key).unwrap_or(&Value::Null);
-            merged.insert(key.clone(), merge_value(old, value, current, &format!("{path}.{key}"))?);
+            merged.insert(
+                key.clone(),
+                merge_value(old, value, current, &format!("{path}.{key}"))?,
+            );
         }
         return Ok(Value::Object(merged));
     }
-    Err(io::Error::new(io::ErrorKind::WouldBlock,
-        format!("{path} changed in another application. Reload the settings before trying again.")))
+    Err(io::Error::new(
+        io::ErrorKind::WouldBlock,
+        format!("{path} changed in another application. Reload the settings before trying again."),
+    ))
 }
 
 /// Incorporate settled worker values while keeping edits made after dispatch.
 /// Unlike a disk conflict, a newer edit in this same UI has a known ordering.
-pub fn rebase_local(submitted: &AppSettings, current: &AppSettings, settled: &AppSettings) -> AppSettings {
-    let values = (serde_json::to_value(submitted), serde_json::to_value(current), serde_json::to_value(settled));
-    let (Ok(base), Ok(local), Ok(remote)) = values else { return current.clone(); };
+pub fn rebase_local(
+    submitted: &AppSettings,
+    current: &AppSettings,
+    settled: &AppSettings,
+) -> AppSettings {
+    let values = (
+        serde_json::to_value(submitted),
+        serde_json::to_value(current),
+        serde_json::to_value(settled),
+    );
+    let (Ok(base), Ok(local), Ok(remote)) = values else {
+        return current.clone();
+    };
     serde_json::from_value(rebase_value(&base, &local, &remote)).unwrap_or_else(|_| current.clone())
 }
 
@@ -97,10 +123,19 @@ fn rebase_value(base: &Value, local: &Value, remote: &Value) -> Value {
     if local == base {
         return remote.clone();
     }
-    if let (Some(base), Some(local), Some(remote)) = (base.as_object(), local.as_object(), remote.as_object()) {
+    if let (Some(base), Some(local), Some(remote)) =
+        (base.as_object(), local.as_object(), remote.as_object())
+    {
         let mut result = remote.clone();
         for (key, value) in local {
-            result.insert(key.clone(), rebase_value(base.get(key).unwrap_or(&Value::Null), value, remote.get(key).unwrap_or(&Value::Null)));
+            result.insert(
+                key.clone(),
+                rebase_value(
+                    base.get(key).unwrap_or(&Value::Null),
+                    value,
+                    remote.get(key).unwrap_or(&Value::Null),
+                ),
+            );
         }
         Value::Object(result)
     } else {
@@ -110,7 +145,10 @@ fn rebase_value(base: &Value, local: &Value, remote: &Value) -> Value {
 
 /// Keep unrecognized extension fields when saving a supported configuration.
 /// A corrupt file is never replaced with defaults implicitly.
-pub(super) fn serialized_preserving_unknown(settings: &AppSettings, path: &Path) -> io::Result<Vec<u8>> {
+pub(super) fn serialized_preserving_unknown(
+    settings: &AppSettings,
+    path: &Path,
+) -> io::Result<Vec<u8>> {
     let known = serde_json::to_value(settings).map_err(io::Error::other)?;
     let mut stored = match std::fs::read(path) {
         Ok(bytes) => serde_json::from_slice::<Value>(&bytes)
@@ -119,7 +157,10 @@ pub(super) fn serialized_preserving_unknown(settings: &AppSettings, path: &Path)
         Err(error) => return Err(error),
     };
     if !stored.is_object() {
-        return Err(io::Error::new(io::ErrorKind::InvalidData, "settings must be a JSON object"));
+        return Err(io::Error::new(
+            io::ErrorKind::InvalidData,
+            "settings must be a JSON object",
+        ));
     }
     overlay(&mut stored, &known);
     let mut bytes = serde_json::to_vec_pretty(&stored).map_err(io::Error::other)?;
@@ -161,7 +202,10 @@ mod tests {
         let mut cli = base.clone();
         ui.noise_reduction.strength = 0.25;
         cli.noise_reduction.strength = 0.75;
-        assert_eq!(merge(&base, &ui, &cli).unwrap_err().kind(), io::ErrorKind::WouldBlock);
+        assert_eq!(
+            merge(&base, &ui, &cli).unwrap_err().kind(),
+            io::ErrorKind::WouldBlock
+        );
         assert_eq!(merge(&base, &ui, &ui).unwrap(), ui);
     }
 
@@ -192,7 +236,11 @@ mod tests {
     fn saving_preserves_extension_fields_and_refuses_corrupt_input() {
         let dir = tempfile::tempdir().unwrap();
         let path = dir.path().join("settings.json");
-        std::fs::write(&path, br#"{"extension":{"value":42},"noise_reduction":{"future":true}}"#).unwrap();
+        std::fs::write(
+            &path,
+            br#"{"extension":{"value":42},"noise_reduction":{"future":true}}"#,
+        )
+        .unwrap();
         let bytes = serialized_preserving_unknown(&AppSettings::default(), &path).unwrap();
         let value: Value = serde_json::from_slice(&bytes).unwrap();
         assert_eq!(value["extension"]["value"], 42);

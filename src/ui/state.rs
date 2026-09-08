@@ -273,7 +273,10 @@ impl AppState {
         if *self.settings.borrow() == new {
             return false;
         }
-        let baseline = self.last_persisted.borrow().clone()
+        let baseline = self
+            .last_persisted
+            .borrow()
+            .clone()
             .unwrap_or_else(|| self.settings.borrow().clone());
         match crate::config::storage::merge(&baseline, &self.settings.borrow(), &new) {
             Ok(merged) => {
@@ -300,7 +303,11 @@ impl AppState {
         ApplyWork {
             request,
             previous: prev,
-            baseline: self.last_persisted.borrow().clone().unwrap_or_else(|| snapshot.clone()),
+            baseline: self
+                .last_persisted
+                .borrow()
+                .clone()
+                .unwrap_or_else(|| snapshot.clone()),
             snapshot,
             loopback: self.loopback.borrow_mut().take(),
         }
@@ -336,7 +343,10 @@ impl AppState {
         if outcome.was_persisted {
             if let Some(local) = &local_snapshot {
                 let rebased = crate::config::storage::rebase_local(
-                    &local.snapshot, &self.settings.borrow(), &outcome.snapshot);
+                    &local.snapshot,
+                    &self.settings.borrow(),
+                    &outcome.snapshot,
+                );
                 *self.settings.borrow_mut() = rebased;
             }
             *self.last_persisted.borrow_mut() = Some(outcome.snapshot.clone());
@@ -362,20 +372,21 @@ fn run_apply(
     mut snapshot: AppSettings,
     loopback_in: Option<Loopback>,
 ) -> ApplyOutcome {
-    let transaction = crate::config::storage::SettingsLock::acquire()
-        .and_then(|guard| {
-            let latest = AppSettings::load_strict()?;
-            let merged = crate::config::storage::merge(&baseline, &snapshot, &latest)?;
-            Ok((guard, merged))
-        });
+    let transaction = crate::config::storage::SettingsLock::acquire().and_then(|guard| {
+        let latest = AppSettings::load_strict()?;
+        let merged = crate::config::storage::merge(&baseline, &snapshot, &latest)?;
+        Ok((guard, merged))
+    });
     let (_settings_lock, merged) = match transaction {
         Ok(transaction) => transaction,
-        Err(error) => return ApplyOutcome {
-            snapshot,
-            loopback: loopback_in,
-            was_persisted: false,
-            status: ApplyStatus::Failed(error.to_string()),
-        },
+        Err(error) => {
+            return ApplyOutcome {
+                snapshot,
+                loopback: loopback_in,
+                was_persisted: false,
+                status: ApplyStatus::Failed(error.to_string()),
+            };
+        }
     };
     snapshot = merged;
     if prev.is_none() {

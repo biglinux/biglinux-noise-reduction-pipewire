@@ -81,12 +81,15 @@ impl AppSettings {
                 let value: serde_json::Value = serde_json::from_slice(&bytes)
                     .map_err(|error| io::Error::new(io::ErrorKind::InvalidData, error))?;
                 if !value.is_object() {
-                    return Err(io::Error::new(io::ErrorKind::InvalidData, "settings must be a JSON object"));
+                    return Err(io::Error::new(
+                        io::ErrorKind::InvalidData,
+                        "settings must be a JSON object",
+                    ));
                 }
                 // Validate the schema before using the compatibility loader.
                 // Old quality spelling is accepted by its serde alias.
-                serde_json::from_value::<Self>(value).map_err(|error|
-                    io::Error::new(io::ErrorKind::InvalidData, error))?;
+                serde_json::from_value::<Self>(value)
+                    .map_err(|error| io::Error::new(io::ErrorKind::InvalidData, error))?;
                 Ok(Self::load_from(&path))
             }
             Err(error) if error.kind() == io::ErrorKind::NotFound => Ok(Self::default()),
