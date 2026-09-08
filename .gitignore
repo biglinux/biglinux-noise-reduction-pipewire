@@ -3,7 +3,8 @@
 /fuzz/target/
 /fuzz/corpus/
 /fuzz/artifacts/
-/vendor/
+/vendor/*
+!/vendor/big-rust-components/
 **/*.rs.bk
 Cargo.lock.orig
 

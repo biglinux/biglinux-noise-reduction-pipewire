@@ -3,11 +3,10 @@
 //!
 //! WirePlumber's base-dirs lookup picks the user-local copy first, so
 //! anything in that path silently shadows the packaged AEC routing
-//! script. After a package update fixes the routing, the user keeps
-//! seeing the old behaviour until the override is removed — and the
-//! cause is invisible from the symptoms.
+//! script. Package routing changes remain shadowed until the override
+//! is removed, and the cause is invisible from the symptoms.
 //!
-//! On every app activation we check for the override and, if present,
+//! On application startup we check for the override and, if present,
 //! show this `AdwAlertDialog`. The user can:
 //!
 //! * **Remove override** — delete the file and prompt them to restart
@@ -15,43 +14,63 @@
 //!   active calls).
 //! * **Keep it** — leave the override in place. Picking this combined
 //!   with the "don't warn me again" checkbox stores
-//!   [`UiConfig::dismiss_wp_override_warning`] so the dialog stays
+//!   [`UiConfig::dismiss_wp_override_warning`](crate::config::UiConfig::dismiss_wp_override_warning)
+//!   so the dialog stays
 //!   silent on subsequent launches.
 //!
 //! The dialog is purely informational and never blocks audio toggles.
 
 use std::path::{Path, PathBuf};
-use std::rc::Rc;
 
+use crate::pipeline::remove_file_if_exists;
 use adw::prelude::*;
 use gtk::glib;
 
 use crate::diagnostics::user_local_wp_script_override;
+use crate::ui::app_kit_edges::dialogs;
 use crate::ui::i18n::i18n;
-use crate::ui::state::AppState;
 
 const RESPONSE_REMOVE: &str = "remove";
-// The cataloged `content_action_dialog` hard-codes the cancel/close response id
-// to "cancel"; "Keep" is that response here.
-const RESPONSE_KEEP: &str = "cancel";
+
+/// User decision emitted by the warning dialog to the Relm4 root.
+#[derive(Debug)]
+pub(in crate::ui) enum OverrideWarningDecision {
+    Keep { should_dismiss: bool },
+    Remove { path: PathBuf, should_dismiss: bool },
+}
+
+/// Result of removing the override on a worker thread.
+#[derive(Debug)]
+pub(in crate::ui) enum OverrideRemoval {
+    Removed,
+    AlreadyMissing,
+}
 
 /// Show the warning when a stale override exists and the user has not
 /// previously asked to silence it. No-op otherwise so app activation
 /// stays cheap.
-pub fn maybe_show(parent: &impl IsA<gtk::Widget>, state: Rc<AppState>) {
-    if state.settings().ui.dismiss_wp_override_warning {
+pub fn maybe_show(
+    parent: &impl IsA<gtk::Widget>,
+    should_suppress: bool,
+    emit: impl Fn(OverrideWarningDecision) + 'static,
+) {
+    if should_suppress {
         return;
     }
     let Some(override_path) = user_local_wp_script_override() else {
         return;
     };
-    show(parent, state, override_path);
+    show(parent, override_path, emit);
 }
 
-fn show(parent: &impl IsA<gtk::Widget>, state: Rc<AppState>, override_path: PathBuf) {
+fn show(
+    parent: &impl IsA<gtk::Widget>,
+    override_path: PathBuf,
+    emit: impl Fn(OverrideWarningDecision) + 'static,
+) {
     // Cataloged shared dialog (cancel = "Keep", destructive confirm = "Remove
     // override") instead of a hand-built `adw::AlertDialog`.
-    let (dialog, content) = big_app_kit::dialogs::content_action_dialog(
+    let (dialog, content) = dialogs::content_action_dialog(
         &i18n("WirePlumber configuration overridden"),
         &i18n("Keep"),
         RESPONSE_REMOVE,
@@ -73,65 +92,91 @@ fn show(parent: &impl IsA<gtk::Widget>, state: Rc<AppState>, override_path: Path
         .build();
     content.append(&dismiss_check);
 
-    let state_for_response = Rc::clone(&state);
     let path_for_response = override_path.clone();
     let dismiss_for_response = dismiss_check.clone();
     dialog.connect_response(None, move |_, response| {
-        let dismiss = dismiss_for_response.is_active();
-        handle_response(
-            response,
-            &path_for_response,
-            dismiss,
-            Rc::clone(&state_for_response),
-        );
+        let should_dismiss = dismiss_for_response.is_active();
+        let decision = if response == RESPONSE_REMOVE {
+            OverrideWarningDecision::Remove {
+                path: path_for_response.clone(),
+                should_dismiss,
+            }
+        } else {
+            OverrideWarningDecision::Keep { should_dismiss }
+        };
+        emit(decision);
     });
 
     dialog.present(Some(parent));
 }
 
-fn handle_response(response: &str, path: &Path, dismiss: bool, state: Rc<AppState>) {
-    match response {
-        RESPONSE_REMOVE => {
-            match std::fs::remove_file(path) {
-                Ok(()) => {
-                    log::info!(
-                        "ui: removed stale wireplumber override at {}",
-                        path.display()
-                    );
-                    notify_restart_needed();
-                }
-                Err(e) => {
-                    log::warn!(
-                        "ui: failed to remove wireplumber override at {}: {e}",
-                        path.display()
-                    );
-                }
-            }
-            // The override is gone — no point setting the dismiss flag,
-            // there is nothing left to warn about. Honour the checkbox
-            // anyway so a recurrence (e.g. a sync tool restoring the
-            // file) does not re-prompt against the user's wishes.
-            if dismiss {
-                persist_dismiss(&state);
-            }
-        }
-        RESPONSE_KEEP if dismiss => {
-            persist_dismiss(&state);
-        }
-        _ => {}
+pub(in crate::ui) fn remove_override(path: &Path) -> Result<OverrideRemoval, String> {
+    let existed = path.exists();
+    remove_file_if_exists(path).map_err(|error| error.to_string())?;
+    if existed {
+        Ok(OverrideRemoval::Removed)
+    } else {
+        Ok(OverrideRemoval::AlreadyMissing)
     }
 }
 
-fn persist_dismiss(state: &Rc<AppState>) {
-    state.mutate(|s| s.ui.dismiss_wp_override_warning = true);
+pub(in crate::ui) fn present_removal_result(
+    parent: &gtk::Widget,
+    path: &Path,
+    result: &Result<OverrideRemoval, String>,
+) {
+    match result {
+        Ok(OverrideRemoval::Removed) => {
+            log::info!(
+                "ui: removed stale wireplumber override at {}",
+                path.display()
+            );
+            notify_restart_needed(parent);
+        }
+        Ok(OverrideRemoval::AlreadyMissing) => {
+            log::warn!(
+                "ui: stale wireplumber override disappeared before removal at {}",
+                path.display()
+            );
+        }
+        Err(cause) => {
+            log::warn!(
+                "ui: failed to remove wireplumber override at {}: {cause}",
+                path.display()
+            );
+            notify_remove_failed(parent, cause);
+        }
+    }
 }
 
-fn notify_restart_needed() {
-    glib::MainContext::default().spawn_local(async {
-        log::info!(
-            "ui: stale wireplumber override removed — restart wireplumber for the fix to load"
-        );
-    });
+/// The screen contract requires the removal to *visibly* report that
+/// WirePlumber continues running the loaded script until restarted — a
+/// journal line is not a report. We deliberately do not restart
+/// WirePlumber ourselves: that would cut any active call.
+fn notify_restart_needed(parent: &gtk::Widget) {
+    log::info!("ui: stale wireplumber override removed — restart wireplumber for the fix to load");
+    dialogs::error_dialog(
+        &i18n("Override removed"),
+        &i18n(
+            "The packaged audio routing will be used after WirePlumber restarts. \
+             Log out and back in, or run \u{201c}systemctl --user restart wireplumber\u{201d}. \
+             Audio keeps working in the meantime with the old routing.",
+        ),
+        &i18n("OK"),
+    )
+    .present(Some(parent));
+}
+
+fn notify_remove_failed(parent: &gtk::Widget, cause: &str) {
+    dialogs::error_dialog(
+        &i18n("Could not remove the override"),
+        &format!(
+            "{cause}\n\n{}",
+            i18n("Remove the file manually, then restart WirePlumber.")
+        ),
+        &i18n("OK"),
+    )
+    .present(Some(parent));
 }
 
 fn format_body(path: &Path) -> String {

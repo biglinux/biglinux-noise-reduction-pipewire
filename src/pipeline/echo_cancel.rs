@@ -11,10 +11,8 @@
 //! `biglinux-microphone-aec.service`), the AEC module loads inside its
 //! own client process that connects to the main PipeWire daemon. The
 //! daemon drives every node, so AEC, mic, and output filter graphs all
-//! share one clock — the original cross-process drift that motivated
-//! co-locating modules in `filter-chain.service` is gone. Independent
-//! lifecycles win over one-process-saved: toggling AEC on/off no
-//! longer reloads the mic chain.
+//! share one clock. Independent loader lifecycles let AEC toggle on and
+//! off without reloading the mic chain.
 //!
 //! Topology:
 //!
@@ -45,41 +43,44 @@
 //! PipeWire's config stays generic, and WirePlumber follows microphone
 //! changes live without ever hard-coding `alsa_input.*` names.
 //!
-//! `node.latency = 1920/48000` (= 40 ms) gives WebRTC exactly four 10 ms
-//! frames per processing block. `libspa-aec-webrtc` rejects buffers
-//! that are not an integer multiple of 10 ms; using the mic chain's
-//! regular 1024-frame quantum here causes ERR counters on
-//! `echo-cancel-source` under load.
+//! [`AEC_NODE_LATENCY`] (= 20 ms) gives WebRTC exactly two 10 ms frames
+//! per processing block. `libspa-aec-webrtc` rejects buffers that are
+//! not an integer multiple of 10 ms; using a 1024-frame quantum here
+//! causes ERR counters on `echo-cancel-source` under load.
 //!
-//! 40 ms picked over the previous 20 ms because the AEC, mic and
-//! output filter chains all join the *same* PipeWire daemon and the
+//! The block size trades graph wakeup cost against call latency. The AEC,
+//! mic, and output filter chains all join the *same* PipeWire daemon, and the
 //! mic chain pins `node.lock-quantum = true`. With the AEC loaded,
 //! that lock pulls the **graph-wide** quantum down to whatever the
-//! AEC declares, so 20 ms forced every active node — including the
-//! always-on `output-biglinux` smart filter chain (mixer + HPF +
-//! GTCRN + gate + compressor + EQ) — to wake up at 50 Hz instead of
-//! the distro default's 24 Hz. With AEC off, the mic chain drops to
-//! the 1024-frame default and the output chain processes only when
-//! apps play. The CPU asymmetry users report ("turning on EC almost
-//! doubles audio CPU") is exactly that wakeup-rate change. Doubling
-//! the AEC block from 20 ms to 40 ms halves the wakeup count
-//! everywhere downstream and stays well inside WebRTC's adaptive
-//! filter convergence window — the canceller still operates on
-//! 10 ms sub-frames internally; only the dispatch cadence changes.
-//! 40 ms total round-trip latency is also imperceptible for voice
-//! and video calls (humans tolerate ~100-150 ms before noticing).
+//! AEC declares, so every active node — including the always-on
+//! `output-biglinux` smart filter chain (mixer + HPF + GTCRN + gate +
+//! compressor + EQ) — wakes up at the AEC's rate rather than the
+//! distro default's 24 Hz. With AEC off, the mic chain drops to the
+//! 1024-frame default and the output chain processes only when apps
+//! play. The CPU asymmetry users report ("turning on EC almost doubles
+//! audio CPU") is exactly that wakeup-rate change. A bigger block
+//! halves the wakeup count everywhere downstream, but it is also the
+//! delay every model waits out — and it costs that twice, which is why
+//! the constant settled at two frames instead of four. See
+//! [`AEC_NODE_LATENCY`] for the measured latency ladder.
 //!
 //! WebRTC AEC tunables:
 //!
 //! - `noise_suppression = false` — GTCRN is far better at this and runs
 //!   downstream.
-//! - `high_pass_filter = false` — our biquad HPF in the mic chain
-//!   already cuts rumble; doubling up would over-attenuate low voice.
-//! - `gain_control = true` — required for the AEC's adaptive filter to
-//!   converge on speech-level reference; with it off the canceller
-//!   passes the mic through unchanged (verified by recording raw mic
-//!   and `echo-cancel-source` simultaneously while a voice clip
-//!   played through the speakers).
+//! - `high_pass_filter = true` — the chain's own biquad HPF sits
+//!   *downstream* of the AEC, so it cannot clean what the adaptive
+//!   filter sees. WebRTC's internal HPF removes DC/rumble before
+//!   adaptation, which is what the canceller needs to converge on
+//!   consumer mics; the audible voice shaping still belongs to the
+//!   downstream biquad.
+//! - `gain_control = false` — measured A/B on PipeWire 1.6.6
+//!   (speech clip through speakers, raw mic vs `echo-cancel-source`
+//!   recorded simultaneously, internal HPF on in both runs): echo
+//!   attenuation was 10.5 dB with AGC off vs 1.5 dB with AGC on — the
+//!   AGC re-amplifies the residual echo after cancellation. The internal
+//!   HPF removes the DC/rumble that otherwise blocks convergence, so AGC
+//!   is unnecessary.
 //! - `voice_detection = true` — quality boost with no toggle benefit.
 //!
 //! `delay_agnostic` and `extended_filter` are accepted by older
@@ -87,20 +88,52 @@
 //! built against `libwebrtc-audio-processing-1` (PipeWire 1.6.x), so
 //! we drop them — `strings libspa-aec-webrtc.so | grep ^webrtc\.`
 //! lists the supported params on the running system.
-
-use crate::config::AppSettings;
+//!
+//! ## On-demand activation
+//!
+//! The module already defaults `node.passive = true` on its capture
+//! and (monitor-mode) sink streams and gives every stream one shared
+//! `node.link-group` — no passive props are needed here. But that
+//! link-group is a hazard: with the reference tap linked to the
+//! default sink's monitor, *any* playback drags the whole AEC group —
+//! including the physical microphone — into RUNNING even when no app
+//! records (verified on PipeWire 1.6.6: a suspended mic woke as soon
+//! as the linked monitor had traffic). The fix lives in the packaged
+//! WirePlumber hook (`echo-cancel-routing.lua`): an "AEC gate" keeps
+//! `echo-cancel-capture` and `echo-cancel-sink` unlinked until at
+//! least one real recording stream exists, and unlinks them again
+//! when the last one goes away. Unlinked streams pause, the module
+//! calls `spa_audio_aec_deactivate`, and the mic + APM idle at zero
+//! cost; a linking rescan re-opens the gate when recording starts.
 
 /// `node.name` of the virtual source created by the EC module.
 pub const EC_SOURCE_NAME: &str = "echo-cancel-source";
 /// Capture stream owned by the EC module. A WirePlumber Lua hook
 /// targets this stream to the selected physical source at runtime.
 pub const EC_CAPTURE_NODE_NAME: &str = "echo-cancel-capture";
-/// WebRTC AEC processes 10 ms frames. At 48 kHz, 1920 samples is four
-/// frames — chosen to halve the graph-wide wakeup rate that the
-/// `node.lock-quantum = true` flag on the mic chain otherwise
-/// imposes on every active node when AEC is loaded. See the
-/// module docstring for the cost analysis.
-pub(crate) const AEC_NODE_LATENCY: &str = "1920/48000";
+/// WebRTC AEC processes 10 ms frames. At 48 kHz, 960 samples is two of
+/// them, so the canceller still sees whole frames.
+///
+/// It was four frames, to halve the graph-wide wakeup rate that
+/// `node.lock-quantum = true` imposes on every active node. Measuring the
+/// microphone path end to end is what changed it: the block is not only a
+/// wakeup interval, it is also the delay every model waits out before it can
+/// start, and it costs that twice — once filling the block and once inside the
+/// plugin's own pipeline.
+///
+/// | block | plugin | whole path |
+/// | --- | --- | --- |
+/// | 480 | 30 ms | 40 ms |
+/// | 960 | 40 ms | 60 ms |
+/// | 1920 | 60 ms | 100 ms |
+///
+/// Forty milliseconds off a call is the difference people describe as talking
+/// over each other, and the models pay almost nothing for it: DPDFNet v2 goes
+/// from 0.7 % of its deadline to 1.1 %, GTCRN from 30 % to 39 %, and both were
+/// measured with the canceller loaded. Four hundred and eighty is better again
+/// and is left alone: 10 ms wakeups across every node on the graph is a cost
+/// the whole desktop pays, not just this chain.
+pub(crate) const AEC_NODE_LATENCY: &str = "960/48000";
 /// File name of the AEC args body, consumed by
 /// `biglinux-microphone-pwloader` (started by
 /// `biglinux-microphone-aec.service`). The unit is started before
@@ -109,21 +142,14 @@ pub(crate) const AEC_NODE_LATENCY: &str = "1920/48000";
 /// `target.object`.
 pub const ECHO_CANCEL_CONF_FILE: &str = "aec.args";
 
-/// True when the EC chain is wanted by the current settings. Centralised
-/// so `super::apply_to_dirs` and `super::mic` read the same flag.
-#[must_use]
-pub fn echo_cancel_wanted(settings: &AppSettings) -> bool {
-    settings.echo_cancel.enabled
-}
-
 /// Render the AEC `args` body for `libpipewire-module-echo-cancel`,
 /// consumed verbatim by `biglinux-microphone-pwloader`.
 ///
 /// The output is just the `{ … }` block — no `context.modules`
 /// wrapper, no comment header. The pwloader passes it straight to
 /// `pw_context_load_module(libpipewire-module-echo-cancel, …)`. The
-/// AEC module pins its own latency via `node.latency = {AEC_NODE_LATENCY}`
-/// (= 40 ms — four WebRTC frames), which is what `libspa-aec-webrtc`
+/// AEC module pins its own latency via [`AEC_NODE_LATENCY`]
+/// (= 20 ms — two WebRTC frames), which is what `libspa-aec-webrtc`
 /// requires regardless of the daemon's quantum.
 ///
 /// The capture stream intentionally has no static `target.object`: a
@@ -133,8 +159,7 @@ pub fn echo_cancel_wanted(settings: &AppSettings) -> bool {
 /// `monitor.mode = true`, tapping the monitor of the default sink
 /// without exposing an Audio/Sink to clients — apps continue to play
 /// to the real speaker.
-#[must_use]
-pub fn build_echo_cancel_conf(_settings: &AppSettings) -> String {
+pub(super) fn build_echo_cancel_conf() -> String {
     format!(
         "{{\n\
          \x20   library.name = aec/libspa-aec-webrtc\n\
@@ -154,9 +179,9 @@ pub fn build_echo_cancel_conf(_settings: &AppSettings) -> String {
          \x20       volume           = 1.0\n\
          \x20   }}\n\
          \x20   aec.args = {{\n\
-         \x20       webrtc.gain_control       = true\n\
+         \x20       webrtc.gain_control       = false\n\
          \x20       webrtc.noise_suppression  = false\n\
-         \x20       webrtc.high_pass_filter   = false\n\
+         \x20       webrtc.high_pass_filter   = true\n\
          \x20       webrtc.voice_detection    = true\n\
          \x20   }}\n\
          }}\n",
@@ -166,27 +191,6 @@ pub fn build_echo_cancel_conf(_settings: &AppSettings) -> String {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::config::EchoCancelConfig;
-
-    fn enabled() -> AppSettings {
-        AppSettings {
-            echo_cancel: EchoCancelConfig { enabled: true },
-            ..AppSettings::default()
-        }
-    }
-
-    #[test]
-    fn defaults_on() {
-        // EC defaults to enabled — covers the laptop-without-headphones
-        // happy path; users with headphones or isolated mics opt out via
-        // Advanced view.
-        assert!(echo_cancel_wanted(&AppSettings::default()));
-    }
-
-    #[test]
-    fn enabled_flag_is_honoured() {
-        assert!(echo_cancel_wanted(&enabled()));
-    }
 
     #[test]
     fn conf_is_a_bare_module_args_body() {
@@ -194,7 +198,7 @@ mod tests {
         // `pw_context_load_module(libpipewire-module-echo-cancel, …)`
         // — no `context.modules` wrapper, no comment header. The module
         // name itself comes from the systemd unit, not from the args.
-        let conf = build_echo_cancel_conf(&enabled());
+        let conf = build_echo_cancel_conf();
         assert!(conf.starts_with('{'));
         assert!(conf.trim_end().ends_with('}'));
         assert!(!conf.contains("context.modules"));
@@ -209,7 +213,7 @@ mod tests {
         // directly. Only the cleaned source node is visible to the rest
         // of the graph as Audio/Source. We deliberately leave sink.props
         // unset — the module's monitor.mode defaults are what works.
-        let conf = build_echo_cancel_conf(&enabled());
+        let conf = build_echo_cancel_conf();
         assert!(conf.contains(&format!("\"{EC_SOURCE_NAME}\"")));
         assert!(conf.contains("Audio/Source"));
         assert!(conf.contains("monitor.mode = true"));
@@ -225,15 +229,15 @@ mod tests {
 
     #[test]
     fn conf_uses_webrtc_frame_compatible_mono_format() {
-        // WebRTC AEC processes 10 ms frames. 1920/48000 is exactly four
-        // frames; 1024/48000 would make libspa-aec-webrtc return errors
+        // WebRTC AEC processes 10 ms frames. 960/48000 is exactly two of
+        // them; 1024/48000 would make libspa-aec-webrtc return errors
         // under load.
         //
-        // We pick four frames over two so the graph-wide quantum that
-        // the mic chain pins (`node.lock-quantum = true`) lands at
-        // 40 ms instead of 20 ms, halving wakeups for every active
-        // node — most importantly the always-on `output-biglinux`
-        // smart filter chain whose GTCRN node is permanently wired.
+        // Two frames rather than four, because the block is also the delay
+        // every model waits out, and it costs that twice: once filling the
+        // block and once inside the plugin. Measured end to end, the whole
+        // microphone path is 60 ms here against 100 ms at four frames, and
+        // the models pay under a percent of their deadline for it.
         //
         // `audio.channels = 1` + `audio.position = [ MONO ]` keep the
         // AEC mono. The mic is mono and `libspa-aec-webrtc` expects
@@ -242,8 +246,8 @@ mod tests {
         // PipeWire's audioconvert when WirePlumber links the stereo
         // sink monitor (FL+FR) to this mono input — both channels
         // reach the canceller, just averaged.
-        let conf = build_echo_cancel_conf(&enabled());
-        assert!(conf.contains("node.latency = 1920/48000"));
+        let conf = build_echo_cancel_conf();
+        assert!(conf.contains("node.latency = 960/48000"));
         assert!(conf.contains("audio.rate = 48000"));
         assert!(conf.contains("audio.channels = 1"));
         assert!(conf.contains("audio.position = [ MONO ]"));
@@ -251,34 +255,22 @@ mod tests {
     }
 
     #[test]
-    fn conf_enables_agc_disables_ns_and_hpf() {
-        let conf = build_echo_cancel_conf(&enabled());
-        // GTCRN owns denoising/voice shaping downstream. AGC must stay
-        // on — without it the WebRTC AEC adaptive filter does not
-        // converge and the canceller passes mic through unchanged.
-        assert!(conf.contains("webrtc.gain_control       = true"));
+    fn conf_enables_internal_hpf_disables_agc_and_ns() {
+        let conf = build_echo_cancel_conf();
+        // GTCRN owns denoising/voice shaping downstream. The internal
+        // HPF must stay on: the chain's biquad HPF is downstream of the
+        // AEC, so only WebRTC's own HPF can remove DC/rumble before the
+        // adaptive filter sees the signal. AGC must stay off — measured
+        // A/B (module docs): 10.5 dB echo attenuation without AGC vs
+        // 1.5 dB with it (the AGC re-amplifies residual echo).
+        assert!(conf.contains("webrtc.gain_control       = false"));
         assert!(conf.contains("webrtc.noise_suppression  = false"));
-        assert!(conf.contains("webrtc.high_pass_filter   = false"));
-    }
-
-    #[test]
-    fn conf_drops_bootstrap_modules_and_global_clock() {
-        // Bootstrap modules (rt, protocol-native, client-node, adapter)
-        // come from the daemon `client.conf` we connect to. The args
-        // body must not re-declare them, and must never redefine
-        // process-wide clock or context properties.
-        let conf = build_echo_cancel_conf(&enabled());
-        assert!(!conf.contains("libpipewire-module-rt"));
-        assert!(!conf.contains("libpipewire-module-protocol-native"));
-        assert!(!conf.contains("libpipewire-module-client-node"));
-        assert!(!conf.contains("libpipewire-module-adapter"));
-        assert!(!conf.contains("context.properties"));
-        assert!(!conf.contains("default.clock"));
+        assert!(conf.contains("webrtc.high_pass_filter   = true"));
     }
 
     #[test]
     fn conf_leaves_capture_target_to_wireplumber_policy() {
-        let conf = build_echo_cancel_conf(&enabled());
+        let conf = build_echo_cancel_conf();
         assert!(conf.contains(&format!("node.name    = \"{EC_CAPTURE_NODE_NAME}\"")));
         assert!(
             !conf.contains("target.object"),

@@ -1,20 +1,19 @@
-/// Number of bars rendered. Kept at 30 to match the Python widget so the
-/// hard-coded frequency labels land on their expected columns.
+/// Number of bars rendered. The 30-band layout places the calibrated
+/// frequency labels on their designated columns.
 pub const BAND_COUNT: usize = 30;
 
 /// Drawing area height in logical pixels.
 pub(super) const WIDGET_HEIGHT: i32 = 200;
 
-/// Animation hz. 30 Hz keeps the bars smooth to the eye while halving
-/// the redraw + interpolation cost compared to the previous 60 Hz timer.
+/// Animation rate. 30 Hz keeps the bars smooth while bounding redraw and
+/// interpolation work.
 pub(super) const ANIMATION_FPS: u32 = 30;
-/// Catch-up rate per tick. Doubled from the 60 Hz version (0.45) so the
-/// bars still reach a new target in roughly the same wall-clock time
-/// at half the tick rate.
+/// Catch-up rate per tick. At 30 Hz, 0.7 reaches a new target quickly while
+/// retaining visible interpolation between audio frames.
 pub(super) const SMOOTH_FACTOR: f32 = 0.7;
 
-/// Per-band peak behaviour. Tick budgets are scaled to 30 Hz so the
-/// hold/decay timings stay close to the original feel.
+/// Per-band peak behaviour. Tick budgets at 30 Hz provide the intended
+/// hold and decay timings.
 pub(super) const PEAK_HOLD_TICKS: u16 = 20; // ≈ 0.7 s at 30 fps
 pub(super) const PEAK_DECAY: f32 = 0.02;
 

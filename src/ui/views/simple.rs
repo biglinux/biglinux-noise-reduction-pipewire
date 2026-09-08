@@ -6,8 +6,8 @@
 //! "Noise filter" (own switch + intensity), so picking a mic stays
 //! independent from turning the filter on.
 //!
-//! Controls emit typed [`MicInput`] messages to the [`MicShell`] component
-//! (`super::super::mic_shell`); the component's `update` owns every `AppState`
+//! Controls emit typed [`MicInput`] messages to the
+//! [`MicShell`](crate::ui::mic_shell::MicShell) component; its `update` owns every `AppState`
 //! transition. (The device picker keeps its own wiring — converted in a later
 //! stage.)
 
@@ -24,7 +24,7 @@ use super::super::i18n::i18n;
 use super::super::mic_shell::MicInput;
 use super::super::state::AppState;
 use super::super::widgets::didactic::{
-    group_separator, illustration, percent_slider_on_change, switch_row, DidacticCard,
+    DidacticCard, group_separator, illustration, percent_slider_on_change, switch_row,
 };
 use super::super::widgets::source_picker;
 
@@ -46,6 +46,8 @@ pub fn build(state: &Rc<AppState>, input: &relm4::Sender<MicInput>) -> gtk::Widg
 
     content.append(&mic_card(state, input));
     content.append(output_card(state, input).widget());
+    content.append(super::mic::quality_card(state, input).widget());
+    content.append(super::mic::echo_cancel_card(state, input).widget());
 
     scroll.set_child(Some(&content));
     scroll.upcast()
@@ -80,8 +82,38 @@ fn mic_card(state: &Rc<AppState>, input: &relm4::Sender<MicInput>) -> GtkBox {
         }
     });
     card.append(&intensity);
+    if let Some(note) = advanced_effects_note(state) {
+        card.append(&note);
+    }
     card.append(&self_listen_row(state, input));
     card
+}
+
+/// Honesty note for the Simple view: the "Noise filter" switch mirrors
+/// `noise_reduction.enabled`, but Advanced can leave other mic effects
+/// (echo cancellation, EQ, gate, …) running with that switch off. When
+/// that happens, say so instead of letting the off switch imply the
+/// microphone is untouched. Simple-view toggling never hits this: the
+/// master off cascades every flag, and the body repopulates whenever
+/// the mode changes or settings arrive externally.
+fn advanced_effects_note(state: &Rc<AppState>) -> Option<Label> {
+    let settings = state.settings();
+    if settings.noise_reduction.enabled || !crate::pipeline::mic_chain_wanted(&settings) {
+        return None;
+    }
+    Some(
+        Label::builder()
+            .label(i18n(
+                "Other microphone effects are still active — see the Advanced view.",
+            ))
+            .wrap(true)
+            .xalign(0.0)
+            .margin_start(16)
+            .margin_end(16)
+            .margin_bottom(8)
+            .css_classes(vec!["dim-label", "caption"])
+            .build(),
+    )
 }
 
 /// `[SVG | title+desc | switch]` row that mirrors `DidacticCard::new`
@@ -130,8 +162,8 @@ fn noise_filter_header(state: &Rc<AppState>, input: &relm4::Sender<MicInput>) ->
 
     let desc = Label::builder()
         .label(i18n(
-            "Removes background noise from your voice with the GTCRN \
-             neural network. Higher intensity = stronger cleanup.",
+            "Removes background noise from your voice using AI. Higher \
+             intensity = stronger cleanup.",
         ))
         .wrap(true)
         .xalign(0.0)
@@ -147,7 +179,7 @@ fn noise_filter_header(state: &Rc<AppState>, input: &relm4::Sender<MicInput>) ->
 /// "Hear my voice" toggle row — feeds the mic into the default sink so
 /// the user can calibrate the filter intensity. Recommended only with
 /// headphones (loopback to speakers can create acoustic feedback).
-fn self_listen_row(state: &Rc<AppState>, input: &relm4::Sender<MicInput>) -> GtkBox {
+pub(super) fn self_listen_row(state: &Rc<AppState>, input: &relm4::Sender<MicInput>) -> GtkBox {
     let switch = gtk::Switch::builder()
         .valign(gtk::Align::Center)
         .active(state.settings().monitor.enabled)
@@ -162,7 +194,7 @@ fn self_listen_row(state: &Rc<AppState>, input: &relm4::Sender<MicInput>) -> Gtk
     switch_row(&i18n("Hear my voice"), &switch)
 }
 
-fn output_card(state: &Rc<AppState>, input: &relm4::Sender<MicInput>) -> DidacticCard {
+pub(super) fn output_card(state: &Rc<AppState>, input: &relm4::Sender<MicInput>) -> DidacticCard {
     let switch = gtk::Switch::builder()
         .active(state.settings().output_filter.enabled)
         .build();

@@ -1,125 +1,132 @@
-use super::constants::{BG_RADIUS, CORNER_RADIUS, PEAK_METER_TICK_VALUES};
-use super::geometry::{
-    bar_geometries, decibel_grid_lines, frequency_labels, gradient_stops, level_color, norm_to_db,
-    peak_meter_geometry, rounded_corner_arcs, spectrum_layout, FrequencyLabel,
-    PeakMeterTextMetrics, RectGeometry, TextPosition,
+use super::constants::{
+    BAND_COUNT, BAR_SPACING, BG_RADIUS, CORNER_RADIUS, DB_FLOOR, PEAK_METER_TICK_VALUES,
 };
 use super::state::SpectrumState;
 
-#[derive(Clone, Copy, Debug, PartialEq)]
-pub(super) struct VerticalGradientRange {
-    pub(super) y_start: f64,
-    pub(super) y_end: f64,
-}
+pub(super) fn draw(
+    cairo_context: &cairo::Context,
+    width: i32,
+    height: i32,
+    state: &SpectrumState,
+    peak_meter_caption: &str,
+) {
+    let padding = 12.0;
+    let meter_height = 42.0;
+    let labels_height = 18.0;
+    let bars_y = padding + meter_height + 8.0;
+    let content_width = (f64::from(width) - padding * 2.0).max(1.0);
+    let bars_height = (f64::from(height) - bars_y - labels_height - padding).max(1.0);
 
-#[derive(Clone, Copy, Debug, PartialEq)]
-pub(super) struct HorizontalGradientRange {
-    pub(super) x_start: f64,
-    pub(super) x_end: f64,
-}
-
-#[derive(Clone, Copy, Debug, PartialEq)]
-pub(super) struct LineSegment {
-    pub(super) x_start: f64,
-    pub(super) y_start: f64,
-    pub(super) x_end: f64,
-    pub(super) y_end: f64,
-}
-
-pub(super) fn draw(cairo_context: &cairo::Context, width: i32, height: i32, state: &SpectrumState) {
-    let layout = spectrum_layout(width, height);
-
-    // Almost-black backdrop with rounded corners.
     cairo_context.set_source_rgba(0.06, 0.06, 0.06, 1.0);
     rounded_rect(
         cairo_context,
-        layout.background.x,
-        layout.background.y,
-        layout.background.width,
-        layout.background.height,
+        0.0,
+        0.0,
+        f64::from(width).max(1.0),
+        f64::from(height).max(1.0),
         BG_RADIUS,
     );
     cairo_context.fill().ok();
 
     draw_peak_meter(
         cairo_context,
-        layout.peak_meter,
+        padding,
+        padding,
+        content_width,
         state.peak_level,
         state.peak_hold,
+        peak_meter_caption,
     );
-    draw_bars(cairo_context, layout.bars, state);
-    draw_frequency_labels(cairo_context, &frequency_labels(layout));
-    draw_db_grid(cairo_context, layout.bars);
+    draw_bars(
+        cairo_context,
+        padding,
+        bars_y,
+        content_width,
+        bars_height,
+        state,
+    );
+    draw_frequency_labels(
+        cairo_context,
+        padding,
+        content_width,
+        bars_y + bars_height + 4.0,
+    );
+    draw_db_grid(cairo_context, padding, bars_y, content_width, bars_height);
 }
 
-pub(super) fn draw_bars(
+fn draw_bars(
     cairo_context: &cairo::Context,
-    bars_area: RectGeometry,
+    area_x: f64,
+    area_y: f64,
+    area_width: f64,
+    area_height: f64,
     state: &SpectrumState,
 ) {
-    let bar_gradient_range = vertical_gradient_range_for_rect(bars_area);
-    let bg_gradient =
-        zone_gradient_vertical(bar_gradient_range.y_start, bar_gradient_range.y_end, 0.2);
-    let fg_gradient =
-        zone_gradient_vertical(bar_gradient_range.y_start, bar_gradient_range.y_end, 1.0);
+    let background_gradient = zone_gradient_vertical(area_y + area_height, area_y, 0.2);
+    let foreground_gradient = zone_gradient_vertical(area_y + area_height, area_y, 1.0);
+    let total_spacing = BAR_SPACING * (BAND_COUNT as f64 - 1.0);
+    let bar_width = ((area_width - total_spacing) / BAND_COUNT as f64).max(2.0);
 
-    for bar in bar_geometries(bars_area, state) {
-        // Dark track
-        cairo_context.set_source(&bg_gradient).ok();
+    for band_index in 0..BAND_COUNT {
+        let x = area_x + band_index as f64 * (bar_width + BAR_SPACING);
+
+        cairo_context.set_source(&background_gradient).ok();
         rounded_rect(
             cairo_context,
-            bar.track.x,
-            bar.track.y,
-            bar.track.width,
-            bar.track.height,
+            x,
+            area_y,
+            bar_width,
+            area_height,
             CORNER_RADIUS,
         );
         cairo_context.fill().ok();
 
-        // Active bar
-        if let Some(active_bar) = bar.active_bar {
-            cairo_context.set_source(&fg_gradient).ok();
+        let level = state.bands[band_index];
+        if level > 0.003 {
+            let active_height = (area_height * f64::from(level)).max(2.0);
+            cairo_context.set_source(&foreground_gradient).ok();
             rounded_rect(
                 cairo_context,
-                active_bar.x,
-                active_bar.y,
-                active_bar.width,
-                active_bar.height,
+                x,
+                area_y + area_height - active_height,
+                bar_width,
+                active_height,
                 CORNER_RADIUS,
             );
             cairo_context.fill().ok();
         }
 
-        // Segment cuts every 10 dB (5 divisions inside a 60 dB range)
         cairo_context.set_source_rgba(0.06, 0.06, 0.06, 1.0);
         cairo_context.set_line_width(1.0);
-        for cut_y in bar.segment_y_positions {
-            let segment_line = horizontal_line_for_y(bar.track, cut_y);
-            cairo_context.move_to(segment_line.x_start, segment_line.y_start);
-            cairo_context.line_to(segment_line.x_end, segment_line.y_end);
+        for step in 1..6 {
+            let cut_y = area_y + area_height * (1.0 - f64::from(step) / 6.0);
+            cairo_context.move_to(x, cut_y);
+            cairo_context.line_to(x + bar_width, cut_y);
             cairo_context.stroke().ok();
         }
 
-        // Sticky peak tick
-        if let Some(peak_y) = bar.peak_y {
-            let peak_tick = peak_tick_rect(bar.track, peak_y);
+        let peak = state.peaks[band_index];
+        if peak > 0.02 {
+            let peak_y = area_y + area_height - area_height * f64::from(peak);
             cairo_context.set_source_rgba(1.0, 1.0, 1.0, 0.9);
-            cairo_context.rectangle(peak_tick.x, peak_tick.y, peak_tick.width, peak_tick.height);
+            cairo_context.rectangle(x, peak_y - 0.5, bar_width, 1.5);
             cairo_context.fill().ok();
         }
     }
 }
 
-pub(super) fn draw_peak_meter(
+fn draw_peak_meter(
     cairo_context: &cairo::Context,
-    meter_area: RectGeometry,
+    area_x: f64,
+    area_y: f64,
+    area_width: f64,
     peak_level: f32,
     peak_hold: f32,
+    caption: &str,
 ) {
     let db_value = norm_to_db(peak_level);
     let db_hold = norm_to_db(peak_hold);
 
-    // Numeric readout: "VAL / PEAK" label
     cairo_context.select_font_face(
         "sans-serif",
         cairo::FontSlant::Normal,
@@ -127,8 +134,8 @@ pub(super) fn draw_peak_meter(
     );
     cairo_context.set_font_size(9.0);
     cairo_context.set_source_rgba(0.6, 0.6, 0.6, 1.0);
-    cairo_context.move_to(meter_area.x, meter_area.y + 10.0);
-    cairo_context.show_text("VAL / PEAK").ok();
+    cairo_context.move_to(area_x, area_y + 10.0);
+    cairo_context.show_text(caption).ok();
 
     cairo_context.select_font_face(
         "monospace",
@@ -137,110 +144,117 @@ pub(super) fn draw_peak_meter(
     );
     cairo_context.set_font_size(15.0);
 
-    let val_text = format!("{db_value:+.1}");
+    let value_text = format!("{db_value:+.1}");
     let hold_text = format!("{db_hold:+.1} dB");
-    let text_metrics = PeakMeterTextMetrics {
-        value_advance: cairo_context
-            .text_extents(&val_text)
-            .map_or(0.0, |text_extents| text_extents.x_advance()),
-        divider_advance: cairo_context
-            .text_extents("|")
-            .map_or(0.0, |text_extents| text_extents.x_advance()),
-        hold_advance: cairo_context
-            .text_extents(&hold_text)
-            .map_or(0.0, |text_extents| text_extents.x_advance()),
-        tick_label_widths: PEAK_METER_TICK_VALUES.map(|db| {
-            cairo_context
-                .text_extents(&db.to_string())
-                .map_or(0.0, |text_extents| text_extents.width())
-        }),
-    };
-    let geometry = peak_meter_geometry(meter_area, peak_level, peak_hold, text_metrics);
+    let value_advance = cairo_context
+        .text_extents(&value_text)
+        .map_or(0.0, |extents| extents.x_advance());
+    let divider_x = area_x + value_advance + 5.0;
+    let divider_advance = cairo_context
+        .text_extents("|")
+        .map_or(0.0, |extents| extents.x_advance());
+    let hold_x = divider_x + divider_advance + 5.0;
+    let hold_advance = cairo_context
+        .text_extents(&hold_text)
+        .map_or(0.0, |extents| extents.x_advance());
+    let tick_label_widths = PEAK_METER_TICK_VALUES.map(|db| {
+        cairo_context
+            .text_extents(&db.to_string())
+            .map_or(0.0, |extents| extents.width())
+    });
+    let text_baseline = area_y + 28.0;
+    let track_x = hold_x + hold_advance + 20.0;
+    let track_y = area_y + 12.0;
+    let track_width = (area_x + area_width - track_x - 5.0).max(40.0);
+    let track_height = 8.0;
 
-    cairo_context.set_source_rgba_tuple(level_color(db_value));
-    cairo_context.move_to(
-        geometry.value_position.x,
-        geometry.value_position.baseline_y,
-    );
-    cairo_context.show_text(&val_text).ok();
+    set_level_color(cairo_context, db_value);
+    cairo_context.move_to(area_x, text_baseline);
+    cairo_context.show_text(&value_text).ok();
 
     cairo_context.set_source_rgba(0.4, 0.4, 0.4, 1.0);
-    cairo_context.move_to(
-        geometry.divider_position.x,
-        geometry.divider_position.baseline_y,
-    );
+    cairo_context.move_to(divider_x, text_baseline);
     cairo_context.show_text("|").ok();
 
-    cairo_context.set_source_rgba_tuple(level_color(db_hold));
-    cairo_context.move_to(geometry.hold_position.x, geometry.hold_position.baseline_y);
+    set_level_color(cairo_context, db_hold);
+    cairo_context.move_to(hold_x, text_baseline);
     cairo_context.show_text(&hold_text).ok();
 
-    let bg_g = zone_gradient_horizontal(
-        horizontal_gradient_range_for_rect(geometry.track).x_start,
-        horizontal_gradient_range_for_rect(geometry.track).x_end,
-        0.2,
-    );
-    cairo_context.set_source(&bg_g).ok();
+    cairo_context
+        .set_source(zone_gradient_horizontal(
+            track_x,
+            track_x + track_width,
+            0.2,
+        ))
+        .ok();
     rounded_rect(
         cairo_context,
-        geometry.track.x,
-        geometry.track.y,
-        geometry.track.width,
-        geometry.track.height,
+        track_x,
+        track_y,
+        track_width,
+        track_height,
         4.0,
     );
     cairo_context.fill().ok();
 
-    if let Some(active) = geometry.active {
-        let fg_g = zone_gradient_horizontal(
-            horizontal_gradient_range_for_rect(geometry.track).x_start,
-            horizontal_gradient_range_for_rect(geometry.track).x_end,
-            1.0,
-        );
-        cairo_context.set_source(&fg_g).ok();
+    let active_width = (f64::from(peak_level) * track_width).clamp(0.0, track_width);
+    if active_width > 1.0 {
+        cairo_context
+            .set_source(zone_gradient_horizontal(
+                track_x,
+                track_x + track_width,
+                1.0,
+            ))
+            .ok();
         rounded_rect(
             cairo_context,
-            active.x,
-            active.y,
-            active.width,
-            active.height,
+            track_x,
+            track_y,
+            active_width,
+            track_height,
             4.0,
         );
         cairo_context.fill().ok();
     }
 
-    // Ruler: ticks + dB labels every 10 dB from −50 to −10.
     cairo_context.select_font_face(
         "sans-serif",
         cairo::FontSlant::Normal,
         cairo::FontWeight::Normal,
     );
     cairo_context.set_font_size(9.0);
-    for tick in geometry.ticks {
-        let tick_line = peak_meter_tick_line(geometry.track, tick.x);
+    for (tick_index, db) in PEAK_METER_TICK_VALUES.into_iter().enumerate() {
+        let ratio = (f64::from(db) - f64::from(DB_FLOOR)) / 60.0;
+        let x = track_x + ratio * track_width;
         cairo_context.set_source_rgba(0.0, 0.0, 0.0, 0.5);
-        cairo_context.move_to(tick_line.x_start, tick_line.y_start);
-        cairo_context.line_to(tick_line.x_end, tick_line.y_end);
+        cairo_context.move_to(x, track_y);
+        cairo_context.line_to(x, track_y + track_height);
         cairo_context.stroke().ok();
 
+        let label = db.to_string();
         cairo_context.set_source_rgba(0.6, 0.6, 0.6, 0.8);
-        cairo_context.move_to(tick.label_position.x, tick.label_position.baseline_y);
-        cairo_context.show_text(&tick.db.to_string()).ok();
+        cairo_context.move_to(
+            x - tick_label_widths[tick_index] / 2.0,
+            track_y + track_height + 10.0,
+        );
+        cairo_context.show_text(&label).ok();
     }
 
-    if let Some(hold_indicator) = geometry.hold_indicator {
+    if peak_hold > 0.01 {
+        let hold_x = track_x + (f64::from(peak_hold) * track_width).clamp(0.0, track_width) - 1.0;
         cairo_context.set_source_rgba(1.0, 1.0, 1.0, 0.9);
-        cairo_context.rectangle(
-            hold_indicator.x,
-            hold_indicator.y,
-            hold_indicator.width,
-            hold_indicator.height,
-        );
+        cairo_context.rectangle(hold_x, area_y + 10.0, 2.0, 12.0);
         cairo_context.fill().ok();
     }
 }
 
-pub(super) fn draw_db_grid(cairo_context: &cairo::Context, bars_area: RectGeometry) {
+fn draw_db_grid(
+    cairo_context: &cairo::Context,
+    area_x: f64,
+    area_y: f64,
+    area_width: f64,
+    area_height: f64,
+) {
     cairo_context.set_line_width(0.5);
     cairo_context.select_font_face(
         "sans-serif",
@@ -249,23 +263,37 @@ pub(super) fn draw_db_grid(cairo_context: &cairo::Context, bars_area: RectGeomet
     );
     cairo_context.set_font_size(9.0);
 
-    for line in decibel_grid_lines(bars_area) {
-        let grid_line = horizontal_line_for_y(bars_area, line.y);
+    for (label, db) in [("-20", -20.0), ("-40", -40.0)] {
+        let ratio = (db - f64::from(DB_FLOOR)) / 60.0;
+        let y = area_y + area_height * (1.0 - ratio);
         cairo_context.set_source_rgba(1.0, 1.0, 1.0, 0.08);
-        cairo_context.move_to(grid_line.x_start, grid_line.y_start);
-        cairo_context.line_to(grid_line.x_end, grid_line.y_end);
+        cairo_context.move_to(area_x, y);
+        cairo_context.line_to(area_x + area_width, y);
         cairo_context.stroke().ok();
 
-        if let Ok(ext) = cairo_context.text_extents(line.label) {
-            let label_position = decibel_grid_label_position(bars_area, line.y, ext.width());
+        if let Ok(extents) = cairo_context.text_extents(label) {
             cairo_context.set_source_rgba(0.6, 0.6, 0.6, 0.6);
-            cairo_context.move_to(label_position.x, label_position.baseline_y);
-            cairo_context.show_text(line.label).ok();
+            cairo_context.move_to(area_x + area_width - extents.width() - 2.0, y - 2.0);
+            cairo_context.show_text(label).ok();
         }
     }
 }
 
-pub(super) fn draw_frequency_labels(cairo_context: &cairo::Context, labels: &[FrequencyLabel; 6]) {
+fn draw_frequency_labels(
+    cairo_context: &cairo::Context,
+    area_x: f64,
+    area_width: f64,
+    labels_y: f64,
+) {
+    const MARKERS: [(usize, &str); 6] = [
+        (5, "63 Hz"),
+        (10, "180 Hz"),
+        (15, "500 Hz"),
+        (20, "1.5 kHz"),
+        (25, "4 kHz"),
+        (29, "9.5 kHz"),
+    ];
+
     cairo_context.select_font_face(
         "sans-serif",
         cairo::FontSlant::Normal,
@@ -273,142 +301,79 @@ pub(super) fn draw_frequency_labels(cairo_context: &cairo::Context, labels: &[Fr
     );
     cairo_context.set_font_size(9.0);
     cairo_context.set_source_rgba(0.5, 0.5, 0.5, 0.9);
+    let total_spacing = BAR_SPACING * (BAND_COUNT as f64 - 1.0);
+    let bar_width = ((area_width - total_spacing) / BAND_COUNT as f64).max(2.0);
 
-    for label in labels {
-        if let Ok(ext) = cairo_context.text_extents(label.text) {
-            let label_position =
-                centered_text_position(label.center_x, label.baseline_y, ext.width());
-            cairo_context.move_to(label_position.x, label_position.baseline_y);
-            cairo_context.show_text(label.text).ok();
+    for (band_index, label) in MARKERS {
+        if let Ok(extents) = cairo_context.text_extents(label) {
+            let center_x = area_x + band_index as f64 * (bar_width + BAR_SPACING) + bar_width / 2.0;
+            cairo_context.move_to(center_x - extents.width() / 2.0, labels_y + 12.0);
+            cairo_context.show_text(label).ok();
         }
     }
 }
 
-pub(super) fn vertical_gradient_range_for_rect(rect: RectGeometry) -> VerticalGradientRange {
-    VerticalGradientRange {
-        y_start: rect.y + rect.height,
-        y_end: rect.y,
-    }
+fn norm_to_db(norm: f32) -> f32 {
+    (DB_FLOOR + norm * 60.0).clamp(DB_FLOOR, 0.0)
 }
 
-pub(super) fn horizontal_gradient_range_for_rect(rect: RectGeometry) -> HorizontalGradientRange {
-    HorizontalGradientRange {
-        x_start: rect.x,
-        x_end: rect.x + rect.width,
-    }
-}
-
-pub(super) fn horizontal_line_for_y(rect: RectGeometry, y: f64) -> LineSegment {
-    LineSegment {
-        x_start: rect.x,
-        y_start: y,
-        x_end: rect.x + rect.width,
-        y_end: y,
-    }
-}
-
-pub(super) fn peak_tick_rect(track: RectGeometry, peak_y: f64) -> RectGeometry {
-    RectGeometry {
-        x: track.x,
-        y: peak_y - 0.5,
-        width: track.width,
-        height: 1.5,
-    }
-}
-
-pub(super) fn peak_meter_tick_line(track: RectGeometry, x: f64) -> LineSegment {
-    LineSegment {
-        x_start: x,
-        y_start: track.y,
-        x_end: x,
-        y_end: track.y + track.height,
-    }
-}
-
-pub(super) fn decibel_grid_label_position(
-    bars_area: RectGeometry,
-    line_y: f64,
-    label_width: f64,
-) -> TextPosition {
-    TextPosition {
-        x: bars_area.x + bars_area.width - label_width - 2.0,
-        baseline_y: line_y - 2.0,
-    }
-}
-
-pub(super) fn centered_text_position(
-    center_x: f64,
-    baseline_y: f64,
-    text_width: f64,
-) -> TextPosition {
-    TextPosition {
-        x: center_x - text_width / 2.0,
-        baseline_y,
-    }
-}
-
-pub(super) fn zone_gradient_vertical(
-    y_start: f64,
-    y_end: f64,
-    alpha_mult: f64,
-) -> cairo::LinearGradient {
-    let g = cairo::LinearGradient::new(0.0, y_start, 0.0, y_end);
-    apply_zone_stops(&g, alpha_mult);
-    g
-}
-
-pub(super) fn zone_gradient_horizontal(
-    x_start: f64,
-    x_end: f64,
-    alpha_mult: f64,
-) -> cairo::LinearGradient {
-    let g = cairo::LinearGradient::new(x_start, 0.0, x_end, 0.0);
-    apply_zone_stops(&g, alpha_mult);
-    g
-}
-
-/// Three colour zones mirroring pro peak meters: green → orange → red.
-/// `alpha_mult` dims every stop so the same gradient doubles as a dark
-/// "track" background.
-pub(super) fn apply_zone_stops(g: &cairo::LinearGradient, alpha_mult: f64) {
-    for stop in gradient_stops(alpha_mult) {
-        g.add_color_stop_rgba(stop.offset, stop.red, stop.green, stop.blue, stop.alpha);
-    }
-}
-
-pub(super) fn rounded_rect(cairo_context: &cairo::Context, x: f64, y: f64, w: f64, h: f64, r: f64) {
-    let rect = RectGeometry {
-        x,
-        y,
-        width: w,
-        height: h,
+fn set_level_color(cairo_context: &cairo::Context, db: f32) {
+    let color = if db > -3.0 {
+        (1.0, 0.2, 0.2)
+    } else if db > -10.0 {
+        (1.0, 0.7, 0.0)
+    } else {
+        (0.2, 0.7, 0.2)
     };
-    let Some(arcs) = rounded_corner_arcs(rect, r) else {
-        cairo_context.rectangle(x, y, w, h);
+    cairo_context.set_source_rgba(color.0, color.1, color.2, 1.0);
+}
+
+fn zone_gradient_vertical(y_start: f64, y_end: f64, intensity: f64) -> cairo::LinearGradient {
+    let gradient = cairo::LinearGradient::new(0.0, y_start, 0.0, y_end);
+    add_zone_stops(&gradient, intensity);
+    gradient
+}
+
+fn zone_gradient_horizontal(x_start: f64, x_end: f64, intensity: f64) -> cairo::LinearGradient {
+    let gradient = cairo::LinearGradient::new(x_start, 0.0, x_end, 0.0);
+    add_zone_stops(&gradient, intensity);
+    gradient
+}
+
+fn add_zone_stops(gradient: &cairo::LinearGradient, intensity: f64) {
+    gradient.add_color_stop_rgba(0.0, 0.0, 0.6 * intensity, 0.0, 1.0);
+    gradient.add_color_stop_rgba(0.667, 0.0, 0.6 * intensity, 0.0, 1.0);
+    gradient.add_color_stop_rgba(0.6671, intensity, 0.6 * intensity, 0.0, 1.0);
+    gradient.add_color_stop_rgba(0.833, intensity, 0.6 * intensity, 0.0, 1.0);
+    gradient.add_color_stop_rgba(0.8331, intensity, 0.0, 0.0, 1.0);
+    gradient.add_color_stop_rgba(1.0, intensity, 0.0, 0.0, 1.0);
+}
+
+fn rounded_rect(
+    cairo_context: &cairo::Context,
+    x: f64,
+    y: f64,
+    width: f64,
+    height: f64,
+    radius: f64,
+) {
+    let radius = radius.min(width / 2.0).min(height / 2.0);
+    if radius < 1.0 {
+        cairo_context.rectangle(x, y, width, height);
         return;
-    };
+    }
 
+    let pi = std::f64::consts::PI;
     cairo_context.new_sub_path();
-    for arc in arcs {
-        cairo_context.arc(
-            arc.center_x,
-            arc.center_y,
-            arc.radius,
-            arc.start_angle,
-            arc.end_angle,
-        );
-    }
+    cairo_context.arc(x + width - radius, y + radius, radius, -pi / 2.0, 0.0);
+    cairo_context.arc(
+        x + width - radius,
+        y + height - radius,
+        radius,
+        0.0,
+        pi / 2.0,
+    );
+    cairo_context.arc(x + radius, y + height - radius, radius, pi / 2.0, pi);
+    cairo_context.arc(x + radius, y + radius, radius, pi, 3.0 * pi / 2.0);
     cairo_context.close_path();
-}
-
-// Cairo context doesn't ship a tuple-taking `set_source_rgba`, so give
-// ourselves one for the level colour helper.
-pub(super) trait SetSourceRgbaTuple {
-    fn set_source_rgba_tuple(&self, color: (f64, f64, f64, f64));
-}
-
-impl SetSourceRgbaTuple for cairo::Context {
-    fn set_source_rgba_tuple(&self, (r, g, b, a): (f64, f64, f64, f64)) {
-        self.set_source_rgba(r, g, b, a);
-    }
 }

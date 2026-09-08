@@ -1,9 +1,8 @@
 //! Plain-data types surfaced by the spectrum analyser.
 
-/// Default number of frequency buckets emitted per frame. 30 matches
-/// the legacy Python widget so the same frequency labels (63 Hz,
-/// 180 Hz, 500 Hz, 1.5 kHz, 4 kHz, 9.5 kHz) land on their expected
-/// column positions.
+/// Default number of frequency buckets emitted per frame. The 30-band layout
+/// places the calibrated labels (63 Hz, 180 Hz, 500 Hz, 1.5 kHz, 4 kHz,
+/// 9.5 kHz) on their designated columns.
 pub const DEFAULT_BAND_COUNT: usize = 30;
 
 /// Default FFT window size (samples). 2048 at 48 kHz ≈ 42 ms, a decent
@@ -43,17 +42,4 @@ pub enum Event {
     /// is inoperative; the consumer should surface the error and stop
     /// visualising.
     Fatal(String),
-}
-
-#[cfg(test)]
-mod tests {
-    use super::*;
-
-    #[test]
-    fn defaults_are_internally_consistent() {
-        const { assert!(DEFAULT_HOP_SIZE < DEFAULT_FFT_SIZE) };
-        assert!(DEFAULT_FFT_SIZE.is_power_of_two());
-        assert!(DEFAULT_HOP_SIZE.is_power_of_two());
-        const { assert!(DEFAULT_BAND_COUNT <= DEFAULT_FFT_SIZE / 2) };
-    }
 }

@@ -10,20 +10,6 @@ use std::fmt::Write as _;
 
 use super::nodes::Node;
 
-/// How the emitted `.conf` is going to be consumed.
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
-pub enum RenderMode {
-    /// Bare module-args body — just the `{ … }` block that
-    /// `biglinux-microphone-pwloader` reads and passes verbatim to
-    /// `pw_context_load_module()` as its `args` parameter. No comment
-    /// header, no `context.modules` wrapper. Each filter-chain (mic,
-    /// output, AEC) lives in its own pwloader process that connects as
-    /// a client of the main PipeWire daemon, so all three filter graphs
-    /// share the daemon's clock — no cross-process drift, no
-    /// `spa.alsa: front:1p ... resync` events.
-    ModuleArgs,
-}
-
 /// One link inside `filter.graph.links`.
 #[derive(Debug, Clone)]
 pub struct Link {
@@ -66,7 +52,7 @@ impl Graph {
     /// No `context.modules` wrapper, no `# DO NOT EDIT` header — the
     /// loader is the only consumer.
     #[must_use]
-    pub fn render(&self, _mode: RenderMode) -> String {
+    pub fn render(&self) -> String {
         let mut out = String::new();
         let _ = writeln!(out, "{{");
         let _ = writeln!(out, "    node.description = \"{}\"", self.description);
@@ -126,7 +112,7 @@ impl Graph {
 
 #[cfg(test)]
 mod tests {
-    use super::super::nodes::{Node, LABEL_COPY, LABEL_MIXER};
+    use super::super::nodes::{LABEL_COPY, LABEL_MIXER, Node};
     use super::*;
 
     fn sample_graph() -> Graph {
@@ -153,7 +139,7 @@ mod tests {
         // bootstrap modules. The whole output is a single SPA-JSON
         // object the filter-chain module knows how to parse.
         let g = sample_graph();
-        let s = g.render(RenderMode::ModuleArgs);
+        let s = g.render();
         assert!(s.starts_with('{'));
         assert!(!s.contains("context.modules"));
         assert!(!s.contains("# BigLinux"));
@@ -167,14 +153,14 @@ mod tests {
     #[test]
     fn render_contains_declared_links() {
         let g = sample_graph();
-        let s = g.render(RenderMode::ModuleArgs);
+        let s = g.render();
         assert!(s.contains(r#"{ output = "m:Out" input = "c:In" }"#));
     }
 
     #[test]
     fn render_contains_inputs_and_outputs() {
         let g = sample_graph();
-        let s = g.render(RenderMode::ModuleArgs);
+        let s = g.render();
         assert!(s.contains(r#"inputs = [ "m:In 1" ]"#));
         assert!(s.contains(r#"outputs = [ "c:Out" ]"#));
     }
@@ -182,24 +168,9 @@ mod tests {
     #[test]
     fn render_indents_custom_capture_props() {
         let g = sample_graph();
-        let s = g.render(RenderMode::ModuleArgs);
+        let s = g.render();
         assert!(s.contains("capture.props = {"));
         assert!(s.contains("        node.name = \"cap\""));
         assert!(s.contains("    playback.props = {"));
-    }
-
-    #[test]
-    fn render_omits_bootstrap_modules() {
-        // Bootstrap modules (rt, protocol-native, adapter, client-node)
-        // come from the daemon `client.conf` we connect to — never from
-        // our args. Including them here would either no-op or
-        // double-load.
-        let g = sample_graph();
-        let s = g.render(RenderMode::ModuleArgs);
-        assert!(!s.contains("context.properties"));
-        assert!(!s.contains("context.spa-libs"));
-        assert!(!s.contains("protocol-native"));
-        assert!(!s.contains("libpipewire-module-rt"));
-        assert!(!s.contains("libpipewire-module-adapter"));
     }
 }

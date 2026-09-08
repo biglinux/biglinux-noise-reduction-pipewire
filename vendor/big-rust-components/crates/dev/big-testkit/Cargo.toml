@@ -1,0 +1,30 @@
+# SPDX-FileCopyrightText: 2026 BigLinux contributors
+# SPDX-License-Identifier: MIT
+
+[package]
+name = "big-testkit"
+version = "0.1.0"
+publish = false  # dev-only leak/harness helpers; consumed via dev-dependency, never crates.io
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+description = "Dev-only test harness: weston-headless finalization census, RSS-slope leak verdicts, and pixel-region assertions for BigLinux Rust apps"
+repository.workspace = true
+homepage.workspace = true
+authors.workspace = true
+keywords = ["testing", "gtk4", "leak", "biglinux", "harness"]
+categories = ["development-tools::testing"]
+
+[dependencies]
+# Census app + windows the harness boots and the two adopters drive.
+adw.workspace = true
+gtk.workspace = true
+relm4.workspace = true
+# `WeakRef<Window>`, `MainContext` pump, idle scheduling — same glib the widgets use.
+glib.workspace = true
+# `BigSettingsStore` for the listener-prune assertion.
+big-app-kit.workspace = true
+
+[dev-dependencies]
+# Build an empty defaults `Map` for the listener-prune unit test.
+serde_json.workspace = true

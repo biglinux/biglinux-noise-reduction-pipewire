@@ -1,4 +1,4 @@
-//! End-to-end exercise of [`pipeline::apply_to_dirs`].
+//! End-to-end exercise of [`pipeline::apply_to_dir`].
 //!
 //! The unit tests inside `pipeline::tests` already cover individual
 //! invariants (file presence, atomic writes, idempotency). This file
@@ -6,7 +6,6 @@
 //! off, swapping models, switching the master toggle, and verifying
 //! the on-disk output stays consistent across runs.
 
-use std::fs;
 use std::path::PathBuf;
 
 use biglinux_microphone::config::{
@@ -14,17 +13,14 @@ use biglinux_microphone::config::{
     NoiseModel, NoiseReductionConfig, OutputFilterSettings, StereoConfig,
 };
 use biglinux_microphone::pipeline::{
-    apply_to_dirs, mic_chain_wanted, ECHO_CANCEL_CONF_FILE, MIC_CONF_FILE, MIC_NODE_NAME,
-    OUTPUT_CONF_FILE, OUTPUT_NODE_NAME,
+    ECHO_CANCEL_CONF_FILE, MIC_CONF_FILE, MIC_NODE_NAME, OUTPUT_CONF_FILE, OUTPUT_NODE_NAME,
+    apply_to_dir, mic_chain_wanted,
 };
+use std::fs::read_to_string;
 use tempfile::tempdir;
 
-fn dirs(t: &tempfile::TempDir) -> (PathBuf, PathBuf, PathBuf) {
-    (
-        t.path().join("bigmic-args"),
-        t.path().join("pw-dropin"),
-        t.path().join("wp"),
-    )
+fn args_dir(t: &tempfile::TempDir) -> PathBuf {
+    t.path().join("bigmic-args")
 }
 
 fn fully_off() -> AppSettings {
@@ -61,7 +57,7 @@ fn fully_off() -> AppSettings {
 #[test]
 fn enabling_only_noise_reduction_writes_mic_conf_with_smart_filter() {
     let dir = tempdir().unwrap();
-    let (args, pw_dropin, wp) = dirs(&dir);
+    let args = args_dir(&dir);
 
     let mut s = fully_off();
     s.noise_reduction.enabled = true;
@@ -74,9 +70,9 @@ fn enabling_only_noise_reduction_writes_mic_conf_with_smart_filter() {
     s.echo_cancel.enabled = false;
     assert!(mic_chain_wanted(&s));
 
-    apply_to_dirs(&s, &args, &pw_dropin, &wp).unwrap();
+    apply_to_dir(&s, &args).unwrap();
 
-    let conf = fs::read_to_string(args.join(MIC_CONF_FILE)).unwrap();
+    let conf = read_to_string(args.join(MIC_CONF_FILE)).unwrap();
     assert!(conf.contains(&format!("node.name = \"{MIC_NODE_NAME}\"")));
     assert!(conf.contains("filter.smart = true"));
     assert!(conf.contains("filter.smart.name = \"big.filter-microphone\""));
@@ -94,30 +90,30 @@ fn enabling_only_noise_reduction_writes_mic_conf_with_smart_filter() {
 #[test]
 fn switching_models_only_changes_the_model_control() {
     let dir = tempdir().unwrap();
-    let (args, pw_dropin, wp) = dirs(&dir);
+    let args = args_dir(&dir);
 
     let mut s = fully_off();
     s.noise_reduction.enabled = true;
-    apply_to_dirs(&s, &args, &pw_dropin, &wp).unwrap();
-    let dns3 = fs::read_to_string(args.join(MIC_CONF_FILE)).unwrap();
+    apply_to_dir(&s, &args).unwrap();
+    let dns3 = read_to_string(args.join(MIC_CONF_FILE)).unwrap();
     assert!(dns3.contains("\"Model\" = 0.0"));
 
     s.noise_reduction.model = NoiseModel::GtcrnVctk;
-    apply_to_dirs(&s, &args, &pw_dropin, &wp).unwrap();
-    let vctk = fs::read_to_string(args.join(MIC_CONF_FILE)).unwrap();
+    apply_to_dir(&s, &args).unwrap();
+    let vctk = read_to_string(args.join(MIC_CONF_FILE)).unwrap();
     assert!(vctk.contains("\"Model\" = 1.0"));
 }
 
 #[test]
 fn output_chain_renders_smart_filter_in_bypass_when_master_off() {
     let dir = tempdir().unwrap();
-    let (args, pw_dropin, wp) = dirs(&dir);
+    let args = args_dir(&dir);
 
     let s = AppSettings::default();
     assert!(!s.output_filter.enabled);
-    apply_to_dirs(&s, &args, &pw_dropin, &wp).unwrap();
+    apply_to_dir(&s, &args).unwrap();
 
-    let conf = fs::read_to_string(args.join(OUTPUT_CONF_FILE)).unwrap();
+    let conf = read_to_string(args.join(OUTPUT_CONF_FILE)).unwrap();
     // Smart-filter sink stays attached so streams don't get yanked when
     // the user toggles the master off — the chain just goes to bypass.
     assert!(conf.contains(&format!("node.name = \"{OUTPUT_NODE_NAME}\"")));
@@ -133,31 +129,19 @@ fn output_chain_renders_smart_filter_in_bypass_when_master_off() {
 #[test]
 fn enabling_master_then_disabling_keeps_conf_present() {
     let dir = tempdir().unwrap();
-    let (args, pw_dropin, wp) = dirs(&dir);
+    let args = args_dir(&dir);
 
     let mut s = AppSettings::default();
     s.output_filter.enabled = true;
-    apply_to_dirs(&s, &args, &pw_dropin, &wp).unwrap();
+    apply_to_dir(&s, &args).unwrap();
     assert!(args.join(OUTPUT_CONF_FILE).exists());
 
     s.output_filter.enabled = false;
-    apply_to_dirs(&s, &args, &pw_dropin, &wp).unwrap();
+    apply_to_dir(&s, &args).unwrap();
     assert!(
         args.join(OUTPUT_CONF_FILE).exists(),
         "conf must remain so the unit can keep running in bypass"
     );
-}
-
-#[test]
-fn legacy_per_app_routing_drop_in_is_scrubbed() {
-    let dir = tempdir().unwrap();
-    let (args, pw_dropin, wp) = dirs(&dir);
-    fs::create_dir_all(&wp).unwrap();
-    let legacy = wp.join("50-biglinux-output-routing.conf");
-    fs::write(&legacy, b"# stale\n").unwrap();
-
-    apply_to_dirs(&AppSettings::default(), &args, &pw_dropin, &wp).unwrap();
-    assert!(!legacy.exists());
 }
 
 #[test]
@@ -167,20 +151,23 @@ fn echo_cancel_conf_is_written_into_args_dir_and_removed_when_disabled() {
     // module args body living alongside the mic + output ones in the
     // pwloader args dir.
     let dir = tempdir().unwrap();
-    let (args, pw_dropin, wp) = dirs(&dir);
+    let args = args_dir(&dir);
 
     let on = AppSettings {
-        echo_cancel: EchoCancelConfig { enabled: true },
+        echo_cancel: EchoCancelConfig {
+            enabled: true,
+            ..Default::default()
+        },
         ..AppSettings::default()
     };
-    apply_to_dirs(&on, &args, &pw_dropin, &wp).unwrap();
+    apply_to_dir(&on, &args).unwrap();
 
     let aec_path = args.join(ECHO_CANCEL_CONF_FILE);
     assert!(
         aec_path.exists(),
         "AEC args body must live in the pwloader args dir"
     );
-    let body = fs::read_to_string(&aec_path).unwrap();
+    let body = read_to_string(&aec_path).unwrap();
     // Bare module-args body — pwloader hands it straight to
     // `pw_context_load_module(libpipewire-module-echo-cancel, …)`, so
     // the body itself must not redeclare the module name, bootstrap
@@ -193,10 +180,13 @@ fn echo_cancel_conf_is_written_into_args_dir_and_removed_when_disabled() {
     assert!(body.contains("aec/libspa-aec-webrtc"));
 
     let off = AppSettings {
-        echo_cancel: EchoCancelConfig { enabled: false },
+        echo_cancel: EchoCancelConfig {
+            enabled: false,
+            ..Default::default()
+        },
         ..AppSettings::default()
     };
-    apply_to_dirs(&off, &args, &pw_dropin, &wp).unwrap();
+    apply_to_dir(&off, &args).unwrap();
     assert!(
         !aec_path.exists(),
         "AEC args body must be removed when the toggle goes off"
@@ -206,13 +196,34 @@ fn echo_cancel_conf_is_written_into_args_dir_and_removed_when_disabled() {
 #[test]
 fn round_trip_through_disk_produces_identical_conf() {
     let dir = tempdir().unwrap();
-    let (args, pw_dropin, wp) = dirs(&dir);
+    let args = args_dir(&dir);
 
     let s = AppSettings::default();
-    apply_to_dirs(&s, &args, &pw_dropin, &wp).unwrap();
-    let first = fs::read_to_string(args.join(MIC_CONF_FILE)).unwrap();
+    apply_to_dir(&s, &args).unwrap();
+    let first = read_to_string(args.join(MIC_CONF_FILE)).unwrap();
 
-    apply_to_dirs(&s, &args, &pw_dropin, &wp).unwrap();
-    let second = fs::read_to_string(args.join(MIC_CONF_FILE)).unwrap();
+    apply_to_dir(&s, &args).unwrap();
+    let second = read_to_string(args.join(MIC_CONF_FILE)).unwrap();
     assert_eq!(first, second);
+}
+
+#[test]
+fn legacy_per_app_routing_drop_in_is_scrubbed_without_touching_other_files() {
+    let dir = tempdir().unwrap();
+    let args = args_dir(&dir);
+    let wp = dir.path().join("wp");
+    std::fs::create_dir_all(&wp).unwrap();
+    let legacy = wp.join("50-biglinux-output-routing.conf");
+    let retained = wp.join("personal.conf");
+    std::fs::write(&legacy, b"# stale\n").unwrap();
+    std::fs::write(&retained, b"# personal\n").unwrap();
+    biglinux_microphone::pipeline::apply_to_dirs(
+        &AppSettings::default(),
+        &args,
+        &dir.path().join("pw"),
+        &wp,
+    )
+    .unwrap();
+    assert!(!legacy.exists());
+    assert_eq!(std::fs::read(&retained).unwrap(), b"# personal\n");
 }

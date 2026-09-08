@@ -10,17 +10,15 @@ use std::rc::Rc;
 use gtk::prelude::*;
 use gtk::{Align, Box as GtkBox, Label, Orientation, ScrolledWindow};
 
-use crate::config::{StereoMode, GATE_INTENSITY_MAX};
+use crate::config::{GATE_INTENSITY_MAX, StereoMode};
 use crate::services::pipewire::source_volume;
-
-use big_relm4_components::feedback::tooltip;
 
 use super::super::i18n::i18n;
 use super::super::mic_shell::MicInput;
 use super::super::state::AppState;
 use super::super::widgets::didactic::{
-    group_separator, illustration, labelled_row, percent_slider_on_change, section_header,
-    slider_row, switch_row, u32_slider_on_change, u8_slider_on_change, DidacticCard,
+    DidacticCard, group_separator, illustration, labelled_row, percent_slider_on_change,
+    section_header, slider_row, u8_slider_on_change, u32_slider_on_change,
 };
 use super::super::widgets::eq_card::build_eq_card;
 use super::super::widgets::{model_picker, source_picker};
@@ -46,6 +44,7 @@ pub fn build(state: &Rc<AppState>, input: &relm4::Sender<MicInput>) -> gtk::Widg
     content.append(echo_cancel_card(state, input).widget());
 
     content.append(&section_header(&i18n("Noise filter — fine-tune"), 16));
+    content.append(quality_card(state, input).widget());
     content.append(model_card(state, input).widget());
     content.append(voice_recovery_card(state, input).widget());
 
@@ -64,7 +63,8 @@ pub fn build(state: &Rc<AppState>, input: &relm4::Sender<MicInput>) -> gtk::Widg
 
 // ── Advanced-mode cards ────────────────────────────────────────────
 
-/// Combined microphone card — same layout as [`super::simple::mic_card`]
+/// Combined microphone card — same layout as the microphone card built by
+/// [`super::simple::build`]
 /// (hardware picker → separator → noise-filter master → intensity →
 /// self-listen toggle).
 fn mic_combo_card(state: &Rc<AppState>, input: &relm4::Sender<MicInput>) -> GtkBox {
@@ -92,31 +92,81 @@ fn mic_combo_card(state: &Rc<AppState>, input: &relm4::Sender<MicInput>) -> GtkB
         }
     });
     card.append(&intensity);
-    card.append(&self_listen_row(state, input));
+    card.append(&super::simple::self_listen_row(state, input));
     card
 }
 
 /// Standalone Echo-cancellation card.
-fn echo_cancel_card(state: &Rc<AppState>, input: &relm4::Sender<MicInput>) -> DidacticCard {
-    let switch = gtk::Switch::builder()
-        .valign(Align::Center)
-        .active(state.settings().echo_cancel.enabled)
-        .build();
-    {
-        let input = input.clone();
-        switch.connect_active_notify(move |sw| {
-            let _ = input.send(MicInput::MicEchoCancelToggled(sw.is_active()));
-        });
-    }
+pub(super) fn echo_cancel_card(
+    state: &Rc<AppState>,
+    input: &relm4::Sender<MicInput>,
+) -> DidacticCard {
+    use crate::config::EchoMode;
+    let modes = [EchoMode::Automatic, EchoMode::Always, EchoMode::Never];
+    let labels = [i18n("Automatic"), i18n("Always"), i18n("Never")];
+    let dropdown =
+        gtk::DropDown::from_strings(&labels.iter().map(String::as_str).collect::<Vec<_>>());
+    dropdown.set_selected(
+        modes
+            .iter()
+            .position(|mode| *mode == state.settings().echo_cancel.mode)
+            .unwrap_or(0) as u32,
+    );
+    dropdown.update_property(&[gtk::accessible::Property::Label(&i18n("Echo cancellation"))]);
+    let input = input.clone();
+    dropdown.connect_selected_notify(move |dropdown| {
+        if let Some(mode) = modes.get(dropdown.selected() as usize) {
+            let _ = input.send(MicInput::MicEchoModeChanged(*mode));
+        }
+    });
     DidacticCard::new(
         "master_mic.svg",
         &i18n("Echo cancellation"),
         &i18n(
-            "Removes speaker bleed from your microphone using the WebRTC \
-             AEC. Turn off when wearing headphones or when troubleshooting \
-             microphone routing.",
+            "Automatic cancels speaker echo and turns off cancellation when headphones are in use.",
         ),
-        Some(switch.upcast_ref()),
+        Some(dropdown.upcast_ref()),
+    )
+}
+
+pub(super) fn quality_card(state: &Rc<AppState>, input: &relm4::Sender<MicInput>) -> DidacticCard {
+    use crate::config::Quality;
+    let modes = [
+        Quality::Automatic,
+        Quality::Best,
+        Quality::Cheapest,
+        Quality::Manual,
+    ];
+    let labels = [
+        i18n("Automatic"),
+        i18n("Best quality"),
+        i18n("Lower CPU use"),
+        i18n("Manual model"),
+    ];
+    let dropdown =
+        gtk::DropDown::from_strings(&labels.iter().map(String::as_str).collect::<Vec<_>>());
+    dropdown.set_selected(
+        modes
+            .iter()
+            .position(|mode| *mode == state.settings().quality)
+            .unwrap_or(0) as u32,
+    );
+    dropdown.update_property(&[gtk::accessible::Property::Label(&i18n(
+        "Noise reduction quality",
+    ))]);
+    let input = input.clone();
+    dropdown.connect_selected_notify(move |dropdown| {
+        if let Some(mode) = modes.get(dropdown.selected() as usize) {
+            let _ = input.send(MicInput::QualityChanged(*mode));
+        }
+    });
+    DidacticCard::new(
+        "master_mic.svg",
+        &i18n("Noise reduction quality"),
+        &i18n(
+            "Automatic chooses a model for this computer. Choose lower CPU use if sound stutters, or select a model in Advanced.",
+        ),
+        Some(dropdown.upcast_ref()),
     )
 }
 
@@ -165,8 +215,8 @@ fn noise_filter_header(state: &Rc<AppState>, input: &relm4::Sender<MicInput>) ->
 
     let desc = Label::builder()
         .label(i18n(
-            "Removes background noise from your voice with the GTCRN \
-             neural network. Higher intensity = stronger cleanup.",
+            "Removes background noise from your voice using AI. Higher \
+             intensity = stronger cleanup.",
         ))
         .wrap(true)
         .xalign(0.0)
@@ -273,8 +323,8 @@ fn eq_card(state: &Rc<AppState>, input: &relm4::Sender<MicInput>) -> DidacticCar
         initial,
         i18n("Equalizer"),
         i18n(
-            "10-band parametric EQ. Pick a preset or drag each band \
-             between -40 dB and +40 dB.",
+            "Fine-tune your voice tone across 10 frequency bands. Pick a \
+             preset or drag each band between -40 dB and +40 dB.",
         ),
         move |mutation| {
             let _ = input.send(MicInput::MicEq(mutation));
@@ -283,7 +333,7 @@ fn eq_card(state: &Rc<AppState>, input: &relm4::Sender<MicInput>) -> DidacticCar
 }
 
 /// Pitch-shift card (LADSPA `pitch_scale_1193`). Width 0..1 maps exponentially
-/// to coefficient 0.5..2.0 — see [`crate::pipeline::mic`].
+/// to coefficient 0.5..2.0 — see [`crate::pipeline::build_mic_conf_for`].
 fn voice_changer_card(state: &Rc<AppState>, input: &relm4::Sender<MicInput>) -> DidacticCard {
     let switch = gtk::Switch::builder()
         .active(
@@ -335,23 +385,6 @@ fn pitch_slider(initial: f32, input: &relm4::Sender<MicInput>) -> GtkBox {
     }
 
     slider_row(&i18n("Pitch"), &scale, &spin)
-}
-
-/// `[label | switch]` self-listen toggle (mirrors `super::simple::self_listen_row`).
-fn self_listen_row(state: &Rc<AppState>, input: &relm4::Sender<MicInput>) -> GtkBox {
-    let switch = gtk::Switch::builder()
-        .valign(Align::Center)
-        .active(state.settings().monitor.enabled)
-        .build();
-    tooltip::set(&switch, i18n("Headphones only — speakers cause feedback."));
-    switch.update_property(&[gtk::accessible::Property::Label(&i18n("Hear my voice"))]);
-    {
-        let input = input.clone();
-        switch.connect_active_notify(move |sw| {
-            let _ = input.send(MicInput::SelfListenToggled(sw.is_active()));
-        });
-    }
-    switch_row(&i18n("Hear my voice"), &switch)
 }
 
 /// Delay slider for the self-listen monitor (own card, hidden in Simple).

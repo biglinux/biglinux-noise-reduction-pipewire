@@ -1,0 +1,22 @@
+# SPDX-FileCopyrightText: 2026 BigLinux contributors
+# SPDX-License-Identifier: MIT
+
+[package]
+name = "big-appearance"
+version = "0.1.0"
+publish = false
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+description = "GTK-free appearance contracts and CSS generation for BigLinux Rust applications"
+repository.workspace = true
+homepage.workspace = true
+authors.workspace = true
+keywords = ["appearance", "css", "theme", "biglinux"]
+categories = ["gui", "config"]
+
+[dependencies]
+serde = { workspace = true }
+
+[dev-dependencies]
+serde_json = { workspace = true }

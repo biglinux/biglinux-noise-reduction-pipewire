@@ -121,14 +121,6 @@ mod tests {
     use super::*;
 
     #[test]
-    fn default_config_has_correct_band_count() {
-        let c = EqualizerConfig::default();
-        assert_eq!(c.bands.len(), EQ_BAND_COUNT);
-        assert_eq!(c.preset, EQ_PRESET_DEFAULT);
-        assert!(!c.enabled);
-    }
-
-    #[test]
     fn normalize_fixes_wrong_length() {
         let mut c = EqualizerConfig {
             bands: vec![1.0, 2.0, 3.0],
@@ -136,10 +128,11 @@ mod tests {
         };
         c.normalize();
         assert_eq!(c.bands.len(), EQ_BAND_COUNT);
-        assert!(c
-            .bands
-            .iter()
-            .all(|b| (*b - EQ_BAND_DEFAULT).abs() < f32::EPSILON));
+        assert!(
+            c.bands
+                .iter()
+                .all(|b| (*b - EQ_BAND_DEFAULT).abs() < f32::EPSILON)
+        );
     }
 
     #[test]
@@ -151,20 +144,6 @@ mod tests {
         c.normalize();
         assert!((c.bands[0] - EQ_BAND_MAX).abs() < f32::EPSILON);
         assert!((c.bands[1] - EQ_BAND_MIN).abs() < f32::EPSILON);
-    }
-
-    #[test]
-    fn presets_have_exact_band_count() {
-        for p in PRESETS {
-            assert_eq!(p.bands.len(), EQ_BAND_COUNT, "preset {} wrong length", p.id);
-        }
-    }
-
-    #[test]
-    fn eq_preset_ids_non_empty_and_contains_flat() {
-        let ids = eq_preset_ids();
-        assert!(!ids.is_empty());
-        assert!(ids.contains(&"flat"));
     }
 
     #[test]

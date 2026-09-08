@@ -16,6 +16,8 @@
 
 use std::fmt::Write as _;
 
+pub use crate::config::noise_model::{GTCRN_LADSPA_PATH as LADSPA_GTCRN, LABEL_GTCRN_MONO};
+
 /// Source of a filter node.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum NodeKind {
@@ -141,13 +143,11 @@ pub fn format_f64(v: f64) -> String {
 
 // ── Canonical LADSPA plugin stems ────────────────────────────────────
 
-pub const LADSPA_GTCRN: &str = "/usr/lib/ladspa/libgtcrn_ladspa.so";
-/// DeepFilterNet3 plugin (premium full-band 48 kHz). Shipped by the
-/// optional `deepfilternet-ladspa` package — only referenced in the
-/// rendered conf when the user explicitly selects DFN3 *and* the
-/// shared object is installed.
-pub const LADSPA_DEEPFILTER: &str = "/usr/lib/ladspa/libdeep_filter_ladspa.so";
+/// Steve Harris gate (`gate_1410`). The user-facing gate on the output
+/// chain, and on the mic chain whenever the selected denoiser has no
+/// integrated one (the attenuation-only families).
 pub const LADSPA_SWH_GATE: &str = "/usr/lib/ladspa/gate_1410.so";
+/// Steve Harris mono compressor (`sc4m_1916`).
 pub const LADSPA_SC4_MONO: &str = "/usr/lib/ladspa/sc4m_1916.so";
 /// Steve Harris pitch shifter (`pitch_scale_1193`). Phase-vocoder
 /// based: changes pitch without retiming. Mono in / mono out, control
@@ -161,19 +161,7 @@ pub const LADSPA_AMP: &str = "/usr/lib/ladspa/amp_1181.so";
 
 // ── Canonical LADSPA labels ──────────────────────────────────────────
 
-/// GTCRN mono speech-enhancement plugin. Exposes every processing control
-/// (strength, speech strength, lookahead, model, blend, voice recovery)
-/// plus an integrated gate section that we use on the mic chain.
-pub const LABEL_GTCRN_MONO: &str = "gtcrn_mono";
-
-/// DeepFilterNet3 mono LADSPA label. Different control surface than
-/// GTCRN — no `Enable` / `Strength` / integrated gate; tuning is done
-/// via attenuation limit and processing thresholds.
-pub const LABEL_DEEPFILTER_MONO: &str = "deep_filter_mono";
-
-/// Steve Harris gate (`gate_1410`). Used on the output chain because it
-/// does not require the GTCRN plugin's initialisation and is cheaper when
-/// noise reduction is disabled.
+/// LADSPA label of [`LADSPA_SWH_GATE`].
 pub const LABEL_SWH_GATE: &str = "gate";
 
 /// SC4 mono compressor.

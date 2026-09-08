@@ -1,56 +1,43 @@
 //! Neural-model dropdown shared by the mic and output Advanced cards.
 //!
-//! Three rows, always present, in the same order as
-//! [`crate::config::NoiseModel`]:
-//!
-//! 1. GTCRN – DNS3 (16 kHz, strong)
-//! 2. GTCRN – VCTK (16 kHz, gentle)
-//! 3. DeepFilterNet3 (48 kHz)
-//!
-//! When the DFN3 LADSPA plugin isn't installed, row 3 stays in the
-//! list with a `not installed` suffix, but is rendered greyed-out and
-//! made non-selectable via the row's `selectable=false` /
-//! `activatable=false` flags. That keeps the option discoverable
-//! (users learn the optdep exists) without letting them pick something
-//! that would fail to instantiate at the LADSPA layer.
-//!
-//! The mic and output views share this helper so the labels stay in
-//! lockstep — every label change here lands in both Advanced pages
-//! atomically without each view drifting on its own.
+//! The available rows come from `big-audio-effects`, which owns the
+//! serialized model identifiers and LADSPA plugin/label contract. Missing
+//! optional plugins stay visible with a `not installed` suffix, but are
+//! rendered dimmed and made non-selectable via the row's
+//! `selectable=false` / `activatable=false` flags. That keeps the option
+//! discoverable without letting the user point the realtime chain at a
+//! plugin that is not installed.
 
+use crate::config::noise_model::{NoiseModel, REALTIME_LAVFI_MODELS};
 use gtk::prelude::*;
-
-use crate::config::{deepfilter_available, NoiseModel};
 
 use super::super::i18n::i18n;
 
+#[derive(Debug, Clone, PartialEq, Eq)]
+struct ModelChoice {
+    model: NoiseModel,
+    label: String,
+    is_available: bool,
+}
+
 /// Build the model `DropDown` and wire its selection to `on_change`.
 ///
-/// `initial` is the persisted model from `AppSettings`. If the user
-/// has DFN3 saved but the plugin is now missing, the caller is
+/// `initial` is the persisted model from `AppSettings`. If the user has
+/// an optional model saved but its plugin is now missing, the caller is
 /// expected to have already demoted it via
 /// [`crate::config::AppSettings::demote_unavailable_models`]; this
-/// builder still treats DFN3 defensively and falls back to row 0
-/// when the plugin is unavailable.
+/// builder still treats unavailable rows defensively and falls back to
+/// the default model when needed.
 pub fn build<F>(initial: NoiseModel, on_change: F) -> gtk::DropDown
 where
     F: Fn(NoiseModel) + 'static,
 {
-    let dfn3_present = deepfilter_available();
-
-    let dfn3_label = if dfn3_present {
-        i18n("DeepFilterNet3 (48 kHz)")
-    } else {
-        i18n("DeepFilterNet3 (48 kHz) — not installed")
-    };
-    let entries = [
-        i18n("GTCRN – DNS3 (16 kHz, strong)"),
-        i18n("GTCRN – VCTK (16 kHz, gentle)"),
-        dfn3_label,
-    ];
-
-    let str_refs: Vec<&str> = entries.iter().map(String::as_str).collect();
-    let model = gtk::StringList::new(&str_refs);
+    // Loadability, not bare file presence: a present-but-unloadable
+    // plugin (broken native dependency) must not be selectable — picking
+    // it would crash-loop the mic unit.
+    let choices = model_choices(crate::config::noise_model_loadable);
+    let labels: Vec<&str> = choices.iter().map(|choice| choice.label.as_str()).collect();
+    let string_model = gtk::StringList::new(&labels);
 
     let factory = gtk::SignalListItemFactory::new();
     factory.connect_setup(|_, list_item| {
@@ -60,70 +47,57 @@ where
         };
         setup_list_item.set_child(Some(&label));
     });
-    factory.connect_bind(move |_, list_item| {
-        let Some(bound_list_item) = list_item.downcast_ref::<gtk::ListItem>() else {
-            return;
-        };
-        let Some(string) = bound_list_item.item().and_downcast::<gtk::StringObject>() else {
-            return;
-        };
-        let Some(label) = bound_list_item.child().and_downcast::<gtk::Label>() else {
-            return;
-        };
-        label.set_label(&string.string());
+    {
+        let choices = choices.clone();
+        factory.connect_bind(move |_, list_item| {
+            let Some(bound_list_item) = list_item.downcast_ref::<gtk::ListItem>() else {
+                return;
+            };
+            let Some(string) = bound_list_item.item().and_downcast::<gtk::StringObject>() else {
+                return;
+            };
+            let Some(label) = bound_list_item.child().and_downcast::<gtk::Label>() else {
+                return;
+            };
+            label.set_label(&string.string());
 
-        // Index 2 is DFN3. When the plugin is missing, render the row
-        // greyed and refuse selection so users see the option is real
-        // but can't point the chain at a plugin that isn't there.
-        let row_interaction = dfn3_row_interaction(bound_list_item.position(), dfn3_present);
-        bound_list_item.set_selectable(row_interaction.is_selectable);
-        bound_list_item.set_activatable(row_interaction.is_activatable);
-        if row_interaction.is_dimmed {
-            label.add_css_class("dim-label");
-        } else {
-            label.remove_css_class("dim-label");
-        }
-    });
+            let row_interaction = row_interaction(bound_list_item.position(), &choices);
+            bound_list_item.set_selectable(row_interaction.is_selectable);
+            bound_list_item.set_activatable(row_interaction.is_activatable);
+            if row_interaction.is_dimmed {
+                label.add_css_class("dimmed");
+            } else {
+                label.remove_css_class("dimmed");
+            }
+        });
+    }
 
-    let dropdown = gtk::DropDown::new(Some(model), gtk::Expression::NONE);
+    let dropdown = gtk::DropDown::new(Some(string_model), gtk::Expression::NONE);
     dropdown.set_factory(Some(&factory));
-    dropdown.set_selected(model_to_index(initial, dfn3_present));
+    dropdown.set_selected(model_to_index(initial, &choices));
 
-    // Snap selection back if a keyboard navigation or accessibility
-    // tool ever bypasses the row-level `selectable=false` and lands
-    // on the disabled DFN3 row.
-    dropdown.connect_selected_notify(move |dd| {
-        let idx = dd.selected();
-        if selected_index_requires_dfn3_snapback(idx, dfn3_present) {
-            dd.set_selected(model_to_index(NoiseModel::GtcrnDns3, dfn3_present));
+    dropdown.connect_selected_notify(move |dropdown| {
+        let selected = dropdown.selected();
+        if selected_index_unavailable(selected, &choices) {
+            dropdown.set_selected(model_to_index(NoiseModel::default(), &choices));
             return;
         }
-        on_change(index_to_model(idx, dfn3_present));
+        on_change(index_to_model(selected, &choices));
     });
 
     dropdown
 }
 
-/// Description shown above the dropdown. Kept in this module so the
-/// "premium" wording can never resurface in only one of the two cards.
+/// Description shown above the dropdown. Kept in this module so the model
+/// guidance cannot drift between Microphone and Output cards.
 #[must_use]
 pub fn description() -> String {
-    i18n(description_message(deepfilter_available()))
+    i18n(
+        "DNS3 removes more noise but can smudge consonants. VCTK is gentler \
+         and lighter on CPU. Full-band models can sound cleaner when their \
+         LADSPA packages are installed, with higher CPU cost.",
+    )
 }
-
-fn description_message(dfn3_present: bool) -> &'static str {
-    if dfn3_present {
-        "DNS3 removes more noise but can smudge consonants. VCTK is \
-         gentler and lighter on CPU. DeepFilterNet3 is a full-band \
-         48 kHz model with the cleanest output and the highest CPU \
-         cost."
-    } else {
-        "DNS3 removes more noise but can smudge consonants. VCTK is \
-         gentler and lighter on CPU — good for podcasts."
-    }
-}
-
-const DFN3_INDEX: u32 = 2;
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 struct ModelRowInteraction {
@@ -132,8 +106,42 @@ struct ModelRowInteraction {
     is_dimmed: bool,
 }
 
-fn dfn3_row_interaction(row_position: u32, dfn3_present: bool) -> ModelRowInteraction {
-    let is_disabled = is_dfn3_row_disabled(row_position, dfn3_present);
+fn model_choices(is_available: impl Fn(NoiseModel) -> bool) -> Vec<ModelChoice> {
+    REALTIME_LAVFI_MODELS
+        .iter()
+        .copied()
+        .map(|model| {
+            let is_available = is_available(model);
+            let label = if is_available {
+                i18n(model_label(model))
+            } else {
+                i18n("{model} - not installed").replace("{model}", &i18n(model_label(model)))
+            };
+            ModelChoice {
+                model,
+                label,
+                is_available,
+            }
+        })
+        .collect()
+}
+
+fn model_label(model: NoiseModel) -> &'static str {
+    match model {
+        NoiseModel::GtcrnDns3 => "GTCRN - DNS3 (16 kHz, strong)",
+        NoiseModel::GtcrnVctk => "GTCRN - VCTK (16 kHz, gentle)",
+        NoiseModel::DeepFilterNet3 => "DeepFilterNet3 (48 kHz)",
+        NoiseModel::DpdfnetV2Hr => "DPDFNet-2 HR (48 kHz)",
+        NoiseModel::DpdfnetV8Hr => "DPDFNet-8 HR (48 kHz)",
+        NoiseModel::DpdfnetBaseline
+        | NoiseModel::DpdfnetV2
+        | NoiseModel::DpdfnetV4
+        | NoiseModel::DpdfnetV8 => "Offline-only DPDFNet",
+    }
+}
+
+fn row_interaction(row_position: u32, choices: &[ModelChoice]) -> ModelRowInteraction {
+    let is_disabled = selected_index_unavailable(row_position, choices);
     ModelRowInteraction {
         is_selectable: !is_disabled,
         is_activatable: !is_disabled,
@@ -141,32 +149,39 @@ fn dfn3_row_interaction(row_position: u32, dfn3_present: bool) -> ModelRowIntera
     }
 }
 
-fn is_dfn3_row_disabled(row_position: u32, dfn3_present: bool) -> bool {
-    row_position == DFN3_INDEX && !dfn3_present
+fn selected_index_unavailable(selected_index: u32, choices: &[ModelChoice]) -> bool {
+    choices
+        .get(selected_index as usize)
+        .is_none_or(|choice| !choice.is_available)
 }
 
-fn selected_index_requires_dfn3_snapback(selected_index: u32, dfn3_present: bool) -> bool {
-    selected_index == DFN3_INDEX && !dfn3_present
+fn model_to_index(model: NoiseModel, choices: &[ModelChoice]) -> u32 {
+    choices
+        .iter()
+        .position(|choice| choice.model == model && choice.is_available)
+        .and_then(|index| u32::try_from(index).ok())
+        .unwrap_or_else(|| default_index(choices))
 }
 
-fn model_to_index(model: NoiseModel, dfn3_present: bool) -> u32 {
-    match model {
-        NoiseModel::GtcrnVctk => 1,
-        NoiseModel::DeepFilterNet3 if dfn3_present => DFN3_INDEX,
-        // Persisted DFN3 with the package uninstalled falls back to
-        // the strong GTCRN preset so the dropdown stays in a valid
-        // state — `demote_unavailable_models()` normally rewrites the
-        // setting on load, this branch is a defensive net.
-        NoiseModel::GtcrnDns3 | NoiseModel::DeepFilterNet3 => 0,
-    }
+fn index_to_model(selected_index: u32, choices: &[ModelChoice]) -> NoiseModel {
+    choices
+        .get(selected_index as usize)
+        .filter(|choice| choice.is_available)
+        .map(|choice| choice.model)
+        .unwrap_or_default()
 }
 
-fn index_to_model(idx: u32, dfn3_present: bool) -> NoiseModel {
-    match idx {
-        1 => NoiseModel::GtcrnVctk,
-        2 if dfn3_present => NoiseModel::DeepFilterNet3,
-        _ => NoiseModel::GtcrnDns3,
-    }
+fn default_index(choices: &[ModelChoice]) -> u32 {
+    choices
+        .iter()
+        .position(|choice| choice.model == NoiseModel::default() && choice.is_available)
+        .or_else(|| {
+            choices
+                .iter()
+                .position(|choice| choice.model == NoiseModel::default())
+        })
+        .and_then(|index| u32::try_from(index).ok())
+        .unwrap_or(0)
 }
 
 #[cfg(test)]
@@ -174,91 +189,67 @@ mod tests {
     use super::*;
 
     #[test]
-    fn round_trip_indices() {
-        for present in [true, false] {
-            for model in [
-                NoiseModel::GtcrnDns3,
-                NoiseModel::GtcrnVctk,
-                NoiseModel::DeepFilterNet3,
-            ] {
-                let idx = model_to_index(model, present);
-                let back = index_to_model(idx, present);
-                if !present && matches!(model, NoiseModel::DeepFilterNet3) {
-                    assert_eq!(back, NoiseModel::GtcrnDns3);
-                } else {
-                    assert_eq!(back, model);
-                }
-            }
+    fn shared_realtime_models_drive_choices() {
+        let choices = model_choices(|_| true);
+
+        assert_eq!(choices.len(), REALTIME_LAVFI_MODELS.len());
+        assert_eq!(choices[0].model, NoiseModel::GtcrnDns3);
+        assert!(
+            choices
+                .iter()
+                .any(|choice| choice.model == NoiseModel::DpdfnetV8Hr)
+        );
+    }
+
+    #[test]
+    fn round_trip_available_indices() {
+        let choices = model_choices(|_| true);
+
+        for model in REALTIME_LAVFI_MODELS {
+            let index = model_to_index(model, &choices);
+            assert_eq!(index_to_model(index, &choices), model);
         }
     }
 
     #[test]
-    fn dfn3_index_is_last() {
-        assert_eq!(DFN3_INDEX, 2);
-    }
+    fn missing_model_is_visible_but_not_selectable() {
+        let choices = model_choices(|model| model != NoiseModel::DeepFilterNet3);
+        let index = model_to_index(NoiseModel::DeepFilterNet3, &choices);
+        let deepfilter_index = REALTIME_LAVFI_MODELS
+            .iter()
+            .position(|model| *model == NoiseModel::DeepFilterNet3)
+            .and_then(|index| u32::try_from(index).ok())
+            .expect("DeepFilterNet3 remains in realtime choices");
 
-    #[test]
-    fn missing_dfn3_is_visible_but_not_selectable() {
-        assert!(!is_dfn3_row_disabled(0, false));
-        assert!(!is_dfn3_row_disabled(1, false));
-        assert!(is_dfn3_row_disabled(DFN3_INDEX, false));
-        assert!(!is_dfn3_row_disabled(DFN3_INDEX, true));
-
-        assert!(selected_index_requires_dfn3_snapback(DFN3_INDEX, false));
-        assert!(!selected_index_requires_dfn3_snapback(DFN3_INDEX, true));
-        assert!(!selected_index_requires_dfn3_snapback(1, false));
-    }
-
-    #[test]
-    fn dfn3_row_interaction_dims_only_missing_dfn3() {
+        assert_eq!(index, 0);
+        assert!(
+            choices[deepfilter_index as usize]
+                .label
+                .contains("not installed")
+        );
         assert_eq!(
-            dfn3_row_interaction(DFN3_INDEX, false),
+            row_interaction(deepfilter_index, &choices),
             ModelRowInteraction {
                 is_selectable: false,
                 is_activatable: false,
                 is_dimmed: true,
             }
         );
+    }
+
+    #[test]
+    fn unavailable_selected_index_falls_back_to_default() {
+        let choices = model_choices(|model| model != NoiseModel::DpdfnetV2Hr);
+        let unavailable_index = REALTIME_LAVFI_MODELS
+            .iter()
+            .position(|model| *model == NoiseModel::DpdfnetV2Hr)
+            .and_then(|index| u32::try_from(index).ok())
+            .expect("DPDFNet-2 HR remains in realtime choices");
+
+        assert!(selected_index_unavailable(unavailable_index, &choices));
         assert_eq!(
-            dfn3_row_interaction(DFN3_INDEX, true),
-            ModelRowInteraction {
-                is_selectable: true,
-                is_activatable: true,
-                is_dimmed: false,
-            }
+            index_to_model(unavailable_index, &choices),
+            NoiseModel::default()
         );
-        assert_eq!(
-            dfn3_row_interaction(1, false),
-            ModelRowInteraction {
-                is_selectable: true,
-                is_activatable: true,
-                is_dimmed: false,
-            }
-        );
-    }
-
-    #[test]
-    fn dfn3_index_falls_back_when_plugin_is_missing() {
-        assert_eq!(model_to_index(NoiseModel::DeepFilterNet3, false), 0);
-        assert_eq!(index_to_model(DFN3_INDEX, false), NoiseModel::GtcrnDns3);
-        assert_eq!(model_to_index(NoiseModel::DeepFilterNet3, true), DFN3_INDEX);
-        assert_eq!(index_to_model(DFN3_INDEX, true), NoiseModel::DeepFilterNet3);
-    }
-
-    #[test]
-    fn description_messages_name_available_gtcrn_models() {
-        for text in [description_message(false), description_message(true)] {
-            assert!(text.contains("DNS3"), "{text}");
-            assert!(text.contains("VCTK"), "{text}");
-        }
-    }
-
-    #[test]
-    #[cfg(not(miri))]
-    fn localized_description_names_available_gtcrn_models() {
-        let text = description();
-
-        assert!(text.contains("DNS3"), "{text}");
-        assert!(text.contains("VCTK"), "{text}");
     }
 }

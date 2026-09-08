@@ -1,10 +1,22 @@
 [Unit]
-Description=BigLinux Microphone — output-side noise-reduction filter (pwloader)
+Description=Filter noise — output-side noise-reduction filter (pwloader)
 Documentation=https://github.com/biglinux/biglinux-noise-reduction-pipewire
 PartOf=pipewire.service
 After=pipewire.service wireplumber.service
 Requisite=pipewire.service
 Wants=pipewire.service wireplumber.service
+
+# The reconciler writes the args file before starting this unit;
+# a missing file means "user turned this chain off" and must not
+# produce a Restart=on-failure loop.
+ConditionPathExists=%h/.config/biglinux-microphone/output.args
+
+# Hard-stop a crash loop (e.g. an unloadable LADSPA plugin) after five
+# quick failures instead of restarting every 2 s forever; the GUI
+# surfaces the failure via its status banner and "Try again" re-runs
+# the reconcile after the user fixes the cause.
+StartLimitIntervalSec=30
+StartLimitBurst=5
 
 [Service]
 Type=simple
@@ -26,7 +38,14 @@ StandardError=journal
 # the process honour it.
 LimitRTPRIO=95
 LimitNICE=-19
-LimitMEMLOCK=infinity
+# Bounded: mlockall(MCL_CURRENT|MCL_FUTURE) in the loader pins every
+# mapping the process makes, and the OpenVINO CPU plugin's JIT is by far
+# the hungriest of them. Measured with the heaviest model we ship,
+# dpdfnet8_48khz_hr: VmLck peaks at 530 MB while compiling. At the old
+# 512M cap `compile_model` failed outright and the chain silently passed
+# audio through undenoised. 1G keeps real headroom above the measured
+# peak while still capping a leak instead of pinning all of RAM.
+LimitMEMLOCK=1G
 
 # ── Hardening ────────────────────────────────────────────────────────
 NoNewPrivileges=true

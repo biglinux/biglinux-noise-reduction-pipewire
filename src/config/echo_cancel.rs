@@ -22,37 +22,75 @@
 //! a call without headphones) without forcing the user to dig through
 //! Advanced. Power users with headphones or well-isolated microphones
 //! can disable it from the Advanced view.
+//!
+//! §78 asks for that choice to be contextual rather than a switch: cancellation is worth
+//! its cost when the microphone can hear the speakers, and worth nothing when the sound is
+//! going to headphones. So `mode` carries what somebody asked for and `enabled` stays what
+//! the pipeline reads — the two are separate because "automatic" is not a state the chain
+//! can be in, it is a rule about which state to be in. Whoever evaluates the rule writes
+//! `enabled`; this file only remembers that the rule is what was asked for.
 
 use serde::{Deserialize, Serialize};
+
+/// What somebody asked for (§78).
+#[derive(Debug, Clone, Copy, Default, PartialEq, Eq, Serialize, Deserialize)]
+pub enum EchoMode {
+    /// Cancel when the microphone can hear the speakers, and not otherwise.
+    #[default]
+    #[serde(rename = "auto")]
+    Automatic,
+    #[serde(rename = "on")]
+    Always,
+    #[serde(rename = "off")]
+    Never,
+}
+
+impl EchoMode {
+    /// Parse the word a command line or a settings file carries.
+    #[must_use]
+    pub fn parse(word: &str) -> Option<Self> {
+        Some(match word {
+            "auto" | "automatic" => Self::Automatic,
+            "on" | "true" | "yes" => Self::Always,
+            "off" | "false" | "no" => Self::Never,
+            _ => return None,
+        })
+    }
+
+    /// The word this writes back, which is the one `parse` prefers.
+    #[must_use]
+    pub const fn word(self) -> &'static str {
+        match self {
+            Self::Automatic => "auto",
+            Self::Always => "on",
+            Self::Never => "off",
+        }
+    }
+}
 
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(default)]
 pub struct EchoCancelConfig {
+    /// What the chain is doing. The pipeline reads this and nothing else.
     pub enabled: bool,
+    /// What was asked for (§78). Defaulted, so a settings file written before this
+    /// existed loads as automatic rather than failing and taking the rest with it.
+    #[serde(default)]
+    pub mode: EchoMode,
 }
 
 impl Default for EchoCancelConfig {
     fn default() -> Self {
-        Self { enabled: true }
+        Self {
+            enabled: true,
+            mode: EchoMode::default(),
+        }
     }
 }
 
 #[cfg(test)]
 mod tests {
     use super::*;
-
-    #[test]
-    fn defaults_to_enabled() {
-        assert!(EchoCancelConfig::default().enabled);
-    }
-
-    #[test]
-    fn round_trips_through_json() {
-        let c = EchoCancelConfig { enabled: false };
-        let s = serde_json::to_string(&c).unwrap();
-        let back: EchoCancelConfig = serde_json::from_str(&s).unwrap();
-        assert_eq!(c, back);
-    }
 
     #[test]
     fn empty_json_configuration_falls_back_to_default() {

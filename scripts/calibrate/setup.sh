@@ -7,7 +7,7 @@
 #   - Downloads the DNS-5 blind test set (~5 GB) into the cache
 #
 # The cache lives outside the repo at:
-#   ${XDG_CACHE_HOME:-$HOME/.cache}/biglinux-noise-reduction-pipewire/calibration/
+#   ${XDG_CACHE_HOME:-$HOME/.cache}/biglinux-microphone/calibration/
 #
 # Re-running is safe: existing models/datasets are skipped unless
 # --force is passed.
@@ -15,8 +15,7 @@
 set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-REPO_ROOT="$(cd "$SCRIPT_DIR/../.." && pwd)"
-CACHE_ROOT="${XDG_CACHE_HOME:-$HOME/.cache}/biglinux-noise-reduction-pipewire/calibration"
+CACHE_ROOT="${XDG_CACHE_HOME:-$HOME/.cache}/biglinux-microphone/calibration"
 VENV="$SCRIPT_DIR/.venv"
 
 FORCE=0
@@ -39,7 +38,7 @@ while [[ $# -gt 0 ]]; do
     shift
 done
 
-mkdir -p "$CACHE_ROOT/models/dnsmos" "$CACHE_ROOT/datasets/dns"
+mkdir -p "$CACHE_ROOT/models/dnsmos"
 
 # ── Python venv + deps ──────────────────────────────────────────────
 if [[ $SKIP_DEPS -eq 0 ]]; then
@@ -59,11 +58,10 @@ if [[ $SKIP_DEPS -eq 0 ]]; then
     python -m pip install --upgrade pip wheel
     python -m pip install -r "$SCRIPT_DIR/requirements.txt"
     if [[ -f "$SCRIPT_DIR/requirements-extra.txt" ]]; then
-        # Optional native deps (pesq, faster-whisper). Best-effort: a
-        # failure here does not block the rest of the bootstrap because
-        # PESQ and WER are nice-to-have on top of DNSMOS + STOI.
+        # PESQ is a best-effort native dependency; DNSMOS and STOI remain
+        # available if a matching wheel/compiler is unavailable.
         python -m pip install -r "$SCRIPT_DIR/requirements-extra.txt" || \
-            printf '  WARNING: optional metrics (pesq/whisper) failed to install — continuing.\n'
+            printf '  WARNING: optional PESQ metric failed to install — continuing.\n'
     fi
     deactivate
 fi
@@ -85,9 +83,6 @@ if [[ $SKIP_MODELS -eq 0 ]]; then
     fetch \
         "https://raw.githubusercontent.com/microsoft/DNS-Challenge/master/DNSMOS/DNSMOS/sig_bak_ovr.onnx" \
         "$CACHE_ROOT/models/dnsmos/sig_bak_ovr.onnx"
-    fetch \
-        "https://raw.githubusercontent.com/microsoft/DNS-Challenge/master/DNSMOS/DNSMOS/model_v8.onnx" \
-        "$CACHE_ROOT/models/dnsmos/model_v8.onnx"
 fi
 
 # ── VoiceBank+DEMAND test set (~250 MB) ─────────────────────────────
@@ -115,7 +110,7 @@ if [[ $SKIP_DATASET -eq 0 ]]; then
             printf '  WARNING: %s download failed — skipping.\n' "$archive"
             continue
         }
-        rm -rf "$DS_DIR/${archive}"
+        rm -rf "${DS_DIR:?}/${archive}"
         if unzip -q -o "$zip" -d "$DS_DIR"; then
             : > "$DS_DIR/${archive}/.extracted"
             rm -f "$zip"

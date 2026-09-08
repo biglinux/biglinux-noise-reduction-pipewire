@@ -1,9 +1,11 @@
-//! Settings persistence — load → mutate → save → load cycles, plus
-//! schema-tolerance against legacy field names.
+//! Settings persistence — load → mutate → save → load cycles and strict
+//! rejection of fields outside the current schema.
 
+use big_os_kit::storage::atomic_write;
 use biglinux_microphone::config::{
-    AppSettings, CompressorConfig, GateConfig, NoiseModel, OutputFilterSettings,
+    AppSettings, CompressorConfig, GateConfig, OutputFilterSettings,
 };
+use std::fs::read_to_string;
 use tempfile::tempdir;
 
 #[test]
@@ -14,7 +16,7 @@ fn save_then_load_restores_every_field() {
     let mut s = AppSettings::default();
     s.noise_reduction.enabled = true;
     s.noise_reduction.strength = 0.42;
-    s.noise_reduction.model = NoiseModel::GtcrnVctk;
+    s.noise_reduction.model = biglinux_microphone::config::NoiseModel::GtcrnVctk;
     s.gate = GateConfig {
         enabled: true,
         intensity: 17,
@@ -32,32 +34,37 @@ fn save_then_load_restores_every_field() {
     s.ui.show_advanced = true;
 
     s.save_to(&path).unwrap();
+    let saved: serde_json::Value = serde_json::from_slice(&std::fs::read(&path).unwrap()).unwrap();
+    assert_eq!(saved["noise_reduction"]["model"], 1);
     let loaded = AppSettings::load_from(&path);
+    if !s.noise_reduction.model.plugin_loadable() {
+        s.noise_reduction.model = biglinux_microphone::config::NoiseModel::default();
+    }
     assert_eq!(loaded, s);
 }
 
 #[test]
-fn legacy_routed_apps_field_is_silently_dropped_on_load() {
+fn unknown_output_filter_field_rejects_the_document_without_rewriting_it() {
     let dir = tempdir().unwrap();
     let path = dir.path().join("settings.json");
     let raw = r#"{
         "output_filter": {
             "enabled": true,
-            "routed_apps": ["Firefox", "Zoom"]
+            "unrecognized_setting": ["Firefox", "Zoom"]
         }
     }"#;
-    std::fs::write(&path, raw).unwrap();
+    atomic_write(&path, raw.as_bytes()).unwrap();
 
     let s = AppSettings::load_from(&path);
-    assert!(s.output_filter.enabled);
-    // No `routed_apps` field exists on the new schema.
+    assert_eq!(s, AppSettings::default());
+    assert_eq!(read_to_string(&path).unwrap(), raw);
 }
 
 #[test]
 fn malformed_file_falls_back_to_defaults() {
     let dir = tempdir().unwrap();
     let path = dir.path().join("settings.json");
-    std::fs::write(&path, b"{ this is not json").unwrap();
+    atomic_write(&path, b"{ this is not json").unwrap();
 
     let s = AppSettings::load_from(&path);
     assert_eq!(s, AppSettings::default());
@@ -79,4 +86,59 @@ fn save_does_not_leave_temp_artefact() {
     AppSettings::default().save_to(&path).unwrap();
     assert!(path.exists());
     assert!(!path.with_extension("tmp").exists());
+}
+
+#[test]
+fn saved_settings_are_private_and_replace_a_symlink_without_touching_its_target() {
+    use std::os::unix::fs::{PermissionsExt, symlink};
+    let dir = tempdir().unwrap();
+    let victim = dir.path().join("unrelated");
+    std::fs::write(&victim, b"unchanged").unwrap();
+    let path = dir.path().join("settings.json");
+    symlink(&victim, &path).unwrap();
+    AppSettings::default().save_to(&path).unwrap();
+    assert_eq!(std::fs::read(&victim).unwrap(), b"unchanged");
+    assert!(!std::fs::symlink_metadata(&path).unwrap().is_symlink());
+    assert_eq!(
+        std::fs::metadata(&path).unwrap().permissions().mode() & 0o777,
+        0o600
+    );
+}
+
+#[test]
+fn legacy_disabled_echo_remains_explicitly_off_without_rewriting_the_file() {
+    let dir = tempdir().unwrap();
+    let path = dir.path().join("settings.json");
+    let original = br#"{"echo_cancel":{"enabled":false}}"#;
+    std::fs::write(&path, original).unwrap();
+    let settings = AppSettings::load_from(&path);
+    assert_eq!(
+        settings.echo_cancel.mode,
+        biglinux_microphone::config::EchoMode::Never
+    );
+    assert!(!settings.echo_cancel.enabled);
+    assert_eq!(std::fs::read(&path).unwrap(), original);
+}
+
+#[test]
+fn legacy_selected_model_keeps_manual_quality() {
+    let dir = tempdir().unwrap();
+    let path = dir.path().join("settings.json");
+    let mut value = serde_json::to_value(AppSettings::default()).unwrap();
+    value.as_object_mut().unwrap().remove("quality");
+    std::fs::write(&path, serde_json::to_vec(&value).unwrap()).unwrap();
+    assert_eq!(
+        AppSettings::load_from(&path).quality,
+        biglinux_microphone::config::Quality::Manual
+    );
+}
+
+#[test]
+fn legacy_routed_apps_does_not_discard_valid_output_settings() {
+    let dir = tempdir().unwrap();
+    let path = dir.path().join("settings.json");
+    let bytes = br#"{"output_filter":{"enabled":true,"routed_apps":["Fixture"]}}"#;
+    std::fs::write(&path, bytes).unwrap();
+    assert!(AppSettings::load_from(&path).output_filter.enabled);
+    assert_eq!(std::fs::read(&path).unwrap(), bytes);
 }

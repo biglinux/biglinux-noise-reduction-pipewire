@@ -10,16 +10,21 @@
 //! cross-process drift. WirePlumber's smart-filter policy then attaches
 //! `mic-biglinux` to the user's default audio source. Every application
 //! that records from the default microphone reads the processed signal
-//! transparently — the original hardware node stays reachable but
+//! transparently — the physical hardware node stays reachable but
 //! deprioritised.
 //!
 //! Pipeline order, mono:
 //!
 //! ```text
-//! hpf [→ gtcrn(+integrated gate)] [→ compressor] [→ param_eq]
+//! [hpf_pre →] hpf [→ denoiser [→ gate]] [→ compressor] [→ param_eq]
 //!     [→ pitch → pitch_gain]   ← only when voice changer is on
 //!     → copy_L, copy_R (fan-out for downstream stereo consumers)
 //! ```
+//!
+//! `hpf_pre` is the second stage of the HPF cascade and only exists
+//! while the high-pass is on; the standalone `gate` only exists when
+//! the selected denoiser has no integrated one. Whichever node comes
+//! first is the graph input — see [`build_mic_conf`].
 //!
 //! Every bracketed node is conditional and skipped from the graph when
 //! its flag is off — the mic chain is read by recording apps via the
@@ -49,16 +54,18 @@
 
 use std::fmt::Write as _;
 
+use crate::config::dynamics::GateDerived;
+
 use crate::config::{
-    deepfilter_attenuation_db, eq_preset_bands, gtcrn_speech_strength, AppSettings,
-    CompressorDerived, StereoMode, EQ_BANDS_HZ, EQ_BAND_COUNT,
+    AppSettings, EQ_BAND_COUNT, EQ_BANDS_HZ, GATE_INTENSITY_MAX, StereoMode,
+    deepfilter_attenuation_db, eq_preset_bands, gtcrn_speech_strength,
 };
 
-use super::graph::{Graph, Link, RenderMode};
+use super::graph::{Graph, Link};
 use super::nodes::{
-    Node, LABEL_AMP, LABEL_BQ_HIGHPASS, LABEL_COPY, LABEL_DEEPFILTER_MONO, LABEL_GTCRN_MONO,
-    LABEL_PARAM_EQ, LABEL_PITCH_SCALE, LABEL_SC4_MONO, LABEL_SWH_GATE, LADSPA_AMP,
-    LADSPA_DEEPFILTER, LADSPA_GTCRN, LADSPA_PITCH_SCALE, LADSPA_SC4_MONO, LADSPA_SWH_GATE,
+    LABEL_AMP, LABEL_BQ_HIGHPASS, LABEL_COPY, LABEL_GTCRN_MONO, LABEL_PARAM_EQ, LABEL_PITCH_SCALE,
+    LABEL_SC4_MONO, LABEL_SWH_GATE, LADSPA_AMP, LADSPA_GTCRN, LADSPA_PITCH_SCALE, LADSPA_SC4_MONO,
+    LADSPA_SWH_GATE, Node,
 };
 
 /// Stem used for the smart filter name — the outward-facing
@@ -70,7 +77,7 @@ pub const MIC_NODE_NAME: &str = "mic-biglinux";
 /// generic audio-adapter properties, so any live parameter update has
 /// to target *this* name instead.
 pub const MIC_CAPTURE_NODE_NAME: &str = "mic-biglinux-capture";
-pub const MIC_DESCRIPTION: &str = "BigLinux Microphone";
+pub const MIC_DESCRIPTION: &str = "Filter noise";
 /// File name of the mic args body inside the bigmic state dir.
 pub const MIC_CONF_FILE: &str = "mic.args";
 
@@ -80,26 +87,36 @@ pub fn build_mic_conf(settings: &AppSettings) -> String {
     let nodes = mic_nodes(settings);
     let links = mic_links(&nodes);
 
+    // The graph input has to be the head of the linear chain, which is
+    // `hpf_pre` once the HPF cascade is on. Naming a port that a link
+    // already consumes makes `spa.filter-graph` refuse the whole graph
+    // ("input port hpf[0]:In already used by link, use mixer", -EBUSY),
+    // so the virtual source never starts.
+    let head = nodes
+        .first()
+        .expect("mic graph always starts with an hpf node");
+    let inputs = vec![format!("{}:{}", head.name, head.input_port)];
+
     let graph = Graph {
         description: MIC_DESCRIPTION.into(),
         media_name: MIC_DESCRIPTION.into(),
         nodes,
         links,
-        inputs: vec!["hpf:In".into()],
+        inputs,
         outputs: vec!["copy_l:Out".into(), "copy_r:Out".into()],
         capture_props: capture_props(settings),
-        playback_props: playback_props(settings),
+        playback_props: playback_props(),
     };
 
-    graph.render(RenderMode::ModuleArgs)
+    graph.render()
 }
 
 /// Tear down every mic-side flag in one go. Called by the simple-view
 /// master switch and the Plasma applet `toggle-mic` action so a single
-/// "off" click reaches all reasons `filter-chain.service` would stay
-/// alive — default-on flags (`echo_cancel`, `stereo`) would otherwise
-/// keep the worker running silently. Advanced view leaves the flags
-/// independent and does not call this.
+/// "off" click reaches all reasons the mic loader would stay alive —
+/// default-on flags (`echo_cancel`, `stereo`) would otherwise keep it
+/// running silently. Advanced view leaves the flags independent and
+/// does not call this.
 pub fn cascade_mic_off(settings: &mut AppSettings) {
     settings.noise_reduction.enabled = false;
     settings.echo_cancel.enabled = false;
@@ -112,7 +129,7 @@ pub fn cascade_mic_off(settings: &mut AppSettings) {
 
 /// Does the current settings snapshot ask for *any* microphone
 /// processing? When this returns `false` we skip writing the mic chain
-/// config entirely so the user doesn't see a "BigLinux Microphone"
+/// config entirely so the user doesn't see a "Filter noise"
 /// virtual source while every filter is off.
 #[must_use]
 pub fn mic_chain_wanted(settings: &AppSettings) -> bool {
@@ -161,7 +178,7 @@ fn mic_nodes(settings: &AppSettings) -> Vec<Node> {
         // DFN3 has no integrated gate, unlike GTCRN. When the user wants
         // the silence gate alongside DFN3 we wire a standalone SWH gate
         // immediately after it (same plugin the output chain uses).
-        if settings.noise_reduction.model.is_deepfilter() && settings.gate.enabled {
+        if settings.noise_reduction.model.is_attenuation_only() && settings.gate.enabled {
             nodes.push(standalone_gate_node(settings));
         }
     }
@@ -191,7 +208,7 @@ fn mic_nodes(settings: &AppSettings) -> Vec<Node> {
 }
 
 fn compressor_node(settings: &AppSettings) -> Node {
-    let comp_d = CompressorDerived::from_config(&settings.compressor);
+    let comp_d = settings.compressor.ladspa_controls();
     Node::ladspa("compressor", LADSPA_SC4_MONO, LABEL_SC4_MONO).with_controls([
         ("RMS/peak", f64::from(comp_d.rms_peak)),
         ("Attack time (ms)", f64::from(comp_d.attack_ms)),
@@ -204,8 +221,8 @@ fn compressor_node(settings: &AppSettings) -> Node {
 }
 
 fn denoiser_node(settings: &AppSettings) -> Node {
-    if settings.noise_reduction.model.is_deepfilter() {
-        deepfilter_node(settings)
+    if settings.noise_reduction.model.is_attenuation_only() {
+        attenuation_denoiser_node(settings)
     } else {
         gtcrn_node(settings)
     }
@@ -214,7 +231,9 @@ fn denoiser_node(settings: &AppSettings) -> Node {
 fn gtcrn_node(settings: &AppSettings) -> Node {
     let nr = &settings.noise_reduction;
     let gate = &settings.gate;
-    let gate_derived = crate::config::GateDerived::from_config(gate);
+    let gate_derived = GateDerived::from_unit_intensity(
+        f64::from(gate.intensity.min(GATE_INTENSITY_MAX)) / f64::from(GATE_INTENSITY_MAX),
+    );
     let threshold_db = if gate.enabled {
         gate_derived.threshold_db
     } else {
@@ -241,21 +260,25 @@ fn gtcrn_node(settings: &AppSettings) -> Node {
     ])
 }
 
-/// DeepFilterNet3 mono node. The plugin has no `Enable` port — toggling
-/// noise-reduction off while DFN3 is selected drops the node from the
-/// graph (a reload, not a live update). The strength→cap mapping lives
-/// in [`deepfilter_attenuation_db`] (quadratic curve aligned with the
+/// Attenuation-only denoiser node (DeepFilterNet / DPDFNet families).
+/// These plugins have no `Enable` port — toggling noise-reduction off
+/// while one is selected drops the node from the graph (a reload, not
+/// a live update). The strength→cap mapping lives in
+/// [`deepfilter_attenuation_db`] (quadratic curve aligned with the
 /// upstream cap-as-perceptual-knob guidance).
-fn deepfilter_node(settings: &AppSettings) -> Node {
+fn attenuation_denoiser_node(settings: &AppSettings) -> Node {
     let nr = &settings.noise_reduction;
     let atten_db = deepfilter_attenuation_db(nr.strength);
-    Node::ladspa("ai", LADSPA_DEEPFILTER, LABEL_DEEPFILTER_MONO)
+    let (plugin, label) = nr.model.plugin_and_label();
+    Node::ladspa("ai", plugin, label)
         .with_ports("Audio In", "Audio Out")
         .with_controls([("Attenuation Limit (dB)", atten_db)])
 }
 
 fn standalone_gate_node(settings: &AppSettings) -> Node {
-    let gate_d = crate::config::GateDerived::from_config(&settings.gate);
+    let gate_d = GateDerived::from_unit_intensity(
+        f64::from(settings.gate.intensity.min(GATE_INTENSITY_MAX)) / f64::from(GATE_INTENSITY_MAX),
+    );
     Node::ladspa("gate", LADSPA_SWH_GATE, LABEL_SWH_GATE).with_controls([
         ("Threshold (dB)", gate_d.threshold_db),
         ("Attack (ms)", gate_d.attack_ms),
@@ -273,9 +296,9 @@ fn standalone_gate_node(settings: &AppSettings) -> Node {
 /// the audio path stays free of the phase-vocoder STFT/iSTFT pass.
 ///
 /// `width` is exponential: width=0.0 → 0.5x (deep), width=0.5 → 1.0x
-/// (passthrough), width=1.0 → 2.0x (high). Gain compensation matches
-/// the legacy curve — deep voices need +dB to keep loudness; high
-/// voices need a small attenuation to avoid clipping.
+/// (passthrough), width=1.0 → 2.0x (high). The calibrated gain curve gives
+/// deep voices +dB to keep loudness and high voices a small attenuation to
+/// avoid clipping.
 fn pitch_controls(settings: &AppSettings) -> Option<(f64, f64)> {
     let st = &settings.stereo;
     if !st.enabled || st.mode != StereoMode::VoiceChanger {
@@ -375,11 +398,11 @@ fn capture_props(settings: &AppSettings) -> String {
     // The node name must stay in sync with [`MIC_CAPTURE_NODE_NAME`] —
     // live parameter updates target this name, not the outward-facing
     // `Audio/Source` wrapper.
-    let latency = if settings.echo_cancel.enabled {
-        super::echo_cancel::AEC_NODE_LATENCY
-    } else {
-        "1024/48000"
-    };
+    // The same block with or without the canceller. 1024 was neither a multiple of the
+    // canceller's 480-sample frame nor of any model's analysis hop, so every callback
+    // straddled a hop boundary and the work per wake-up alternated; it also measured the
+    // worst p99 of the three sizes tried.
+    let latency = super::echo_cancel::AEC_NODE_LATENCY;
 
     // `node.lock-quantum = true` keeps PipeWire from re-negotiating the
     // graph quantum while this chain is active. Without the lock, the
@@ -411,7 +434,7 @@ fn capture_props(settings: &AppSettings) -> String {
     props.join("\n")
 }
 
-fn playback_props(settings: &AppSettings) -> String {
+fn playback_props() -> String {
     // Always declare `mic-biglinux` as a WirePlumber smart filter so it
     // inserts itself between every default-following recording app and
     // whichever source the user has picked in their audio manager. The
@@ -436,11 +459,11 @@ fn playback_props(settings: &AppSettings) -> String {
     // Stereo fan-out (FL / FR via `copy_l` / `copy_r`) keeps apps that
     // require a two-channel source happy; the internal chain is mono
     // and the copies just duplicate the signal.
-    let latency = if settings.echo_cancel.enabled {
-        super::echo_cancel::AEC_NODE_LATENCY
-    } else {
-        "1024/48000"
-    };
+    // The same block with or without the canceller. 1024 was neither a multiple of the
+    // canceller's 480-sample frame nor of any model's analysis hop, so every callback
+    // straddled a hop boundary and the work per wake-up alternated; it also measured the
+    // worst p99 of the three sizes tried.
+    let latency = super::echo_cancel::AEC_NODE_LATENCY;
 
     let props = vec![
         format!("node.name = \"{MIC_NODE_NAME}\""),

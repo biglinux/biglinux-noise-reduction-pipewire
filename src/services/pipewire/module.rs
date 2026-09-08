@@ -1,35 +1,31 @@
 //! systemd unit helpers for the per-loader mic / AEC / output chains.
 //!
-//! The rewrite deliberately avoids restarting the system audio stack
-//! for routine setting changes — that would interrupt every live
-//! stream every time the user drags a slider. The layout is:
+//! Routine setting changes do not restart the system audio stack because
+//! that would interrupt every live stream whenever the user drags a slider.
+//! The layout is:
 //!
 //! - **Control values** (sliders, strength, model) update the running
 //!   graph via [`crate::services::pipewire::apply_live`]. No service
 //!   restart, no audio glitch.
-//! - **Per-application output routing** is pushed straight into the
-//!   PipeWire graph through metadata
-//!   ([`crate::services::pipewire::route_stream`]). WirePlumber reads
-//!   the metadata change in place — no `wireplumber.service` restart.
+//! - **Output control values** are pushed into the running filter
+//!   graph without restarting `wireplumber.service`.
 //! - **Mic chain topology changes** (a filter added or removed, the
 //!   user enabling processing for the first time) reach the running
 //!   loader only if we restart `biglinux-microphone-mic.service`. The
 //!   restart affects exclusively our `mic-biglinux` virtual source.
 //! - **AEC lifecycle** toggles `biglinux-microphone-aec.service`. The
-//!   mic unit `Wants/After`s it, so starting AEC after the mic chain
-//!   is up triggers a brief mic restart so the EC source is wired
-//!   into the chain.
+//!   mic unit is ordered after it when both units start, but does not
+//!   pull it in when AEC is disabled.
 //! - **Output chain lifecycle** toggles
-//!   `biglinux-microphone-output.service`. Only streams routed through
-//!   the output filter see a brief interruption; the rest of the audio
-//!   graph is untouched.
+//!   `biglinux-microphone-output.service`. Its smart-filter node follows
+//!   the selected sink through WirePlumber policy.
 //!
 //! Every unit runs the same `biglinux-microphone-pwloader` binary,
 //! which connects as a regular client of the main PipeWire daemon.
 //! That gives all three loaders one shared clock — no cross-process
 //! drift, no `spa.alsa: front:1p ... resync` events.
 //!
-//! We never restart `wireplumber.service` any more. A stale drop-in in
+//! We never restart `wireplumber.service`. A stale drop-in in
 //! `~/.config/wireplumber/wireplumber.conf.d/` is fine: WirePlumber
 //! reads it on its next natural start-up, and live metadata covers the
 //! interactive case.
@@ -46,8 +42,8 @@ const OUTPUT_UNIT: &str = "biglinux-microphone-output.service";
 
 /// Restart the AEC loader. Only the `echo-cancel-source` virtual
 /// source briefly disappears from the graph; the mic loader picks it
-/// up again as soon as it's back. Clears `failed` state first to ride
-/// out crash-loops left behind by previous packaged versions.
+/// up again as soon as it's back. Clears `failed` state first so a
+/// crash-loop cannot block the restart.
 pub fn restart_aec_service() -> io::Result<()> {
     let _ = run_systemctl(["--user", "reset-failed", AEC_UNIT]);
     run_systemctl(["--user", "restart", AEC_UNIT])?;
@@ -102,12 +98,6 @@ pub fn stop_mic_service() -> io::Result<()> {
     Ok(())
 }
 
-/// Restart just the mic chain — alias kept so legacy call sites do not
-/// have to know about the underlying unit name.
-pub fn reload_mic_chain() -> io::Result<()> {
-    restart_mic_service()
-}
-
 /// Start the output loader. Idempotent. Clears `failed` state first.
 pub fn start_output_service() -> io::Result<()> {
     let _ = run_systemctl(["--user", "reset-failed", OUTPUT_UNIT]);
@@ -136,9 +126,10 @@ pub fn stop_output_service() -> io::Result<()> {
 
 fn run_systemctl<const N: usize>(args: [&str; N]) -> io::Result<()> {
     let output = BigSubprocessSpec::builder()
-        .program("systemctl")
+        .program("/usr/bin/systemctl")
         .args(args)
         .stdout(BigSubprocessOutputMode::Null)
+        .allow_list(["/usr/bin/systemctl"])
         .build()
         .run()
         .map_err(io::Error::other)?;
@@ -150,12 +141,4 @@ fn run_systemctl<const N: usize>(args: [&str; N]) -> io::Result<()> {
             output.status.code()
         )))
     }
-}
-
-#[cfg(test)]
-mod tests {
-    // Interaction with systemd requires a live user manager. Covered by
-    // integration runs under a real session.
-    #[test]
-    fn noop() {}
 }

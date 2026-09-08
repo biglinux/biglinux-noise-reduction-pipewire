@@ -1,0 +1,41 @@
+[package]
+name = "big-relm4-components"
+version = "0.1.0"
+publish = false  # consumed by sibling apps via path dep, not crates.io (see ARCHITECTURE.md §8)
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+description = "Reusable Relm4/libadwaita components for BigLinux applications"
+repository.workspace = true
+homepage.workspace = true
+authors.workspace = true
+readme = "README.md"
+keywords = ["relm4", "gtk4", "libadwaita", "components", "biglinux"]
+categories = ["gui"]
+
+[dependencies]
+adw.workspace = true
+gtk.workspace = true
+log.workspace = true
+relm4.workspace = true
+gettext-rs.workspace = true
+big-app-kit.workspace = true
+# Direct dep on the display-free core so the GTK-free `zone_layout` model is
+# re-exported from `input::zone_layout` (the editor + runtime applier consume it
+# without the widget graph living in core).
+big-app-kit-core.workspace = true
+big-appearance.workspace = true
+# `mem::trim_arenas` for dialog teardown (single canonical impl; light default).
+big-os-kit.workspace = true
+# Split-tree layout capture nodes (`pane::split_tree_layout`).
+serde_json.workspace = true
+
+[dev-dependencies]
+# Shared leak/census harness for examples/leak_soak (finalization census).
+big-testkit.workspace = true
+
+[build-dependencies]
+glib-build-tools = "0.22"
+
+[package.metadata.cargo-machete]
+ignored = ["glib-build-tools"]

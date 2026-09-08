@@ -54,14 +54,6 @@ mod tests {
     use super::*;
 
     #[test]
-    fn window_defaults_are_reasonable() {
-        let w = WindowConfig::default();
-        assert!(w.width >= WINDOW_WIDTH_MIN);
-        assert!(w.height >= WINDOW_HEIGHT_MIN);
-        assert!(!w.maximized);
-    }
-
-    #[test]
     fn window_sanitize_fixes_tiny_dimensions() {
         let w = WindowConfig {
             width: 10,

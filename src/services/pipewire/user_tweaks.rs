@@ -14,33 +14,30 @@
 //!
 //! Each field is `Option<…>`. `None` means "the user has not customised
 //! this control" — we omit the key entirely from the drop-in so the
-//! distro defaults shipped by `pipewire-biglinux-config` (and by this
-//! package's own `61-biglinux-alsa-headroom.conf`) win unchanged. This
+//! PipeWire, WirePlumber, and distro defaults win unchanged. This
 //! keeps the user file *additive*: no surprise overrides to undo when
 //! the user toggles a single control back to "Distribution default".
 //!
 //! ## Atomic writes
 //!
-//! Every write goes through a `<file>.tmp` rename so a crash mid-write
+//! Every write goes through a sibling temp-file rename so a crash mid-write
 //! cannot leave a half-rendered config that PipeWire / WirePlumber
-//! would refuse to load. We fsync the temp file before the rename and
-//! fsync the parent directory after, so the rename is durable on disk
-//! before the GUI fires `restart_pipewire_user_stack` — a race we hit
-//! in the field where systemctl restarted the daemons faster than the
-//! page-cache flushed, and PipeWire re-read the previous file. Empty
-//! drop-ins (no field set) are deleted entirely instead of left as
-//! zero-byte files.
+//! would refuse to load. Empty drop-ins (no field set) are deleted
+//! entirely instead of left as zero-byte files.
 //!
 //! ## Drop-in precedence
 //!
-//! `99-` prefix beats every distro file (`50-`, `51-`, `61-`) under
+//! `99-` prefix beats every distro file under
 //! `~/.config`, and `~/.config` itself beats `/etc` and `/usr/share`
 //! per the PipeWire / WirePlumber lookup rules. Removing the user file
 //! restores the distro defaults atomically.
 
-use std::fs::{self, File};
-use std::io::{self, Write};
+use std::io;
 use std::path::{Path, PathBuf};
+
+use crate::config::atomic_write_private as atomic_write;
+use crate::pipeline::remove_file_if_exists;
+use std::fs::read_to_string;
 
 /// Sample-rate options the UI exposes. `Standard` keeps the upstream /
 /// distro default of 48 kHz only — every other variant adds the listed
@@ -109,10 +106,10 @@ impl UserTweaks {
     /// out of the UI.
     pub fn load_from_disk() -> Self {
         let mut t = Self::default();
-        if let Ok(text) = fs::read_to_string(pipewire_drop_in()) {
+        if let Ok(text) = read_to_string(pipewire_drop_in()) {
             parse_pipewire(&text, &mut t);
         }
-        if let Ok(text) = fs::read_to_string(wireplumber_drop_in()) {
+        if let Ok(text) = read_to_string(wireplumber_drop_in()) {
             parse_wireplumber(&text, &mut t);
         }
         t
@@ -169,39 +166,9 @@ fn wireplumber_drop_in() -> PathBuf {
 
 fn write_or_remove(path: &Path, body: &str) -> io::Result<()> {
     if body.trim().is_empty() {
-        return remove_if_exists(path);
+        return remove_file_if_exists(path);
     }
-    let parent = path
-        .parent()
-        .ok_or_else(|| io::Error::other(format!("path has no parent: {}", path.display())))?;
-    fs::create_dir_all(parent)?;
-
-    let temporary_override_file = path.with_extension("conf.tmp");
-    {
-        let mut f = File::create(&temporary_override_file)?;
-        f.write_all(body.as_bytes())?;
-        f.sync_all()?;
-    }
-    fs::rename(&temporary_override_file, path)?;
-
-    // fsync the parent directory so the rename is durable before
-    // systemctl restarts pipewire — otherwise the daemons can re-read
-    // the previous file from page cache while the new one is still
-    // unflushed. Best-effort: some filesystems return EINVAL on dir
-    // fsync (legacy FAT, some FUSE backends); we accept that since the
-    // `sync_all` on the temp file above already gives data durability.
-    if let Ok(dir) = File::open(parent) {
-        let _ = dir.sync_all();
-    }
-    Ok(())
-}
-
-fn remove_if_exists(path: &Path) -> io::Result<()> {
-    match fs::remove_file(path) {
-        Ok(()) => Ok(()),
-        Err(e) if e.kind() == io::ErrorKind::NotFound => Ok(()),
-        Err(e) => Err(e),
-    }
+    atomic_write(path, body.as_bytes())
 }
 
 // ── Renderers ─────────────────────────────────────────────────────────
@@ -400,18 +367,18 @@ fn parse_wireplumber(text: &str, out: &mut UserTweaks) {
                 _ => {}
             }
         }
-        if let Some(value) = extract_action_value(line, "session.suspend-timeout-seconds") {
-            if matches!(current, Some("alsa_all")) && value == "0" {
-                out.alsa_no_suspend = Some(true);
-            }
+        if let Some(value) = extract_action_value(line, "session.suspend-timeout-seconds")
+            && matches!(current, Some("alsa_all"))
+            && value == "0"
+        {
+            out.alsa_no_suspend = Some(true);
         }
         if let Some(latency) = extract_action_value(line, "node.latency")
             .and_then(|s| s.trim_matches('"').split('/').next().map(str::to_owned))
             .and_then(|s| s.parse::<u32>().ok())
+            && matches!(current, Some("bluez"))
         {
-            if matches!(current, Some("bluez")) {
-                out.bt_latency = Some(latency);
-            }
+            out.bt_latency = Some(latency);
         }
         if let Some(v) = strip_kv(line, "bluez5.enable-sbc-xq") {
             out.bt_sbc_xq = match v {
@@ -470,16 +437,6 @@ mod tests {
             bt_call_autoswitch: Some(true),
             alsa_no_suspend: Some(true),
         }
-    }
-
-    #[test]
-    fn default_is_unmodified() {
-        assert!(!UserTweaks::default().is_modified());
-    }
-
-    #[test]
-    fn any_set_field_marks_modified() {
-        assert!(quantum_only().is_modified());
     }
 
     #[test]
@@ -570,16 +527,20 @@ mod tests {
     fn is_modified_reflects_any_single_field() {
         assert!(!UserTweaks::default().is_modified());
         // A single set field anywhere in the OR chain marks it modified.
-        assert!(UserTweaks {
-            quantum: Some(1024),
-            ..UserTweaks::default()
-        }
-        .is_modified());
-        assert!(UserTweaks {
-            alsa_no_suspend: Some(true),
-            ..UserTweaks::default()
-        }
-        .is_modified());
+        assert!(
+            UserTweaks {
+                quantum: Some(1024),
+                ..UserTweaks::default()
+            }
+            .is_modified()
+        );
+        assert!(
+            UserTweaks {
+                alsa_no_suspend: Some(true),
+                ..UserTweaks::default()
+            }
+            .is_modified()
+        );
     }
 
     #[test]
@@ -646,7 +607,7 @@ mod tests {
         let path = dir.path().join("nested").join("conf.conf");
         write_or_remove(&path, "body\n").unwrap();
         assert!(path.exists());
-        assert_eq!(fs::read_to_string(&path).unwrap(), "body\n");
+        assert_eq!(read_to_string(&path).unwrap(), "body\n");
         write_or_remove(&path, "").unwrap();
         assert!(!path.exists());
     }

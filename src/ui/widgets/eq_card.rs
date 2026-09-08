@@ -29,8 +29,8 @@ use gtk::prelude::*;
 use gtk::{Align, Box as GtkBox, DropDown, Label, Orientation, Scale};
 
 use crate::config::{
-    eq_preset_bands, eq_preset_ids, EqualizerConfig, EQ_BANDS_HZ, EQ_BAND_COUNT, EQ_BAND_MAX,
-    EQ_BAND_MIN,
+    EQ_BAND_COUNT, EQ_BAND_MAX, EQ_BAND_MIN, EQ_BANDS_HZ, EqualizerConfig, eq_preset_bands,
+    eq_preset_ids,
 };
 
 use super::super::i18n::i18n;
@@ -74,7 +74,9 @@ pub fn build_eq_card(
     let band_scales: Vec<Scale> = (0..EQ_BAND_COUNT).map(|_| build_band_scale()).collect();
     let band_scales = Rc::new(band_scales);
 
-    apply_initial_band_values(&band_scales, &initial.bands);
+    for (scale, gain) in band_scales.iter().zip(initial.bands.iter()) {
+        scale.adjustment().set_value(f64::from(*gain));
+    }
 
     // RefCell guards "we are programmatically setting band values
     // because the user picked a preset" — without it the per-band
@@ -98,12 +100,6 @@ pub fn build_eq_card(
             }
             *suppress.borrow_mut() = false;
             apply(EqMutation::Preset(id));
-            for (i, gain) in bands.iter().enumerate() {
-                apply(EqMutation::Band {
-                    index: i,
-                    gain_db: *gain,
-                });
-            }
         });
     }
 
@@ -133,7 +129,12 @@ pub fn build_eq_card(
 pub fn apply_eq_mutation(eq: &mut EqualizerConfig, mutation: EqMutation) {
     match mutation {
         EqMutation::Enabled(on) => eq.enabled = on,
-        EqMutation::Preset(id) => id.clone_into(&mut eq.preset),
+        EqMutation::Preset(id) => {
+            id.clone_into(&mut eq.preset);
+            if let Some(bands) = eq_preset_bands(id) {
+                eq.bands = bands.to_vec();
+            }
+        }
         EqMutation::Band { index, gain_db } => {
             if let Some(slot) = eq.bands.get_mut(index) {
                 *slot = gain_db;
@@ -192,12 +193,6 @@ fn build_band_scale() -> Scale {
     scale
 }
 
-fn apply_initial_band_values(scales: &[Scale], bands: &[f32]) {
-    for (scale, gain) in scales.iter().zip(bands.iter()) {
-        scale.adjustment().set_value(f64::from(*gain));
-    }
-}
-
 fn preset_row(dropdown: &DropDown) -> GtkBox {
     let row = GtkBox::builder()
         .orientation(Orientation::Horizontal)
@@ -254,5 +249,20 @@ fn format_freq(hz: u32) -> String {
         format!("{}k", hz / 1000)
     } else {
         format!("{hz}")
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn preset_mutation_updates_id_and_bands_together() {
+        let mut equalizer = EqualizerConfig::default();
+
+        apply_eq_mutation(&mut equalizer, EqMutation::Preset("voice_boost"));
+
+        assert_eq!(equalizer.preset, "voice_boost");
+        assert_eq!(equalizer.bands, eq_preset_bands("voice_boost").unwrap());
     }
 }

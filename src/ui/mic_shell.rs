@@ -1,43 +1,52 @@
-//! `MicShell` — the microphone window as a Relm4 [`Component`].
+//! `MicShell` — the microphone application's Relm4 root.
 //!
-//! ADR-D14 mountable content (shared with bigiris/players): the component
-//! `Root` is the window *content* (a vertical box of header + spectrum strip +
-//! body), never an `adw::ApplicationWindow`. Each entry point ([`super::app`]
-//! standalone, [`super::embed`] host) launches the component and mounts
-//! `controller.widget()` into its own window.
-//!
-//! Model owns the shared [`AppState`] and the [`AudioMonitor`]; shell-level
-//! user actions (the Advanced toggle, an external `settings.json` change, the
-//! menu's "Restore defaults" rebuild) flow through typed [`MicInput`] messages
-//! handled in [`Component::update`]. The custom-draw [`Spectrum`] `DrawingArea`
-//! has no Relm4 equivalent and stays embedded inside the component (manual
-//! view) — in-model, not a violation.
-//!
-//! Body views `views::{simple,mic,output}` are message-driven: their controls
-//! emit typed [`MicInput`] messages and `update` owns every `AppState`
-//! transition (no `state.mutate` in view handlers). They are built from the
-//! shared `big_relm4_components` card/row primitives. `views::advanced` (the
-//! Tuning tab) is a self-contained `UserTweaks` Apply/Reset flow, not part of
-//! the `AppState` message path.
+//! The model owns [`AppState`], [`AudioMonitor`], apply/health workers, and the
+//! debounce. Views emit typed [`MicInput`] messages; the custom-draw
+//! [`Spectrum`] remains a concrete widget owned by this root.
 
+use std::ffi::OsString;
 use std::rc::Rc;
+use std::time::Duration;
 
 use adw::prelude::*;
 use big_relm4_components::layout::hamburger_menu::{
-    build_flat_action_popover_button, BigActionPopoverButton,
+    BigActionPopoverButton, build_flat_action_popover_button,
 };
-use gtk::{gio, Orientation};
+use glib::SourceId;
+use gtk::{Orientation, gio, glib};
 use relm4::{Component, ComponentParts, ComponentSender};
 
-use crate::config::{settings_file, AppSettings, NoiseModel, StereoMode};
+use crate::config::{AppSettings, NoiseModel, StereoMode, app_id, app_version, settings_file};
 use crate::pipeline::cascade_mic_off;
-use crate::services::audio_monitor::AudioMonitor;
+use crate::services::audio_monitor::{AudioMonitor, MonitorConfig};
 
-use super::state::AppState;
+use super::health::{self, Health};
+use super::i18n::{i18n, init_gettext};
+use super::mic_shell_tracker::{ApplyTracker, HealthRequest, SettingsLoadTracker};
+use super::state::{AppState, ApplyCompletion, ApplyRequest, ApplyRevision, ApplyWork};
+#[cfg(test)]
 use super::views::Mode;
 use super::widgets::eq_card::{self, EqMutation};
 use super::widgets::spectrum::Spectrum;
+use super::widgets::wp_override_warning;
 use super::window;
+
+/// Coalesce slider drags without delaying deliberate actions such as close.
+const APPLY_DEBOUNCE: Duration = Duration::from_millis(150);
+
+/// Run the microphone application through its sole Relm4 root.
+#[must_use]
+pub fn run() -> glib::ExitCode {
+    if let Some(result) = early_cli(&std::env::args_os().collect::<Vec<_>>()) {
+        return result;
+    }
+    init_gettext();
+    let app = adw::Application::builder().application_id(app_id()).build();
+    let state = AppState::new(AppSettings::load());
+    let monitor = Rc::new(AudioMonitor::start(MonitorConfig::default()));
+    relm4::RelmApp::from_app(app).run::<MicShell>(MicShellInit { state, monitor });
+    glib::ExitCode::SUCCESS
+}
 
 /// Domain services handed to the shell at launch.
 pub(super) struct MicShellInit {
@@ -46,17 +55,28 @@ pub(super) struct MicShellInit {
 }
 
 /// User actions routed through the component. Body controls emit these typed
-/// messages (Stage 2); `update` owns every `AppState` transition.
+/// messages; `update_with_view` owns every `AppState` transition.
 #[derive(Debug)]
 pub(super) enum MicInput {
+    /// The window manager requested a clean close.
+    CloseRequested,
+    /// The main menu requested the reset confirmation dialog.
+    RestoreDefaultsRequested,
+    /// The reset confirmation dialog was accepted.
+    RestoreDefaultsConfirmed,
+    /// The main menu requested application information.
+    AboutRequested,
+    /// The stale WirePlumber override dialog returned a user decision.
+    OverrideWarningDecided(wp_override_warning::OverrideWarningDecision),
     /// The header "Advanced" switch flipped.
     AdvancedToggled(bool),
-    /// `settings.json` changed outside this process (CLI / plasmoid / edit) and
-    /// the new snapshot was absorbed; reconcile the switch + rebuild the body.
-    ExternalSettingsLoaded,
-    /// "Restore default settings" was confirmed; rebuild the body for the
-    /// (geometry/UI-preserving) factory snapshot already written to `AppState`.
-    RebuildBody,
+    /// `settings.json` changed outside this process (CLI / plasmoid / edit).
+    ExternalSettingsChanged,
+    /// The apply debounce for this settings revision elapsed.
+    ApplyDebounceElapsed(ApplyRevision),
+    /// The status banner's action button was clicked; the model decides
+    /// between re-probing health and retrying the failed apply.
+    BannerActionClicked,
     /// Microphone noise-filter master switch (Simple view). Off cascades the
     /// whole mic chain down so the worker fully tears down.
     NoiseFilterToggled(bool),
@@ -73,7 +93,8 @@ pub(super) enum MicInput {
     /// Mic noise-reduction master (Advanced view — no cascade, unlike Simple).
     MicNrEnabled(bool),
     /// WebRTC echo-cancellation toggle.
-    MicEchoCancelToggled(bool),
+    MicEchoModeChanged(crate::config::EchoMode),
+    QualityChanged(crate::config::Quality),
     /// Mic neural-model selection.
     MicModelChanged(NoiseModel),
     /// Mic voice-presence (high-frequency recovery) intensity.
@@ -116,40 +137,79 @@ pub(super) enum MicInput {
     OutputEq(EqMutation),
 }
 
-/// The microphone window content as a Relm4 component (model owns the state).
+#[derive(Debug)]
+pub(super) enum MicCommandOutput {
+    ExternalSettingsLoaded {
+        generation: u64,
+        settings: Box<AppSettings>,
+    },
+    ApplyCompleted(Box<ApplyCompletion>),
+    HealthResolved {
+        request: HealthRequest,
+        health: Health,
+    },
+    /// The spectrum worker and its `pw-cat` child were reaped off the GTK
+    /// thread after the final settings revision settled.
+    MonitorStopped,
+    OverrideRemovalCompleted {
+        path: std::path::PathBuf,
+        result: Result<wp_override_warning::OverrideRemoval, String>,
+    },
+}
+
+/// What the status banner's single action button does right now.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+enum BannerAction {
+    /// Banner hidden / informational — no button.
+    None,
+    /// Unavailable state — button re-runs the health probe.
+    Recheck,
+    /// Apply failure — button re-runs the apply pipeline.
+    RetryApply,
+    /// An explicit apply retry is running; health results from an older probe
+    /// must not replace the honest in-progress state.
+    RetryInProgress,
+}
+
+/// The microphone application model and lifecycle owner.
 pub(super) struct MicShell {
     state: Rc<AppState>,
-    mode: Mode,
+    banner_action: BannerAction,
+    is_closing: bool,
+    should_probe_after_apply: bool,
+    applies: ApplyTracker,
+    apply_debounce: Option<SourceId>,
+    settings_loads: SettingsLoadTracker,
+    monitor: Option<Rc<AudioMonitor>>,
+    settings_monitor: Option<gio::FileMonitor>,
+}
+
+/// Concrete GTK view owned by the root component runtime.
+pub(super) struct MicShellWidgets {
     header: adw::HeaderBar,
     body: gtk::Box,
+    banner: adw::Banner,
     spectrum_container: gtk::Box,
     mode_switch: gtk::Switch,
-    /// Input sender clone, used to rebuild the body (`populate_body` wires the
-    /// freshly-built view controls back to these messages).
-    input: relm4::Sender<MicInput>,
-    /// Kept alive for the shell's lifetime; the monitor/visibility bindings hold
-    /// weak refs to it (see [`window::bind_spectrum_to_monitor`]).
     _spectrum: Rc<Spectrum>,
-    /// Kept alive because the actionable menu button owns a manually-parented
-    /// popover instead of a native `GtkMenuButton`.
     _primary_menu: BigActionPopoverButton,
-    /// Kept alive so the watch keeps firing; dropped with the model on close.
-    _monitor: Rc<AudioMonitor>,
-    /// `settings.json` watch; held to keep the subscription alive.
-    _settings_monitor: Option<gio::FileMonitor>,
 }
 
 impl Component for MicShell {
     type Init = MicShellInit;
     type Input = MicInput;
     type Output = ();
-    type CommandOutput = ();
-    /// Mountable content (ADR-D14): the root box, never an ApplicationWindow.
-    type Root = gtk::Box;
-    type Widgets = ();
+    type CommandOutput = MicCommandOutput;
+    type Root = adw::ApplicationWindow;
+    type Widgets = MicShellWidgets;
 
     fn init_root() -> Self::Root {
-        gtk::Box::new(Orientation::Vertical, 0)
+        let window = adw::ApplicationWindow::builder().build();
+        // Opt in to optional Big Gnome Center background styling. This used
+        // to sit in `window::build`, which the Relm4 port removed — the
+        // component owns the window now, so the class moves with it.
+        window.add_css_class("biglinux-microphone");
+        window
     }
 
     fn init(
@@ -159,16 +219,26 @@ impl Component for MicShell {
     ) -> ComponentParts<Self> {
         let MicShellInit { state, monitor } = init;
         let initial_mode = window::current_mode(&state);
+        let initial_window = state.settings().window.clone();
+        root.set_title(Some(&i18n("Filter noise")));
+        root.set_default_width(initial_window.width.try_into().unwrap_or(720));
+        root.set_default_height(initial_window.height.try_into().unwrap_or(700));
+        if initial_window.maximized {
+            root.maximize();
+        }
 
-        // ── Header ───────────────────────────────────────────────────────
         let header = adw::HeaderBar::new();
         header.set_decoration_layout(Some(":minimize,maximize,close"));
         let mode_picker = window::build_mode_picker(initial_mode);
         header.pack_start(&mode_picker.container);
         let primary_menu = build_flat_action_popover_button(&window::primary_menu_spec());
-        header.pack_end(primary_menu.button());
+        // Pack the component's root container, not the bare button: the
+        // button already lives inside `root()` (which also anchors the
+        // popover), and packing a parented child trips
+        // `adw_header_bar_pack_end`'s assertion — the menu silently
+        // never appears (AT-SPI tree had no "Main menu" button).
+        header.pack_end(primary_menu.root());
 
-        // ── Body + spectrum strip ─────────────────────────────────────────
         let body = gtk::Box::builder()
             .orientation(Orientation::Vertical)
             .vexpand(true)
@@ -196,181 +266,620 @@ impl Component for MicShell {
             &spectrum_container,
             initial_mode,
         );
+        body.set_sensitive(false);
 
-        root.append(&header);
-        root.append(&spectrum_container);
-        root.append(&body);
+        let banner = adw::Banner::new(&i18n("Checking the audio system…"));
+        banner.set_revealed(true);
+        {
+            let sender = sender.clone();
+            banner.connect_button_clicked(move |_| {
+                let _ = sender.input_sender().send(MicInput::BannerActionClicked);
+            });
+        }
+
+        let content = gtk::Box::new(Orientation::Vertical, 0);
+        content.append(&header);
+        content.append(&banner);
+        content.append(&spectrum_container);
+        content.append(&body);
+        root.set_content(Some(&content));
 
         // Advanced toggle → typed message (no direct mutate in the handler).
         {
             let sender = sender.clone();
             mode_picker.switch.connect_active_notify(move |sw| {
-                sender.input(MicInput::AdvancedToggled(sw.is_active()));
+                let _ = sender
+                    .input_sender()
+                    .send(MicInput::AdvancedToggled(sw.is_active()));
             });
         }
 
-        let settings_monitor = install_external_settings_watch(&state, sender.clone());
+        window::install_window_actions(&root, sender.input_sender().clone());
+        {
+            let sender = sender.clone();
+            root.connect_close_request(move |_| {
+                let _ = sender.input_sender().send(MicInput::CloseRequested);
+                glib::Propagation::Stop
+            });
+        }
+
+        let root_for_warning = root.clone();
+        let should_suppress_warning = state.settings().ui.dismiss_wp_override_warning;
+        let warning_sender = sender.clone();
+        glib::idle_add_local_once(move || {
+            wp_override_warning::maybe_show(
+                &root_for_warning,
+                should_suppress_warning,
+                move |decision| {
+                    let _ = warning_sender
+                        .input_sender()
+                        .send(MicInput::OverrideWarningDecided(decision));
+                },
+            );
+        });
+
+        let settings_monitor = install_external_settings_watch(sender.clone());
+        let mut applies = ApplyTracker::default();
+        if let Some(request) = applies.mark_current_ready() {
+            spawn_apply_work(&sender, state.apply_work(request));
+        }
 
         let model = MicShell {
             state,
-            mode: initial_mode,
+            banner_action: BannerAction::None,
+            is_closing: false,
+            should_probe_after_apply: true,
+            applies,
+            apply_debounce: None,
+            settings_loads: SettingsLoadTracker::default(),
+            monitor: Some(monitor),
+            settings_monitor,
+        };
+        let widgets = MicShellWidgets {
             header,
             body,
+            banner,
             spectrum_container,
             mode_switch: mode_picker.switch,
-            input,
             _spectrum: spectrum,
             _primary_menu: primary_menu,
-            _monitor: monitor,
-            _settings_monitor: settings_monitor,
         };
-        ComponentParts { model, widgets: () }
+        ComponentParts { model, widgets }
     }
 
-    fn update(&mut self, message: Self::Input, _sender: ComponentSender<Self>, root: &Self::Root) {
-        // Panic boundary (module contract): a panic in message handling reaps
-        // this module's window cleanly (host closes it) instead of orphaning a
-        // dead window; the host process and sibling modules survive.
-        big_app_kit::containment::contain_embedded_update(root, "microphone", || {
-            match message {
-                MicInput::AdvancedToggled(advanced) => {
-                    self.state.mutate(|s| s.ui.show_advanced = advanced);
-                    self.mode = Mode::from_advanced_flag(advanced);
-                    self.repopulate();
-                }
-                MicInput::RebuildBody => {
-                    self.mode = window::current_mode(&self.state);
-                    self.repopulate();
-                }
-                MicInput::ExternalSettingsLoaded => {
-                    let advanced = self.state.settings().ui.show_advanced;
-                    if self.mode_switch.is_active() == advanced {
-                        self.mode = Mode::from_advanced_flag(advanced);
-                        self.repopulate();
-                    } else {
-                        // Flipping the switch re-enters update via AdvancedToggled,
-                        // which mutates + rebuilds (matches the pre-migration path).
-                        self.mode_switch.set_active(advanced);
+    fn update_with_view(
+        &mut self,
+        widgets: &mut Self::Widgets,
+        message: Self::Input,
+        sender: ComponentSender<Self>,
+        root: &Self::Root,
+    ) {
+        if self.is_closing {
+            return;
+        }
+        match message {
+            MicInput::CloseRequested => self.close(widgets, root, &sender),
+            MicInput::RestoreDefaultsRequested => {
+                let dialog = window::reset_confirmation_dialog();
+                let sender = sender.clone();
+                dialog.connect_response(None, move |dialog, response| {
+                    if response == "reset" {
+                        let _ = sender
+                            .input_sender()
+                            .send(MicInput::RestoreDefaultsConfirmed);
                     }
+                    dialog.close();
+                });
+                dialog.present(Some(root));
+            }
+            MicInput::RestoreDefaultsConfirmed => {
+                window::apply_factory_defaults(&self.state);
+                self.settings_changed(&sender);
+                self.repopulate(widgets, sender.input_sender());
+            }
+            MicInput::AboutRequested => {
+                window::present_about_dialog(root);
+            }
+            MicInput::OverrideWarningDecided(decision) => match decision {
+                wp_override_warning::OverrideWarningDecision::Keep { should_dismiss } => {
+                    self.dismiss_override_warning(should_dismiss, &sender);
                 }
-                // Body-control transitions. The widget already shows the new value;
-                // the mutation triggers the debounced apply. No rebuild (the visible
-                // Simple-view controls don't depend on these fields).
-                MicInput::NoiseFilterToggled(on) => self.state.mutate(|s| {
-                    s.noise_reduction.enabled = on;
-                    if !on {
-                        // Single Simple-view master: cascade so one click tears down
-                        // every reason the mic worker would stay alive.
-                        cascade_mic_off(s);
-                    }
-                }),
-                MicInput::MicIntensityChanged(v) => {
-                    self.state.mutate(|s| s.noise_reduction.strength = v);
-                }
-                MicInput::SelfListenToggled(on) => self.state.mutate(|s| s.monitor.enabled = on),
-                MicInput::OutputFilterToggled(on) => {
-                    self.state.mutate(|s| s.output_filter.enabled = on);
-                }
-                MicInput::OutputIntensityChanged(v) => {
-                    self.state
-                        .mutate(|s| s.output_filter.noise_reduction.strength = v);
-                }
-
-                // ── Advanced mic-chain ────────────────────────────────────
-                MicInput::MicNrEnabled(on) => self.state.mutate(|s| s.noise_reduction.enabled = on),
-                MicInput::MicEchoCancelToggled(on) => {
-                    self.state.mutate(|s| s.echo_cancel.enabled = on);
-                }
-                MicInput::MicModelChanged(model) => {
-                    self.state.mutate(|s| s.noise_reduction.model = model);
-                }
-                MicInput::MicVoiceRecoveryChanged(v) => {
-                    self.state.mutate(|s| s.noise_reduction.voice_recovery = v);
-                }
-                MicInput::MicHpfToggled(on) => self.state.mutate(|s| s.hpf.enabled = on),
-                MicInput::MicGateToggled(on) => self.state.mutate(|s| s.gate.enabled = on),
-                MicInput::MicGateIntensityChanged(v) => self.state.mutate(|s| s.gate.intensity = v),
-                MicInput::MicCompressorToggled(on) => {
-                    self.state.mutate(|s| s.compressor.enabled = on);
-                }
-                MicInput::MicCompressorIntensityChanged(v) => {
-                    self.state.mutate(|s| s.compressor.intensity = v);
-                }
-                MicInput::MicEq(mutation) => {
-                    self.state
-                        .mutate(|s| eq_card::apply_eq_mutation(&mut s.equalizer, mutation));
-                }
-                MicInput::MicVoiceChangerToggled(on) => self.state.mutate(|s| {
-                    s.stereo.enabled = on;
-                    s.stereo.mode = if on {
-                        StereoMode::VoiceChanger
-                    } else {
-                        StereoMode::Mono
-                    };
-                }),
-                MicInput::MicPitchChanged(v) => self.state.mutate(|s| s.stereo.width = v),
-                MicInput::MicSelfListenDelayChanged(v) => {
-                    self.state.mutate(|s| s.monitor.delay_ms = v);
-                }
-
-                // ── Advanced output-chain ─────────────────────────────────
-                MicInput::OutputModelChanged(model) => {
-                    self.state
-                        .mutate(|s| s.output_filter.noise_reduction.model = model);
-                }
-                MicInput::OutputVoiceRecoveryChanged(v) => {
-                    self.state
-                        .mutate(|s| s.output_filter.noise_reduction.voice_recovery = v);
-                }
-                MicInput::OutputHpfToggled(on) => {
-                    self.state.mutate(|s| s.output_filter.hpf.enabled = on);
-                }
-                MicInput::OutputGateToggled(on) => {
-                    self.state.mutate(|s| s.output_filter.gate.enabled = on);
-                }
-                MicInput::OutputGateIntensityChanged(v) => {
-                    self.state.mutate(|s| s.output_filter.gate.intensity = v);
-                }
-                MicInput::OutputCompressorToggled(on) => {
-                    self.state
-                        .mutate(|s| s.output_filter.compressor.enabled = on);
-                }
-                MicInput::OutputCompressorIntensityChanged(v) => {
-                    self.state
-                        .mutate(|s| s.output_filter.compressor.intensity = v);
-                }
-                MicInput::OutputEq(mutation) => {
-                    self.state.mutate(|s| {
-                        eq_card::apply_eq_mutation(&mut s.output_filter.equalizer, mutation);
+                wp_override_warning::OverrideWarningDecision::Remove {
+                    path,
+                    should_dismiss,
+                } => {
+                    self.dismiss_override_warning(should_dismiss, &sender);
+                    sender.spawn_oneshot_command(move || {
+                        let result = wp_override_warning::remove_override(&path);
+                        MicCommandOutput::OverrideRemovalCompleted { path, result }
                     });
                 }
+            },
+            MicInput::AdvancedToggled(advanced) => {
+                self.mutate_settings(&sender, |s| s.ui.show_advanced = advanced);
+                self.repopulate(widgets, sender.input_sender());
             }
-        });
+            MicInput::ApplyDebounceElapsed(revision) => {
+                if !self.applies.is_current_revision(revision) {
+                    return;
+                }
+                self.apply_debounce.take();
+                if let Some(request) = self.applies.mark_ready(revision) {
+                    self.spawn_apply_request(&sender, request);
+                }
+            }
+            MicInput::BannerActionClicked => match self.banner_action {
+                BannerAction::Recheck => {
+                    if self.spawn_health_probe(&sender) {
+                        self.show_checking(widgets);
+                    }
+                }
+                BannerAction::RetryApply => {
+                    self.show_checking(widgets);
+                    self.banner_action = BannerAction::RetryInProgress;
+                    self.should_probe_after_apply = true;
+                    let revision = self.applies.settings_changed();
+                    self.arm_apply_debounce(&sender, revision);
+                }
+                BannerAction::None | BannerAction::RetryInProgress => {}
+            },
+            MicInput::ExternalSettingsChanged => {
+                let Some(generation) = self.settings_loads.begin() else {
+                    log::error!("settings reload generation exhausted");
+                    return;
+                };
+                sender.spawn_oneshot_command(move || MicCommandOutput::ExternalSettingsLoaded {
+                    generation,
+                    settings: Box::new(AppSettings::load()),
+                });
+            }
+            // Body-control transitions. The widget already shows the new value;
+            // the mutation triggers the debounced apply. No rebuild (the visible
+            // Simple-view controls don't depend on these fields).
+            MicInput::NoiseFilterToggled(on) => self.mutate_settings(&sender, |s| {
+                s.noise_reduction.enabled = on;
+                if !on {
+                    // Single Simple-view master: cascade so one click tears down
+                    // every reason the mic worker would stay alive.
+                    cascade_mic_off(s);
+                }
+            }),
+            MicInput::MicIntensityChanged(v) => {
+                self.mutate_settings(&sender, |s| s.noise_reduction.strength = v);
+            }
+            MicInput::SelfListenToggled(on) => {
+                self.mutate_settings(&sender, |s| s.monitor.enabled = on);
+            }
+            MicInput::OutputFilterToggled(on) => {
+                self.mutate_settings(&sender, |s| s.output_filter.enabled = on);
+            }
+            MicInput::OutputIntensityChanged(v) => {
+                self.mutate_settings(&sender, |s| {
+                    s.output_filter.noise_reduction.strength = v;
+                });
+            }
+
+            // ── Advanced mic-chain ────────────────────────────────────
+            MicInput::MicNrEnabled(on) => {
+                self.mutate_settings(&sender, |s| s.noise_reduction.enabled = on);
+            }
+            MicInput::MicEchoModeChanged(mode) => {
+                self.mutate_settings(&sender, |s| s.echo_cancel.mode = mode);
+            }
+            MicInput::QualityChanged(quality) => {
+                self.mutate_settings(&sender, |s| s.quality = quality);
+            }
+            // Picking a model by name is the expert path, and it takes ownership of the
+            // choice away from §38's policy. Without this the model reverts at the next
+            // login, which reads as the list not working rather than as a policy winning.
+            MicInput::MicModelChanged(model) => {
+                self.mutate_settings(&sender, |s| {
+                    s.noise_reduction.model = model;
+                    s.quality = crate::config::Quality::Manual;
+                });
+            }
+            MicInput::MicVoiceRecoveryChanged(v) => {
+                self.mutate_settings(&sender, |s| s.noise_reduction.voice_recovery = v);
+            }
+            MicInput::MicHpfToggled(on) => {
+                self.mutate_settings(&sender, |s| s.hpf.enabled = on);
+            }
+            MicInput::MicGateToggled(on) => {
+                self.mutate_settings(&sender, |s| s.gate.enabled = on);
+            }
+            MicInput::MicGateIntensityChanged(v) => {
+                self.mutate_settings(&sender, |s| s.gate.intensity = v);
+            }
+            MicInput::MicCompressorToggled(on) => {
+                self.mutate_settings(&sender, |s| s.compressor.enabled = on);
+            }
+            MicInput::MicCompressorIntensityChanged(v) => {
+                self.mutate_settings(&sender, |s| s.compressor.intensity = v);
+            }
+            MicInput::MicEq(mutation) => {
+                self.mutate_settings(&sender, |s| {
+                    eq_card::apply_eq_mutation(&mut s.equalizer, mutation);
+                });
+            }
+            MicInput::MicVoiceChangerToggled(on) => self.mutate_settings(&sender, |s| {
+                s.stereo.enabled = on;
+                s.stereo.mode = if on {
+                    StereoMode::VoiceChanger
+                } else {
+                    StereoMode::Mono
+                };
+            }),
+            MicInput::MicPitchChanged(v) => {
+                self.mutate_settings(&sender, |s| s.stereo.width = v);
+            }
+            MicInput::MicSelfListenDelayChanged(v) => {
+                self.mutate_settings(&sender, |s| s.monitor.delay_ms = v);
+            }
+
+            // ── Advanced output-chain ─────────────────────────────────
+            MicInput::OutputModelChanged(model) => {
+                self.mutate_settings(&sender, |s| {
+                    s.output_filter.noise_reduction.model = model;
+                    s.quality = crate::config::Quality::Manual;
+                });
+            }
+            MicInput::OutputVoiceRecoveryChanged(v) => {
+                self.mutate_settings(&sender, |s| {
+                    s.output_filter.noise_reduction.voice_recovery = v;
+                });
+            }
+            MicInput::OutputHpfToggled(on) => {
+                self.mutate_settings(&sender, |s| s.output_filter.hpf.enabled = on);
+            }
+            MicInput::OutputGateToggled(on) => {
+                self.mutate_settings(&sender, |s| s.output_filter.gate.enabled = on);
+            }
+            MicInput::OutputGateIntensityChanged(v) => {
+                self.mutate_settings(&sender, |s| s.output_filter.gate.intensity = v);
+            }
+            MicInput::OutputCompressorToggled(on) => {
+                self.mutate_settings(&sender, |s| {
+                    s.output_filter.compressor.enabled = on;
+                });
+            }
+            MicInput::OutputCompressorIntensityChanged(v) => {
+                self.mutate_settings(&sender, |s| {
+                    s.output_filter.compressor.intensity = v;
+                });
+            }
+            MicInput::OutputEq(mutation) => {
+                self.mutate_settings(&sender, |s| {
+                    eq_card::apply_eq_mutation(&mut s.output_filter.equalizer, mutation);
+                });
+            }
+        }
     }
+
+    fn update_cmd_with_view(
+        &mut self,
+        widgets: &mut Self::Widgets,
+        message: Self::CommandOutput,
+        sender: ComponentSender<Self>,
+        root: &Self::Root,
+    ) {
+        match message {
+            MicCommandOutput::ExternalSettingsLoaded {
+                generation,
+                settings,
+            } => {
+                if self.is_closing {
+                    return;
+                }
+                if !self.settings_loads.accept(generation) {
+                    return;
+                }
+                if !self.state.external_replace(*settings) {
+                    return;
+                }
+                self.cancel_apply_debounce();
+                self.show_checking(widgets);
+                self.should_probe_after_apply = true;
+                self.applies.settings_changed();
+                if let Some(request) = self.applies.mark_current_ready() {
+                    self.spawn_apply_request(&sender, request);
+                }
+                let advanced = self.state.settings().ui.show_advanced;
+                if widgets.mode_switch.is_active() == advanced {
+                    self.repopulate(widgets, sender.input_sender());
+                } else {
+                    // Flipping the switch re-enters via `AdvancedToggled`, which
+                    // persists the already-loaded value and rebuilds the view.
+                    widgets.mode_switch.set_active(advanced);
+                }
+            }
+            MicCommandOutput::ApplyCompleted(completion) => {
+                let request = completion.request();
+                let Some(tracking) = self.applies.complete_apply(request) else {
+                    return;
+                };
+                let result = self.state.finish_apply(*completion);
+                if result.is_ok() {
+                    self.applies.record_applied(request);
+                }
+                if let Some(next) = tracking.next {
+                    self.spawn_apply_request(&sender, next);
+                }
+                if !tracking.is_settled {
+                    return;
+                }
+
+                if self.is_closing {
+                    match result {
+                        Ok(()) => self.stop_monitor(widgets, &sender),
+                        Err(cause) => {
+                            self.is_closing = false;
+                            self.repopulate(widgets, sender.input_sender());
+                            self.show_apply_failure(widgets, &cause);
+                        }
+                    }
+                    return;
+                }
+
+                match result {
+                    Ok(()) if self.should_probe_after_apply => {
+                        self.should_probe_after_apply = false;
+                        self.show_checking(widgets);
+                        self.spawn_health_probe(&sender);
+                    }
+                    Ok(()) => {}
+                    Err(cause) => self.show_apply_failure(widgets, &cause),
+                }
+            }
+            MicCommandOutput::HealthResolved { request, health } => {
+                let Some(tracking) = self.applies.complete_health(request) else {
+                    return;
+                };
+                if let Some(next) = tracking.next {
+                    self.spawn_apply_request(&sender, next);
+                }
+                if tracking.is_current && tracking.next.is_none() && !self.is_closing {
+                    self.show_health(widgets, &health);
+                }
+            }
+            MicCommandOutput::MonitorStopped => {
+                if self.is_closing {
+                    root.destroy();
+                }
+            }
+            MicCommandOutput::OverrideRemovalCompleted { path, result } => {
+                wp_override_warning::present_removal_result(root.upcast_ref(), &path, &result);
+            }
+        }
+    }
+
+    fn shutdown(&mut self, _widgets: &mut Self::Widgets, _output: relm4::Sender<Self::Output>) {
+        self.cancel_apply_debounce();
+        self.settings_monitor.take();
+        self.monitor.take();
+    }
+}
+
+fn early_cli(arguments: &[OsString]) -> Option<glib::ExitCode> {
+    if arguments.iter().any(|argument| argument == "--version") {
+        println!("biglinux-microphone {}", app_version());
+        return Some(glib::ExitCode::SUCCESS);
+    }
+    if arguments.iter().any(|argument| argument == "--help") {
+        println!("Usage: biglinux-microphone [--help] [--version]");
+        return Some(glib::ExitCode::SUCCESS);
+    }
+    None
 }
 
 impl MicShell {
-    fn repopulate(&self) {
+    fn repopulate(&self, widgets: &MicShellWidgets, input: &relm4::Sender<MicInput>) {
         window::populate_body(
             &self.state,
-            &self.input,
-            &self.header,
-            &self.body,
-            &self.spectrum_container,
-            self.mode,
+            input,
+            &widgets.header,
+            &widgets.body,
+            &widgets.spectrum_container,
+            window::current_mode(&self.state),
         );
+    }
+
+    fn show_apply_failure(&mut self, widgets: &MicShellWidgets, cause: &str) {
+        widgets.banner.set_title(&apply_failure_title(cause));
+        widgets.banner.set_button_label(Some(&i18n("Try again")));
+        self.banner_action = BannerAction::RetryApply;
+        self.should_probe_after_apply = true;
+        widgets.banner.set_revealed(true);
+        widgets.body.set_sensitive(false);
+    }
+
+    fn show_checking(&mut self, widgets: &MicShellWidgets) {
+        widgets
+            .banner
+            .set_title(&i18n("Checking the audio system…"));
+        widgets.banner.set_button_label(None);
+        widgets.banner.set_revealed(true);
+        widgets.body.set_sensitive(false);
+        self.banner_action = BannerAction::None;
+    }
+
+    fn mutate_settings<F>(&mut self, sender: &ComponentSender<Self>, mutation: F)
+    where
+        F: FnOnce(&mut AppSettings),
+    {
+        self.state.mutate(mutation);
+        self.settings_changed(sender);
+    }
+
+    fn settings_changed(&mut self, sender: &ComponentSender<Self>) {
+        if self.applies.has_active_health() || self.banner_action == BannerAction::Recheck {
+            self.should_probe_after_apply = true;
+        }
+        let revision = self.applies.settings_changed();
+        self.arm_apply_debounce(sender, revision);
+    }
+
+    fn arm_apply_debounce(&mut self, sender: &ComponentSender<Self>, revision: ApplyRevision) {
+        self.cancel_apply_debounce();
+        let sender = sender.clone();
+        self.apply_debounce = Some(glib::timeout_add_local_once(APPLY_DEBOUNCE, move || {
+            let _ = sender
+                .input_sender()
+                .send(MicInput::ApplyDebounceElapsed(revision));
+        }));
+    }
+
+    fn cancel_apply_debounce(&mut self) {
+        if let Some(source) = self.apply_debounce.take() {
+            source.remove();
+        }
+    }
+
+    fn spawn_apply_request(&self, sender: &ComponentSender<Self>, request: ApplyRequest) {
+        spawn_apply_work(sender, self.state.apply_work(request));
+    }
+
+    fn spawn_health_probe(&mut self, sender: &ComponentSender<Self>) -> bool {
+        let Some(request) = self.applies.begin_health() else {
+            return false;
+        };
+        sender.oneshot_command(async move {
+            let health = relm4::spawn_blocking(health::probe)
+                .await
+                .unwrap_or_else(|error| {
+                    log::error!("audio health worker failed: {error}");
+                    Health::Unavailable {
+                        cause: i18n("The audio system check failed unexpectedly."),
+                        hint: i18n(
+                            "Check again, or run biglinux-microphone-cli doctor in a terminal.",
+                        ),
+                    }
+                });
+            MicCommandOutput::HealthResolved { request, health }
+        });
+        true
+    }
+
+    fn dismiss_override_warning(&mut self, should_dismiss: bool, sender: &ComponentSender<Self>) {
+        if should_dismiss {
+            self.mutate_settings(sender, |settings| {
+                settings.ui.dismiss_wp_override_warning = true;
+            });
+        }
+    }
+
+    fn close(
+        &mut self,
+        widgets: &MicShellWidgets,
+        root: &adw::ApplicationWindow,
+        sender: &ComponentSender<Self>,
+    ) {
+        if self.is_closing {
+            return;
+        }
+        self.is_closing = true;
+        self.cancel_apply_debounce();
+        self.show_checking(widgets);
+        let persisted_window = self.state.settings().window.clone();
+        let width = current_window_dimension(root.width(), persisted_window.width);
+        let height = current_window_dimension(root.height(), persisted_window.height);
+        let maximized = root.is_maximized();
+        self.state.mutate(|settings| {
+            settings.monitor.enabled = false;
+            settings.window.width = width;
+            settings.window.height = height;
+            settings.window.maximized = maximized;
+        });
+        self.applies.settings_changed();
+        if let Some(request) = self.applies.mark_current_ready() {
+            self.spawn_apply_request(sender, request);
+        }
+    }
+
+    fn stop_monitor(&mut self, widgets: &MicShellWidgets, sender: &ComponentSender<Self>) {
+        let Some(monitor) = self.monitor.take() else {
+            sender.oneshot_command(async { MicCommandOutput::MonitorStopped });
+            return;
+        };
+        let monitor = match take_unique_monitor(monitor) {
+            Ok(monitor) => monitor,
+            Err(monitor) => {
+                log::error!(
+                    "audio monitor still had {} strong owners during close",
+                    Rc::strong_count(&monitor)
+                );
+                self.monitor = Some(monitor);
+                self.is_closing = false;
+                widgets.banner.set_title(&i18n(
+                    "Could not stop the audio monitor safely. Close the window again to retry.",
+                ));
+                widgets.banner.set_button_label(None);
+                widgets.banner.set_revealed(true);
+                widgets.body.set_sensitive(true);
+                return;
+            }
+        };
+        sender.oneshot_command(async move {
+            if let Err(error) = relm4::spawn_blocking(move || monitor.shutdown()).await {
+                log::error!("audio monitor shutdown worker failed: {error}");
+            }
+            MicCommandOutput::MonitorStopped
+        });
+    }
+
+    /// Render a resolved health probe. Ready hides the banner and
+    /// re-enables the body; Unavailable explains cause + next action and
+    /// makes the controls insensitive — a toggle that cannot reach
+    /// PipeWire/the plugins must not pretend to work.
+    fn show_health(&mut self, widgets: &MicShellWidgets, health: &Health) {
+        match health {
+            Health::Ready => {
+                widgets.banner.set_revealed(false);
+                self.banner_action = BannerAction::None;
+                widgets.body.set_sensitive(true);
+            }
+            Health::Unavailable { cause, hint } => {
+                widgets.banner.set_title(&format!("{cause} {hint}"));
+                widgets.banner.set_button_label(Some(&i18n("Check again")));
+                self.banner_action = BannerAction::Recheck;
+                widgets.banner.set_revealed(true);
+                widgets.body.set_sensitive(false);
+            }
+        }
     }
 }
 
+fn apply_failure_title(cause: &str) -> String {
+    format!("{} {cause}", i18n("Could not apply the audio settings:"))
+}
+
+fn current_window_dimension(actual: i32, persisted: u32) -> u32 {
+    u32::try_from(actual)
+        .ok()
+        .filter(|dimension| *dimension > 0)
+        .unwrap_or(persisted)
+}
+
+fn take_unique_monitor(monitor: Rc<AudioMonitor>) -> Result<AudioMonitor, Rc<AudioMonitor>> {
+    Rc::try_unwrap(monitor)
+}
+
+fn spawn_apply_work(sender: &ComponentSender<MicShell>, work: ApplyWork) {
+    let request = work.request();
+    sender.oneshot_command(async move {
+        let completion = relm4::spawn_blocking(move || work.run())
+            .await
+            .unwrap_or_else(|error| {
+                log::error!("audio apply worker failed: {error}");
+                ApplyCompletion::worker_failed(request)
+            });
+        MicCommandOutput::ApplyCompleted(Box::new(completion))
+    });
+}
+
 /// Watch `settings.json` and forward external changes as [`MicInput`] messages.
-/// Cheap by design: one `gio::FileMonitor`, re-read on each event, and
-/// [`AppState::external_replace`] turns our own atomic-rename writes into a
-/// no-op compare. The returned monitor is held by the model so the watch lives
-/// exactly as long as the shell.
-fn install_external_settings_watch(
-    state: &Rc<AppState>,
-    sender: ComponentSender<MicShell>,
-) -> Option<gio::FileMonitor> {
+/// The component model performs the read/compare transition; the callback does
+/// not mutate application state.
+fn install_external_settings_watch(sender: ComponentSender<MicShell>) -> Option<gio::FileMonitor> {
     let file = gio::File::for_path(settings_file());
     let monitor =
         match file.monitor_file(gio::FileMonitorFlags::WATCH_MOVES, gio::Cancellable::NONE) {
@@ -381,7 +890,6 @@ fn install_external_settings_watch(
             }
         };
 
-    let state = Rc::clone(state);
     monitor.connect_changed(move |_, _, _, event| {
         if !matches!(
             event,
@@ -393,40 +901,14 @@ fn install_external_settings_watch(
         ) {
             return;
         }
-        if state.external_replace(AppSettings::load()) {
-            sender.input(MicInput::ExternalSettingsLoaded);
-        }
+        let _ = sender
+            .input_sender()
+            .send(MicInput::ExternalSettingsChanged);
     });
 
     Some(monitor)
 }
 
 #[cfg(test)]
-mod tests {
-    use super::*;
-    #[cfg(not(miri))]
-    use crate::config::AppSettings;
-
-    // Pure reducer-style checks on the shell's mode mapping. Building the full
-    // component requires a GTK display; these cover the message→mode logic that
-    // `update` applies (Layer-1 no-display validation per relm4-ui).
-    #[test]
-    fn advanced_flag_maps_to_mode() {
-        assert_eq!(Mode::from_advanced_flag(true), Mode::Advanced);
-        assert_eq!(Mode::from_advanced_flag(false), Mode::Simple);
-    }
-
-    // Miri cannot enter GLib's main-context FFI used by AppState's debounce
-    // timer; the normal cargo test gate still covers this UI-state mutation.
-    #[cfg(not(miri))]
-    #[test]
-    fn advanced_toggle_persists_into_settings() {
-        // `AdvancedToggled` mutates `AppState.ui.show_advanced`; verify the
-        // state side effect a rendered toggle would drive (no widgets needed).
-        let state = AppState::new(AppSettings::default());
-        state.mutate(|s| s.ui.show_advanced = true);
-        assert!(state.settings().ui.show_advanced);
-        state.mutate(|s| s.ui.show_advanced = false);
-        assert!(!state.settings().ui.show_advanced);
-    }
-}
+#[path = "mic_shell_tests.rs"]
+mod tests;

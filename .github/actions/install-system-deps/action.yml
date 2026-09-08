@@ -2,8 +2,8 @@ name: Install system dependencies
 description: |
   Installs the GTK4 / libadwaita / PipeWire build stack for compiling
   this crate. Designed for the `archlinux:latest` container that the
-  compile jobs run in — the project's GTK feature gate (`v4_20`) needs
-  GTK ≥ 4.20, which is not available on `ubuntu-latest` runners.
+  compile jobs run in — the project's GTK feature gate (`v4_22`) needs
+  GTK ≥ 4.22, which is not available on `ubuntu-latest` runners.
 
 runs:
   using: composite
@@ -26,4 +26,5 @@ runs:
           pango \
           gdk-pixbuf2 \
           graphene \
+          jemalloc \
           gettext

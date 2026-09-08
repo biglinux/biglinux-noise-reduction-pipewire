@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<gresources>
+  <gresource prefix="/org/biglinux/big-components/illustrations">
+    <file compressed="true" preprocess="xml-stripblanks">tab-alignment.svg</file>
+    <file compressed="true" preprocess="xml-stripblanks">tab-style.svg</file>
+  </gresource>
+</gresources>

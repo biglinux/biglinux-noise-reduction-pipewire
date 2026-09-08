@@ -41,9 +41,10 @@ pub fn list_sources() -> io::Result<Vec<Source>> {
 #[must_use]
 pub fn default_source_name() -> Option<String> {
     let output = BigSubprocessSpec::builder()
-        .program("pw-metadata")
+        .program("/usr/bin/pw-metadata")
         .args(["0", "default.audio.source"])
         .stderr(BigSubprocessOutputMode::Null)
+        .allow_list(["/usr/bin/pw-metadata"])
         .build()
         .run()
         .ok()?;
@@ -58,9 +59,10 @@ pub fn default_source_name() -> Option<String> {
 /// switches over without restart.
 pub fn set_default_source(node_id: u32) -> io::Result<()> {
     let output = BigSubprocessSpec::builder()
-        .program("wpctl")
+        .program("/usr/bin/wpctl")
         .args(["set-default", &node_id.to_string()])
         .stdout(BigSubprocessOutputMode::Null)
+        .allow_list(["/usr/bin/wpctl"])
         .build()
         .run()
         .map_err(io::Error::other)?;
@@ -79,9 +81,10 @@ pub fn set_default_source(node_id: u32) -> io::Result<()> {
 #[must_use]
 pub fn source_volume(node_id: u32) -> Option<f32> {
     let output = BigSubprocessSpec::builder()
-        .program("wpctl")
+        .program("/usr/bin/wpctl")
         .args(["get-volume", &node_id.to_string()])
         .stderr(BigSubprocessOutputMode::Null)
+        .allow_list(["/usr/bin/wpctl"])
         .build()
         .run()
         .ok()?;
@@ -97,9 +100,10 @@ pub fn source_volume(node_id: u32) -> Option<f32> {
 pub fn set_source_volume(node_id: u32, volume: f32) -> io::Result<()> {
     let clamped = volume.clamp(0.0, 1.5);
     let output = BigSubprocessSpec::builder()
-        .program("wpctl")
+        .program("/usr/bin/wpctl")
         .args(["set-volume", &node_id.to_string(), &format!("{clamped:.2}")])
         .stdout(BigSubprocessOutputMode::Null)
+        .allow_list(["/usr/bin/wpctl"])
         .build()
         .run()
         .map_err(io::Error::other)?;
@@ -118,9 +122,10 @@ fn pw_cli_ls_node() -> io::Result<String> {
     // `pw-cli ls Node` output can exceed 64 KiB on a busy graph — the shared
     // spec drains stdout/stderr concurrently, avoiding the pipe-fill deadlock.
     let output = BigSubprocessSpec::builder()
-        .program("pw-cli")
+        .program("/usr/bin/pw-cli")
         .args(["ls", "Node"])
         .stderr(BigSubprocessOutputMode::Null)
+        .allow_list(["/usr/bin/pw-cli"])
         .build()
         .run()
         .map_err(io::Error::other)?;
@@ -254,6 +259,34 @@ pub fn snapshot() -> (Vec<Source>, Option<u32>) {
         .as_deref()
         .and_then(|n| sources.iter().find(|s| s.node_name == n).map(|s| s.node_id));
     (sources, default_id)
+}
+
+/// Hear a buffer size before saving it, and give it back when you are done.
+///
+/// PipeWire keeps a live override beside the configured value: `clock.force-quantum` is
+/// obeyed at once, by every stream, with no restart and no file — and it is forgotten when
+/// the session ends. So the honest way to choose a number that is measured in milliseconds
+/// is to listen to it while a song is playing, rather than to save, restart, judge, and
+/// start again.
+///
+/// `0` releases the override and the configured value takes over again. That is also the
+/// safety net: nothing written down can be wrong, because nothing was written down.
+pub fn preview_quantum(frames: u32) -> bool {
+    BigSubprocessSpec::builder()
+        .program("/usr/bin/pw-metadata")
+        .args([
+            "-n",
+            "settings",
+            "0",
+            "clock.force-quantum",
+            &frames.to_string(),
+        ])
+        .stdout(BigSubprocessOutputMode::Null)
+        .stderr(BigSubprocessOutputMode::Null)
+        .allow_list(["/usr/bin/pw-metadata"])
+        .build()
+        .run()
+        .is_ok_and(|output| output.status.success())
 }
 
 #[cfg(test)]

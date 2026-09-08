@@ -1,0 +1,47 @@
+[workspace]
+members = [
+    "crates/app/big-app-kit",
+    "crates/app/big-app-kit-core",
+    "crates/dev/big-testkit",
+    "crates/foundation/big-appearance",
+    "crates/foundation/big-jemalloc",
+    "crates/foundation/big-os-kit",
+    "crates/ui/generic/big-relm4-components",
+]
+resolver = "3"
+
+[workspace.package]
+edition = "2024"
+rust-version = "1.93"
+license = "MIT"
+repository = "https://github.com/biglinux/big-rust-components"
+homepage = "https://github.com/biglinux/big-rust-components"
+authors = ["BigLinux contributors"]
+
+[workspace.dependencies]
+adw = { version = "0.9", features = ["v1_9"], package = "libadwaita" }
+gtk = { version = "0.11", features = ["v4_22"], package = "gtk4" }
+relm4 = { version = "0.11.0", features = ["libadwaita"] }
+log = "0.4"
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+gettext-rs = { version = "0.7", features = ["gettext-system"] }
+gdk4-wayland = { version = "0.11", features = ["wayland_crate"] }
+gdk4-x11 = "0.11"
+wayland-client = "0.31"
+wayland-protocols = { version = "0.32.13", features = ["client", "staging"] }
+wayland-protocols-plasma = { version = "0.3", features = ["client"] }
+x11rb = "0.13"
+bon = "3"
+thiserror = "2"
+tiny_http = "0.12"
+tree_magic_mini = { version = "3.2", default-features = false }
+libsecret = { version = "0.9", features = ["v0_21"] }
+glib = "0.22"
+gio = "0.22"
+libc = "0.2"
+big-app-kit = { path = "crates/app/big-app-kit", version = "0.1.0" }
+big-app-kit-core = { path = "crates/app/big-app-kit-core", version = "0.1.0" }
+big-appearance = { path = "crates/foundation/big-appearance", version = "0.1.0" }
+big-os-kit = { path = "crates/foundation/big-os-kit", version = "0.1.0" }
+big-testkit = { path = "crates/dev/big-testkit", version = "0.1.0" }

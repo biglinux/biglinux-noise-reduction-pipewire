@@ -1,0 +1,29 @@
+[package]
+name = "big-app-kit-core"
+version = "0.1.0"
+publish = false  # consumed by big-app-kit via path dep, not crates.io (see ARCHITECTURE.md §8)
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+description = "Display-free (GTK-free) app-building contracts for BigLinux Rust desktop applications"
+repository.workspace = true
+homepage.workspace = true
+authors.workspace = true
+keywords = ["desktop", "biglinux", "app", "contracts"]
+categories = ["config"]
+
+[dependencies]
+serde_json.workspace = true
+big-os-kit.workspace = true
+# `remote-control` only. `log` and the LAN-bindable control server (tiny_http)
+# stay out of the default build so a consumer never links them unasked.
+log = { workspace = true, optional = true }
+tiny_http = { workspace = true, optional = true }
+
+# Network + control-server features are opt-in. `http-client` forwards to the
+# single HTTP-policy home in big-os-kit; `remote-control` pulls the tiny_http
+# endpoint. Default is empty.
+[features]
+default = []
+http-client = ["big-os-kit/http-client"]
+remote-control = ["dep:tiny_http", "dep:log"]

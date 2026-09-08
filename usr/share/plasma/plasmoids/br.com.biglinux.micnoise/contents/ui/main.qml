@@ -202,7 +202,7 @@ PlasmoidItem {
         PlasmaComponents.Label {
             Layout.fillWidth: true
             Layout.margins: Kirigami.Units.smallSpacing
-            text: i18nd("biglinux-noise-reduction-pipewire","Filter noise")
+            text: i18nd("biglinux-microphone","Filter noise")
             font.bold: true
             elide: Text.ElideRight
         }
@@ -223,12 +223,12 @@ PlasmoidItem {
                 Layout.fillWidth: true
                 spacing: 0
                 PlasmaComponents.Label {
-                    text: i18nd("biglinux-noise-reduction-pipewire","Microphone filter")
+                    text: i18nd("biglinux-microphone","Microphone filter")
                     elide: Text.ElideRight
                     Layout.fillWidth: true
                 }
                 PlasmaComponents.Label {
-                    text: i18nd("biglinux-noise-reduction-pipewire","Cleans your voice for calls and recordings")
+                    text: i18nd("biglinux-microphone","Cleans your voice for calls and recordings")
                     opacity: 0.7
                     font.pixelSize: Kirigami.Theme.smallFont.pixelSize
                     elide: Text.ElideRight
@@ -258,12 +258,12 @@ PlasmoidItem {
                 Layout.fillWidth: true
                 spacing: 0
                 PlasmaComponents.Label {
-                    text: i18nd("biglinux-noise-reduction-pipewire","System sound filter")
+                    text: i18nd("biglinux-microphone","System sound filter")
                     elide: Text.ElideRight
                     Layout.fillWidth: true
                 }
                 PlasmaComponents.Label {
-                    text: i18nd("biglinux-noise-reduction-pipewire","Cleans every sound the system plays before it reaches your speakers")
+                    text: i18nd("biglinux-microphone","Cleans every sound the system plays before it reaches your speakers")
                     opacity: 0.7
                     font.pixelSize: Kirigami.Theme.smallFont.pixelSize
                     elide: Text.ElideRight
@@ -282,7 +282,7 @@ PlasmoidItem {
         PlasmaComponents.Button {
             Layout.alignment: Qt.AlignRight
             Layout.margins: Kirigami.Units.smallSpacing
-            text: i18nd("biglinux-noise-reduction-pipewire","Open settings…")
+            text: i18nd("biglinux-microphone","Open settings…")
             icon.name: "preferences-desktop-sound"
             onClicked: {
                 root.openConfigurator()

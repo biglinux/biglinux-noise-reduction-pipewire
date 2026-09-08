@@ -25,83 +25,20 @@
 use std::rc::Rc;
 
 use adw::prelude::*;
-use big_app_kit::{desktop, dialogs};
 use big_relm4_components::feedback::tooltip;
 use big_relm4_components::layout::hamburger_menu::{BigHamburgerMenuSpec, BigMenuActionItem};
 use glib::MainContext;
-use gtk::{glib, Orientation};
-use relm4::{Component, ComponentController};
+use gtk::Orientation;
 
-use crate::config::{app_id, app_version, AppSettings};
+use crate::config::{AppSettings, app_id, app_version};
 use crate::services::audio_monitor::{AudioMonitor, Event as MonitorEvent};
 
+use super::app_kit_edges::{desktop, dialogs};
 use super::i18n::i18n;
-use super::mic_shell::{MicInput, MicShell, MicShellInit};
+use super::mic_shell::MicInput;
 use super::state::AppState;
-use super::views::{advanced, mic, output, simple, Mode};
+use super::views::{Mode, advanced, mic, output, simple};
 use super::widgets::spectrum::Spectrum;
-
-pub fn build(
-    app: &adw::Application,
-    state: Rc<AppState>,
-    monitor: Rc<AudioMonitor>,
-) -> adw::ApplicationWindow {
-    let window = adw::ApplicationWindow::builder()
-        .application(app)
-        .title(i18n("Filter noise"))
-        .default_width(state.settings().window.width.try_into().unwrap_or(720))
-        .default_height(state.settings().window.height.try_into().unwrap_or(700))
-        .build();
-    // Opt in to optional Big Gnome Center background styling.
-    window.add_css_class("biglinux-microphone");
-
-    // The window content is a mountable Relm4 component (ADR-D14): it owns the
-    // header, spectrum strip, body, the Advanced toggle, and the external
-    // `settings.json` watch. The window-scoped concerns stay here because they
-    // need the `adw::ApplicationWindow` itself — the menu GActions (their
-    // dialogs target the window) and the close handler (geometry persistence +
-    // flush).
-    let controller = MicShell::builder()
-        .launch(MicShellInit {
-            state: Rc::clone(&state),
-            monitor,
-        })
-        .detach();
-    window.set_content(Some(controller.widget()));
-
-    install_window_actions(&window, Rc::clone(&state), controller.sender().clone());
-
-    {
-        let state = Rc::clone(&state);
-        let window_weak = window.downgrade();
-        window.connect_close_request(move |_| {
-            // Self-listen is a calibration aid only — the loopback must
-            // not survive the configuration window. The mutation below
-            // also persists `monitor.enabled = false` to settings, so
-            // the next launch does not auto-open the loopback either.
-            state.mutate(|s| {
-                s.monitor.enabled = false;
-                if let Some(w) = window_weak.upgrade() {
-                    s.window.width = u32::try_from(w.default_width()).unwrap_or(720);
-                    s.window.height = u32::try_from(w.default_height()).unwrap_or(700);
-                }
-            });
-            state.flush();
-            glib::Propagation::Proceed
-        });
-    }
-
-    // Park the controller for the window's lifetime: the component — and with
-    // it the widget tree, spectrum, monitor binding, and settings watch — drops
-    // when the window finalizes on close.
-    // SAFETY: unique key, only written here, never read back; keeps the
-    // controller alive exactly as long as the window.
-    unsafe {
-        window.set_data("biglinux-mic-shell", controller);
-    }
-
-    window
-}
 
 /// Replace the body contents and the header title widget so they match
 /// the requested mode. Simple → no tab switcher, single combined page.
@@ -236,59 +173,26 @@ fn primary_menu_action_specs() -> [(&'static str, &'static str); 2] {
 /// Wire the hamburger menu's GActions to the window. Window-scoped (not
 /// app-scoped) so the dialogs can target the active window directly and
 /// shut down with it.
-fn install_window_actions(
+pub(super) fn install_window_actions(
     window: &adw::ApplicationWindow,
-    state: Rc<AppState>,
     shell: relm4::Sender<MicInput>,
 ) {
-    // Cataloged shared action installer (`big_app_kit::desktop`) instead of raw
-    // `gio::SimpleAction`. Weak window captures: the exported actions outlive
-    // widget teardown, so strong refs would leak the window after close. The
-    // reset body-rebuild goes through the shell sender (the component owns the
-    // widgets), so no header/body/spectrum captures are needed.
-    {
-        let state = Rc::clone(&state);
-        let window_weak = window.downgrade();
-        desktop::install_action(window, "reset-defaults", move || {
-            if let Some(window) = window_weak.upgrade() {
-                let dialog = reset_confirmation_dialog();
-                let state = Rc::clone(&state);
-                let shell = shell.clone();
-                dialog.connect_response(None, move |dialog, response| {
-                    if is_reset_response(response) {
-                        apply_factory_defaults(&state);
-                        // The component owns the body widgets; ask it to rebuild for the
-                        // (geometry/UI-preserving) factory snapshot just written to state.
-                        let _ = shell.send(MicInput::RebuildBody);
-                    }
-                    dialog.close();
-                });
-                dialog.present(Some(&window));
-            }
-        });
-    }
-    {
-        let window_weak = window.downgrade();
-        desktop::install_action(window, "about", move || {
-            if let Some(window) = window_weak.upgrade() {
-                present_about_dialog(&window);
-            }
-        });
-    }
+    let reset_shell = shell.clone();
+    desktop::install_action(window, "reset-defaults", move || {
+        let _ = reset_shell.send(MicInput::RestoreDefaultsRequested);
+    });
+    desktop::install_action(window, "about", move || {
+        let _ = shell.send(MicInput::AboutRequested);
+    });
 }
 
 #[cfg(test)]
 pub(in crate::ui) fn install_window_actions_contract(
     window: &adw::ApplicationWindow,
-    state: Rc<AppState>,
 ) -> relm4::Receiver<MicInput> {
     let (sender, receiver) = relm4::channel();
-    install_window_actions(window, state, sender);
+    install_window_actions(window, sender);
     receiver
-}
-
-fn is_reset_response(response: &str) -> bool {
-    response == "reset"
 }
 
 /// Confirm before overwriting the user's audio configuration.
@@ -318,7 +222,7 @@ pub(in crate::ui) fn apply_factory_defaults(state: &Rc<AppState>) {
     });
 }
 
-fn present_about_dialog(parent: &adw::ApplicationWindow) -> adw::AboutDialog {
+pub(super) fn present_about_dialog(parent: &adw::ApplicationWindow) -> adw::AboutDialog {
     let about = adw::AboutDialog::builder()
         .application_name(i18n("Filter noise"))
         .application_icon(app_id())
@@ -390,7 +294,7 @@ pub(super) fn bind_monitor_to_spectrum_visibility(
 ) {
     let widget = spectrum.widget().clone();
     // Weak: these closures live on the spectrum's widget — strong monitor
-    // refs here prevent the embed guard's `Rc::try_unwrap` teardown.
+    // refs here would keep the root-owned service alive after window teardown.
     let monitor_for_map = Rc::downgrade(monitor);
     widget.connect_map(move |_| {
         if let Some(monitor) = monitor_for_map.upgrade() {
@@ -444,13 +348,6 @@ mod tests {
         assert_eq!(spec.items[0].action, "win.reset-defaults");
         assert_eq!(spec.items[1].label, "About Filter noise");
         assert_eq!(spec.items[1].action, "win.about");
-    }
-
-    #[test]
-    fn reset_response_only_accepts_reset_id() {
-        assert!(is_reset_response("reset"));
-        assert!(!is_reset_response("cancel"));
-        assert!(!is_reset_response(""));
     }
 
     #[test]

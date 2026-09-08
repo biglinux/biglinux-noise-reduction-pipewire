@@ -4,7 +4,7 @@
   <id>br.com.biglinux.microphone</id>
   <launchable type="desktop-id">br.com.biglinux.microphone.desktop</launchable>
 
-  <name>BigLinux Microphone</name>
+  <name>Filter noise</name>
   <summary>AI-powered microphone noise reduction for PipeWire</summary>
 
   <metadata_license>CC0-1.0</metadata_license>
@@ -16,7 +16,7 @@
 
   <description>
     <p>
-      BigLinux Microphone inserts a PipeWire filter chain on the default
+      Filter noise inserts a PipeWire filter chain on the default
       audio source, powered by the GTCRN deep-learning speech enhancement
       plugin. The result is a clean, noise-free microphone signal for
       every application — meetings, streams, voice notes — with no need
@@ -50,8 +50,7 @@
     <keyword>filter chain</keyword>
   </keywords>
 
-  <url type="homepage">https://github.com/biglinux/biglinux-noise-reduction-pipewire</url>
-  <url type="bugtracker">https://github.com/biglinux/biglinux-noise-reduction-pipewire/issues</url>
+  <url type="homepage">https://www.biglinux.com.br</url>
 
   <supports>
     <control>pointing</control>
@@ -62,7 +61,7 @@
   <content_rating type="oars-1.1"/>
 
   <releases>
-    <release version="5.0.0" date="2026-04-26">
+    <release version="0.1.0" date="2026-04-26">
       <description>
         <p>
           Full Rust rewrite. Drops the legacy Python stack in favour of

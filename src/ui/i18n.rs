@@ -1,19 +1,18 @@
 //! gettext helpers for UI translation.
 //!
-//! Call [`init_gettext`] once during application start-up (in
-//! `bin/gui.rs`). After that, use [`i18n`] anywhere a user-facing string
+//! The Relm4 root calls [`init_gettext`] once during application start-up.
+//! After that, use [`i18n`] anywhere a user-facing string
 //! needs to be translated — the call site doubles as a marker that the
 //! string must appear in `po/POTFILES.in`.
 
-use gettextrs::{dgettext, setlocale, LocaleCategory};
+use gettextrs::{LocaleCategory, setlocale};
 
 use crate::config::GETTEXT_PACKAGE;
 
-/// Translate a string via gettext (domain-explicit, so translation works
-/// both standalone and embedded in a host that owns the default domain).
+/// Translate a string through the application gettext domain.
 #[must_use]
 pub fn i18n(s: &str) -> String {
-    dgettext(GETTEXT_PACKAGE, s)
+    gettextrs::dgettext(GETTEXT_PACKAGE, s)
 }
 
 /// Initialise the gettext locale and text domain.
@@ -26,14 +25,6 @@ pub fn init_gettext() {
     setlocale(LocaleCategory::LcAll, "");
     bind_domain();
     gettextrs::textdomain(GETTEXT_PACKAGE).expect("textdomain");
-}
-
-/// Embedded boot (multicall host): bind our domain WITHOUT touching the
-/// process-global locale or default text domain — another embedded app may
-/// pin `LC_NUMERIC=C` (ffmpeg float parsing) and own `textdomain()`.
-/// [`i18n`] is domain-explicit, so neither is needed.
-pub fn init_gettext_embedded() {
-    bind_domain();
 }
 
 fn bind_domain() {
@@ -73,7 +64,7 @@ fn dev_locale_dir() -> Option<String> {
 mod tests {
     use super::*;
 
-    // Miri cannot call gettext's `dgettext` FFI; the normal cargo test
+    // Miri cannot call gettext's FFI; the normal cargo test
     // gate still covers the untranslated fallback contract.
     #[cfg(not(miri))]
     #[test]
@@ -84,18 +75,5 @@ mod tests {
         // outside an installed locale.
         assert_eq!(i18n("Microphone"), "Microphone");
         assert_eq!(i18n(""), "");
-    }
-
-    #[test]
-    fn dev_locale_dir_is_none_when_no_in_tree_catalog_exists() {
-        // The test binary lives under `target/debug/deps/` so the
-        // candidate paths probed by `dev_locale_dir` resolve to
-        // non-existing directories. We just need this not to panic and
-        // to return `None` in that situation.
-        // NB: when a developer has built `.mo` files in-tree this
-        // assertion still holds because the resolution checks for the
-        // exact `pt_BR/LC_MESSAGES/<pkg>.mo` artefact, which the test
-        // process doesn't create.
-        assert!(dev_locale_dir().is_none() || dev_locale_dir().is_some());
     }
 }

@@ -12,6 +12,7 @@ Scores roughly map to the 1–5 MOS scale. We aggregate across windows
 from __future__ import annotations
 
 from dataclasses import dataclass
+from functools import lru_cache
 from pathlib import Path
 
 import numpy as np
@@ -43,9 +44,40 @@ def _polyfit(sig: float, bak: float, ovrl: float) -> DnsmosScores:
     return DnsmosScores(sig_p, bak_p, ovrl_p)
 
 
+@lru_cache(maxsize=4)
+def _session(model_path: Path):
+    """One session per model file, reused.
+
+    A sweep scores thousands of windows; building an `InferenceSession`
+    for each one costs more than the inference does.
+    """
+    import onnxruntime as ort
+
+    return ort.InferenceSession(str(model_path), providers=["CPUExecutionProvider"])
+
+
+#: Level DNSMOS is fed at, in dBFS RMS.
+#:
+#: The model deliberately has no feature normalization — its authors left
+#: it out because people rate quiet clips lower and they wanted that
+#: captured — so raw, peak-normalized and loudness-normalized audio all
+#: score differently. Any number is defensible; only a fixed one is
+#: comparable, and it has to be applied to every system in a comparison
+#: including the unprocessed reference.
+NORMALIZE_DBFS = -26.0
+
+
+def normalize(audio: np.ndarray) -> np.ndarray:
+    """Bring `audio` to `NORMALIZE_DBFS` RMS. Silence is left alone."""
+    rms = float(np.sqrt(np.mean(np.square(audio, dtype=np.float64))))
+    if rms < 1e-9:
+        return audio
+    gain = 10.0 ** (NORMALIZE_DBFS / 20.0) / rms
+    return (audio * gain).astype(np.float32)
+
+
 def score(audio: np.ndarray, sr: int, model_path: Path) -> DnsmosScores:
     """Score one waveform. Resamples to 16 kHz; tiles short clips."""
-    import onnxruntime as ort
     from scipy.signal import resample_poly
 
     if sr != _TARGET_SAMPLE_RATE_HZ:
@@ -57,7 +89,7 @@ def score(audio: np.ndarray, sr: int, model_path: Path) -> DnsmosScores:
         audio = np.tile(audio, reps)
     audio = audio[:target_len]
 
-    sess = ort.InferenceSession(str(model_path), providers=["CPUExecutionProvider"])
+    sess = _session(model_path)
     name = sess.get_inputs()[0].name
     out = sess.run(None, {name: audio[np.newaxis, :]})
     raw = out[0][0]  # [sig_raw, bak_raw, ovr_raw]
@@ -65,7 +97,13 @@ def score(audio: np.ndarray, sr: int, model_path: Path) -> DnsmosScores:
 
 
 def score_batch(audio: np.ndarray, sr: int, model_path: Path) -> DnsmosScores:
-    """Score by averaging across overlapping 9-second windows."""
+    """Score by averaging across overlapping 9-second windows.
+
+    Normalizes once, for the whole signal, so every window of one take
+    keeps its relative level; normalizing per window would erase exactly
+    the loudness differences the model is meant to hear.
+    """
+    audio = normalize(audio)
     target_len = int(_INPUT_WINDOW_SECONDS * sr)
     hop = target_len // 2
     if audio.size <= target_len:

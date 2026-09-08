@@ -1,11 +1,8 @@
 #!/usr/bin/env python3
 """Sweep parameter grid across input samples and score each output.
 
-Default sweep is small and fast (~2 min on a 5-sample directory): it
-evaluates the current production defaults and the new presence preset
-against every common-sense alternative we'd consider tuning. Override
-the matrix via `--config` to pin the exact axes a calibration session
-needs.
+Default sweep evaluates the current production defaults and the presence
+preset against the HPF/EQ alternatives we currently tune.
 
 Output: `report.csv` plus a markdown summary `report.md`. Both go to
 the cache by default so the repo stays clean.
@@ -30,7 +27,7 @@ from lib import chain, metrics, signals  # noqa: E402
 def _default_cache() -> Path:
     return (
         Path(os.environ.get("XDG_CACHE_HOME", str(Path.home() / ".cache")))
-        / "biglinux-noise-reduction-pipewire/calibration"
+        / "biglinux-microphone/calibration"
     )
 
 
@@ -137,7 +134,6 @@ def main() -> int:
     if not args.samples_dir:
         args.samples_dir = [
             _default_cache() / "datasets/voicebank_demand/noisy_testset_wav",
-            _default_cache() / "signals",
         ]
 
     samples = _discover_samples(*args.samples_dir)

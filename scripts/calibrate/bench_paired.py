@@ -42,9 +42,10 @@ def _discover(cache: Path) -> list[ModelEntry]:
     out: list[ModelEntry] = []
     # Sibling gtcrn-ladspa checkout. Override with $GTCRN_LADSPA_ROOT;
     # defaults to a checkout adjacent to this repo.
-    gtcrn_root = Path(
-        os.environ.get("GTCRN_LADSPA_ROOT", "../gtcrn-ladspa")
-    ) / "stream/onnx_models"
+    gtcrn_root = (
+        Path(os.environ.get("GTCRN_LADSPA_ROOT", "../gtcrn-ladspa"))
+        / "stream/onnx_models"
+    )
     for variant in ("gtcrn_simple.onnx", "gtcrn_vctk.onnx"):
         p = gtcrn_root / variant
         if p.exists():
@@ -60,7 +61,9 @@ def _discover(cache: Path) -> list[ModelEntry]:
     return out
 
 
-def _align_lag(reference: np.ndarray, processed: np.ndarray, max_ms: int, sr: int) -> tuple[np.ndarray, np.ndarray, int]:
+def _align_lag(
+    reference: np.ndarray, processed: np.ndarray, max_ms: int, sr: int
+) -> tuple[np.ndarray, np.ndarray, int]:
     """Cross-correlate within ±max_ms to find streaming-model group
     delay, then trim both to a common aligned span. PESQ does its own
     alignment, but STOI and SI-SDR are sample-aligned and collapse to
@@ -84,7 +87,7 @@ def _align_lag(reference: np.ndarray, processed: np.ndarray, max_ms: int, sr: in
     if lag > 0:
         return reference[: n - lag], processed[lag:n], lag
     if lag < 0:
-        return reference[-lag : n], processed[: n + lag], lag
+        return reference[-lag:n], processed[: n + lag], lag
     return reference[:n], processed[:n], 0
 
 
@@ -167,7 +170,9 @@ def _bench_one(
 
 
 def _write_md(rows: list[dict], dest: Path) -> None:
-    rows = sorted(rows, key=lambda r: -r["pesq_wb"] if not np.isnan(r["pesq_wb"]) else 0)
+    rows = sorted(
+        rows, key=lambda r: -r["pesq_wb"] if not np.isnan(r["pesq_wb"]) else 0
+    )
     lines = [
         "# Paired-reference denoiser benchmark (VoiceBank+DEMAND)",
         "",
@@ -202,8 +207,9 @@ def main() -> int:
     )
     p.add_argument("--out", type=Path, default=_default_cache() / "reports")
     p.add_argument("--limit", type=int, default=80, help="0 = all")
-    p.add_argument("--backend", default="onnxruntime", choices=("onnxruntime", "openvino"))
-    p.add_argument("--include-noisy", action="store_true", default=True)
+    p.add_argument(
+        "--backend", default="onnxruntime", choices=("onnxruntime", "openvino")
+    )
     args = p.parse_args()
 
     clean_dir = args.dataset / "clean_testset_wav"
@@ -230,9 +236,8 @@ def main() -> int:
         return 1
 
     rows: list[dict] = []
-    if args.include_noisy:
-        print("\n=== noisy (passthrough)")
-        rows.append(_bench_one(None, pairs, args.backend))
+    print("\n=== noisy (passthrough)")
+    rows.append(_bench_one(None, pairs, args.backend))
 
     for entry in entries:
         print(f"\n=== {entry.name}  [{args.backend}]")

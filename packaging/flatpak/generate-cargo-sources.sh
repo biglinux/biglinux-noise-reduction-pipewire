@@ -21,25 +21,31 @@
 #     - cargo-sources.json   # expanded inline by flatpak-builder
 set -euo pipefail
 
-repo_root="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
+script_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+readonly script_dir
+repo_root="$(cd "${script_dir}/../.." && pwd)"
 readonly repo_root
-cd "$repo_root"
 
-readonly generator_url='https://raw.githubusercontent.com/flatpak/flatpak-builder-tools/master/cargo/flatpak-cargo-generator.py'
-readonly generator_path="${repo_root}/packaging/flatpak/flatpak-cargo-generator.py"
+for command in curl python3 sha256sum; do
+	if ! command -v "$command" >/dev/null 2>&1; then
+		printf 'Missing required command: %s\n' "$command" >&2
+		exit 127
+	fi
+done
 
-if [ ! -f "$generator_path" ]; then
-    echo "==> Fetching flatpak-cargo-generator.py" >&2
-    curl --fail --location --output "$generator_path" "$generator_url"
-    chmod +x "$generator_path"
-fi
+readonly generator_commit='737c0085912f9f7dabf9341d4608e2a77a51a73a'
+readonly generator_sha256='b373c8ab1a05378ec5d8ed0645c7b127bcec7d2f7a1798694fbc627d570d856c'
+readonly generator_url="https://raw.githubusercontent.com/flatpak/flatpak-builder-tools/${generator_commit}/cargo/flatpak-cargo-generator.py"
+generator_path="$(mktemp "${TMPDIR:-/tmp}/flatpak-cargo-generator.XXXXXX.py")"
+readonly generator_path
+trap 'rm -f "$generator_path"' EXIT
 
-if ! command -v python3 >/dev/null 2>&1; then
-    printf 'Missing required command: python3\n' >&2
-    exit 127
-fi
+echo "==> Fetching pinned flatpak-cargo-generator.py (${generator_commit})" >&2
+curl --fail --location --proto '=https' --tlsv1.2 \
+	--output "$generator_path" "$generator_url"
+printf '%s  %s\n' "$generator_sha256" "$generator_path" | sha256sum --check --status
 
-readonly output='packaging/flatpak/cargo-sources.json'
+readonly output="${script_dir}/cargo-sources.json"
 echo "==> Generating $output from Cargo.lock" >&2
-python3 "$generator_path" Cargo.lock -o "$output"
+python3 "$generator_path" "${repo_root}/Cargo.lock" -o "$output"
 echo "==> Done. Reference $output in the Flatpak manifest sources list." >&2

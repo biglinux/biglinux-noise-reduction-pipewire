@@ -5,11 +5,11 @@
 //! name we declared in the `.conf` file (`"Strength"`, `"Enable"`,
 //! `"Freq"`, …). `pw-cli s <id> Props '{ params = [ … ] }'` pushes a new
 //! value without touching the module graph, so slider drags update the
-//! running audio pipeline in real time — no `filter-chain.service`
-//! restart, no pop, no drop-out.
+//! running audio pipeline in real time — no loader restart, no pop, no
+//! drop-out.
 //!
 //! The helper intentionally stays argv-based: it invokes `pw-cli`
-//! directly via `std::process::Command` with an argument array, never
+//! through the shared subprocess boundary with an argument array, never
 //! through a shell (`sh -c`), so there is no shell-quoting or injection
 //! surface. Rationale:
 //!
@@ -20,33 +20,35 @@
 //!   we decide the subprocess overhead matters.
 //!
 //! Gracefully no-ops when the target node is absent (e.g. the first run
-//! before `filter-chain.service` has loaded the drop-in config). A
-//! separate service restart is still required whenever the **graph
-//! structure** changes — adding/removing a filter, swapping the routing
-//! mode — because only the control values can be updated live.
+//! before the loader units have started) or still `suspended`, which is
+//! where PipeWire drops Props silently — see [`find_live_node`]. Both
+//! cases report "not pushed" so the caller restarts the loader instead.
+//! A loader restart is also required whenever the **graph structure**
+//! changes — adding/removing a filter, swapping the model — because
+//! only the control values can be updated live.
 
 use std::io;
 
+use crate::config::dynamics::GateDerived;
 use big_os_kit::subprocess::{BigSubprocessOutputMode, BigSubprocessSpec};
-use log::{debug, trace, warn};
+use log::{debug, trace};
 
 use crate::config::{
-    deepfilter_attenuation_db, gtcrn_speech_strength, AppSettings, CompressorDerived, GateDerived,
-    EQ_BANDS_HZ, EQ_BAND_COUNT,
+    AppSettings, GATE_INTENSITY_MAX, deepfilter_attenuation_db, gtcrn_speech_strength,
 };
 use crate::pipeline::{
-    ai_node_in_mic_chain, output_ai_processing, MIC_CAPTURE_NODE_NAME, OUTPUT_NODE_NAME,
+    MIC_CAPTURE_NODE_NAME, OUTPUT_NODE_NAME, ai_node_in_mic_chain, mic_chain_wanted,
+    output_ai_processing,
 };
 
 /// Result of a [`apply_live`] call.
 ///
 /// `*_pushed` is `true` when the corresponding filter-chain node was
-/// found in the PipeWire graph and its controls were updated. A
-/// `false` tells the caller the running graph is stale — typically
-/// the first time the user edits a setting in a session where the
-/// `filter-chain.service` has not yet been (re)loaded. The caller
-/// should then trigger a full service restart to bring the freshly
-/// written `.conf` drop-ins into effect.
+/// live in the PipeWire graph and its controls were updated. A `false`
+/// tells the caller the running graph is stale — the loader is not up
+/// yet, or its node is still `suspended` and would swallow the update.
+/// The caller should then restart that loader so it picks up the args
+/// file the reconciler just wrote.
 #[derive(Debug, Clone, Copy, Default, PartialEq, Eq)]
 pub struct LiveOutcome {
     pub mic_pushed: bool,
@@ -58,7 +60,8 @@ impl LiveOutcome {
     /// received its control update.
     #[must_use]
     pub fn fully_applied(self, settings: &AppSettings) -> bool {
-        self.mic_pushed && (!settings.output_filter.enabled || self.output_pushed)
+        (!mic_chain_wanted(settings) || self.mic_pushed)
+            && (!settings.output_filter.enabled || self.output_pushed)
     }
 }
 
@@ -66,40 +69,82 @@ impl LiveOutcome {
 /// output filter chain. See [`LiveOutcome`] for the semantics of the
 /// returned value.
 pub fn apply_live(settings: &AppSettings) -> io::Result<LiveOutcome> {
-    // Clear the legacy external override file shipped by the Python
-    // implementation. While this file exists the GTCRN plugin reads
-    // its values from it and silently ignores the LADSPA port values
-    // we push through PipeWire.
-    clear_legacy_external_override();
-
     // Target the **capture-side** node: that's where the filter-chain
     // module exposes its LADSPA control surface. The outward-facing
     // `mic-biglinux` node is just the audio-adapter wrapper and its
     // `Props` only carries channel-mix / resampler settings.
-    let mic_pushed = if let Some(id) = find_node_id(MIC_CAPTURE_NODE_NAME)? {
+    let mic_pushed = if let Some(id) = find_live_node(MIC_CAPTURE_NODE_NAME)? {
         set_props(id, &mic_params(settings))?;
         true
     } else {
-        trace!("live: mic filter-chain not loaded, skipping");
+        trace!("live: mic filter-chain not live, skipping");
         false
     };
 
-    // Always try to push the output controls — even when the master
-    // switch is off, `output_params` returns the bypass values that
-    // keep the filter graph loaded but transparent. This avoids the
-    // service teardown that would otherwise yank the smart-filter sink
-    // out from under any active stream.
-    let output_pushed = if let Some(id) = find_node_id(OUTPUT_NODE_NAME)? {
+    // Try the output controls even when the master switch is off. The
+    // node may still exist briefly while the service is being stopped,
+    // and `output_params` supplies safe bypass values for that transition.
+    let output_pushed = if let Some(id) = find_live_node(OUTPUT_NODE_NAME)? {
         set_props(id, &output_params(settings))?;
         true
     } else {
-        trace!("live: output filter-chain not loaded, skipping");
+        trace!("live: output filter-chain not live, skipping");
         false
     };
 
     Ok(LiveOutcome {
         mic_pushed,
         output_pushed,
+    })
+}
+
+/// Resolve a `node.name` to the id of a node that can actually take a
+/// Props update, or `None` when the chain is not there yet.
+///
+/// A filter-chain node that never had a consumer sits in `suspended`:
+/// its filter graph is only set up at format negotiation, and until
+/// then PipeWire accepts the `set-param` and drops it — `pw-cli` still
+/// exits 0 and the control keeps its load-time value. Reporting `None`
+/// makes the caller fall back to a loader restart, which re-reads the
+/// args file the reconciler just wrote. Verified on PipeWire 1.6.8:
+/// a `Props` push to a suspended node leaves the value unchanged in
+/// `pw-dump`, while the same push on a running node takes effect.
+fn find_live_node(node_name: &str) -> io::Result<Option<u32>> {
+    let Some(id) = find_node_id(node_name)? else {
+        return Ok(None);
+    };
+    if node_state(id)?.as_deref() == Some("suspended") {
+        debug!("live: node {node_name} ({id}) is suspended, needs a loader restart");
+        return Ok(None);
+    }
+    Ok(Some(id))
+}
+
+/// Read a node's state (`suspended` / `idle` / `running`) from
+/// `pw-cli info <id>`. `None` when the object disappeared between the
+/// lookup and this call, or when the output has no state line.
+fn node_state(node_id: u32) -> io::Result<Option<String>> {
+    let output = BigSubprocessSpec::builder()
+        .program("/usr/bin/pw-cli")
+        .args(["info", &node_id.to_string()])
+        .stderr(BigSubprocessOutputMode::Null)
+        .allow_list(["/usr/bin/pw-cli"])
+        .build()
+        .run()
+        .map_err(io::Error::other)?;
+    if !output.status.success() {
+        return Ok(None);
+    }
+    Ok(parse_node_state(&output.stdout_lossy()))
+}
+
+/// Pull the state out of `pw-cli info` output. The line is rendered as
+/// `*\tstate: "running"`, with the `*` marking a changed field.
+fn parse_node_state(stdout: &str) -> Option<String> {
+    stdout.lines().find_map(|line| {
+        line.trim_start_matches(['*', ' ', '\t'])
+            .strip_prefix("state: ")
+            .map(|state| state.trim().trim_matches('"').to_owned())
     })
 }
 
@@ -119,9 +164,10 @@ pub fn apply_live(settings: &AppSettings) -> io::Result<LiveOutcome> {
 /// `node.name` line that follows it with the right object.
 fn find_node_id(node_name: &str) -> io::Result<Option<u32>> {
     let output = BigSubprocessSpec::builder()
-        .program("pw-cli")
+        .program("/usr/bin/pw-cli")
         .args(["ls", "Node"])
         .stderr(BigSubprocessOutputMode::Null)
+        .allow_list(["/usr/bin/pw-cli"])
         .build()
         .run()
         .map_err(io::Error::other)?;
@@ -159,19 +205,21 @@ fn set_props(node_id: u32, controls: &[(String, f64)]) -> io::Result<()> {
     let payload = format_params(controls);
     debug!("live: pw-cli s {node_id} Props {payload}");
     let output = BigSubprocessSpec::builder()
-        .program("pw-cli")
+        .program("/usr/bin/pw-cli")
         .args(["s", &node_id.to_string(), "Props", &payload])
         .stdout(BigSubprocessOutputMode::Null)
+        .allow_list(["/usr/bin/pw-cli"])
         .build()
         .run()
         .map_err(io::Error::other)?;
-    if !output.status.success() {
-        warn!(
-            "live: pw-cli set-param {node_id} failed with {:?}",
-            output.status.code()
-        );
+    if output.status.success() {
+        return Ok(());
     }
-    Ok(())
+    let stderr = output.stderr_lossy().trim().to_owned();
+    Err(io::Error::other(format!(
+        "pw-cli set-param {node_id} exited with {:?}: {stderr}",
+        output.status.code()
+    )))
 }
 
 fn format_params(controls: &[(String, f64)]) -> String {
@@ -189,21 +237,6 @@ fn format_params(controls: &[(String, f64)]) -> String {
     out
 }
 
-/// Delete the legacy `gtcrn-ladspa-controls` override file the Python
-/// implementation left on tmpfs. Silently ignored if the file doesn't
-/// exist — which is the common case after the first call.
-fn clear_legacy_external_override() {
-    let Some(dir) = std::env::var_os("XDG_RUNTIME_DIR") else {
-        return;
-    };
-    let path = std::path::Path::new(&dir).join("gtcrn-ladspa-controls");
-    match std::fs::remove_file(&path) {
-        Ok(()) => debug!("live: removed stale {}", path.display()),
-        Err(e) if e.kind() == io::ErrorKind::NotFound => {}
-        Err(e) => warn!("live: could not remove {}: {e}", path.display()),
-    }
-}
-
 fn format_f64(v: f64) -> String {
     if v.fract() == 0.0 && v.abs() < 1e15 {
         format!("{v:.1}")
@@ -215,7 +248,7 @@ fn format_f64(v: f64) -> String {
 // ── Parameter extraction ─────────────────────────────────────────────
 
 /// Controls for the mic filter-chain node, mirrored from
-/// [`crate::pipeline::mic::build_mic_conf`].
+/// [`crate::pipeline::build_mic_conf_for`].
 ///
 /// PipeWire exposes filter-chain controls under keys of the form
 /// `<graph_node_name>:<control>`. Sending a bare `Strength` (no
@@ -225,7 +258,9 @@ fn format_f64(v: f64) -> String {
 fn mic_params(s: &AppSettings) -> Vec<(String, f64)> {
     let nr = &s.noise_reduction;
     let gate = &s.gate;
-    let gate_derived = GateDerived::from_config(gate);
+    let gate_derived = GateDerived::from_unit_intensity(
+        f64::from(gate.intensity.min(GATE_INTENSITY_MAX)) / f64::from(GATE_INTENSITY_MAX),
+    );
     let threshold_db = if gate.enabled {
         gate_derived.threshold_db
     } else {
@@ -254,10 +289,10 @@ fn mic_params(s: &AppSettings) -> Vec<(String, f64)> {
     // drops unknown control names) but pruning them keeps the trace
     // log honest about what the running graph actually accepts.
     if ai_node_in_mic_chain(s) {
-        if nr.model.is_deepfilter() {
-            // DFN3 has a single live-tunable knob — the attenuation cap
-            // driven by the user's strength slider. The gate (when
-            // enabled) lives in a separate `gate:` SWH-gate node.
+        if nr.model.is_attenuation_only() {
+            // Attenuation-only models have a single live-tunable knob:
+            // the attenuation cap driven by the user's strength slider.
+            // The gate (when enabled) lives in a separate `gate:` SWH-gate node.
             let atten_db = deepfilter_attenuation_db(nr.strength);
             params.push(("ai:Attenuation Limit (dB)".to_owned(), atten_db));
             if s.gate.enabled {
@@ -297,17 +332,14 @@ fn mic_params(s: &AppSettings) -> Vec<(String, f64)> {
         s.compressor,
         s.compressor.enabled,
     );
-    append_eq_params(&mut params, &s.equalizer.bands, s.equalizer.enabled);
     params
 }
 
 /// Controls for the output filter-chain node.
 ///
 /// Master-off (`output_filter.enabled = false`) forces every sub-effect
-/// to bypass — same policy as the on-disk conf in `pipeline::output`.
-/// The standalone unit stays running so the smart-filter sink keeps
-/// streams attached and browsers don't pause playback when the user
-/// flips the toggle off.
+/// to bypass — the same policy used by the on-disk configuration while
+/// the output service is stopping or before it is reconciled.
 fn output_params(s: &AppSettings) -> Vec<(String, f64)> {
     let of = &s.output_filter;
     let master = of.enabled;
@@ -316,7 +348,9 @@ fn output_params(s: &AppSettings) -> Vec<(String, f64)> {
     let gate_enabled = master && gate.enabled;
     let hpf_enabled = master && of.hpf.enabled;
     let comp_enabled = master && of.compressor.enabled;
-    let gate_derived = GateDerived::from_config(gate);
+    let gate_derived = GateDerived::from_unit_intensity(
+        f64::from(gate.intensity.min(GATE_INTENSITY_MAX)) / f64::from(GATE_INTENSITY_MAX),
+    );
     let hpf_freq = if hpf_enabled {
         f64::from(of.hpf.frequency)
     } else {
@@ -326,11 +360,9 @@ fn output_params(s: &AppSettings) -> Vec<(String, f64)> {
     let mut params = vec![("hpf:Freq".to_owned(), hpf_freq)];
 
     // GTCRN is always wired in the output graph; toggling master or NR
-    // flips its `Enable` port between 0 and 1 so the live update path
-    // is the one and only path that reflects the user's choice — the
-    // standalone unit stays running so streams don't get yanked.
+    // flips its `Enable` port between 0 and 1 while the node is running.
     let ai_processing = output_ai_processing(s);
-    if nr.model.is_deepfilter() {
+    if nr.model.is_attenuation_only() {
         let atten_db = if ai_processing {
             deepfilter_attenuation_db(nr.strength)
         } else {
@@ -345,7 +377,13 @@ fn output_params(s: &AppSettings) -> Vec<(String, f64)> {
             ),
             ("ai:Strength".to_owned(), f64::from(nr.strength)),
             ("ai:Model".to_owned(), f64::from(nr.model.ladspa_control())),
-            ("ai:SpeechStrength".to_owned(), f64::from(nr.strength)),
+            // Same strength→speech-strength curve the static conf uses
+            // (`output.rs`); sending the raw strength here made the
+            // output chain sound different live vs after a reload.
+            (
+                "ai:SpeechStrength".to_owned(),
+                gtcrn_speech_strength(nr.strength),
+            ),
             ("ai:LookaheadMs".to_owned(), f64::from(nr.lookahead_ms)),
             ("ai:ModelBlend".to_owned(), f64::from(nr.model_blending)),
             ("ai:VoiceRecovery".to_owned(), f64::from(nr.voice_recovery)),
@@ -379,11 +417,6 @@ fn output_params(s: &AppSettings) -> Vec<(String, f64)> {
     ]);
 
     append_compressor_params(&mut params, "compressor", of.compressor, comp_enabled);
-    append_eq_params(
-        &mut params,
-        &of.equalizer.bands,
-        master && of.equalizer.enabled,
-    );
     params
 }
 
@@ -397,7 +430,7 @@ fn append_compressor_params(
     compressor_config: crate::config::CompressorConfig,
     enabled: bool,
 ) {
-    let compressor_derived = CompressorDerived::from_intensity(compressor_config.intensity);
+    let compressor_derived = compressor_config.ladspa_controls();
     let keyed = |tail: &str| format!("{prefix}:{tail}");
     params.extend([
         (keyed("RMS/peak"), f64::from(compressor_derived.rms_peak)),
@@ -440,19 +473,46 @@ fn append_compressor_params(
     ]);
 }
 
-fn append_eq_params(_params: &mut [(String, f64)], _bands: &[f32], _enabled: bool) {
-    // The `param_eq` builtin takes its filter list as a config block,
-    // not as per-band controls, so EQ live updates still require a
-    // filter-chain reload. Left as a no-op here to keep the function
-    // surface consistent with the other helpers.
-    let _ = EQ_BAND_COUNT;
-    let _ = EQ_BANDS_HZ;
-}
-
 #[cfg(test)]
 mod tests {
     use super::*;
     use crate::config::AppSettings;
+
+    #[test]
+    fn fully_applied_ignores_chains_that_are_disabled() {
+        let mut settings = AppSettings::default();
+        crate::pipeline::cascade_mic_off(&mut settings);
+
+        assert!(LiveOutcome::default().fully_applied(&settings));
+    }
+
+    #[test]
+    fn fully_applied_requires_every_enabled_chain() {
+        let settings = AppSettings::default();
+        assert!(!LiveOutcome::default().fully_applied(&settings));
+        assert!(
+            LiveOutcome {
+                mic_pushed: true,
+                output_pushed: false,
+            }
+            .fully_applied(&settings)
+        );
+
+        let settings = AppSettings {
+            output_filter: crate::config::OutputFilterSettings {
+                enabled: true,
+                ..crate::config::OutputFilterSettings::default()
+            },
+            ..settings
+        };
+        assert!(
+            !LiveOutcome {
+                mic_pushed: true,
+                output_pushed: false,
+            }
+            .fully_applied(&settings)
+        );
+    }
 
     #[test]
     fn format_f64_canonical_for_integers_and_floats() {
@@ -492,6 +552,27 @@ mod tests {
     #[test]
     fn parse_node_id_handles_empty_output() {
         assert_eq!(parse_node_id("", "mic-biglinux"), None);
+    }
+
+    #[test]
+    fn parse_node_state_reads_the_starred_state_line() {
+        // `pw-cli info <id>` marks changed fields with a leading `*`
+        // and quotes the state value.
+        let stdout = "\tid: 79\n\
+                      \tpermissions: rwxm-\n\
+                      \ttype: PipeWire:Interface:Node/3\n\
+                      *\tinput ports: 1/129\n\
+                      *\tstate: \"running\"\n";
+        assert_eq!(parse_node_state(stdout), Some("running".to_owned()));
+
+        let suspended = "*\tstate: \"suspended\"\n";
+        assert_eq!(parse_node_state(suspended), Some("suspended".to_owned()));
+    }
+
+    #[test]
+    fn parse_node_state_handles_output_without_a_state_line() {
+        assert_eq!(parse_node_state(""), None);
+        assert_eq!(parse_node_state("\tid: 79\n\tpermissions: rwxm-\n"), None);
     }
 
     #[test]

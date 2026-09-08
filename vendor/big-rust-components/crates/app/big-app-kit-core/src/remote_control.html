@@ -1,0 +1,124 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no">
+<meta name="theme-color" content="#1e1e1e">
+<title>Big Media Player — Remote</title>
+<style>
+  :root {
+    --bg: #1e1e1e;
+    --surface: #2a2a2a;
+    --accent: #3584e4;
+    --text: #ffffff;
+    --muted: #a0a0a0;
+  }
+  @media (prefers-color-scheme: light) {
+    :root { --bg:#fafafa; --surface:#ffffff; --text:#1e1e1e; --muted:#606060; }
+  }
+  * { box-sizing: border-box; }
+  html, body {
+    margin: 0; padding: 0; height: 100%;
+    background: var(--bg); color: var(--text);
+    font-family: -apple-system, "Segoe UI", Roboto, Cantarell, sans-serif;
+    touch-action: manipulation;
+    -webkit-tap-highlight-color: transparent;
+  }
+  main {
+    max-width: 480px; margin: 0 auto; padding: 24px 20px;
+    display: flex; flex-direction: column; gap: 20px;
+    min-height: 100%;
+  }
+  .card {
+    background: var(--surface); border-radius: 16px;
+    padding: 20px; text-align: center;
+  }
+  .title { font-size: 1.3rem; font-weight: 600; margin: 0 0 4px; }
+  .artist { color: var(--muted); font-size: 1rem; margin: 0 0 16px; }
+  .times { display: flex; justify-content: space-between; color: var(--muted); font-size: 0.85rem; margin-top: 6px; }
+  progress {
+    width: 100%; height: 6px; border: none; background: transparent;
+  }
+  progress::-webkit-progress-bar { background: #00000022; border-radius: 3px; }
+  progress::-webkit-progress-value { background: var(--accent); border-radius: 3px; }
+  progress::-moz-progress-bar { background: var(--accent); border-radius: 3px; }
+  .controls {
+    display: flex; gap: 16px; justify-content: center; align-items: center;
+  }
+  button {
+    border: 0; border-radius: 50%; background: var(--surface); color: var(--text);
+    width: 64px; height: 64px; font-size: 1.6rem; cursor: pointer;
+    transition: transform 0.1s ease, background 0.15s ease;
+  }
+  button:active { transform: scale(0.94); background: var(--accent); }
+  button.primary {
+    width: 84px; height: 84px; background: var(--accent); color: #fff; font-size: 2rem;
+  }
+  .volume { display: flex; align-items: center; gap: 12px; }
+  .volume input[type=range] { flex: 1; accent-color: var(--accent); }
+  footer { text-align: center; color: var(--muted); font-size: 0.8rem; margin-top: auto; padding-top: 12px; }
+</style>
+</head>
+<body>
+<main>
+  <div class="card">
+    <p class="title" id="title">—</p>
+    <p class="artist" id="artist"></p>
+    <progress id="progress" value="0" max="1"></progress>
+    <div class="times"><span id="pos">0:00</span><span id="dur">0:00</span></div>
+  </div>
+
+  <div class="controls">
+    <button onclick="act('prev')" aria-label="Previous">⏮</button>
+    <button class="primary" id="pp" onclick="act('play-pause')" aria-label="Play/Pause">⏸</button>
+    <button onclick="act('next')" aria-label="Next">⏭</button>
+  </div>
+
+  <div class="card volume">
+    <span aria-hidden="true">🔈</span>
+    <input id="vol" type="range" min="0" max="100" value="100"
+           oninput="setVolume(this.value)" aria-label="Volume">
+    <span aria-hidden="true">🔊</span>
+  </div>
+
+  <footer>Big Media Player</footer>
+</main>
+
+<script>
+const base = window.location.pathname.replace(/\/+$/, '');
+const t = id => document.getElementById(id);
+function fmt(s) {
+  s = Math.max(0, Math.floor(s || 0));
+  const m = Math.floor(s / 60), r = s % 60;
+  return m + ':' + (r < 10 ? '0' : '') + r;
+}
+async function act(cmd) {
+  try { await fetch(base + '/' + cmd, { method: 'POST' }); } catch (e) {}
+  setTimeout(refresh, 80);
+}
+async function setVolume(v) {
+  try { await fetch(base + '/volume?v=' + v, { method: 'POST' }); } catch (e) {}
+}
+async function refresh() {
+  try {
+    const r = await fetch(base + '/status');
+    if (!r.ok) return;
+    const s = await r.json();
+    t('title').textContent = s.title || '—';
+    t('artist').textContent = s.artist || '';
+    t('pos').textContent = fmt(s.position);
+    t('dur').textContent = fmt(s.duration);
+    t('progress').max = s.duration || 1;
+    t('progress').value = s.position || 0;
+    t('pp').textContent = s.playing ? '⏸' : '▶';
+    if (!volDragging) t('vol').value = Math.round(s.volume);
+  } catch (e) {}
+}
+let volDragging = false;
+t('vol').addEventListener('pointerdown', () => { volDragging = true; });
+t('vol').addEventListener('pointerup', () => { volDragging = false; });
+refresh();
+setInterval(refresh, 1000);
+</script>
+</body>
+</html>

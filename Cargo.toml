@@ -1,13 +1,13 @@
 [package]
 name = "biglinux-microphone"
 version = "5.0.0"
-edition = "2021"
+edition = "2024"
 authors = ["BigLinux Team <dev@biglinux.com.br>"]
 license = "GPL-3.0-or-later"
 description = "AI-powered microphone noise reduction with GTK4/libadwaita interface for PipeWire"
 homepage = "https://github.com/biglinux/biglinux-noise-reduction-pipewire"
 repository = "https://github.com/biglinux/biglinux-noise-reduction-pipewire"
-rust-version = "1.82"
+rust-version = "1.97.1"
 # Distro application, never published to crates.io — also lets cargo-deny's
 # `allow-wildcard-paths` cover the internal `big-os-kit` path dependency.
 publish = false
@@ -33,6 +33,10 @@ path = "src/bin/cli.rs"
 name = "biglinux-microphone-pwloader"
 path = "src/bin/pwloader.rs"
 
+[[bin]]
+name = "biglinux-microphone-probe"
+path = "src/bin/probe.rs"
+
 [profile.release]
 codegen-units = 1
 lto = true
@@ -41,6 +45,10 @@ opt-level = 3
 
 [profile.dev]
 opt-level = 1
+
+[features]
+default = ["gtk-jemalloc"]
+gtk-jemalloc = ["dep:big-jemalloc"]
 
 [dependencies]
 # Serialization (settings.json persistence)
@@ -61,7 +69,7 @@ dirs = "6"
 pipewire = { version = "0.10", features = ["v1_2_0"] }
 
 # Direct libc syscalls for the pwloader binary's real-time setup
-# (sched_setaffinity, sched_setscheduler SCHED_FIFO, mlockall, errno).
+# (sched_setaffinity for P-core pinning, mlockall, cpu_set_t, errno).
 libc = "0.2"
 
 # Cross-thread channel between the PipeWire main-loop thread and the UI
@@ -87,19 +95,16 @@ gettext-rs = { version = "0.7", features = ["gettext-system"] }
 # pipe draining (no >64 KiB deadlock on `pw-cli ls Node`), a kill timeout, and
 # zombie reaping. Replaces the raw `std::process::Command` calls in the
 # pipewire/system-audio service layer.
-big-os-kit = { path = "../big-rust-components/crates/foundation/big-os-kit" }
+big-os-kit = { path = "vendor/big-rust-components/crates/foundation/big-os-kit" }
 
 # Links the system jemalloc into the GUI binary (anchored in gui.rs main): GTK4
 # returns freed memory to the OS only under jemalloc. Only the GUI bin calls
 # anchor(), so the cli/pwloader bins stay on glibc.
-big-jemalloc = { path = "../big-rust-components/crates/foundation/big-jemalloc" }
+big-jemalloc = { path = "vendor/big-rust-components/crates/foundation/big-jemalloc", optional = true }
 
 # Shared BigLinux UI primitives — cards, slider/switch rows, preference cards,
 # tooltips. The settings UI reuses these instead of app-local widget forks.
-big-relm4-components = { path = "../big-rust-components/crates/ui/generic/big-relm4-components" }
-# Cataloged desktop actions + dialogs (reset/about GActions, the WirePlumber
-# override AlertDialog) — shared instead of raw gio::SimpleAction / adw::AlertDialog.
-big-app-kit = { path = "../big-rust-components/crates/app/big-app-kit", default-features = false }
+big-relm4-components = { path = "vendor/big-rust-components/crates/ui/generic/big-relm4-components" }
 
 # Relm4 component model for the GUI shell (matches the workspace 0.11 stack).
 # The microphone window is a mountable Relm4 `Component` (ADR-D14 pattern,

@@ -26,11 +26,12 @@ const UNITS: &[&str] = &["pipewire", "wireplumber", "pipewire-pulse"];
 /// `gio::spawn_blocking` from the UI thread.
 pub fn restart_pipewire_user_stack() -> io::Result<()> {
     let output = BigSubprocessSpec::builder()
-        .program("systemctl")
+        .program("/usr/bin/systemctl")
         .arg("--user")
         .arg("restart")
         .args(UNITS)
         .stdout(BigSubprocessOutputMode::Null)
+        .allow_list(["/usr/bin/systemctl"])
         .build()
         .run()
         .map_err(io::Error::other)?;

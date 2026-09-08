@@ -13,7 +13,7 @@ use std::sync::Arc;
 use rustfft::num_complex::Complex32;
 use rustfft::{Fft, FftPlanner};
 
-use super::types::{SpectrumFrame, DEFAULT_BAND_COUNT, DEFAULT_FFT_SIZE, DEFAULT_SAMPLE_RATE};
+use super::types::{DEFAULT_BAND_COUNT, DEFAULT_FFT_SIZE, DEFAULT_SAMPLE_RATE, SpectrumFrame};
 
 /// Log-spaced band aggregator configuration.
 #[derive(Debug, Clone)]

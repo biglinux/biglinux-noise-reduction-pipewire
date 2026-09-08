@@ -18,7 +18,6 @@ import argparse
 import csv
 import os
 import sys
-import time
 from dataclasses import dataclass
 from pathlib import Path
 
@@ -36,9 +35,10 @@ class ModelEntry:
 
 
 def _default_cache() -> Path:
-    return Path(
-        os.environ.get("XDG_CACHE_HOME", str(Path.home() / ".cache"))
-    ) / "biglinux-noise-reduction-pipewire/calibration"
+    return (
+        Path(os.environ.get("XDG_CACHE_HOME", str(Path.home() / ".cache")))
+        / "biglinux-microphone/calibration"
+    )
 
 
 def _discover_models(cache: Path) -> list[ModelEntry]:
@@ -48,9 +48,10 @@ def _discover_models(cache: Path) -> list[ModelEntry]:
 
     # Sibling gtcrn-ladspa checkout. Override with $GTCRN_LADSPA_ROOT;
     # defaults to a checkout adjacent to this repo.
-    gtcrn_root = Path(
-        os.environ.get("GTCRN_LADSPA_ROOT", "../gtcrn-ladspa")
-    ) / "stream/onnx_models"
+    gtcrn_root = (
+        Path(os.environ.get("GTCRN_LADSPA_ROOT", "../gtcrn-ladspa"))
+        / "stream/onnx_models"
+    )
     for variant in ("gtcrn_simple.onnx", "gtcrn.onnx", "gtcrn_vctk.onnx"):
         p = gtcrn_root / variant
         if p.exists():
@@ -221,9 +222,7 @@ def main() -> int:
         print("no models discovered", file=sys.stderr)
         return 1
 
-    backends = (
-        ["onnxruntime", "openvino"] if args.backend == "both" else [args.backend]
-    )
+    backends = ["onnxruntime", "openvino"] if args.backend == "both" else [args.backend]
     print(
         f"benchmarking {len(entries)} models on {len(samples)} samples "
         f"× {len(backends)} backend(s)"

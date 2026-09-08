@@ -6,50 +6,72 @@
 //! Subprocess lifecycle:
 //!
 //! - `spawn` creates the child and wraps `stdout` in a `BufReader`.
-//! - `Capture::pump_one_frame` pulls exactly `hop_size` fresh samples,
-//!   slides them into the internal ring buffer, and returns a borrowed
-//!   window ready for the analyser. When the child exits mid-read the
-//!   method returns an IO error; the caller is expected to propagate
-//!   it as an `Event::Fatal` and stop.
+//! - `Capture::pump` pulls exactly `hop_size` fresh samples,
+//!   slides them into the internal ring buffer, and reports read errors
+//!   so the caller can emit `Event::Fatal` and stop.
 //! - Dropping the [`Capture`] kills the child so we never leave orphan
 //!   `pw-cat` processes behind.
 
 use std::io::{self, BufReader, Read};
-use std::process::{Child, ChildStdout, Command, Stdio};
+use std::process::ChildStdout;
 
+use big_os_kit::subprocess::{BigSubprocessChild, BigSubprocessOutputMode, BigSubprocessSpec};
 use log::debug;
 
-/// Target identifier passed to `pw-cat --target`.
-#[derive(Debug, Clone)]
-pub enum CaptureTarget {
-    /// Read from whatever PipeWire considers the default source. The
-    /// mic filter-chain (when loaded) replaces the hardware default, so
-    /// this automatically captures the *processed* signal — exactly
-    /// what the UI's spectrum should show.
-    DefaultSource,
-    /// Read from a specific node by its `node.name` property.
-    NodeName(String),
-}
+/// **What this stream says about itself, and why it has to say anything.**
+///
+/// The spectrum reads the microphone for as long as this window is open. In the
+/// graph that is a recorder like any other: the desktop's own "something is
+/// listening to you" indicator counts capture streams, and without a mark this
+/// one lights it for the whole session — the analyser somebody opened to LOOK at
+/// their microphone reported as somebody recording them. The mark is the same
+/// one the shell's own level meters carry (`media.role=monitor`), which is what
+/// its classifier already excludes, plus the identity so a person reading
+/// `pw-top` or the sound centre sees whose stream it is instead of "pw-cat".
+const MARKED_AS_A_METER: &str = concat!(
+    "{ media.role=monitor media.category=Monitor",
+    " application.id=br.com.biglinux.microphone",
+    " application.name=Filter noise",
+    " node.name=biglinux-microphone.meter.spectrum",
+    " node.description=\"Filter noise — analisador de espectro\" }",
+);
 
-impl CaptureTarget {
-    fn as_arg(&self) -> String {
-        match self {
-            Self::DefaultSource => "@DEFAULT_SOURCE@".to_owned(),
-            Self::NodeName(name) => name.clone(),
-        }
-    }
+/// The command that reads the default input, marked as the meter it is.
+fn spec(sample_rate: u32) -> BigSubprocessSpec {
+    BigSubprocessSpec::builder()
+        .program("/usr/bin/pw-cat")
+        .args([
+            "--record",
+            "-",
+            "--target",
+            "@DEFAULT_SOURCE@",
+            "--raw",
+            "--format",
+            "f32",
+            "--rate",
+            &sample_rate.to_string(),
+            "--channels",
+            "1",
+            "-P",
+            MARKED_AS_A_METER,
+        ])
+        .stdout(BigSubprocessOutputMode::Capture)
+        .stderr(BigSubprocessOutputMode::Null)
+        .allow_list(["/usr/bin/pw-cat"])
+        .build()
 }
 
 /// Live capture handle.
-pub struct Capture {
-    child: Child,
+pub(super) struct Capture {
+    child: std::sync::Arc<std::sync::Mutex<BigSubprocessChild>>,
     stdout: BufReader<ChildStdout>,
     ring: Vec<f32>,
+    read_buf: Vec<u8>,
     write_pos: usize,
     fft_size: usize,
     hop_size: usize,
     /// Samples produced since construction; used by
-    /// [`Self::ready_for_first_frame`] to decide whether the ring is
+    /// [`Self::ready`] to decide whether the ring is
     /// filled for the first time.
     samples_read: usize,
 }
@@ -57,53 +79,26 @@ pub struct Capture {
 impl Capture {
     /// Spawn `pw-cat` and return a handle that yields `hop_size`-sized
     /// sample slices sliding over a `fft_size` buffer.
-    pub fn spawn(
-        target: &CaptureTarget,
-        sample_rate: u32,
-        fft_size: usize,
-        hop_size: usize,
-    ) -> io::Result<Self> {
+    pub(super) fn spawn(sample_rate: u32, fft_size: usize, hop_size: usize) -> io::Result<Self> {
         assert!(hop_size > 0 && hop_size <= fft_size);
 
-        // bigagents: app-local-subprocess — `pw-cat --record -` is a streaming
-        // capture child: its stdout is piped and read continuously for the
-        // spectrum analyser, and the child is supervised/killed by this struct.
-        // The run()-to-completion shared spec cannot model a live stream.
-        let mut child = Command::new("pw-cat")
-            .args([
-                "--record",
-                "-",
-                "--target",
-                &target.as_arg(),
-                "--raw",
-                "--format",
-                "f32",
-                "--rate",
-                &sample_rate.to_string(),
-                "--channels",
-                "1",
-            ])
-            .stdin(Stdio::null())
-            .stdout(Stdio::piped())
-            .stderr(Stdio::null())
-            .spawn()?;
+        let mut child = spec(sample_rate).spawn().map_err(io::Error::other)?;
 
-        let stdout = child
-            .stdout
-            .take()
-            .ok_or_else(|| io::Error::other("pw-cat: no stdout handle"))?;
+        let Some(stdout) = child.take_stdout() else {
+            let _ = child.kill();
+            let _ = child.wait();
+            return Err(io::Error::other("pw-cat: no stdout handle"));
+        };
 
         debug!(
-            "audio monitor: spawned pw-cat target={} rate={} fft={}",
-            target.as_arg(),
-            sample_rate,
-            fft_size,
+            "audio monitor: spawned pw-cat target=@DEFAULT_SOURCE@ rate={sample_rate} fft={fft_size}",
         );
 
         Ok(Self {
-            child,
+            child: std::sync::Arc::new(std::sync::Mutex::new(child)),
             stdout: BufReader::with_capacity(fft_size * 4, stdout),
             ring: vec![0.0; fft_size],
+            read_buf: vec![0; hop_size * 4],
             write_pos: 0,
             fft_size,
             hop_size,
@@ -111,44 +106,47 @@ impl Capture {
         })
     }
 
+    /// Cloneable process handle used by the monitor owner to interrupt a
+    /// blocking stdout read during shutdown.
+    pub(super) fn cancellation_handle(
+        &self,
+    ) -> std::sync::Arc<std::sync::Mutex<BigSubprocessChild>> {
+        self.child.clone()
+    }
+
     /// True when at least one full window of audio has accumulated and a
     /// call to [`Self::window_snapshot`] will produce meaningful data.
     #[must_use]
-    pub fn ready(&self) -> bool {
+    pub(super) fn ready(&self) -> bool {
         self.samples_read >= self.fft_size
     }
 
     /// Read the next `hop_size` samples from `pw-cat` and slide them into
     /// the ring buffer. Returns the number of samples actually read (0
     /// only on EOF).
-    pub fn pump(&mut self) -> io::Result<usize> {
-        let mut buf = [0_u8; 4 * 4096];
-        let want = (self.hop_size).min(buf.len() / 4);
-        let byte_count = want * 4;
-        self.stdout
-            .read_exact(&mut buf[..byte_count])
-            .map_err(|e| {
-                if e.kind() == io::ErrorKind::UnexpectedEof {
-                    io::Error::new(io::ErrorKind::BrokenPipe, "pw-cat closed stdout")
-                } else {
-                    e
-                }
-            })?;
+    pub(super) fn pump(&mut self) -> io::Result<usize> {
+        self.stdout.read_exact(&mut self.read_buf).map_err(|e| {
+            if e.kind() == io::ErrorKind::UnexpectedEof {
+                io::Error::new(io::ErrorKind::BrokenPipe, "pw-cat closed stdout")
+            } else {
+                e
+            }
+        })?;
 
-        for chunk in buf[..byte_count].chunks_exact(4) {
+        for chunk in self.read_buf.chunks_exact(4) {
             let sample = f32::from_le_bytes([chunk[0], chunk[1], chunk[2], chunk[3]]);
             self.ring[self.write_pos] = sample;
             self.write_pos = (self.write_pos + 1) % self.fft_size;
             self.samples_read = self.samples_read.saturating_add(1);
         }
-        Ok(want)
+        Ok(self.hop_size)
     }
 
     /// Copy the current ring buffer contents into a linear slice ordered
     /// oldest → newest. Allocates once per frame; at 94 Hz on 2048-float
     /// windows that's ~770 KiB/s, negligible for a desktop app.
     #[must_use]
-    pub fn window_snapshot(&self) -> Vec<f32> {
+    pub(super) fn window_snapshot(&self) -> Vec<f32> {
         let mut out = Vec::with_capacity(self.fft_size);
         out.extend_from_slice(&self.ring[self.write_pos..]);
         out.extend_from_slice(&self.ring[..self.write_pos]);
@@ -161,26 +159,42 @@ impl Drop for Capture {
         // Best-effort shutdown: try TERM via `kill`, ignore errors
         // (child already exited, permission denied, …). Orphaned pw-cat
         // processes are the sole thing we're protecting against.
-        let _ = self.child.kill();
-        let _ = self.child.wait();
+        if let Ok(mut child) = self.child.lock() {
+            let _ = child.kill();
+            let _ = child.wait();
+        }
     }
 }
 
 #[cfg(test)]
 mod tests {
-    use super::*;
+    use super::{MARKED_AS_A_METER, spec};
 
+    /// The mark travels with the command, and it has to be exactly the one the
+    /// shell's classifier looks for. Checked here because the alternative is
+    /// finding out from a desktop that says somebody is recording you whenever
+    /// this window is open — which is what happened before the mark existed.
     #[test]
-    fn target_default_source_uses_atom() {
-        assert_eq!(CaptureTarget::DefaultSource.as_arg(), "@DEFAULT_SOURCE@");
+    fn the_spectrum_stream_says_it_is_only_a_meter() {
+        let argv = spec(48_000).resolved().argv;
+        let marks = argv
+            .iter()
+            .position(|arg| arg == "-P")
+            .map(|at| argv[at + 1].clone())
+            .expect("the properties are passed");
+        assert!(marks.contains("media.role=monitor"), "{marks}");
+        assert!(
+            marks.contains("application.id=br.com.biglinux.microphone"),
+            "{marks}"
+        );
+        assert!(
+            marks.contains("node.name=biglinux-microphone.meter.spectrum"),
+            "{marks}"
+        );
+        assert_eq!(marks, MARKED_AS_A_METER);
+        // Still reading the default input, and still raw floats: the mark must
+        // not have changed what the analyser is fed.
+        assert!(argv.contains(&String::from("@DEFAULT_SOURCE@")));
+        assert!(argv.contains(&String::from("f32")));
     }
-
-    #[test]
-    fn target_node_name_passes_through() {
-        let t = CaptureTarget::NodeName("mic-biglinux".into());
-        assert_eq!(t.as_arg(), "mic-biglinux");
-    }
-
-    // The spawn path requires pw-cat on PATH and a live PipeWire
-    // session — exercised by the CLI `spectrum` command end-to-end.
 }

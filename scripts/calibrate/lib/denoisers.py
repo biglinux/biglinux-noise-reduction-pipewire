@@ -35,15 +35,53 @@ class DenoiserSpec:
     family: str  # "gtcrn", "ulunas", "dpdfnet"
 
 
-def _spec_for(name: str, onnx_path: Path) -> DenoiserSpec:
-    """Resolve framing + family from a friendly name."""
+#: Frequency bins a model declares, mapped to the framing that produces
+#: them. Every model here is an STFT of `nfft` with 50 % overlap, so the
+#: bin count `nfft / 2 + 1` identifies the geometry uniquely.
+_BINS_TO_FRAMING = {
+    257: (16000, 512, 256),  # GTCRN and UL-UNAS
+    161: (16000, 320, 160),  # DPDFNet at 16 kHz
+    481: (48000, 960, 480),  # DPDFNet 48 kHz hi-res
+}
+
+
+def _family_for(name: str) -> str:
+    """Which tensor layout the model expects. This genuinely is a
+    property of the exported graph, not of the audio, so the name is the
+    only handle we have."""
     if name.startswith("gtcrn"):
-        return DenoiserSpec(name, onnx_path, 16000, 512, 256, "gtcrn")
+        return "gtcrn"
     if name.startswith("ulunas"):
-        return DenoiserSpec(name, onnx_path, 16000, 512, 256, "ulunas")
+        return "ulunas"
     if name.startswith("dpdfnet") or name == "baseline":
-        return DenoiserSpec(name, onnx_path, 16000, 320, 160, "dpdfnet")
+        return "dpdfnet"
     raise ValueError(f"unknown denoiser family for name={name!r}")
+
+
+def _spec_for(name: str, onnx_path: Path) -> DenoiserSpec:
+    """Resolve framing from the model's own input shape, family from its name.
+
+    The framing used to come from the name too, and `dpdfnet2_48khz_hr`
+    starts with `dpdfnet`, so the 48 kHz models were being scored at
+    16 kHz geometry — not unmeasurable, which would have been obvious,
+    but measured wrong.
+    """
+    import onnxruntime as ort
+
+    sess = ort.InferenceSession(str(onnx_path), providers=["CPUExecutionProvider"])
+    spectrum = sess.get_inputs()[0]
+    bins = next(
+        (int(d) for d in reversed(spectrum.shape) if isinstance(d, int) and d > 2),
+        None,
+    )
+    framing = _BINS_TO_FRAMING.get(bins)
+    if framing is None:
+        raise ValueError(
+            f"{onnx_path.name}: input {spectrum.name} has shape {spectrum.shape}, "
+            f"which is {bins} frequency bins — add its framing to _BINS_TO_FRAMING"
+        )
+    sr, nfft, hop = framing
+    return DenoiserSpec(name, onnx_path, sr, nfft, hop, _family_for(name))
 
 
 class _OrtSession:

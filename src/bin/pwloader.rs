@@ -4,10 +4,10 @@
 //! # Why this exists
 //!
 //! Both the mic chain and the per-app output filter need to share the
-//! main PipeWire daemon's clock. Spawning a second `pipewire -c file.conf`
-//! daemon (the original architecture) gave each filter graph its own
-//! quantum/rate negotiation and produced cross-process drift — surfaced
-//! as `spa.alsa: front:1p ... resync` events and audible micro-cuts.
+//! main PipeWire daemon's clock. A separate `pipewire -c file.conf`
+//! daemon would give each filter graph independent quantum/rate negotiation,
+//! causing cross-process drift, `spa.alsa: front:1p ... resync` events, and
+//! audible micro-cuts.
 //!
 //! This loader connects as a regular client to the running PipeWire daemon
 //! (so it inherits the daemon's clock), then calls
@@ -32,9 +32,14 @@
 //! systemd's `Restart=on-failure`.
 
 use std::ffi::CString;
-use std::fs;
 use std::mem;
 use std::process::ExitCode;
+use std::time::Duration;
+
+use std::fs::read_to_string;
+#[path = "../pwloader/denoise_watch.rs"]
+mod denoise_watch;
+use denoise_watch::DenoiseWatch;
 
 use pipewire as pw;
 use pw::loop_::Signal;
@@ -54,25 +59,26 @@ use pw::loop_::Signal;
 /// P-cores. On homogeneous CPUs (every core at the same max freq),
 /// this is a no-op.
 fn pin_to_p_cores() {
-    let Ok(entries) = fs::read_dir("/sys/devices/system/cpu") else {
+    let Ok(online_cpus) = read_to_string(std::path::Path::new("/sys/devices/system/cpu/online"))
+    else {
         return;
     };
 
     let mut cpus: Vec<(usize, u64)> = Vec::new();
-    for entry in entries.flatten() {
-        let name = entry.file_name();
-        let Some(s) = name.to_str() else { continue };
-        let Some(num) = s.strip_prefix("cpu").and_then(|n| n.parse::<usize>().ok()) else {
+    for cpu in parse_online_cpus(&online_cpus) {
+        if cpu >= libc::CPU_SETSIZE as usize {
             continue;
-        };
-        let path = entry.path().join("cpufreq/cpuinfo_max_freq");
-        let Ok(raw) = fs::read_to_string(&path) else {
+        }
+        let path = std::path::Path::new("/sys/devices/system/cpu")
+            .join(format!("cpu{cpu}"))
+            .join("cpufreq/cpuinfo_max_freq");
+        let Ok(raw) = read_to_string(&path) else {
             continue;
         };
         let Ok(freq) = raw.trim().parse::<u64>() else {
             continue;
         };
-        cpus.push((num, freq));
+        cpus.push((cpu, freq));
     }
 
     if cpus.is_empty() {
@@ -92,8 +98,9 @@ fn pin_to_p_cores() {
     }
 
     // SAFETY: `cpu_set_t` is a plain bitset; zero-init via mem::zeroed
-    // is the documented way to start an empty set before
-    // `CPU_SET`. `sched_setaffinity` reads `set` for `size` bytes.
+    // is the documented way to start an empty set before `CPU_SET`.
+    // Every CPU index was checked against `CPU_SETSIZE`, and
+    // `sched_setaffinity` reads `set` for exactly `size` bytes.
     unsafe {
         let mut set: libc::cpu_set_t = mem::zeroed();
         for cpu in &p_cores {
@@ -105,56 +112,29 @@ fn pin_to_p_cores() {
                 "biglinux-microphone-pwloader: pinned to P-cores {p_cores:?} ({max_freq} kHz)"
             );
         } else {
-            let errno = *libc::__errno_location();
-            eprintln!("biglinux-microphone-pwloader: sched_setaffinity failed (errno {errno})");
+            let error = std::io::Error::last_os_error();
+            eprintln!("biglinux-microphone-pwloader: sched_setaffinity failed ({error})");
         }
     }
 }
 
-/// Promote the calling (main) thread to `SCHED_FIFO` at priority 88
-/// **before** `pw::init()` so the data-loop thread spawned inside
-/// libpipewire inherits the policy. Linux pthread default is
-/// `PTHREAD_INHERIT_SCHED`, so child threads pick up the parent's
-/// scheduling policy at creation time.
-///
-/// Why duplicate what `libpipewire-module-rt` already does:
-/// `module-rt` is loaded asynchronously inside the PipeWire context, by
-/// which time the data-loop thread already exists. If `module-rt` then
-/// hits `EPERM` on `pthread_setschedparam` (insufficient
-/// `RLIMIT_RTPRIO`), the data-loop silently stays `SCHED_OTHER` and
-/// the audio path runs without RT — the exact failure mode that
-/// produces 5 ms `pw-top` spikes when GTCRN warms ORT pages. Setting
-/// `SCHED_FIFO` up-front turns this into a hard failure (logged),
-/// avoiding the silent regression.
-///
-/// Priority 88 matches what BigLinux's `module-rt` variant 2 ships
-/// (heterogeneous CPU, stock kernel) — high enough to outrank every
-/// userspace thread, low enough to stay below the kernel's RT softirqs.
-///
-/// Failure is non-fatal: when rlimits forbid RT (process launched
-/// outside `biglinux-microphone-*.service`, no PAM session, user
-/// missing from the `realtime` group), we log a clear diagnostic and
-/// let the loader continue. `module-rt` will still try later and may
-/// or may not succeed; either way, the operator sees in the journal
-/// why audio is glitchy.
-fn promote_to_realtime() {
-    // SAFETY: `sched_param` is a plain POD; libc's `sched_setscheduler`
-    // takes a pointer-to-const for it. PID 0 means "current thread".
-    let param = libc::sched_param { sched_priority: 88 };
-    let rc = unsafe { libc::sched_setscheduler(0, libc::SCHED_FIFO, &raw const param) };
-    if rc == 0 {
-        eprintln!(
-            "biglinux-microphone-pwloader: sched_setscheduler(SCHED_FIFO, 88) OK — \
-             data-loop will inherit RT policy"
-        );
-        return;
-    }
-    let errno = unsafe { *libc::__errno_location() };
-    eprintln!(
-        "biglinux-microphone-pwloader: sched_setscheduler(SCHED_FIFO, 88) failed (errno {errno}) — \
-         module-rt may retry; if RLIMIT_RTPRIO=0 (loader launched outside the systemd unit), \
-         data-loop stays SCHED_OTHER and pw-top spikes are expected"
-    );
+fn parse_online_cpus(raw: &str) -> Vec<usize> {
+    raw.trim()
+        .split(',')
+        .flat_map(|part| {
+            if let Some((start, end)) = part.split_once('-') {
+                let start = start.parse::<usize>().ok();
+                let end = end.parse::<usize>().ok();
+                match (start, end) {
+                    (Some(start), Some(end)) if start <= end => (start..=end).collect::<Vec<_>>(),
+                    _ => Vec::new(),
+                }
+            } else {
+                part.parse::<usize>()
+                    .map_or_else(|_| Vec::new(), |cpu| vec![cpu])
+            }
+        })
+        .collect()
 }
 
 /// `mlockall(MCL_CURRENT | MCL_FUTURE)` — see the call site in `run()` for
@@ -169,19 +149,24 @@ fn lock_pages_in_ram() {
         eprintln!("biglinux-microphone-pwloader: mlockall() OK — pages pinned");
         return;
     }
-    let errno = unsafe { *libc::__errno_location() };
+    let error = std::io::Error::last_os_error();
     eprintln!(
-        "biglinux-microphone-pwloader: mlockall() failed (errno {errno}) — \
+        "biglinux-microphone-pwloader: mlockall() failed ({error}) — \
          expect occasional pw-top spikes from page faults; check RLIMIT_MEMLOCK"
     );
 }
+
+/// How often to sample the denoiser's counters. Long enough that the timer
+/// costs nothing, short enough that a degraded window is noticed while the
+/// call is still happening.
+const WATCH_PERIOD: Duration = Duration::from_secs(10);
 
 fn run() -> Result<(), String> {
     const USAGE: &str =
         "usage: biglinux-microphone-pwloader <module> <args-file> [<module> <args-file> ...]";
 
     let raw_args: Vec<String> = std::env::args().skip(1).collect();
-    if raw_args.is_empty() || raw_args.len() % 2 != 0 {
+    if raw_args.is_empty() || !raw_args.len().is_multiple_of(2) {
         return Err(USAGE.to_owned());
     }
 
@@ -191,8 +176,8 @@ fn run() -> Result<(), String> {
     for pair in raw_args.chunks_exact(2) {
         let module_name = &pair[0];
         let args_path = &pair[1];
-        let module_args =
-            fs::read_to_string(args_path).map_err(|e| format!("read {args_path}: {e}"))?;
+        let module_args = read_to_string(std::path::Path::new(args_path))
+            .map_err(|e| format!("read {args_path}: {e}"))?;
         let module_name_c =
             CString::new(module_name.clone()).map_err(|e| format!("module name: {e}"))?;
         let module_args_c = CString::new(module_args).map_err(|e| format!("module args: {e}"))?;
@@ -203,13 +188,6 @@ fn run() -> Result<(), String> {
     // libpipewire) inherits the affinity mask.
     pin_to_p_cores();
 
-    // Promote main thread to SCHED_FIFO BEFORE pw::init() so the
-    // data-loop thread inherits the RT policy at creation time
-    // (PTHREAD_INHERIT_SCHED is the Linux pthread default). Avoids the
-    // race where module-rt loads asynchronously and silently fails on
-    // EPERM, leaving the data-loop on SCHED_OTHER.
-    promote_to_realtime();
-
     // Lock all current and future pages into RAM. The PipeWire data-loop
     // runs SCHED_FIFO at prio 83, but a major page fault inside ORT (cold
     // weight pages, lazy mmap-backed regions, freshly allocated arena
@@ -218,8 +196,8 @@ fn run() -> Result<(), String> {
     // MCL_FUTURE pre-faults every subsequent allocation, so ORT's first
     // post-silence inference can't trip a fault. Best-effort: when
     // RLIMIT_MEMLOCK is too low (no rtkit / non-audio group), we log and
-    // continue — the system stays functional, just with the original
-    // spike profile.
+    // continue — the system stays functional but may still exhibit
+    // fault-related latency spikes.
     lock_pages_in_ram();
 
     pw::init();
@@ -253,6 +231,30 @@ fn run() -> Result<(), String> {
         }
     }
 
+    // Watch whether the denoiser keeps up. The plugin counts its own hops;
+    // reading them from here rather than from the worker is the point — a
+    // starved thread cannot report that it is starved.
+    let watches: Vec<DenoiseWatch> = modules
+        .iter()
+        .flat_map(|(_, args, _)| denoise_watch::plugin_paths(&args.to_string_lossy()))
+        .filter_map(|path| DenoiseWatch::open(std::path::Path::new(&path)))
+        .collect();
+    // `add_timer` takes an `Fn`, so the state it mutates lives behind a
+    // `RefCell`. Only the main loop ever touches it, and never reentrantly.
+    let watching = !watches.is_empty();
+    let watches = std::cell::RefCell::new(watches);
+    let watch_timer = watching.then(|| {
+        let timer = main_loop.loop_().add_timer(move |_| {
+            for watch in watches.borrow_mut().iter_mut() {
+                watch.tick();
+            }
+        });
+        let _ = timer
+            .update_timer(Some(WATCH_PERIOD), Some(WATCH_PERIOD))
+            .into_result();
+        timer
+    });
+
     let weak = main_loop.downgrade();
     let _sig_int = main_loop.loop_().add_signal_local(Signal::INT, move || {
         if let Some(m) = weak.upgrade() {
@@ -267,6 +269,7 @@ fn run() -> Result<(), String> {
     });
 
     main_loop.run();
+    drop(watch_timer);
     Ok(())
 }
 
@@ -276,4 +279,22 @@ fn main() -> ExitCode {
         return ExitCode::FAILURE;
     }
     ExitCode::SUCCESS
+}
+
+#[cfg(test)]
+mod tests {
+    use super::parse_online_cpus;
+
+    #[test]
+    fn parses_sysfs_online_cpu_ranges() {
+        assert_eq!(
+            parse_online_cpus("0-3,8,10-11\n"),
+            vec![0, 1, 2, 3, 8, 10, 11]
+        );
+    }
+
+    #[test]
+    fn ignores_malformed_online_cpu_ranges() {
+        assert_eq!(parse_online_cpus("0-1,bad,5-3,7\n"), vec![0, 1, 7]);
+    }
 }

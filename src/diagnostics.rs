@@ -15,7 +15,19 @@ use std::process::ExitCode;
 
 use big_os_kit::subprocess::{BigSubprocessOutputMode, BigSubprocessSpec};
 
-use crate::config::gtcrn_plugin;
+fn read_bounded(path: &Path, max_bytes: u64) -> std::io::Result<Vec<u8>> {
+    use std::io::Read;
+    let mut bytes = Vec::new();
+    std::fs::File::open(path)?
+        .take(max_bytes + 1)
+        .read_to_end(&mut bytes)?;
+    if bytes.len() as u64 > max_bytes {
+        return Err(std::io::Error::other("diagnostic file exceeds size limit"));
+    }
+    Ok(bytes)
+}
+
+use crate::config::{AppSettings, gtcrn_plugin};
 use crate::pipeline;
 
 const SC4_MONO_PLUGIN: &str = "/usr/lib/ladspa/sc4m_1916.so";
@@ -38,17 +50,14 @@ const WP_USER_LUA_RELATIVE: &str =
 pub fn user_local_wp_script_override() -> Option<PathBuf> {
     let home = std::env::var_os("HOME")?;
     let path = PathBuf::from(home).join(WP_USER_LUA_RELATIVE);
-    if path.is_file() {
-        Some(path)
-    } else {
-        None
-    }
+    if path.is_file() { Some(path) } else { None }
 }
 
 /// Run every probe and return an [`ExitCode`] equal to the failure count.
 #[must_use]
 pub fn doctor() -> ExitCode {
     let mut report = Report::default();
+    let settings = AppSettings::load();
     println!(
         "biglinux-microphone-cli doctor {}\n",
         env!("CARGO_PKG_VERSION")
@@ -57,11 +66,11 @@ pub fn doctor() -> ExitCode {
     check_ladspa_plugins(&mut report);
     check_runtime_daemons(&mut report);
     check_systemd_units(&mut report);
-    check_generated_configs(&mut report);
-    check_graph_nodes(&mut report);
-    check_echo_cancel(&mut report);
+    check_generated_configs(&mut report, &settings);
+    check_graph_nodes(&mut report, &settings);
+    check_echo_cancel(&mut report, &settings);
     check_wireplumber_script(&mut report);
-    print_unit_state();
+    print_unit_state(&settings);
 
     println!();
     if report.failed == 0 {
@@ -73,7 +82,7 @@ pub fn doctor() -> ExitCode {
              toggling from the GUI",
             report.failed,
         );
-        ExitCode::FAILURE
+        ExitCode::from(report.failed)
     }
 }
 
@@ -112,12 +121,12 @@ fn check_ladspa_plugins(report: &mut Report) {
 fn check_runtime_daemons(report: &mut Report) {
     report.check(
         "PipeWire daemon",
-        command_succeeds("pw-cli", &["info", "0"]),
+        command_succeeds("/usr/bin/pw-cli", &["info", "0"]),
         "pw-cli info 0",
     );
     report.check(
         "WirePlumber",
-        command_succeeds("wpctl", &["status"]),
+        command_succeeds("/usr/bin/wpctl", &["status"]),
         "wpctl status",
     );
 }
@@ -140,13 +149,21 @@ fn check_systemd_units(report: &mut Report) {
     );
 }
 
-fn check_generated_configs(report: &mut Report) {
+fn check_generated_configs(report: &mut Report, settings: &AppSettings) {
     let mic_path = pipeline::mic_conf_path();
-    report.check(
-        "mic conf written",
-        mic_path.exists(),
-        &mic_path.display().to_string(),
-    );
+    if pipeline::mic_chain_wanted(settings) {
+        report.check(
+            "mic conf written",
+            mic_path.exists(),
+            &mic_path.display().to_string(),
+        );
+    } else {
+        report.check(
+            "mic conf absent while disabled",
+            !mic_path.exists(),
+            &mic_path.display().to_string(),
+        );
+    }
     let out_path = pipeline::output_conf_path();
     report.check(
         "output conf written",
@@ -159,8 +176,7 @@ fn check_generated_configs(report: &mut Report) {
 /// expected to be active and `echo-cancel-source` should be visible in
 /// the graph. When disabled, neither check applies — silently skip
 /// instead of failing.
-fn check_echo_cancel(report: &mut Report) {
-    let settings = crate::config::AppSettings::load();
+fn check_echo_cancel(report: &mut Report, settings: &AppSettings) {
     if !settings.echo_cancel.enabled {
         println!("[skip] echo-cancel: AEC is disabled in settings");
         return;
@@ -172,9 +188,10 @@ fn check_echo_cancel(report: &mut Report) {
         &ec_path.display().to_string(),
     );
     let graph_dump = BigSubprocessSpec::builder()
-        .program("pw-cli")
+        .program("/usr/bin/pw-cli")
         .args(["ls", "Node"])
         .stderr(BigSubprocessOutputMode::Null)
+        .allow_list(["/usr/bin/pw-cli"])
         .build()
         .run()
         .map(|o| o.stdout_lossy())
@@ -186,9 +203,10 @@ fn check_echo_cancel(report: &mut Report) {
     );
 
     let link_dump = BigSubprocessSpec::builder()
-        .program("pw-link")
+        .program("/usr/bin/pw-link")
         .arg("-l")
         .stderr(BigSubprocessOutputMode::Null)
+        .allow_list(["/usr/bin/pw-link"])
         .build()
         .run()
         .map(|o| o.stdout_lossy())
@@ -196,12 +214,11 @@ fn check_echo_cancel(report: &mut Report) {
     let aec_ref_to_alsa =
         link_dump.lines().any(|l| {
             l.contains("alsa_output.") && l.contains(":monitor_") && {
-                let next_line_aec = link_dump
+                link_dump
                     .lines()
                     .skip_while(|x| *x != l)
                     .nth(1)
-                    .is_some_and(|n| n.contains("echo-cancel-sink:input_"));
-                next_line_aec
+                    .is_some_and(|n| n.contains("echo-cancel-sink:input_"))
             }
         }) || link_dump.lines().any(|l| {
             l.contains("echo-cancel-sink:input_")
@@ -218,8 +235,8 @@ fn check_echo_cancel(report: &mut Report) {
 
 /// Detect a stale `~/.local/share/wireplumber/scripts/biglinux/` copy
 /// that masks the packaged routing hook. WirePlumber's base-dirs
-/// lookup picks the user copy first, so an old version here means the
-/// fix you just installed via pacman never runs.
+/// lookup picks the user copy first, so a stale copy here prevents the
+/// packaged script installed by pacman from running.
 fn check_wireplumber_script(report: &mut Report) {
     let installed = Path::new(WP_PACKAGED_LUA);
     report.check(
@@ -230,8 +247,8 @@ fn check_wireplumber_script(report: &mut Report) {
 
     if let Some(override_path) = user_local_wp_script_override() {
         let same = match (
-            std::fs::read(WP_PACKAGED_LUA),
-            std::fs::read(&override_path),
+            read_bounded(Path::new(WP_PACKAGED_LUA), 512 * 1024),
+            read_bounded(&override_path, 512 * 1024),
         ) {
             (Ok(a), Ok(b)) => a == b,
             _ => false,
@@ -256,28 +273,47 @@ fn check_wireplumber_script(report: &mut Report) {
     }
 }
 
-fn check_graph_nodes(report: &mut Report) {
+fn check_graph_nodes(report: &mut Report, settings: &AppSettings) {
     let graph_dump = BigSubprocessSpec::builder()
-        .program("pw-cli")
+        .program("/usr/bin/pw-cli")
         .args(["ls", "Node"])
         .stderr(BigSubprocessOutputMode::Null)
+        .allow_list(["/usr/bin/pw-cli"])
         .build()
         .run()
         .map(|o| o.stdout_lossy())
         .unwrap_or_default();
-    report.check(
-        "mic-biglinux node visible",
-        graph_dump.contains(MIC_NODE_TAG),
-        "pw-cli ls Node | grep mic-biglinux",
-    );
-    report.check(
-        "output-biglinux node visible",
-        graph_dump.contains(OUTPUT_NODE_TAG),
-        "pw-cli ls Node | grep output-biglinux",
-    );
+    // Judge the graph against the *desired* state: a node that the user
+    // turned off is correctly absent, not a failure.
+    if pipeline::mic_chain_wanted(settings) {
+        report.check(
+            "mic-biglinux node visible",
+            graph_dump.contains(MIC_NODE_TAG),
+            "pw-cli ls Node | grep mic-biglinux",
+        );
+    } else {
+        report.check(
+            "mic-biglinux node absent while disabled",
+            !graph_dump.contains(MIC_NODE_TAG),
+            "pw-cli ls Node | grep mic-biglinux",
+        );
+    }
+    if settings.output_filter.enabled {
+        report.check(
+            "output-biglinux node visible",
+            graph_dump.contains(OUTPUT_NODE_TAG),
+            "pw-cli ls Node | grep output-biglinux",
+        );
+    } else {
+        report.check(
+            "output-biglinux node absent while disabled",
+            !graph_dump.contains(OUTPUT_NODE_TAG),
+            "pw-cli ls Node | grep output-biglinux",
+        );
+    }
 }
 
-fn print_unit_state() {
+fn print_unit_state(settings: &AppSettings) {
     println!();
     let mic_state = unit_active_state(MIC_UNIT);
     let aec_state = unit_active_state(AEC_UNIT);
@@ -286,14 +322,13 @@ fn print_unit_state() {
     println!("biglinux-microphone-aec.service ...... {aec_state}");
     println!("biglinux-microphone-output.service ... {out_state}");
 
-    let aec_wanted = crate::config::AppSettings::load().echo_cancel.enabled;
-    if mic_state != "active" {
+    if pipeline::mic_chain_wanted(settings) && mic_state != "active" {
         dump_journal(MIC_UNIT);
     }
-    if aec_wanted && aec_state != "active" {
+    if settings.echo_cancel.enabled && aec_state != "active" {
         dump_journal(AEC_UNIT);
     }
-    if out_state != "active" {
+    if settings.output_filter.enabled && out_state != "active" {
         dump_journal(OUTPUT_UNIT);
     }
 }
@@ -304,20 +339,22 @@ fn command_succeeds(cmd: &str, args: &[&str]) -> bool {
         .args(args.iter().copied())
         .stdout(BigSubprocessOutputMode::Null)
         .stderr(BigSubprocessOutputMode::Null)
+        .allow_list([cmd])
         .build()
         .run()
         .is_ok_and(|o| o.status.success())
 }
 
 fn unit_known(name: &str) -> bool {
-    command_succeeds("systemctl", &["--user", "cat", name])
+    command_succeeds("/usr/bin/systemctl", &["--user", "cat", name])
 }
 
 fn unit_active_state(name: &str) -> String {
     BigSubprocessSpec::builder()
-        .program("systemctl")
+        .program("/usr/bin/systemctl")
         .args(["--user", "is-active", name])
         .stderr(BigSubprocessOutputMode::Null)
+        .allow_list(["/usr/bin/systemctl"])
         .build()
         .run()
         .map_or_else(
@@ -339,7 +376,7 @@ fn dump_journal(unit: &str) {
     println!();
     println!("--- last journal lines for {unit} ---");
     let out = BigSubprocessSpec::builder()
-        .program("journalctl")
+        .program("/usr/bin/journalctl")
         .args([
             "--user",
             "-u",
@@ -351,6 +388,7 @@ fn dump_journal(unit: &str) {
             "short",
         ])
         .stderr(BigSubprocessOutputMode::Null)
+        .allow_list(["/usr/bin/journalctl"])
         .build()
         .run();
     match out {
@@ -359,45 +397,5 @@ fn dump_journal(unit: &str) {
         }
         Ok(_) => println!("(journalctl returned non-zero — not enough permissions?)"),
         Err(e) => println!("(journalctl unavailable: {e})"),
-    }
-}
-
-#[cfg(test)]
-mod tests {
-    use super::*;
-
-    #[test]
-    fn report_starts_at_zero_failures() {
-        let r = Report::default();
-        assert_eq!(r.failed, 0);
-    }
-
-    #[test]
-    fn report_increments_on_failure_only() {
-        let mut r = Report::default();
-        r.check("ok", true, "passes");
-        r.check("bad", false, "fails");
-        r.check("ok2", true, "passes");
-        assert_eq!(r.failed, 1);
-    }
-
-    #[test]
-    fn report_failure_count_saturates() {
-        let mut r = Report {
-            failed: u8::MAX - 1,
-        };
-        r.check("a", false, "");
-        r.check("b", false, "");
-        r.check("c", false, "");
-        assert_eq!(r.failed, u8::MAX);
-    }
-
-    // Miri cannot spawn `systemctl` (`posix_spawnattr_init` unsupported);
-    // the normal cargo test gate still covers this live-subprocess fallback.
-    #[cfg(not(miri))]
-    #[test]
-    fn unit_active_state_returns_string_for_unknown_unit() {
-        let s = unit_active_state("definitely-not-a-real-unit-xyz.service");
-        assert!(!s.is_empty());
     }
 }

@@ -16,7 +16,7 @@ use super::super::i18n::i18n;
 use super::super::mic_shell::MicInput;
 use super::super::state::AppState;
 use super::super::widgets::didactic::{
-    labelled_row, percent_slider_on_change, section_header, u8_slider_on_change, DidacticCard,
+    DidacticCard, labelled_row, percent_slider_on_change, section_header, u8_slider_on_change,
 };
 use super::super::widgets::eq_card::build_eq_card;
 use super::super::widgets::model_picker;
@@ -37,7 +37,7 @@ pub fn build(state: &Rc<AppState>, input: &relm4::Sender<MicInput>) -> gtk::Widg
         .margin_end(24)
         .build();
 
-    content.append(output_combo_card(state, input).widget());
+    content.append(super::simple::output_card(state, input).widget());
 
     content.append(&section_header(&i18n("AI noise reduction"), 16));
     content.append(model_card(state, input).widget());
@@ -70,36 +70,6 @@ fn eq_card(state: &Rc<AppState>, input: &relm4::Sender<MicInput>) -> DidacticCar
 }
 
 // ── Advanced-mode cards ────────────────────────────────────────────
-
-/// Master card for the output chain. Mirrors [`super::simple::output_card`]
-/// one-for-one so the Simple → Advanced jump only adds depth.
-fn output_combo_card(state: &Rc<AppState>, input: &relm4::Sender<MicInput>) -> DidacticCard {
-    let switch = gtk::Switch::builder()
-        .active(state.settings().output_filter.enabled)
-        .build();
-    {
-        let input = input.clone();
-        switch.connect_active_notify(move |sw| {
-            let _ = input.send(MicInput::OutputFilterToggled(sw.is_active()));
-        });
-    }
-    let card = DidacticCard::new(
-        "output_filter.svg",
-        &i18n("System sound"),
-        &i18n("Cleans background noise from everything you hear before it reaches your speakers."),
-        Some(switch.upcast_ref::<gtk::Widget>()),
-    );
-
-    let strength = state.settings().output_filter.noise_reduction.strength;
-    let row = percent_slider_on_change(&i18n("Intensity"), strength, {
-        let input = input.clone();
-        move |v| {
-            let _ = input.send(MicInput::OutputIntensityChanged(v));
-        }
-    });
-    card.add_row(&row);
-    card
-}
 
 fn model_card(state: &Rc<AppState>, input: &relm4::Sender<MicInput>) -> DidacticCard {
     let card = DidacticCard::new(

@@ -1,13 +1,17 @@
 # Files with translatable strings (gettext).
 # Keep this list in sync with `grep -rln 'i18n(' src/`.
 
+src/ui/health.rs
+src/ui/mic_shell.rs
 src/ui/window.rs
 src/ui/views/advanced.rs
+src/ui/views/advanced/apply.rs
 src/ui/views/mic.rs
 src/ui/views/output.rs
 src/ui/views/simple.rs
 src/ui/widgets/eq_card.rs
 src/ui/widgets/model_picker.rs
 src/ui/widgets/source_picker.rs
+src/ui/widgets/spectrum.rs
 src/ui/widgets/wp_override_warning.rs
 usr/share/plasma/plasmoids/br.com.biglinux.micnoise/contents/ui/main.qml

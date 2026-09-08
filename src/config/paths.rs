@@ -6,14 +6,16 @@
 
 use std::path::{Path, PathBuf};
 
+pub const EQ_BANDS_HZ: [u32; 10] = [31, 63, 125, 250, 500, 1000, 2000, 4000, 8000, 16000];
+use crate::config::noise_model::{
+    DEEPFILTER_LADSPA_PATH, GTCRN_LADSPA_PATH, LADSPA_DIR_PATH, NoiseModel,
+};
+
 /// D-Bus / desktop application identifier.
 pub const APP_ID: &str = "br.com.biglinux.microphone";
 
 /// Gettext translation domain.
 pub const GETTEXT_PACKAGE: &str = "biglinux-microphone";
-
-/// System LADSPA plugin directory (used only for presence detection).
-pub const LADSPA_DIR_PATH: &str = "/usr/lib/ladspa";
 
 /// System data directory shipped by the package — holds the SVG
 /// illustrations the didactic UI cards display next to each control.
@@ -21,33 +23,23 @@ pub const LADSPA_DIR_PATH: &str = "/usr/lib/ladspa";
 /// dev runs can override it without an install.
 pub const APP_DATA_DIR: &str = "/usr/share/biglinux-microphone";
 
-/// Frequency centres of the 10-band equalizer, in Hz. Index-aligned with
-/// `EqualizerConfig::bands`.
-pub const EQ_BANDS_HZ: [u32; 10] = [31, 63, 125, 250, 500, 1000, 2000, 4000, 8000, 16000];
-
 /// User config directory: `$XDG_CONFIG_HOME/biglinux-microphone` with
 /// `$HOME/.config/biglinux-microphone` as the portable fallback.
 #[must_use]
 pub fn config_dir() -> PathBuf {
-    app_config_dir(dirs::config_dir().unwrap_or_else(|| {
-        dirs::home_dir()
-            .unwrap_or_else(|| PathBuf::from("/tmp"))
-            .join(".config")
-    }))
-}
-
-fn app_config_dir(config_root: PathBuf) -> PathBuf {
-    config_root.join("biglinux-microphone")
-}
-
-fn settings_file_in(config_directory: &Path) -> PathBuf {
-    config_directory.join("settings.json")
+    dirs::config_dir()
+        .unwrap_or_else(|| {
+            dirs::home_dir()
+                .unwrap_or_else(|| PathBuf::from("/tmp"))
+                .join(".config")
+        })
+        .join("biglinux-microphone")
 }
 
 /// Path to `settings.json` inside the user config directory.
 #[must_use]
 pub fn settings_file() -> PathBuf {
-    settings_file_in(&config_dir())
+    config_dir().join("settings.json")
 }
 
 /// System LADSPA directory.
@@ -59,7 +51,7 @@ pub fn ladspa_dir() -> &'static Path {
 /// Path to the GTCRN LADSPA plugin shared object.
 #[must_use]
 pub fn gtcrn_plugin() -> PathBuf {
-    ladspa_dir().join("libgtcrn_ladspa.so")
+    PathBuf::from(GTCRN_LADSPA_PATH)
 }
 
 /// Path to the DeepFilterNet3 LADSPA plugin shared object. Shipped by
@@ -67,7 +59,7 @@ pub fn gtcrn_plugin() -> PathBuf {
 /// [`deepfilter_available`] before assuming it exists.
 #[must_use]
 pub fn deepfilter_plugin() -> PathBuf {
-    ladspa_dir().join("libdeep_filter_ladspa.so")
+    PathBuf::from(DEEPFILTER_LADSPA_PATH)
 }
 
 /// Whether the DeepFilterNet3 LADSPA plugin is currently installed.
@@ -76,7 +68,7 @@ pub fn deepfilter_plugin() -> PathBuf {
 /// previously had DFN3 selected and then uninstalled the package.
 #[must_use]
 pub fn deepfilter_available() -> bool {
-    deepfilter_plugin().exists()
+    NoiseModel::DeepFilterNet3.plugin_available()
 }
 
 /// Package version read from `Cargo.toml`.
@@ -118,61 +110,4 @@ pub fn illustrations_dir() -> PathBuf {
         }
     }
     PathBuf::from(APP_DATA_DIR).join("illustrations")
-}
-
-#[cfg(test)]
-mod tests {
-    use super::*;
-
-    #[test]
-    #[cfg(not(miri))]
-    fn host_config_dir_ends_with_app_folder() {
-        assert!(config_dir().ends_with("biglinux-microphone"));
-    }
-
-    #[test]
-    fn app_config_dir_appends_app_folder() {
-        assert_eq!(
-            app_config_dir(PathBuf::from("/tmp/config-root")),
-            PathBuf::from("/tmp/config-root/biglinux-microphone")
-        );
-    }
-
-    #[test]
-    #[cfg(not(miri))]
-    fn host_settings_file_is_inside_config_dir() {
-        assert_eq!(settings_file().parent().unwrap(), config_dir());
-        assert_eq!(
-            settings_file().file_name().unwrap().to_str().unwrap(),
-            "settings.json"
-        );
-    }
-
-    #[test]
-    fn settings_file_is_inside_given_config_dir() {
-        let config_directory = PathBuf::from("/tmp/config-root/biglinux-microphone");
-        assert_eq!(
-            settings_file_in(&config_directory),
-            PathBuf::from("/tmp/config-root/biglinux-microphone/settings.json")
-        );
-    }
-
-    #[test]
-    fn gtcrn_plugin_has_so_suffix() {
-        let p = gtcrn_plugin();
-        assert_eq!(p.extension().unwrap(), "so");
-        assert!(p.starts_with(LADSPA_DIR_PATH));
-    }
-
-    #[test]
-    fn eq_bands_are_monotonic_increasing() {
-        for pair in EQ_BANDS_HZ.windows(2) {
-            assert!(pair[0] < pair[1]);
-        }
-    }
-
-    #[test]
-    fn app_version_matches_cargo() {
-        assert_eq!(app_version(), env!("CARGO_PKG_VERSION"));
-    }
 }

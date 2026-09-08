@@ -21,9 +21,7 @@
 
 use std::path::PathBuf;
 
-use big_relm4_components::layout::illustration_card::{
-    BigIllustrationCard, BigIllustrationCardSpec,
-};
+use super::illustration_card::{BigIllustrationCard, BigIllustrationCardSpec};
 use gtk::prelude::*;
 use gtk::{Align, Box as GtkBox, Label, Orientation, Picture};
 
@@ -45,10 +43,8 @@ impl DidacticCard {
     /// Build a card whose top row is `[svg | title+desc | trailing]`.
     /// `trailing` is typically a `gtk::Switch` or empty placeholder.
     ///
-    /// Thin wrapper over the cataloged shared
-    /// [`big_relm4_components::layout::illustration_card::BigIllustrationCard`]
-    /// (filesystem-illustration variant) — the card shell, header layout, and
-    /// row stacking are the shared primitive; noise only supplies its
+    /// Thin wrapper over [`BigIllustrationCard`] — the card shell, header
+    /// layout and row stacking live there; this supplies the
     /// `illustrations_dir` SVGs and the explicit trailing-control a11y label.
     pub fn new(svg: &str, title: &str, description: &str, trailing: Option<&gtk::Widget>) -> Self {
         let spec =
@@ -87,7 +83,7 @@ pub fn slider_row(label: &str, scale: &gtk::Scale, spin: &gtk::SpinButton) -> Gt
     // (belt-and-suspenders alongside the shared label↔control mnemonic).
     scale.update_property(&[gtk::accessible::Property::Label(label)]);
     spin.update_property(&[gtk::accessible::Property::Label(label)]);
-    big_relm4_components::layout::illustration_card::slider_spin_row(label, scale, spin)
+    super::illustration_card::slider_spin_row(label, scale, spin)
 }
 
 /// `[label | … | switch]` row. Pads with a flexible filler so the
@@ -95,7 +91,7 @@ pub fn slider_row(label: &str, scale: &gtk::Scale, spin: &gtk::SpinButton) -> Gt
 /// stretched by `hexpand` like in [`labelled_row`].
 pub fn switch_row(label: &str, switch: &gtk::Switch) -> GtkBox {
     switch.update_property(&[gtk::accessible::Property::Label(label)]);
-    big_relm4_components::layout::illustration_card::switch_row(label, switch)
+    super::illustration_card::switch_row(label, switch)
 }
 
 /// Compose a `[label | control]` row that hosts non-slider widgets
@@ -104,17 +100,18 @@ pub fn labelled_row(label: &str, control: &impl IsA<gtk::Widget>) -> GtkBox {
     control
         .upcast_ref::<gtk::Widget>()
         .update_property(&[gtk::accessible::Property::Label(label)]);
-    big_relm4_components::layout::illustration_card::labelled_row(label, control)
+    super::illustration_card::labelled_row(label, control)
 }
 
 /// `[label | scale | spin]` row driving a `0.0..=1.0` setting. The
 /// underlying widgets run on a 0..100 percent scale because typing
 /// `85` into the spin button feels more natural than `0.85`.
 /// `[label | scale | spin]` row for a `0.0..=1.0` setting that reports changes
-/// through a caller-supplied callback instead of mutating [`AppState`] directly
+/// through a caller-supplied callback instead of mutating
+/// [`AppState`](crate::ui::state::AppState) directly
 /// — the Relm4 message path (the handler emits a typed `MicInput`; the
 /// component's `update` owns the state transition). Same 0–100 percent UI as
-/// [`percent_slider`].
+/// [`percent_slider_on_change`].
 pub fn percent_slider_on_change<F>(label: &str, initial: f32, on_change: F) -> GtkBox
 where
     F: Fn(f32) + 'static,

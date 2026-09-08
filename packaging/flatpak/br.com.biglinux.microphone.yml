@@ -1,13 +1,11 @@
-# Flatpak manifest for biglinux-noise-reduction-pipewire (GUI configurator).
+# Flatpak manifest for biglinux-microphone (GUI configurator).
 #
 # Local test build (source = this working tree):
 #   flatpak-builder --user --install --force-clean build-dir \
 #       packaging/flatpak/br.com.biglinux.microphone.yml
 #
-# Flathub submission: pin the source to a tag/commit (replace `type: dir`
-# with `type: git`) and generate the offline cargo sources via
-# `packaging/flatpak/generate-cargo-sources.sh` (creates cargo-sources.json),
-# then drop `--share=network` from build-args.
+# Flathub submission: replace the local `type: dir` source with a pinned
+# `type: git` commit and regenerate `cargo-sources.json` from Cargo.lock.
 #
 # Caveats — read before publishing:
 #   * Audio processing depends on host-side LADSPA plugins
@@ -16,15 +14,13 @@
 #     filters live in user PipeWire/WirePlumber config under
 #     `~/.config/{pipewire,wireplumber}/`.
 #   * The Plasma 6 applet, systemd user units, the WirePlumber Lua
-#     policy hook, and the libalpm bluetooth-autoswitch helper are
-#     host integration — not packaged here. Distro packages
+#     policy hook are host integration — not packaged here. Distro packages
 #     (PKGBUILD / .deb / .rpm) remain the supported path for them.
 app-id: br.com.biglinux.microphone
 runtime: org.gnome.Platform
-# GNOME 48 = Freedesktop 24.08 base. Bump together with the GNOME
-# release branch (one-year support window). Keep `rust-stable` aligned
-# with the chosen runtime: `flatpak info -m org.gnome.Sdk//<ver>`.
-runtime-version: '48'
+# Keep `rust-stable` aligned with the current supported GNOME branch:
+# `flatpak info -m org.gnome.Sdk//<ver>`.
+runtime-version: '50'
 sdk: org.gnome.Sdk
 sdk-extensions:
   - org.freedesktop.Sdk.Extension.rust-stable
@@ -46,30 +42,29 @@ finish-args:
   # systemd --user control through the host bus (start/stop the helper
   # services that run the filter chain)
   - --talk-name=org.freedesktop.systemd1
-  - --system-talk-name=org.freedesktop.systemd1
   # Desktop / theme integration
   - --filesystem=xdg-config/gtk-3.0:ro
   - --filesystem=xdg-config/gtk-4.0:ro
 
 build-options:
   append-path: /usr/lib/sdk/rust-stable/bin
-  build-args:
-    # Drop on Flathub once cargo-sources.json is wired up.
-    - --share=network
   env:
-    CARGO_HOME: /run/build/biglinux-noise-reduction-pipewire/cargo
+    CARGO_HOME: /run/build/biglinux-microphone/cargo
     RUST_BACKTRACE: '1'
 
 modules:
-  - name: biglinux-noise-reduction-pipewire
+  - name: biglinux-microphone
     buildsystem: simple
     build-commands:
       # Build both binaries (GUI + CLI)
-      - cargo build --release --locked
+      - cargo build --release --frozen --offline --no-default-features -p biglinux-microphone
 
       # Binaries
       - install -Dm755 target/release/biglinux-microphone     "${FLATPAK_DEST}/bin/biglinux-microphone"
       - install -Dm755 target/release/biglinux-microphone-cli "${FLATPAK_DEST}/bin/biglinux-microphone-cli"
+
+      - install -Dm644 LICENSE "${FLATPAK_DEST}/share/licenses/biglinux-microphone/LICENSE"
+      - install -Dm644 LICENSE-MIT "${FLATPAK_DEST}/share/licenses/biglinux-microphone/LICENSE-MIT"
 
       # Desktop entry
       - install -Dm644 usr/share/applications/br.com.biglinux.microphone.desktop
@@ -103,7 +98,7 @@ modules:
           locale_dir="${lang//-/_}"
           msgfmt -o "/tmp/${lang}.mo" "$po"
           install -Dm644 "/tmp/${lang}.mo" \
-            "${FLATPAK_DEST}/share/locale/${locale_dir}/LC_MESSAGES/biglinux-noise-reduction-pipewire.mo"
+            "${FLATPAK_DEST}/share/locale/${locale_dir}/LC_MESSAGES/biglinux-microphone.mo"
         done
 
     sources:
@@ -117,3 +112,4 @@ modules:
           - .git
           - packaging/arch/pkg
           - packaging/arch/src
+      - cargo-sources.json

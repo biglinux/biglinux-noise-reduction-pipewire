@@ -104,8 +104,11 @@ else
 fi
 
 # 5) cargo-machete
+# `--with-metadata` resolves crates renamed in their own Cargo.toml;
+# without it the vendored big-relm4-components trips the gettext-rs /
+# `gettextrs` false positive. Matches the CI invocation.
 if has_cmd cargo-machete; then
-    run_check "cargo machete" cargo machete
+    run_check "cargo machete" cargo machete --with-metadata
 else
     skip_check "cargo machete" "install: cargo install cargo-machete"
 fi

@@ -14,10 +14,10 @@ use std::cell::{Cell, RefCell};
 use std::rc::Rc;
 use std::time::Duration;
 
-use gtk::prelude::*;
-use gtk::{gio, glib, Box as GtkBox};
+use adw::prelude::*;
+use gtk::{Box as GtkBox, gio, glib};
 
-use crate::services::pipewire::{set_default_source, set_source_volume, snapshot_sources, Source};
+use crate::services::pipewire::{Source, set_default_source, set_source_volume, snapshot_sources};
 
 use super::super::i18n::i18n;
 use super::didactic::{labelled_row, slider_row};
@@ -43,9 +43,16 @@ pub struct PickerRows {
 
 /// Build the rows. `volume_for` is injected so callers can stub it in
 /// tests; production wires
-/// [`crate::services::pipewire::sources::source_volume`].
+/// [`crate::services::pipewire::source_volume`].
 pub fn build_rows(volume_for: impl Fn(u32) -> Option<f32> + 'static) -> PickerRows {
-    let (sources, default_id) = snapshot_sources();
+    // Nothing is asked of PipeWire here. `snapshot_sources` shells out to
+    // `pw-cli` and `pw-metadata` three to six times, and this runs while the
+    // window is being built -- before the first frame, so the panel stayed
+    // blank for as long as PipeWire took to answer. The rows start empty and
+    // the first refresh fills them, which is the path every later change
+    // already takes.
+    let sources: Vec<Source> = Vec::new();
+    let default_id = None;
     let active = Rc::new(Cell::new(default_id));
     let sources_state = Rc::new(RefCell::new(sources.clone()));
     // Set whenever a programmatic change must not echo back into the
@@ -55,13 +62,16 @@ pub fn build_rows(volume_for: impl Fn(u32) -> Option<f32> + 'static) -> PickerRo
     let dropdown = build_dropdown(&sources);
     select_initial(&dropdown, &sources, default_id);
 
-    let initial_vol = active.get().and_then(&volume_for).unwrap_or(1.0);
+    // Unity until the first refresh says otherwise: reading the real volume is
+    // another blocking `wpctl` call, and `apply_refresh` sets it below.
+    let initial_vol = 1.0;
     let (vol_row, vol_adj) = build_volume_row(initial_vol);
+    let error_banner = adw::Banner::builder().revealed(false).build();
 
     let volume_for = Rc::new(volume_for);
     // Shared trailing-debounce timer for the volume slider — also cancelled on
-    // a source switch so a half-finished drag of the OLD source never lands
-    // after the user picked a different one.
+    // a source switch so a half-finished drag for the source being left never
+    // lands after the user picked a different one.
     let vol_pending: Rc<Cell<Option<glib::SourceId>>> = Rc::new(Cell::new(None));
     wire_dropdown_change(
         &dropdown,
@@ -71,15 +81,31 @@ pub fn build_rows(volume_for: impl Fn(u32) -> Option<f32> + 'static) -> PickerRo
         &volume_for,
         &suppress,
         &vol_pending,
+        &error_banner,
     );
-    wire_volume_change(&vol_adj, &active, &suppress, &vol_pending);
+    wire_volume_change(&vol_adj, &active, &suppress, &vol_pending, &error_banner);
 
-    let dropdown_row = labelled_row(&i18n("Microphone"), &dropdown);
-    dropdown_row.set_visible(sources.len() > 1);
+    let dropdown_row = GtkBox::builder()
+        .orientation(gtk::Orientation::Vertical)
+        .spacing(0)
+        .build();
+    let microphone_row = labelled_row(&i18n("Microphone"), &dropdown);
+    dropdown_row.append(&error_banner);
+    dropdown_row.append(&microphone_row);
+    microphone_row.set_visible(sources.len() > 1);
 
+    refresh_once(
+        dropdown.clone(),
+        microphone_row.clone(),
+        vol_adj.clone(),
+        Rc::clone(&sources_state),
+        Rc::clone(&active),
+        Rc::clone(&volume_for),
+        Rc::clone(&suppress),
+    );
     spawn_refresh_poller(
         dropdown.clone(),
-        dropdown_row.clone(),
+        microphone_row,
         vol_adj,
         sources_state,
         active,
@@ -129,6 +155,7 @@ fn wire_dropdown_change<F>(
     volume_for: &Rc<F>,
     suppress: &Rc<Cell<bool>>,
     vol_pending: &Rc<Cell<Option<glib::SourceId>>>,
+    error_banner: &adw::Banner,
 ) where
     F: Fn(u32) -> Option<f32> + 'static,
 {
@@ -138,6 +165,7 @@ fn wire_dropdown_change<F>(
     let volume_for = Rc::clone(volume_for);
     let suppress = Rc::clone(suppress);
     let vol_pending = Rc::clone(vol_pending);
+    let error_banner = error_banner.clone();
     dropdown.connect_selected_notify(move |dd| {
         if suppress.get() {
             return;
@@ -147,12 +175,13 @@ fn wire_dropdown_change<F>(
             Some(s) => s.node_id,
             None => return,
         };
-        if active.get() == Some(picked_id) {
+        let previous_id = active.get();
+        if previous_id == Some(picked_id) {
             return;
         }
         // Cancel a pending volume write for the source we're leaving — its
         // value is about to be replaced by the new source's, and the
-        // suppressed set_value below would otherwise let the old timer fire.
+        // suppressed set_value below would otherwise let that timer fire.
         if let Some(timer) = vol_pending.take() {
             timer.remove();
         }
@@ -161,17 +190,40 @@ fn wire_dropdown_change<F>(
         // volume side-effect when `active` still points at `picked_id`.
         active.set(Some(picked_id));
         let active = Rc::clone(&active);
+        let dropdown = dd.clone();
+        let sources = Rc::clone(&sources);
         let vol_adj = vol_adj.clone();
         let volume_for = Rc::clone(&volume_for);
         let suppress = Rc::clone(&suppress);
+        let error_banner = error_banner.clone();
         glib::spawn_future_local(async move {
             let result = gio::spawn_blocking(move || set_default_source(picked_id))
                 .await
                 .unwrap_or_else(|_| Err(std::io::Error::other("worker thread panicked")));
             if let Err(e) = result {
                 log::warn!("source picker: set-default failed: {e}");
+                error_banner.set_title(&i18n(
+                    "Could not switch microphone. Try again or run diagnostics.",
+                ));
+                error_banner.set_revealed(true);
+                if active.get() == Some(picked_id) {
+                    active.set(previous_id);
+                    if let Some(previous_id) = previous_id
+                        && let Some(idx) = sources
+                            .borrow()
+                            .iter()
+                            .position(|source| source.node_id == previous_id)
+                    {
+                        suppress.set(true);
+                        dropdown.set_selected(u32::try_from(idx).unwrap_or(0));
+                        let vol = (volume_for)(previous_id).unwrap_or(1.0);
+                        vol_adj.set_value((f64::from(vol) * 100.0).clamp(0.0, 150.0));
+                        suppress.set(false);
+                    }
+                }
                 return;
             }
+            error_banner.set_revealed(false);
             // A newer selection may have landed while the subprocess ran;
             // don't clobber its volume with this stale one.
             if active.get() != Some(picked_id) {
@@ -190,6 +242,7 @@ fn wire_volume_change(
     active: &Rc<Cell<Option<u32>>>,
     suppress: &Rc<Cell<bool>>,
     pending: &Rc<Cell<Option<glib::SourceId>>>,
+    error_banner: &adw::Banner,
 ) {
     let active = Rc::clone(active);
     let suppress = Rc::clone(suppress);
@@ -197,6 +250,7 @@ fn wire_volume_change(
     // switch can cancel it); replaced on every tick so only the final value
     // reaches `wpctl`.
     let pending = Rc::clone(pending);
+    let error_banner = error_banner.clone();
     vol_adj.connect_value_changed(move |a| {
         if suppress.get() {
             return;
@@ -210,6 +264,7 @@ fn wire_volume_change(
             source.remove();
         }
         let pending_inner = Rc::clone(&pending);
+        let error_banner = error_banner.clone();
         let source = glib::timeout_add_local_once(VOLUME_DEBOUNCE, move || {
             pending_inner.set(None);
             glib::spawn_future_local(async move {
@@ -218,6 +273,12 @@ fn wire_volume_change(
                     .unwrap_or_else(|_| Err(std::io::Error::other("worker thread panicked")));
                 if let Err(e) = result {
                     log::warn!("source picker: set-volume failed: {e}");
+                    error_banner.set_title(&i18n(
+                        "Could not change microphone volume. Try again or run diagnostics.",
+                    ));
+                    error_banner.set_revealed(true);
+                } else {
+                    error_banner.set_revealed(false);
                 }
             });
         });
@@ -227,6 +288,37 @@ fn wire_volume_change(
 
 /// Poll the graph for hot-plug changes. Stops automatically once the
 /// dropdown widget is dropped (window closed).
+/// Ask PipeWire for the first time, without the window waiting for the answer.
+#[allow(clippy::too_many_arguments)]
+fn refresh_once<F>(
+    dropdown: gtk::DropDown,
+    dropdown_row: GtkBox,
+    vol_adj: gtk::Adjustment,
+    sources_state: Rc<RefCell<Vec<Source>>>,
+    active: Rc<Cell<Option<u32>>>,
+    volume_for: Rc<F>,
+    suppress: Rc<Cell<bool>>,
+) where
+    F: Fn(u32) -> Option<f32> + 'static,
+{
+    glib::spawn_future_local(async move {
+        let Ok((new_sources, new_default)) = gio::spawn_blocking(snapshot_sources).await else {
+            return; // the poller asks again in two seconds
+        };
+        apply_refresh(
+            &dropdown,
+            &dropdown_row,
+            &vol_adj,
+            new_sources,
+            new_default,
+            &sources_state,
+            &active,
+            volume_for.as_ref(),
+            &suppress,
+        );
+    });
+}
+
 fn spawn_refresh_poller<F>(
     dropdown: gtk::DropDown,
     dropdown_row: GtkBox,
@@ -330,14 +422,14 @@ fn apply_refresh<F>(
         new_default
     };
 
-    if let Some(id) = target_id {
-        if let Some(idx) = new_sources.iter().position(|s| s.node_id == id) {
-            let idx_u32 = u32::try_from(idx).unwrap_or(0);
-            if dropdown.selected() != idx_u32 {
-                suppress.set(true);
-                dropdown.set_selected(idx_u32);
-                suppress.set(false);
-            }
+    if let Some(id) = target_id
+        && let Some(idx) = new_sources.iter().position(|s| s.node_id == id)
+    {
+        let idx_u32 = u32::try_from(idx).unwrap_or(0);
+        if dropdown.selected() != idx_u32 {
+            suppress.set(true);
+            dropdown.set_selected(idx_u32);
+            suppress.set(false);
         }
     }
 

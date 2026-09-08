@@ -39,16 +39,17 @@
 
 use std::fmt::Write as _;
 
+use crate::config::dynamics::GateDerived;
+
 use crate::config::{
-    deepfilter_attenuation_db, eq_preset_bands, gtcrn_speech_strength, AppSettings,
-    CompressorDerived, GateDerived, EQ_BANDS_HZ, EQ_BAND_COUNT,
+    AppSettings, EQ_BAND_COUNT, EQ_BANDS_HZ, GATE_INTENSITY_MAX, deepfilter_attenuation_db,
+    eq_preset_bands, gtcrn_speech_strength,
 };
 
-use super::graph::{Graph, Link, RenderMode};
+use super::graph::{Graph, Link};
 use super::nodes::{
-    Node, LABEL_BQ_HIGHPASS, LABEL_COPY, LABEL_DEEPFILTER_MONO, LABEL_GTCRN_MONO, LABEL_MIXER,
-    LABEL_PARAM_EQ, LABEL_SC4_MONO, LABEL_SWH_GATE, LADSPA_DEEPFILTER, LADSPA_GTCRN,
-    LADSPA_SC4_MONO, LADSPA_SWH_GATE,
+    LABEL_BQ_HIGHPASS, LABEL_COPY, LABEL_GTCRN_MONO, LABEL_MIXER, LABEL_PARAM_EQ, LABEL_SC4_MONO,
+    LABEL_SWH_GATE, LADSPA_GTCRN, LADSPA_SC4_MONO, LADSPA_SWH_GATE, Node,
 };
 
 /// Stem used as the `node.name` of the output virtual sink.
@@ -73,11 +74,11 @@ pub fn build_output_conf(settings: &AppSettings) -> String {
         // Apps write into the mixer's two `In` ports (FL and FR).
         inputs: vec!["mixer:In 1".into(), "mixer:In 2".into()],
         outputs: vec!["copy_l:Out".into(), "copy_r:Out".into()],
-        capture_props: capture_props(settings.output_filter.target_sink_name.as_deref()),
+        capture_props: capture_props(),
         playback_props: playback_props(),
     };
 
-    graph.render(RenderMode::ModuleArgs)
+    graph.render()
 }
 
 /// True when GTCRN should *process* (Enable=1.0) inside the output
@@ -114,20 +115,22 @@ fn output_nodes(settings: &AppSettings) -> Vec<Node> {
     };
 
     let nr = &of.noise_reduction;
-    // Backend swap (GTCRN ↔ DFN3) is a topology change — selecting DFN3
-    // emits a different LADSPA plugin with a different control surface
+    // Backend swap (GTCRN ↔ attenuation-only models) is a topology
+    // change — selecting one emits a different LADSPA plugin/control surface
     // and port names. The reconciler treats `model` changes as
     // restart-worthy, so live-toggling between the two is intentionally
     // not graceful (one-shot restart on swap).
-    let denoiser = if nr.model.is_deepfilter() {
-        // DFN3 has no `Enable` port, so master-off / NR-off renders the
-        // node with `Attenuation Limit = 0` to make it a passthrough.
+    let denoiser = if nr.model.is_attenuation_only() {
+        // Attenuation-only plugins have no `Enable` port, so master-off
+        // / NR-off renders the node with `Attenuation Limit = 0` to make
+        // it a passthrough.
         let atten_db = if ai_processing {
             deepfilter_attenuation_db(nr.strength)
         } else {
             0.0
         };
-        Node::ladspa("ai", LADSPA_DEEPFILTER, LABEL_DEEPFILTER_MONO)
+        let (plugin, label) = nr.model.plugin_and_label();
+        Node::ladspa("ai", plugin, label)
             .with_ports("Audio In", "Audio Out")
             .with_controls([("Attenuation Limit (dB)", atten_db)])
     } else {
@@ -155,7 +158,9 @@ fn output_nodes(settings: &AppSettings) -> Vec<Node> {
         ])
     };
 
-    let gate_d = GateDerived::from_config(&of.gate);
+    let gate_d = GateDerived::from_unit_intensity(
+        f64::from(of.gate.intensity.min(GATE_INTENSITY_MAX)) / f64::from(GATE_INTENSITY_MAX),
+    );
     let gate_threshold = if gate_enabled {
         gate_d.threshold_db
     } else {
@@ -179,7 +184,7 @@ fn output_nodes(settings: &AppSettings) -> Vec<Node> {
         ),
     ]);
 
-    let comp_d = CompressorDerived::from_config(&of.compressor);
+    let comp_d = of.compressor.ladspa_controls();
     let compressor = Node::ladspa("compressor", LADSPA_SC4_MONO, LABEL_SC4_MONO).with_controls([
         ("RMS/peak", f64::from(comp_d.rms_peak)),
         ("Attack time (ms)", f64::from(comp_d.attack_ms)),
@@ -282,22 +287,15 @@ fn output_links(nodes: &[Node]) -> Vec<Link> {
     ]
 }
 
-fn capture_props(target_sink_name: Option<&str>) -> String {
+fn capture_props() -> String {
     // Capture side is the virtual sink apps write into. WirePlumber 0.5
     // ships the `filter.smart` policy: when set, WP transparently links
     // every Stream/Output/Audio that targets the default sink through
     // this node first.
     //
-    // The default-sink follow alone broke once `echo-cancel-sink`
-    // started showing up in the graph as another Audio/Sink — the
-    // policy's "follow default" predicate sometimes picked the AEC
-    // reference sink, so streams went straight to AEC bypassing GTCRN.
-    // Pinning `filter.smart.target = { node.name = "<hw>" }` removes
-    // the ambiguity: the reconciler captures the user's hardware sink
-    // before enabling and persists it in `target_sink_name`, so this
-    // filter inserts unambiguously between apps and that exact sink.
-    // The user's chosen default device stays the visible default in
-    // every volume control — only the routing changes.
+    // With no explicit `filter.smart.target`, the upstream policy follows
+    // the current default sink. Runtime overrides for JamesDSP are owned by
+    // the packaged WirePlumber hook.
     // The output filter runs inside `biglinux-microphone-pwloader`,
     // which connects as a regular client of the main PipeWire daemon.
     // The filter graph's nodes are exported to the daemon and driven
@@ -315,7 +313,7 @@ fn capture_props(target_sink_name: Option<&str>) -> String {
     // false` is kept so the chain rides brief unlink/relink cycles
     // during a call without the loader exiting on idle and forcing a
     // unit restart.
-    let mut props = vec![
+    [
         format!("node.name = \"{OUTPUT_NODE_NAME}\""),
         format!("node.description = \"{OUTPUT_DESCRIPTION}\""),
         "media.class = Audio/Sink".to_owned(),
@@ -326,36 +324,13 @@ fn capture_props(target_sink_name: Option<&str>) -> String {
         "audio.position = [ FL FR ]".to_owned(),
         "filter.smart = true".to_owned(),
         format!("filter.smart.name = \"{OUTPUT_NODE_NAME}\""),
-    ];
-    if let Some(name) = target_sink_name.and_then(sanitize_node_name) {
-        // Disambiguates from `echo-cancel-sink` and any other
-        // Audio/Sink in the graph; the policy will not auto-pick the
-        // AEC reference sink as the smart-filter destination.
-        props.push(format!(
-            "filter.smart.target = {{ node.name = \"{name}\" }}"
-        ));
-    }
-    props.join("\n")
-}
-
-// PipeWire `node.name` is a dotted/dashed identifier in practice
-// (`alsa_output.pci-...`, `bluez_output.XX_XX...`). Reject anything
-// that could break the conf parser or smuggle structure into the
-// embedding `format!`. `target_sink_name` originates from `settings.json`
-// in the user's home, so this is defense-in-depth, not a trust boundary.
-fn sanitize_node_name(name: &str) -> Option<&str> {
-    let ok = !name.is_empty()
-        && name.len() <= 256
-        && name
-            .chars()
-            .all(|c| c.is_ascii_alphanumeric() || matches!(c, '.' | '_' | '-' | ':'));
-    ok.then_some(name)
+    ]
+    .join("\n")
 }
 
 fn playback_props() -> String {
     // Playback side rides on the smart-filter policy: WirePlumber links
-    // it to whichever sink `filter.smart.target` resolves to (the user's
-    // hardware sink). `node.passive = true` keeps the chain idle when
+    // it to the current default sink. `node.passive = true` keeps the chain idle when
     // no app is producing audio so it doesn't hold the hw sink awake.
     // Same rationale as the capture side: no explicit latency / no
     // lock-quantum, plus `node.async = true` as belt-and-braces in
@@ -378,389 +353,5 @@ fn playback_props() -> String {
 }
 
 #[cfg(test)]
-mod tests {
-    use super::*;
-    use crate::config::AppSettings;
-
-    fn enabled_settings() -> AppSettings {
-        AppSettings {
-            output_filter: crate::config::OutputFilterSettings {
-                enabled: true,
-                ..crate::config::OutputFilterSettings::default()
-            },
-            ..AppSettings::default()
-        }
-    }
-
-    #[test]
-    fn conf_declares_smart_filter_audio_sink() {
-        // The output sink registers as a WirePlumber smart-filter on
-        // the sink direction. The user's hardware sink stays the
-        // visible default; the policy transparently inserts our chain
-        // between every Stream/Output/Audio and that sink.
-        let conf = build_output_conf(&enabled_settings());
-        assert!(conf.contains("media.class = Audio/Sink"));
-        assert!(conf.contains(&format!("node.name = \"{OUTPUT_NODE_NAME}\"")));
-        assert!(conf.contains("filter.smart = true"));
-        assert!(conf.contains(&format!("filter.smart.name = \"{OUTPUT_NODE_NAME}\"")));
-    }
-
-    #[test]
-    fn conf_playback_is_passive_stereo() {
-        let conf = build_output_conf(&enabled_settings());
-        assert!(conf.contains("node.name = \"output-biglinux-out\""));
-        assert!(conf.contains("node.passive = true"));
-        assert!(conf.contains("audio.position = [ FL FR ]"));
-    }
-
-    #[test]
-    fn conf_pins_smart_filter_target_when_known() {
-        // With the user's hw sink captured, the smart-filter target
-        // must be pinned to that node.name. This is what disambiguates
-        // us from `echo-cancel-sink` and any other Audio/Sink in the
-        // graph.
-        let s = AppSettings {
-            output_filter: crate::config::OutputFilterSettings {
-                enabled: true,
-                target_sink_name: Some("alsa_output.pci-0000_00_1f.3.analog-stereo".into()),
-                ..crate::config::OutputFilterSettings::default()
-            },
-            ..AppSettings::default()
-        };
-        let conf = build_output_conf(&s);
-        assert!(
-            conf.contains(
-                "filter.smart.target = { node.name = \"alsa_output.pci-0000_00_1f.3.analog-stereo\" }"
-            ),
-            "smart-filter must pin to captured hardware sink to bypass AEC sink ambiguity",
-        );
-    }
-
-    #[test]
-    fn conf_omits_smart_filter_target_when_unknown() {
-        // First boot — no target captured yet. Without the pin the
-        // policy falls back to the current default sink (still the
-        // user's hw sink unless something else takes it over). The
-        // conf must remain renderable.
-        let conf = build_output_conf(&enabled_settings());
-        assert!(!conf.contains("filter.smart.target ="));
-    }
-
-    #[test]
-    fn conf_mono_downmix_mixes_both_inputs_equally() {
-        let conf = build_output_conf(&enabled_settings());
-        assert!(conf.contains("\"Gain 1\" = 0.5"));
-        assert!(conf.contains("\"Gain 2\" = 0.5"));
-    }
-
-    #[test]
-    fn conf_full_chain_is_linked() {
-        let conf = build_output_conf(&enabled_settings());
-        for link in [
-            r#"{ output = "mixer:Out" input = "hpf:In" }"#,
-            r#"{ output = "hpf:Out" input = "ai:Input" }"#,
-            r#"{ output = "ai:Output" input = "gate:Input" }"#,
-            r#"{ output = "gate:Output" input = "compressor:Input" }"#,
-            r#"{ output = "compressor:Output" input = "eq:In 1" }"#,
-            r#"{ output = "eq:Out 1" input = "copy_l:In" }"#,
-            r#"{ output = "eq:Out 1" input = "copy_r:In" }"#,
-        ] {
-            assert!(conf.contains(link), "missing link: {link}");
-        }
-    }
-
-    #[test]
-    fn conf_does_not_use_optional_zeroramp_builtin() {
-        let conf = build_output_conf(&enabled_settings());
-        assert!(
-            !conf.contains("zeroramp"),
-            "output chain must not depend on the optional `zeroramp` builtin",
-        );
-    }
-
-    #[test]
-    fn output_conf_is_a_bare_module_args_body() {
-        // The pwloader passes the file contents straight to
-        // `pw_context_load_module(libpipewire-module-filter-chain, …)`
-        // — bootstrap modules come from the daemon `client.conf`, never
-        // from our args. Verifying the absence keeps a regression that
-        // would re-introduce cross-process clock duplication visible.
-        let s = AppSettings {
-            output_filter: crate::config::OutputFilterSettings {
-                enabled: true,
-                noise_reduction: crate::config::NoiseReductionConfig {
-                    enabled: true,
-                    ..crate::config::NoiseReductionConfig::default()
-                },
-                ..crate::config::OutputFilterSettings::default()
-            },
-            ..AppSettings::default()
-        };
-        let conf = build_output_conf(&s);
-        assert!(conf.starts_with('{'));
-        assert!(conf.trim_end().ends_with('}'));
-        assert!(!conf.contains("context.properties"));
-        assert!(!conf.contains("context.modules"));
-        assert!(!conf.contains("libpipewire-module-protocol-native"));
-        assert!(!conf.contains("libpipewire-module-adapter"));
-        assert!(!conf.contains("libpipewire-module-filter-chain"));
-        // Filter graph itself is still rendered.
-        assert!(conf.contains("gtcrn_mono"));
-        assert!(conf.contains("filter.graph = {"));
-    }
-
-    #[test]
-    fn master_off_forces_full_bypass_regardless_of_sub_flags() {
-        // Sub-effects look enabled in the user's settings, but the
-        // master switch is off — every control must render in
-        // pass-through. GTCRN stays in the topology with Enable=0 so
-        // the live update path can flip it back without restarting the
-        // unit (which would yank the smart-filter sink and pause
-        // browsers).
-        let s = AppSettings {
-            output_filter: crate::config::OutputFilterSettings {
-                enabled: false,
-                noise_reduction: crate::config::NoiseReductionConfig {
-                    enabled: true,
-                    strength: 0.9,
-                    ..crate::config::NoiseReductionConfig::default()
-                },
-                hpf: crate::config::HpfConfig {
-                    enabled: true,
-                    frequency: 200.0,
-                },
-                gate: crate::config::GateConfig {
-                    enabled: true,
-                    intensity: 30,
-                },
-                compressor: crate::config::CompressorConfig {
-                    enabled: true,
-                    intensity: 0.7,
-                },
-                equalizer: crate::config::EqualizerConfig {
-                    enabled: true,
-                    bands: vec![6.0; EQ_BAND_COUNT],
-                    ..crate::config::EqualizerConfig::default()
-                },
-                target_sink_name: None,
-            },
-            ..AppSettings::default()
-        };
-        let conf = build_output_conf(&s);
-
-        // GTCRN node must remain so the live path can re-enable it.
-        assert!(conf.contains("name = \"ai\""));
-        assert!(conf.contains(&format!("plugin = \"{LADSPA_GTCRN}\"")));
-        assert!(
-            conf.contains("\"Enable\" = 0.0"),
-            "GTCRN must render with Enable=0 while master is off"
-        );
-        assert!(conf.contains("\"Freq\" = 5.0"), "HPF must pass through");
-        assert!(
-            conf.contains("\"Output select (-1 = key listen, 0 = gate, 1 = bypass)\" = 1.0"),
-            "gate must bypass",
-        );
-        assert!(
-            conf.contains("\"Ratio (1:n)\" = 1.0"),
-            "compressor must run unity"
-        );
-        assert!(
-            conf.contains("\"Makeup gain (dB)\" = 0.0"),
-            "compressor must add no gain"
-        );
-        // EQ bands must read 0.00 dB so the user's preset doesn't bleed
-        // through while the master is off.
-        assert!(
-            conf.matches("gain = 0.00").count() >= EQ_BAND_COUNT,
-            "every EQ band should be flat at 0 dB while master is off"
-        );
-    }
-
-    #[test]
-    fn nr_off_with_master_on_keeps_gtcrn_with_enable_zero() {
-        // Master is on, sub-effects routed normally, but noise
-        // reduction is off — the GTCRN node must remain wired with
-        // Enable=0 so the user can re-toggle NR via the live path
-        // without a service restart.
-        let s = AppSettings {
-            output_filter: crate::config::OutputFilterSettings {
-                enabled: true,
-                noise_reduction: crate::config::NoiseReductionConfig {
-                    enabled: false,
-                    ..crate::config::NoiseReductionConfig::default()
-                },
-                ..crate::config::OutputFilterSettings::default()
-            },
-            ..AppSettings::default()
-        };
-        let conf = build_output_conf(&s);
-        assert!(conf.contains("name = \"ai\""));
-        assert!(conf.contains("\"Enable\" = 0.0"));
-        assert!(conf.contains(r#"{ output = "hpf:Out" input = "ai:Input" }"#));
-        assert!(conf.contains(r#"{ output = "ai:Output" input = "gate:Input" }"#));
-    }
-
-    #[test]
-    fn master_on_eq_off_renders_flat_regardless_of_preset() {
-        // The EQ sub-toggle is off but the user previously selected a
-        // non-flat preset. The `param_eq` node must render flat — the
-        // preset shaping must not leak through while EQ is disabled.
-        let s = AppSettings {
-            output_filter: crate::config::OutputFilterSettings {
-                enabled: true,
-                equalizer: crate::config::EqualizerConfig {
-                    enabled: false,
-                    preset: "vocal-boost".to_owned(),
-                    bands: vec![6.0; EQ_BAND_COUNT],
-                },
-                ..crate::config::OutputFilterSettings::default()
-            },
-            ..AppSettings::default()
-        };
-        let conf = build_output_conf(&s);
-        assert!(
-            conf.matches("gain = 0.00").count() >= EQ_BAND_COUNT,
-            "every EQ band should be flat at 0 dB while EQ sub-toggle is off"
-        );
-    }
-
-    #[test]
-    fn output_gtcrn_keeps_integrated_gate_parked_below_noise_floor() {
-        // GTCRN's `Threshold (dB)` port (default `-60`) drives an
-        // integrated noise gate. On the output chain the user-facing
-        // gate is a separate SWH node, so the integrated one must
-        // always render at the `-80 dB` sentinel — otherwise quiet
-        // playback gets cut even when the UI gate toggle is off.
-        let s = enabled_settings();
-        let conf = build_output_conf(&s);
-        assert!(
-            conf.contains(r#""Threshold (dB)" = -80.0"#),
-            "GTCRN integrated gate must be parked at -80 dB on the output chain"
-        );
-    }
-
-    #[test]
-    fn conf_disabled_gate_bypasses_via_output_select() {
-        let mut s = enabled_settings();
-        s.output_filter.gate.enabled = false;
-        let conf = build_output_conf(&s);
-        assert!(conf.contains("\"Output select (-1 = key listen, 0 = gate, 1 = bypass)\" = 1.0"));
-    }
-
-    #[test]
-    fn conf_eq_emits_ten_bands() {
-        let conf = build_output_conf(&enabled_settings());
-        assert_eq!(conf.matches("type = bq_peaking").count(), EQ_BAND_COUNT);
-    }
-
-    #[test]
-    fn conf_graph_inputs_map_to_mixer() {
-        let conf = build_output_conf(&enabled_settings());
-        assert!(conf.contains(r#"inputs = [ "mixer:In 1" "mixer:In 2" ]"#));
-        assert!(conf.contains(r#"outputs = [ "copy_l:Out" "copy_r:Out" ]"#));
-    }
-
-    #[test]
-    fn ai_processing_on_renders_gtcrn_enable_one() {
-        // Master + NR on → GTCRN actually processes (Enable=1.0). Pins
-        // output_ai_processing's true path (the off paths are covered above).
-        let s = AppSettings {
-            output_filter: crate::config::OutputFilterSettings {
-                enabled: true,
-                noise_reduction: crate::config::NoiseReductionConfig {
-                    enabled: true,
-                    ..crate::config::NoiseReductionConfig::default()
-                },
-                ..crate::config::OutputFilterSettings::default()
-            },
-            ..AppSettings::default()
-        };
-        let conf = build_output_conf(&s);
-        assert!(
-            conf.contains("\"Enable\" = 1.0"),
-            "GTCRN must process (Enable=1) when master + NR are on: {conf}"
-        );
-    }
-
-    #[test]
-    fn both_integrated_and_swh_gate_thresholds_park_at_floor() {
-        // GTCRN's integrated gate is always parked at -80 dB; with the SWH gate
-        // sub-toggle off its threshold parks at -80 too. Assert BOTH are present
-        // (a count) so a sign flip on either threshold is caught and not masked
-        // by the other -80 still being there.
-        let mut s = enabled_settings();
-        s.output_filter.gate.enabled = false;
-        let conf = build_output_conf(&s);
-        assert_eq!(
-            conf.matches(r#""Threshold (dB)" = -80.0"#).count(),
-            2,
-            "GTCRN integrated gate + disabled SWH gate must both park at -80 dB: {conf}",
-        );
-    }
-
-    #[test]
-    fn output_eq_prefers_explicit_bands_over_preset() {
-        // Master + EQ on with a full explicit band set: the bands win over the
-        // named preset (the `==` length check), reaching the conf verbatim.
-        let mut bands = vec![0.0_f32; EQ_BAND_COUNT];
-        bands[2] = 7.0;
-        let s = AppSettings {
-            output_filter: crate::config::OutputFilterSettings {
-                enabled: true,
-                equalizer: crate::config::EqualizerConfig {
-                    enabled: true,
-                    preset: "voice_boost".to_owned(),
-                    bands,
-                },
-                ..crate::config::OutputFilterSettings::default()
-            },
-            ..AppSettings::default()
-        };
-        let conf = build_output_conf(&s);
-        assert!(
-            conf.contains("gain = 7.00"),
-            "explicit bands must render verbatim, not the preset: {conf}"
-        );
-        assert!(
-            !conf.contains("gain = 20.00"),
-            "voice_boost preset must be ignored"
-        );
-    }
-
-    #[test]
-    fn sanitize_rejects_target_with_forbidden_chars() {
-        // A target sink name with spaces / structure chars must be rejected so
-        // it cannot smuggle SPA-JSON into the embedding format! (defense in
-        // depth: the name originates from the user's settings.json).
-        let s = AppSettings {
-            output_filter: crate::config::OutputFilterSettings {
-                enabled: true,
-                target_sink_name: Some("bad name; node.name = evil".into()),
-                ..crate::config::OutputFilterSettings::default()
-            },
-            ..AppSettings::default()
-        };
-        let conf = build_output_conf(&s);
-        assert!(
-            !conf.contains("filter.smart.target ="),
-            "forbidden chars must reject the smart-filter target: {conf}",
-        );
-    }
-
-    #[test]
-    fn sanitize_rejects_empty_target() {
-        let s = AppSettings {
-            output_filter: crate::config::OutputFilterSettings {
-                enabled: true,
-                target_sink_name: Some(String::new()),
-                ..crate::config::OutputFilterSettings::default()
-            },
-            ..AppSettings::default()
-        };
-        let conf = build_output_conf(&s);
-        assert!(
-            !conf.contains("filter.smart.target ="),
-            "an empty target name must be rejected, not pinned"
-        );
-    }
-}
+#[path = "output_tests.rs"]
+mod tests;

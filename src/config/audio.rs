@@ -4,81 +4,12 @@
 //! `#[serde(default)]` so missing keys fall back to the constants below,
 //! letting new fields ship without breaking existing files.
 
+pub use crate::config::noise_model::{NoiseModel, deepfilter_attenuation_db};
 use serde::{Deserialize, Serialize};
 
 // ── Noise reduction (GTCRN) ──────────────────────────────────────────
 
-/// Denoiser backend. GTCRN variants share one LADSPA plugin and switch
-/// via the `Model` control input. DFN3 is a different plugin entirely
-/// (full-band 48 kHz DeepFilterNet3) — selecting it swaps the LADSPA
-/// node, which forces a filter-chain reload.
-#[derive(Debug, Clone, Copy, Default, PartialEq, Eq, Serialize, Deserialize)]
-#[serde(try_from = "u8", into = "u8")]
-pub enum NoiseModel {
-    /// Strongest GTCRN noise reduction, highest quality.
-    #[default]
-    GtcrnDns3 = 0,
-    /// Gentler GTCRN noise reduction, lower CPU cost.
-    GtcrnVctk = 1,
-    /// DeepFilterNet3 — premium full-band 48 kHz model. Requires the
-    /// optional `deepfilternet-ladspa` package; the UI hides this option
-    /// when the plugin shared object isn't installed.
-    DeepFilterNet3 = 2,
-}
-
-impl TryFrom<u8> for NoiseModel {
-    type Error = String;
-
-    fn try_from(v: u8) -> Result<Self, Self::Error> {
-        match v {
-            0 => Ok(Self::GtcrnDns3),
-            1 => Ok(Self::GtcrnVctk),
-            2 => Ok(Self::DeepFilterNet3),
-            other => Err(format!("unknown NoiseModel value: {other}")),
-        }
-    }
-}
-
-impl From<NoiseModel> for u8 {
-    fn from(m: NoiseModel) -> Self {
-        m as Self
-    }
-}
-
-impl NoiseModel {
-    /// LADSPA control value for the GTCRN plugin's `model` input. Only
-    /// meaningful for GTCRN variants; DFN3 is a different LADSPA plugin
-    /// and ignores this number.
-    #[must_use]
-    pub fn ladspa_control(self) -> f32 {
-        match self {
-            Self::GtcrnVctk => 1.0,
-            // GTCRN DNS3 wires the model select to 0; DFN3 is a
-            // different LADSPA plugin entirely and ignores this value.
-            Self::GtcrnDns3 | Self::DeepFilterNet3 => 0.0,
-        }
-    }
-
-    #[must_use]
-    pub fn is_deepfilter(self) -> bool {
-        matches!(self, Self::DeepFilterNet3)
-    }
-}
-
-/// Map the unified `strength` slider (0..=1) onto DFN3's
-/// `Attenuation Limit (dB)` control. Upstream documents the cap
-/// perceptually as: ~6-12 dB light, ~18-24 dB medium, 100 dB = no
-/// limit (max NR). A linear `s * 100` mapping saturates the
-/// perceptual range above `s≈0.1` because real noise rarely needs
-/// more than 24 dB suppression — the slider feels binary. The
-/// quadratic curve `s² * 100` lands at ~6 dB (s=0.25), ~25 dB
-/// (s=0.5), ~56 dB (s=0.75), 100 dB (s=1.0), giving usable travel
-/// across the slider that aligns with the upstream guidance.
-#[must_use]
-pub fn deepfilter_attenuation_db(strength: f32) -> f64 {
-    let s = strength.clamp(0.0, 1.0);
-    f64::from(s * s) * 100.0
-}
+// The model owner preserves the established LADSPA identifiers and serialized values.
 
 pub const STRENGTH_DEFAULT: f32 = 1.0;
 // 60 ms gives the lookahead buffer enough frames to backdate VAD decisions
@@ -158,8 +89,7 @@ pub const GATE_INTENSITY_MAX: u8 = 50;
 pub struct GateConfig {
     pub enabled: bool,
     /// Intensity scale 0..=50. Mapped to LADSPA parameters
-    /// (threshold / range / hold / release) by
-    /// [`super::ProcessingChain`].
+    /// (threshold / range / hold / release) by `big-audio-effects`.
     pub intensity: u8,
 }
 
@@ -213,16 +143,21 @@ pub enum StereoMode {
 }
 
 pub const STEREO_WIDTH_DEFAULT: f32 = 0.7;
-pub const CROSSFEED_DEFAULT: f32 = 0.3;
 
+/// **What happens to the two channels.**
+///
+/// There were two more fields here once — `crossfeed_enabled` and `crossfeed_level` —
+/// and nothing in this program ever read them. No pipeline stage, no command-line key, no
+/// interface: a feature that existed only as two lines in everybody's settings file, which
+/// is worse than a missing feature because anybody reading that file believed in it.
+/// Removed rather than implemented: `#[serde(default)]` means an existing file carrying
+/// the old keys still loads, and they go the next time it is written.
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 #[serde(default)]
 pub struct StereoConfig {
     pub enabled: bool,
     pub mode: StereoMode,
     pub width: f32,
-    pub crossfeed_enabled: bool,
-    pub crossfeed_level: f32,
 }
 
 impl Default for StereoConfig {
@@ -231,8 +166,6 @@ impl Default for StereoConfig {
             enabled: true,
             mode: StereoMode::default(),
             width: STEREO_WIDTH_DEFAULT,
-            crossfeed_enabled: false,
-            crossfeed_level: CROSSFEED_DEFAULT,
         }
     }
 }
@@ -294,14 +227,6 @@ mod tests {
     }
 
     #[test]
-    fn noise_reduction_defaults() {
-        let c = NoiseReductionConfig::default();
-        assert!(c.enabled);
-        assert_eq!(c.model, NoiseModel::GtcrnDns3);
-        assert!((c.strength - STRENGTH_DEFAULT).abs() < f32::EPSILON);
-    }
-
-    #[test]
     fn deepfilter_attenuation_curve_is_quadratic() {
         // Endpoints + clamp.
         assert!((deepfilter_attenuation_db(0.0) - 0.0).abs() < 1e-6);
@@ -318,18 +243,5 @@ mod tests {
     fn noise_model_ladspa_control_value() {
         assert!((NoiseModel::GtcrnDns3.ladspa_control() - 0.0).abs() < f32::EPSILON);
         assert!((NoiseModel::GtcrnVctk.ladspa_control() - 1.0).abs() < f32::EPSILON);
-    }
-
-    #[test]
-    fn gate_intensity_default_matches_constant() {
-        assert_eq!(GateConfig::default().intensity, GATE_INTENSITY_DEFAULT);
-    }
-
-    #[test]
-    fn gate_intensity_rejects_overflow_in_json() {
-        // serde enforces u8 bounds on deserialization
-        let err =
-            serde_json::from_str::<GateConfig>(r#"{"enabled":true,"intensity":500}"#).unwrap_err();
-        assert!(err.to_string().to_ascii_lowercase().contains("invalid"));
     }
 }

@@ -1,4 +1,4 @@
-msrv = "1.82.0"
+msrv = "1.97.1"
 
 # ── Complexity thresholds ──────────────────────────────────────────
 cognitive-complexity-threshold = 25

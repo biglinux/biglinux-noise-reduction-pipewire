@@ -1,0 +1,49 @@
+[package]
+name = "big-app-kit"
+version = "0.1.0"
+publish = false  # consumed by sibling apps via path dep, not crates.io (see ARCHITECTURE.md §8)
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+description = "Typed app-building contracts for BigLinux Rust desktop applications"
+repository.workspace = true
+homepage.workspace = true
+authors.workspace = true
+readme = "README.md"
+keywords = ["gtk4", "libadwaita", "desktop", "biglinux", "app"]
+categories = ["gui"]
+
+[dependencies]
+adw.workspace = true
+gtk.workspace = true
+relm4.workspace = true
+log.workspace = true
+gdk4-wayland.workspace = true
+gdk4-x11.workspace = true
+wayland-client.workspace = true
+wayland-protocols.workspace = true
+wayland-protocols-plasma.workspace = true
+x11rb.workspace = true
+serde.workspace = true
+serde_json.workspace = true
+big-os-kit.workspace = true
+# Display-free contracts (specs, discovery-free helpers). Every module here is
+# re-exported so `big_app_kit::<module>::…` paths stay unchanged; the HTTP and
+# remote-control code lives there too, behind matching forwarded features.
+big-app-kit-core.workspace = true
+
+# Network + secret-store features are opt-in. Default is empty so a consumer
+# never silently enables outbound HTTP policy, a LAN-bindable control server
+# (tiny_http), or a system libsecret backend it did not ask for. Enable
+# explicitly, e.g. features = ["http-client"] /
+# ["libsecret-system-backend"]. HTTP + remote-control forward to
+# big-app-kit-core; the keyring backend lives in big-os-kit.
+[features]
+default = []
+http-client = ["big-app-kit-core/http-client"]
+remote-control = ["big-app-kit-core/remote-control"]
+libsecret-system-backend = ["big-os-kit/libsecret-system-backend"]
+secret-service-backend = ["libsecret-system-backend"]
+
+[dev-dependencies]
+tempfile = "3"

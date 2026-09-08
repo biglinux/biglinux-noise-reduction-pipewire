@@ -37,7 +37,7 @@ concurrency:
 
 jobs:
   # ── Compile jobs run inside Arch container because Cargo.toml gates
-  #    GTK 4.20 (`features = ["v4_20"]`) and ubuntu-latest only ships
+  #    GTK 4.22 (`features = ["v4_22"]`) and ubuntu-latest only ships
   #    GTK 4.14. Arch is also our deployment target (BigLinux/Manjaro)
   #    so CI matches what users will run.
   fmt:
@@ -80,7 +80,7 @@ jobs:
       - run: cargo nextest run --all-features --locked
 
   msrv:
-    name: MSRV (1.82)
+    name: MSRV (1.97.1)
     runs-on: ubuntu-latest
     container: archlinux:latest
     steps:
@@ -91,7 +91,7 @@ jobs:
       # by changing the action ref.
       - uses: dtolnay/rust-toolchain@master
         with:
-          toolchain: "1.82.0"
+          toolchain: "1.97.1"
       - uses: Swatinem/rust-cache@v2
       - run: cargo build --all-features --locked
 
@@ -125,7 +125,11 @@ jobs:
       - uses: taiki-e/install-action@v2
         with:
           tool: cargo-machete
-      - run: cargo machete
+      # `--with-metadata` resolves crates renamed in their own
+      # Cargo.toml. Without it the vendored big-relm4-components trips
+      # the same gettext-rs / `gettextrs` false positive the root
+      # manifest has to ignore by hand.
+      - run: cargo machete --with-metadata
 
   typos:
     name: typos (spellcheck)

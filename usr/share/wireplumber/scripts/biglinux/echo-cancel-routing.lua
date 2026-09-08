@@ -1,4 +1,4 @@
--- BigLinux Microphone
+-- Filter noise
 --
 -- Keep libpipewire-module-echo-cancel's capture stream connected to the
 -- currently selected physical microphone. The public smart filter
@@ -54,38 +54,79 @@ local function metadata_object (source, name)
   }
 end
 
-local function disable_legacy_aec_smart_filter (source, si)
-  -- Cheap short-circuit: linkable's own properties already carry the
-  -- node name, so we can bail before allocating the node proxy. The
-  -- hook fires for every `session-item-added`; this keeps the cost
-  -- O(1) for streams that aren't `echo-cancel-source`.
-  if si.properties ["node.name"] ~= EC_SOURCE_NAME then
-    return
-  end
-  local node = si:get_associated_proxy ("node")
-  if node == nil or node.properties ["node.name"] ~= EC_SOURCE_NAME then
-    return
-  end
-
-  -- Older configurator builds wrote `filter.smart = true` on
-  -- `echo-cancel-source`. WirePlumber then reinserted the AEC source
-  -- into the smart-filter sorting pass and could rebuild the bad loop:
-  -- `echo-cancel-capture <- mic-biglinux`. The "filters" metadata
-  -- overrides node properties, so force this internal AEC source to be
-  -- a plain virtual source even if an old config file is still present.
-  local metadata = metadata_object (source, "filters")
-  local id = node ["bound-id"]
-  if metadata ~= nil and id ~= nil then
-    metadata:set (id, "filter.smart", "Spa:String:JSON", "false")
-  end
-end
-
 local function is_virtual_source_name (name)
   return VIRTUAL_SOURCE_NAMES [name]
       or starts_with (name, "input.pw-loopback")
       or starts_with (name, "output.pw-loopback")
       or starts_with (name, "input.loopback")
       or starts_with (name, "output.loopback")
+end
+
+-- ── On-demand AEC gate ──────────────────────────────────────────────
+-- The AEC module's streams share one `node.link-group`, so a linked
+-- reference tap (`echo-cancel-sink`) drags the whole group — including
+-- `echo-cancel-capture` and the physical microphone it is linked to —
+-- into RUNNING whenever anything plays audio. Verified on PipeWire
+-- 1.6.6: with the module linked and the speaker monitor busy, a
+-- suspended mic wakes and the WebRTC APM processes even though no app
+-- records. The gate below keeps both AEC streams *unlinked* until at
+-- least one real recording stream exists, so the mic and the canceller
+-- idle at zero cost; a rescan relinks them the moment recording starts.
+
+local function is_real_capture_stream (props)
+  if props ["media.class"] ~= "Stream/Input/Audio" then
+    return false
+  end
+  -- Volume meters (plasma-pa, pavucontrol) capture monitors, and
+  -- module-internal streams (filter-chain, echo-cancel) always carry a
+  -- node.link-group. Neither is a user recording.
+  if props ["stream.monitor"] == "true" then
+    return false
+  end
+  if props ["node.link-group"] ~= nil then
+    return false
+  end
+  local name = props ["node.name"]
+  if name == nil or is_virtual_source_name (name) then
+    return false
+  end
+  return true
+end
+
+-- `skip_id` ignores a linkable that is being removed right now: during
+-- `session-item-removed` the dying stream is still visible in the
+-- object manager and would otherwise keep the gate open.
+local function has_real_capture_consumer (om, skip_id)
+  for si in om:iterate { type = "SiLinkable" } do
+    if si.id ~= skip_id and is_real_capture_stream (si.properties) then
+      return true
+    end
+  end
+  return false
+end
+
+-- Remove every SiLink attached to `si`, mirroring the bookkeeping done
+-- by linking/rescan.lua's unhandleLinkable so the linker's peer flags
+-- stay consistent and the item can be relinked later.
+local function unlink_item (om, si)
+  local si_id = si.id
+  for silink in om:iterate { type = "SiLink" } do
+    local silink_props = silink.properties
+    local out_id = silink_props:get_int ("out.item.id")
+    local in_id = silink_props:get_int ("in.item.id")
+    if out_id == si_id or in_id == si_id then
+      local in_flags = lutils:get_flags (in_id)
+      local out_flags = lutils:get_flags (out_id)
+      if out_id == si_id and in_flags.peer_id == out_id then
+        in_flags.peer_id = nil
+      elseif in_id == si_id and out_flags.peer_id == in_id then
+        out_flags.peer_id = nil
+      end
+      silink:remove ()
+      log:info (silink, "AEC gate: link removed")
+    end
+  end
+  lutils:clear_flags (si_id)
 end
 
 local function is_real_capture_source (si)
@@ -143,12 +184,18 @@ local function lookup_node_by_name (om, name)
   return nil
 end
 
-local function is_physical_alsa_sink (si)
+local function is_physical_sink (si)
   local props = si.properties
   if props ["media.class"] ~= "Audio/Sink" then
     return false
   end
-  if not starts_with (props ["node.name"] or "", "alsa_output.") then
+  -- Bluetooth speakers are physical devices too: without them here a
+  -- BT default sink gets no AEC reference retarget and the canceller
+  -- subtracts the pre-effect smart-filter mix, so echo leaks for BT
+  -- speaker users.
+  local name = props ["node.name"] or ""
+  if not (starts_with (name, "alsa_output.")
+      or starts_with (name, "bluez_output.")) then
     return false
   end
   if props ["node.virtual"] == "true" then
@@ -171,20 +218,20 @@ local function lookup_physical_sink (source, om)
   local metadata = metadata_object (source, "default")
   local configured = json_name (metadata, "default.configured.audio.sink")
   local candidate = lookup_sink_by_name (om, configured)
-  if candidate and is_physical_alsa_sink (candidate) then
+  if candidate and is_physical_sink (candidate) then
     return candidate
   end
 
   local default_name = json_name (metadata, "default.audio.sink")
   candidate = lookup_sink_by_name (om, default_name)
-  if candidate and is_physical_alsa_sink (candidate) then
+  if candidate and is_physical_sink (candidate) then
     return candidate
   end
 
   local best = nil
   local best_priority = -1
   for si in om:iterate { type = "SiLinkable" } do
-    if is_physical_alsa_sink (si) then
+    if is_physical_sink (si) then
       local props = si.properties
       local priority = tonumber (props ["priority.session"])
           or tonumber (props ["priority.driver"])
@@ -259,20 +306,6 @@ local function selected_real_source (source, om)
 end
 
 SimpleEventHook {
-  name = "biglinux/echo-cancel-source-not-smart",
-  before = "linking/rescan-trigger",
-  interests = {
-    EventInterest {
-      Constraint { "event.type", "=", "session-item-added" },
-      Constraint { "event.session-item.interface", "=", "linkable" },
-    },
-  },
-  execute = function (event)
-    disable_legacy_aec_smart_filter (event:get_source (), event:get_subject ())
-  end
-}:register ()
-
-SimpleEventHook {
   name = "biglinux/echo-cancel-capture-target",
   after = "linking/find-defined-target",
   before = {
@@ -291,6 +324,15 @@ SimpleEventHook {
         lutils:unwrap_select_target_event (event)
 
     if target or si_props ["node.name"] ~= EC_CAPTURE_NODE_NAME then
+      return
+    end
+
+    if not has_real_capture_consumer (om) then
+      -- No app is recording: leave the AEC capture unlinked so the
+      -- physical mic can suspend. The aec-gate hooks below schedule a
+      -- rescan the moment a recording stream appears.
+      log:info (si, "AEC gate: no recording stream, capture stays unlinked")
+      event:stop_processing ()
       return
     end
 
@@ -359,6 +401,15 @@ SimpleEventHook {
         lutils:unwrap_select_target_event (event)
 
     if si_props ["node.name"] ~= EC_SINK_NODE_NAME then
+      return
+    end
+
+    if not has_real_capture_consumer (om) then
+      -- Keeping the reference tap linked would drag the module's
+      -- link-group (and the physical mic) into RUNNING whenever audio
+      -- plays. Gate it together with the capture side.
+      log:info (si, "AEC gate: no recording stream, reference stays unlinked")
+      event:stop_processing ()
       return
     end
 
@@ -433,7 +484,7 @@ local function maybe_retarget_output_smart_filter (source, om)
     metadata:set (filter_id, "filter.smart.target", "Spa:String:JSON",
       "{ \"node.name\": \"" .. JAMESDSP_SINK_NAME .. "\" }")
   else
-    -- Clear the override so the conf-supplied alsa target wins.
+    -- Clear the override so WirePlumber follows the default sink again.
     metadata:set (filter_id, "filter.smart.target", nil, nil)
   end
 end
@@ -520,6 +571,61 @@ SimpleEventHook {
     local source = event:get_source ()
     local om = source:call ("get-object-manager", "session-item")
     maybe_retarget_output_smart_filter (source, om)
+  end
+}:register ()
+
+-- Open the AEC gate: when a real recording stream appears, schedule a
+-- linking rescan so the (still unlinked) echo-cancel-capture and
+-- echo-cancel-sink pick up their targets via the gated hooks above.
+SimpleEventHook {
+  name = "biglinux/aec-gate-capture-added",
+  before = "linking/rescan-trigger",
+  interests = {
+    EventInterest {
+      Constraint { "event.type", "=", "session-item-added" },
+      Constraint { "event.session-item.interface", "=", "linkable" },
+    },
+  },
+  execute = function (event)
+    local si = event:get_subject ()
+    if si == nil or not is_real_capture_stream (si.properties) then
+      return
+    end
+    local source = event:get_source ()
+    source:call ("schedule-rescan", "linking")
+    log:info ("AEC gate: recording stream appeared; scheduled rescan")
+  end
+}:register ()
+
+-- Close the AEC gate: when the last real recording stream goes away,
+-- drop the links of both AEC streams so the module group and the
+-- physical mic go idle and suspend. The gated select-target hooks keep
+-- them unlinked until the next recording stream shows up.
+SimpleEventHook {
+  name = "biglinux/aec-gate-capture-removed",
+  interests = {
+    EventInterest {
+      Constraint { "event.type", "=", "session-item-removed" },
+      Constraint { "event.session-item.interface", "=", "linkable" },
+    },
+  },
+  execute = function (event)
+    local si = event:get_subject ()
+    if si == nil or not is_real_capture_stream (si.properties) then
+      return
+    end
+    local source = event:get_source ()
+    local om = source:call ("get-object-manager", "session-item")
+    if has_real_capture_consumer (om, si.id) then
+      return
+    end
+    for _, name in ipairs { EC_CAPTURE_NODE_NAME, EC_SINK_NODE_NAME } do
+      local item = lookup_node_by_name (om, name)
+      if item ~= nil then
+        unlink_item (om, item)
+      end
+    end
+    log:info ("AEC gate: last recording stream gone; AEC unlinked")
   end
 }:register ()
 

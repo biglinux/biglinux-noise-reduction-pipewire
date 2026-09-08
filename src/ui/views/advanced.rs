@@ -4,9 +4,8 @@
 //! WirePlumber on a per-control basis without leaving the GUI. Every
 //! card hosts a single dropdown whose first entry is the sentinel
 //! `Distribution default` — that selection wipes the corresponding
-//! line from the user drop-in so the layered defaults shipped by
-//! `pipewire-biglinux-config` (and the package's own
-//! `61-biglinux-alsa-headroom.conf`) take over again.
+//! line from the user drop-in so the layered PipeWire and WirePlumber
+//! defaults take over again.
 //!
 //! ## Apply pipeline
 //!
@@ -36,68 +35,17 @@ use std::cell::RefCell;
 use std::rc::Rc;
 
 use adw::prelude::*;
-use big_app_kit::dialogs;
-use gtk::{gio, glib, Box as GtkBox, Orientation, ScrolledWindow};
-
-use crate::services::pipewire::user_tweaks::{SampleRates, UserTweaks};
-use crate::services::system_audio::restart_pipewire_user_stack;
+use gtk::{Box as GtkBox, Orientation, ScrolledWindow, gio, glib};
 
 use super::super::i18n::i18n;
-use super::super::widgets::didactic::{labelled_row, section_header, DidacticCard};
+use crate::services::pipewire::user_tweaks::{SampleRates, UserTweaks};
+use apply::apply_clicked;
+pub(in crate::ui) use apply::reset_audio_settings_dialog;
+#[cfg(test)]
+pub(in crate::ui) use apply::trigger_apply_button_contract;
 
-/// Per-control selection, decoupled from the on-disk shape so the UI
-/// can offer a richer set of curated defaults than what raw integers
-/// allow. The sentinel `None` always maps to "Distribution default".
-#[derive(Debug, Default, Clone, Copy, PartialEq, Eq)]
-struct Selection {
-    quantum: Option<u32>,
-    headroom_usb: Option<u32>,
-    headroom_pci: Option<u32>,
-    bt_latency: Option<u32>,
-    sample_rates: Option<SampleRates>,
-    bt_sbc_xq: Option<bool>,
-    bt_call_autoswitch: Option<bool>,
-    alsa_no_suspend: Option<bool>,
-}
-
-impl Selection {
-    fn from_disk(t: &UserTweaks) -> Self {
-        Self {
-            quantum: t.quantum,
-            headroom_usb: t.headroom_usb,
-            headroom_pci: t.headroom_pci,
-            bt_latency: t.bt_latency,
-            sample_rates: t.sample_rates,
-            bt_sbc_xq: t.bt_sbc_xq,
-            bt_call_autoswitch: t.bt_call_autoswitch,
-            alsa_no_suspend: t.alsa_no_suspend,
-        }
-    }
-
-    fn into_tweaks(self) -> UserTweaks {
-        UserTweaks {
-            quantum: self.quantum,
-            headroom_usb: self.headroom_usb,
-            headroom_pci: self.headroom_pci,
-            bt_latency: self.bt_latency,
-            sample_rates: self.sample_rates,
-            bt_sbc_xq: self.bt_sbc_xq,
-            bt_call_autoswitch: self.bt_call_autoswitch,
-            alsa_no_suspend: self.alsa_no_suspend,
-        }
-    }
-
-    fn is_modified(self) -> bool {
-        self.quantum.is_some()
-            || self.headroom_usb.is_some()
-            || self.headroom_pci.is_some()
-            || self.bt_latency.is_some()
-            || self.sample_rates.is_some()
-            || self.bt_sbc_xq.is_some()
-            || self.bt_call_autoswitch.is_some()
-            || self.alsa_no_suspend.is_some()
-    }
-}
+mod apply;
+use super::super::widgets::didactic::{DidacticCard, labelled_row, section_header};
 
 /// Build the Tuning page. Returns a scrollable container ready to be
 /// added to the [`adw::ViewStack`] in `views::window::populate_body`.
@@ -127,7 +75,7 @@ pub fn build() -> gtk::Widget {
             .await
             .unwrap_or_default();
         if let Some(content) = content_weak.upgrade() {
-            populate_tuning_page(&content, Selection::from_disk(&tweaks));
+            populate_tuning_page(&content, tweaks);
         }
     });
     scroll.upcast()
@@ -135,7 +83,7 @@ pub fn build() -> gtk::Widget {
 
 /// Build the Tuning page cards from the already-loaded on-disk selection. Split
 /// from [`build`] so the disk read can run off the main loop first.
-fn populate_tuning_page(content: &GtkBox, initial: Selection) {
+fn populate_tuning_page(content: &GtkBox, initial: UserTweaks) {
     let selection = Rc::new(RefCell::new(initial));
 
     let banner = adw::Banner::builder()
@@ -198,7 +146,7 @@ fn populate_tuning_page(content: &GtkBox, initial: Selection) {
             let button_weak = btn.downgrade();
             dialog.connect_response(None, move |dlg, response| {
                 if is_reset_response(response) {
-                    *selection.borrow_mut() = Selection::default();
+                    *selection.borrow_mut() = UserTweaks::default();
                     refresh_banner(&banner, &selection);
                     // No separate synchronous `UserTweaks::clear()`: applying the
                     // now-default selection renders empty drop-ins, and
@@ -251,7 +199,7 @@ fn action_toolbar() -> ActionToolbar {
     ActionToolbar { row, apply, reset }
 }
 
-fn refresh_banner(banner: &adw::Banner, selection: &Rc<RefCell<Selection>>) {
+fn refresh_banner(banner: &adw::Banner, selection: &Rc<RefCell<UserTweaks>>) {
     let modified = selection.borrow().is_modified();
     banner.set_title(&banner_title_for_modified_state(modified));
     banner.set_revealed(modified);
@@ -271,7 +219,7 @@ fn banner_title_message_for_modified_state(is_modified: bool) -> &'static str {
 
 // ── Bluetooth cards ──────────────────────────────────────────────────
 
-fn bt_call_card(selection: &Rc<RefCell<Selection>>, banner: &adw::Banner) -> DidacticCard {
+fn bt_call_card(selection: &Rc<RefCell<UserTweaks>>, banner: &adw::Banner) -> DidacticCard {
     let card = DidacticCard::new(
         "bluetooth_call.svg",
         &i18n("Bluetooth call mode"),
@@ -303,7 +251,7 @@ fn bt_call_card(selection: &Rc<RefCell<Selection>>, banner: &adw::Banner) -> Did
     card
 }
 
-fn bt_latency_card(selection: &Rc<RefCell<Selection>>, banner: &adw::Banner) -> DidacticCard {
+fn bt_latency_card(selection: &Rc<RefCell<UserTweaks>>, banner: &adw::Banner) -> DidacticCard {
     let card = DidacticCard::new(
         "bluetooth_latency.svg",
         &i18n("Bluetooth audio buffer"),
@@ -319,7 +267,7 @@ fn bt_latency_card(selection: &Rc<RefCell<Selection>>, banner: &adw::Banner) -> 
     let options = vec![
         TweakOption::distro(),
         TweakOption::value(
-            i18n("Small (low delay — needs a stable headset, ~11 ms)"),
+            i18n("Lower delay (needs a stable headset, ~11 ms)"),
             512_u32,
         ),
         TweakOption::value(i18n("Medium (~21 ms)"), 1024_u32),
@@ -338,7 +286,7 @@ fn bt_latency_card(selection: &Rc<RefCell<Selection>>, banner: &adw::Banner) -> 
     card
 }
 
-fn bt_codec_card(selection: &Rc<RefCell<Selection>>, banner: &adw::Banner) -> DidacticCard {
+fn bt_codec_card(selection: &Rc<RefCell<UserTweaks>>, banner: &adw::Banner) -> DidacticCard {
     let card = DidacticCard::new(
         "bluetooth_codec.svg",
         &i18n("High-quality Bluetooth audio (SBC-XQ)"),
@@ -363,13 +311,16 @@ fn bt_codec_card(selection: &Rc<RefCell<Selection>>, banner: &adw::Banner) -> Di
             refresh_banner(&banner, &selection);
         }
     });
-    card.add_row(&labelled_row(&i18n("SBC-XQ"), &dropdown));
+    card.add_row(&labelled_row(
+        &i18n("Higher Bluetooth audio quality (SBC-XQ)"),
+        &dropdown,
+    ));
     card
 }
 
 // ── Stability / performance cards ────────────────────────────────────
 
-fn quantum_card(selection: &Rc<RefCell<Selection>>, banner: &adw::Banner) -> DidacticCard {
+fn quantum_card(selection: &Rc<RefCell<UserTweaks>>, banner: &adw::Banner) -> DidacticCard {
     let card = DidacticCard::new(
         "quantum.svg",
         &i18n("Audio responsiveness"),
@@ -385,7 +336,7 @@ fn quantum_card(selection: &Rc<RefCell<Selection>>, banner: &adw::Banner) -> Did
     let options = vec![
         TweakOption::distro(),
         TweakOption::value(i18n("Very fast (music production, ~5 ms)"), 256_u32),
-        TweakOption::value(i18n("Fast (low delay, ~11 ms)"), 512_u32),
+        TweakOption::value(i18n("Low delay (~11 ms)"), 512_u32),
         TweakOption::value(
             i18n("Balanced (upstream PipeWire default, ~21 ms)"),
             1024_u32,
@@ -405,10 +356,33 @@ fn quantum_card(selection: &Rc<RefCell<Selection>>, banner: &adw::Banner) -> Did
         }
     });
     card.add_row(&labelled_row(&i18n("Reaction speed"), &dropdown));
+    // Heard before it is saved. A number measured in milliseconds cannot be judged from a
+    // dropdown, and the alternative is save, restart, listen, start again — four steps to
+    // answer a question the ear settles in two seconds. PipeWire's live override is obeyed
+    // at once and forgotten at the end of the session, so nothing written down can be wrong
+    // here: nothing is written down.
+    let listen = gtk::Button::builder()
+        .label(i18n("Listen to it now"))
+        .halign(gtk::Align::Start)
+        .build();
+    {
+        let selection = Rc::clone(selection);
+        listen.connect_clicked(move |listen| {
+            let frames = selection.borrow().quantum.unwrap_or(1024);
+            let heard = crate::services::pipewire::preview_quantum(frames);
+            listen.set_label(&if heard {
+                i18n("Playing at this setting until you log out")
+            } else {
+                i18n("This computer would not let it be tried")
+            });
+            listen.set_sensitive(false);
+        });
+    }
+    card.add_row(&listen);
     card
 }
 
-fn headroom_usb_card(selection: &Rc<RefCell<Selection>>, banner: &adw::Banner) -> DidacticCard {
+fn headroom_usb_card(selection: &Rc<RefCell<UserTweaks>>, banner: &adw::Banner) -> DidacticCard {
     let card = DidacticCard::new(
         "headroom_usb.svg",
         &i18n("USB audio safety margin"),
@@ -432,7 +406,7 @@ fn headroom_usb_card(selection: &Rc<RefCell<Selection>>, banner: &adw::Banner) -
     card
 }
 
-fn headroom_pci_card(selection: &Rc<RefCell<Selection>>, banner: &adw::Banner) -> DidacticCard {
+fn headroom_pci_card(selection: &Rc<RefCell<UserTweaks>>, banner: &adw::Banner) -> DidacticCard {
     let card = DidacticCard::new(
         "headroom_pci.svg",
         &i18n("Built-in audio safety margin"),
@@ -457,7 +431,7 @@ fn headroom_pci_card(selection: &Rc<RefCell<Selection>>, banner: &adw::Banner) -
     card
 }
 
-fn alsa_suspend_card(selection: &Rc<RefCell<Selection>>, banner: &adw::Banner) -> DidacticCard {
+fn alsa_suspend_card(selection: &Rc<RefCell<UserTweaks>>, banner: &adw::Banner) -> DidacticCard {
     let card = DidacticCard::new(
         "alsa_suspend.svg",
         &i18n("Avoid the click at the start of sounds"),
@@ -493,7 +467,7 @@ fn alsa_suspend_card(selection: &Rc<RefCell<Selection>>, banner: &adw::Banner) -
 
 // ── Sound-quality cards ──────────────────────────────────────────────
 
-fn sample_rates_card(selection: &Rc<RefCell<Selection>>, banner: &adw::Banner) -> DidacticCard {
+fn sample_rates_card(selection: &Rc<RefCell<UserTweaks>>, banner: &adw::Banner) -> DidacticCard {
     let card = DidacticCard::new(
         "sample_rates.svg",
         &i18n("Sound quality range"),
@@ -509,10 +483,13 @@ fn sample_rates_card(selection: &Rc<RefCell<Selection>>, banner: &adw::Banner) -
     let options = vec![
         TweakOption::distro(),
         TweakOption::value(
-            i18n("Studio quality only (default, 48 kHz)"),
+            i18n("Standard quality only (default, 48 kHz)"),
             SampleRates::Standard,
         ),
-        TweakOption::value(i18n("CD + studio quality (44.1 + 48 kHz)"), SampleRates::Cd),
+        TweakOption::value(
+            i18n("CD and standard quality (44.1 + 48 kHz)"),
+            SampleRates::Cd,
+        ),
         TweakOption::value(
             i18n("Allow hi-res audio (44.1 / 48 / 88.2 / 96 / 176.4 / 192 kHz)"),
             SampleRates::HiRes,
@@ -561,7 +538,7 @@ fn headroom_options() -> Vec<TweakOption<u32>> {
         TweakOption::value(i18n("None"), 0_u32),
         TweakOption::value(i18n("Small (~5 ms)"), 256_u32),
         TweakOption::value(i18n("Medium (~11 ms)"), 512_u32),
-        TweakOption::value(i18n("Standard (default, ~21 ms)"), 1024_u32),
+        TweakOption::value(i18n("Standard (~21 ms)"), 1024_u32),
         TweakOption::value(i18n("Large (virtual machines, ~42 ms)"), 2048_u32),
         TweakOption::value(i18n("Maximum (last resort, ~85 ms)"), 4096_u32),
     ]
@@ -607,245 +584,17 @@ where
 
 #[cfg(test)]
 pub(in crate::ui) fn refresh_banner_contract(banner: &adw::Banner, tweaks: UserTweaks) {
-    let selection = Rc::new(RefCell::new(Selection::from_disk(&tweaks)));
+    let selection = Rc::new(RefCell::new(tweaks));
     refresh_banner(banner, &selection);
 }
 
 #[cfg(test)]
 pub(in crate::ui) fn build_tuning_page_contract(tweaks: UserTweaks) -> GtkBox {
     let content = GtkBox::builder().orientation(Orientation::Vertical).build();
-    populate_tuning_page(&content, Selection::from_disk(&tweaks));
+    populate_tuning_page(&content, tweaks);
     content
 }
 
-// ── Apply / Reset ────────────────────────────────────────────────────
-
-/// Outcome of the apply worker, distinguishing a config-write failure
-/// from a service-restart failure so the UI can show the right message.
-enum ApplyOutcome {
-    Ok,
-    WriteFailed(String),
-    RestartFailed(String),
-}
-
-fn apply_clicked(button: &gtk::Button, selection: &Rc<RefCell<Selection>>, banner: &adw::Banner) {
-    let snapshot = *selection.borrow();
-    let tweaks = snapshot.into_tweaks();
-
-    button.set_sensitive(false);
-    button.set_label(&i18n("Restarting audio…"));
-
-    let button_weak = button.downgrade();
-    let banner_weak = banner.downgrade();
-    let selection = Rc::clone(selection);
-    glib::spawn_future_local(async move {
-        // Write the drop-ins and restart the stack on the same worker so
-        // the load-bearing order (fsync the config, *then* bounce the
-        // daemons that re-read it) is preserved off the main loop —
-        // offloading the write separately could race it past the restart.
-        let outcome = gio::spawn_blocking(move || {
-            if let Err(e) = tweaks.apply() {
-                return ApplyOutcome::WriteFailed(e.to_string());
-            }
-            match restart_pipewire_user_stack() {
-                Ok(()) => ApplyOutcome::Ok,
-                Err(e) => ApplyOutcome::RestartFailed(e.to_string()),
-            }
-        })
-        .await
-        .unwrap_or_else(|_| ApplyOutcome::RestartFailed("worker thread panicked".to_owned()));
-
-        let Some(button) = button_weak.upgrade() else {
-            return;
-        };
-        button.set_sensitive(true);
-        button.set_label(&i18n("Apply and restart audio"));
-
-        if let Some(banner) = banner_weak.upgrade() {
-            refresh_banner(&banner, &selection);
-        }
-
-        match outcome {
-            ApplyOutcome::Ok => {}
-            ApplyOutcome::WriteFailed(message) => {
-                dialogs::error_dialog(
-                    &i18n("Failed to write configuration"),
-                    &message,
-                    &i18n("OK"),
-                )
-                .present(Some(&button));
-            }
-            ApplyOutcome::RestartFailed(message) => {
-                dialogs::error_dialog(&i18n("Audio service restart failed"), &message, &i18n("OK"))
-                    .present(Some(&button));
-            }
-        }
-    });
-}
-
 #[cfg(test)]
-pub(in crate::ui) fn trigger_apply_button_contract(button: &gtk::Button, banner: &adw::Banner) {
-    let selection = Rc::new(RefCell::new(Selection::default()));
-    apply_clicked(button, &selection, banner);
-}
-
-pub(in crate::ui) fn reset_audio_settings_dialog() -> adw::AlertDialog {
-    dialogs::confirm_dialog(
-        &i18n("Restore default audio settings?"),
-        &i18n(
-            "All your custom audio settings will be removed and the \
-             audio service will restart with the defaults.",
-        ),
-        &i18n("Cancel"),
-        "reset",
-        &i18n("Restore"),
-        true,
-    )
-}
-
-#[cfg(test)]
-mod tests {
-    use super::*;
-
-    fn fully_custom_tweaks() -> UserTweaks {
-        UserTweaks {
-            quantum: Some(512),
-            headroom_usb: Some(256),
-            headroom_pci: Some(1024),
-            bt_latency: Some(2048),
-            sample_rates: Some(SampleRates::HiRes),
-            bt_sbc_xq: Some(true),
-            bt_call_autoswitch: Some(false),
-            alsa_no_suspend: Some(true),
-        }
-    }
-
-    #[test]
-    fn selection_round_trips_every_user_tweak_field() {
-        let tweaks = fully_custom_tweaks();
-        let selection = Selection::from_disk(&tweaks);
-
-        assert_eq!(selection.quantum, Some(512));
-        assert_eq!(selection.headroom_usb, Some(256));
-        assert_eq!(selection.headroom_pci, Some(1024));
-        assert_eq!(selection.bt_latency, Some(2048));
-        assert_eq!(selection.sample_rates, Some(SampleRates::HiRes));
-        assert_eq!(selection.bt_sbc_xq, Some(true));
-        assert_eq!(selection.bt_call_autoswitch, Some(false));
-        assert_eq!(selection.alsa_no_suspend, Some(true));
-        assert_eq!(selection.into_tweaks(), tweaks);
-    }
-
-    #[test]
-    fn selection_modified_state_tracks_each_field_independently() {
-        assert!(!Selection::default().is_modified());
-
-        for selection in [
-            Selection {
-                quantum: Some(512),
-                ..Selection::default()
-            },
-            Selection {
-                headroom_usb: Some(256),
-                ..Selection::default()
-            },
-            Selection {
-                headroom_pci: Some(1024),
-                ..Selection::default()
-            },
-            Selection {
-                bt_latency: Some(2048),
-                ..Selection::default()
-            },
-            Selection {
-                sample_rates: Some(SampleRates::Cd),
-                ..Selection::default()
-            },
-            Selection {
-                bt_sbc_xq: Some(false),
-                ..Selection::default()
-            },
-            Selection {
-                bt_call_autoswitch: Some(true),
-                ..Selection::default()
-            },
-            Selection {
-                alsa_no_suspend: Some(true),
-                ..Selection::default()
-            },
-        ] {
-            assert!(selection.is_modified(), "{selection:?}");
-        }
-    }
-
-    #[test]
-    fn banner_title_message_matches_modified_state() {
-        assert_eq!(
-            banner_title_message_for_modified_state(false),
-            "The standard audio settings are in use."
-        );
-        assert_eq!(
-            banner_title_message_for_modified_state(true),
-            "Custom settings active. Click Apply to enable them."
-        );
-    }
-
-    #[test]
-    #[cfg(not(miri))]
-    fn localized_banner_title_matches_modified_state() {
-        assert_eq!(
-            banner_title_for_modified_state(false),
-            "The standard audio settings are in use."
-        );
-        assert_eq!(
-            banner_title_for_modified_state(true),
-            "Custom settings active. Click Apply to enable them."
-        );
-    }
-
-    #[test]
-    fn reset_response_only_accepts_reset_id() {
-        assert!(is_reset_response("reset"));
-        assert!(!is_reset_response("cancel"));
-        assert!(!is_reset_response(""));
-    }
-
-    #[test]
-    #[cfg(not(miri))]
-    fn headroom_options_keep_default_and_curated_values() {
-        let options = headroom_options();
-        let labels = options
-            .iter()
-            .map(|option| option.label.as_str())
-            .collect::<Vec<_>>();
-        let values = options
-            .iter()
-            .map(|option| option.value)
-            .collect::<Vec<_>>();
-
-        assert_eq!(
-            labels,
-            [
-                "Default",
-                "None",
-                "Small (~5 ms)",
-                "Medium (~11 ms)",
-                "Standard (default, ~21 ms)",
-                "Large (virtual machines, ~42 ms)",
-                "Maximum (last resort, ~85 ms)",
-            ]
-        );
-        assert_eq!(
-            values,
-            [
-                None,
-                Some(0),
-                Some(256),
-                Some(512),
-                Some(1024),
-                Some(2048),
-                Some(4096),
-            ]
-        );
-    }
-}
+#[path = "advanced_tests.rs"]
+mod tests;

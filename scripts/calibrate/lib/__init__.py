@@ -1,4 +1,4 @@
-"""Calibration library: signals, chain emulator, metrics, DNSMOS wrapper.
+"""Calibration library: audio loading, chain emulator, metrics, DNSMOS wrapper.
 
 Reproducible offline scoring of the BigLinux noise-reduction filter
 chain. The Python emulator is exact for the biquad/EQ stages (same

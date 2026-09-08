@@ -115,6 +115,7 @@ env \
 	FINAL_LAYOUT="$SESSION_DIR/final.layout.txt" \
 	FINAL_TARGETS="$SESSION_DIR/final.targets.txt" \
 	FINAL_TREE="$SESSION_DIR/final.tree.txt" \
+	PIPEWIRE_REMOTE="biglinux-microphone-smoke-${BASHPID}" \
 	BIGLINUX_UI_SESSION_MODE=headless \
 	BIGLINUX_VISIBLE_HOST_DISPLAY_FORBIDDEN=1 \
 	AUDIT_APP=biglinux-microphone \

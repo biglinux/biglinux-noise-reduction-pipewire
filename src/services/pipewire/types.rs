@@ -1,8 +1,4 @@
-//! Shared types exchanged between the PipeWire worker thread and any
-//! consumer (UI, CLI, tests).
-//!
-//! Everything in here is plain data: `Send + Sync`, no pipewire-rs types
-//! leak across the thread boundary.
+//! Plain-data descriptions of PipeWire application streams.
 
 /// Snapshot of an application stream discovered in the PipeWire graph.
 ///
@@ -52,26 +48,6 @@ impl StreamDirection {
             _ => None,
         }
     }
-}
-
-/// Events the worker emits as the graph changes.
-#[derive(Debug, Clone, PartialEq, Eq)]
-pub enum Event {
-    /// A new stream became visible in the graph.
-    StreamAppeared(AppStream),
-    /// A previously-announced stream has been removed.
-    StreamDisappeared { node_id: u32 },
-    /// The worker thread encountered a fatal error and shut the main loop
-    /// down. Consumers should treat the service as dead after this.
-    Fatal(String),
-}
-
-/// Commands the consumer sends *into* the worker thread.
-#[derive(Debug, Clone)]
-pub enum Command {
-    /// Gracefully shut down the main loop. The worker thread exits after
-    /// emitting any pending events.
-    Shutdown,
 }
 
 #[cfg(test)]

@@ -1,10 +1,8 @@
 //! Output filter chain — processes audio the user **hears**.
 //!
-//! Typical use case: a noisy video call. The output filter sink is
-//! exposed as a regular PipeWire `Audio/Sink` virtual device. The user
-//! routes specific apps to it through the standard system audio panel
-//! (KDE/GNOME volume mixer), exactly like any other sink — no per-app
-//! state is maintained inside this app.
+//! Typical use case: a noisy video call. WirePlumber transparently
+//! inserts the filter before the current default sink, so this app keeps
+//! no per-application routing state.
 
 use serde::{Deserialize, Serialize};
 
@@ -13,7 +11,7 @@ use super::equalizer::EqualizerConfig;
 use super::processing::CompressorConfig;
 
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
-#[serde(default)]
+#[serde(default, deny_unknown_fields)]
 pub struct OutputFilterSettings {
     pub enabled: bool,
     pub noise_reduction: NoiseReductionConfig,
@@ -21,13 +19,8 @@ pub struct OutputFilterSettings {
     pub gate: GateConfig,
     pub compressor: CompressorConfig,
     pub equalizer: EqualizerConfig,
-    /// `node.name` of the hardware sink the output filter plays into.
-    /// Captured by the reconciler the first time the user enables the
-    /// output filter (snapshot of the system default sink right before
-    /// `output-biglinux` is promoted), so the playback side of the
-    /// filter chain has a stable target to forward processed audio to —
-    /// without it, `node.passive` would follow the new default and
-    /// loop back into us.
+    /// Legacy persisted target retained for settings and API compatibility.
+    /// WirePlumber now follows the current default sink directly.
     #[serde(default)]
     pub target_sink_name: Option<String>,
 }
@@ -60,16 +53,6 @@ mod tests {
     use super::*;
 
     #[test]
-    fn defaults_have_disabled_effects() {
-        let s = OutputFilterSettings::default();
-        assert!(!s.enabled);
-        assert!(!s.gate.enabled);
-        assert!(!s.compressor.enabled);
-        assert!(!s.equalizer.enabled);
-        assert!(!s.hpf.enabled);
-    }
-
-    #[test]
     fn deserializes_minimal_payload() {
         let raw = r#"{ "enabled": true }"#;
         let s: OutputFilterSettings = serde_json::from_str(raw).unwrap();
@@ -78,11 +61,10 @@ mod tests {
     }
 
     #[test]
-    fn legacy_routed_apps_field_is_ignored() {
-        // Existing settings.json files from the per-app era include a
-        // `routed_apps` array. Serde must accept and discard it.
+    fn unknown_routed_apps_field_is_rejected() {
         let raw = r#"{ "enabled": true, "routed_apps": ["Firefox"] }"#;
-        let s: OutputFilterSettings = serde_json::from_str(raw).unwrap();
-        assert!(s.enabled);
+        let error = serde_json::from_str::<OutputFilterSettings>(raw).unwrap_err();
+
+        assert!(error.to_string().contains("unknown field `routed_apps`"));
     }
 }

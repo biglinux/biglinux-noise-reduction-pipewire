@@ -59,7 +59,16 @@ run_surface() {
 	} >"$automation_file"
 	chmod 700 "$automation_file"
 
+	# Isolated per-surface config: the app under test reads/writes
+	# settings.json via XDG_CONFIG_HOME, so without this the smoke
+	# mutates the developer's real ~/.config/biglinux-microphone (state
+	# leaks between surfaces/runs — e.g. a persisted Advanced flag
+	# breaks the advanced-tabs surface on the next run).
+	local config_home="$surface_dir/config"
+	mkdir -p "$config_home"
 	env \
+		XDG_CONFIG_HOME="$config_home" \
+		PIPEWIRE_REMOTE="biglinux-microphone-smoke-${BASHPID}" \
 		BIGLINUX_UI_SESSION_MODE=headless \
 		BIGLINUX_VISIBLE_HOST_DISPLAY_FORBIDDEN=1 \
 		AUDIT_APP=biglinux-microphone \
@@ -92,8 +101,8 @@ python3 "$ATSPI" wait-for --query "=Main menu" --role "button" --timeout-ms 2000
 # shellcheck disable=SC2016
 run_surface main-menu '
 python3 "$ATSPI" wait-act-first --query "=Main menu" --role "button" --timeout-ms 20000 >/dev/null
-python3 "$ATSPI" wait-for --query "=Restore default settings" --role "menu item" --timeout-ms 10000 >/dev/null
-python3 "$ATSPI" wait-for --query "=About Filter noise" --role "menu item" --timeout-ms 10000 >/dev/null
+python3 "$ATSPI" wait-for --query "=Restore default settings" --role "button" --timeout-ms 10000 >/dev/null
+python3 "$ATSPI" wait-for --query "=About Filter noise" --role "button" --timeout-ms 10000 >/dev/null
 '
 
 # shellcheck disable=SC2016
@@ -107,7 +116,7 @@ python3 "$ATSPI" wait-for --query "=Tuning" --timeout-ms 10000 >/dev/null
 # shellcheck disable=SC2016
 run_surface reset-dialog '
 python3 "$ATSPI" wait-act-first --query "=Main menu" --role "button" --timeout-ms 20000 >/dev/null
-python3 "$ATSPI" wait-act-first --query "=Restore default settings" --role "menu item" --timeout-ms 10000 >/dev/null
+python3 "$ATSPI" wait-act-first --query "=Restore default settings" --role "button" --timeout-ms 10000 >/dev/null
 python3 "$ATSPI" wait-for --query "=Restore default settings?" --role "dialog" --timeout-ms 10000 >/dev/null
 python3 "$ATSPI" wait-for --query "=Restore defaults" --role "button" --timeout-ms 10000 >/dev/null
 '

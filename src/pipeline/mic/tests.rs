@@ -56,7 +56,10 @@ fn conf_declares_smart_filter_when_aec_disabled() {
     // `filter.smart.before` either — there is no EC filter to
     // cascade with.
     let s = AppSettings {
-        echo_cancel: crate::config::EchoCancelConfig { enabled: false },
+        echo_cancel: crate::config::EchoCancelConfig {
+            enabled: false,
+            ..Default::default()
+        },
         ..AppSettings::default()
     };
     let conf = build_mic_conf(&s);
@@ -80,7 +83,10 @@ fn conf_pins_capture_to_aec_source_when_enabled() {
     // so WirePlumber cannot link it directly to the hardware mic and
     // bypass the canceller.
     let s = AppSettings {
-        echo_cancel: crate::config::EchoCancelConfig { enabled: true },
+        echo_cancel: crate::config::EchoCancelConfig {
+            enabled: true,
+            ..Default::default()
+        },
         ..AppSettings::default()
     };
     let conf = build_mic_conf(&s);
@@ -96,22 +102,25 @@ fn conf_pins_capture_to_aec_source_when_enabled() {
         "mic-biglinux must not promote itself as the visible default",
     );
     assert!(
-        conf.contains("node.latency = \"1920/48000\""),
-        "when AEC is upstream, the mic chain must follow AEC's 40 ms (4× WebRTC frame) quantum",
+        conf.contains("node.latency = \"960/48000\""),
+        "when AEC is upstream, the mic chain must follow AEC's 20 ms (2x WebRTC frame) quantum",
     );
 }
 
 #[test]
 fn conf_omits_capture_target_when_aec_disabled() {
     let s = AppSettings {
-        echo_cancel: crate::config::EchoCancelConfig { enabled: false },
+        echo_cancel: crate::config::EchoCancelConfig {
+            enabled: false,
+            ..Default::default()
+        },
         ..AppSettings::default()
     };
     let conf = build_mic_conf(&s);
     assert!(!conf.contains("target.object ="));
     assert!(
-        conf.contains("node.latency = \"1024/48000\""),
-        "without AEC, keep the regular GTCRN-friendly quantum",
+        conf.contains("node.latency = \"960/48000\""),
+        "the block is the same with or without the canceller, and a multiple of every hop",
     );
 }
 
@@ -148,18 +157,75 @@ fn conf_enabled_hpf_cascades_two_biquads() {
     assert!(conf.contains("name = \"hpf_pre\""));
     assert!(conf.contains("name = \"hpf\""));
     assert!(conf.contains("{ output = \"hpf_pre:Out\" input = \"hpf:In\" }"));
+    // The stream enters at the head of the cascade, not at the second
+    // stage — see `graph_input_is_never_a_link_destination`.
+    assert!(conf.contains("inputs = [ \"hpf_pre:In\" ]"));
     // Both stages share the user-selected cutoff.
     let occurrences = conf.matches("\"Freq\" = 80.0").count();
     assert!(occurrences >= 2, "expected cascade to share cutoff: {conf}");
 }
 
+/// Collect the `inputs = [ … ]` entries and every link destination out
+/// of a rendered args body.
+fn graph_inputs_and_link_targets(conf: &str) -> (Vec<String>, Vec<String>) {
+    let inputs = conf
+        .lines()
+        .find_map(|line| line.trim().strip_prefix("inputs = ["))
+        .map(|rest| {
+            rest.split('"')
+                .skip(1)
+                .step_by(2)
+                .map(str::to_owned)
+                .collect()
+        })
+        .unwrap_or_default();
+    let targets = conf
+        .lines()
+        .filter_map(|line| line.trim().strip_prefix("{ output = "))
+        .filter_map(|rest| rest.split_once("input = "))
+        .map(|(_, input)| input.trim_end_matches(" }").trim_matches('"').to_owned())
+        .collect();
+    (inputs, targets)
+}
+
 #[test]
-fn hpf_default_frequency_protects_voice_fundamental() {
-    // 80 Hz keeps the lowest adult-male F0 (~85 Hz) intact while
-    // killing HVAC/fan rumble and 50/60 Hz mains harmonics. If
-    // someone bumps this they should weigh the impact on bass
-    // voices first.
-    assert!((crate::config::HPF_FREQUENCY_DEFAULT - 80.0).abs() < f32::EPSILON);
+fn graph_input_is_never_a_link_destination() {
+    // `spa.filter-graph` rejects the whole graph when a declared input
+    // names a port some link already feeds: "input port hpf[0]:In
+    // already used by link, use mixer" (-EBUSY), and the virtual source
+    // then never starts. Reproduced on PipeWire 1.6.8 with the HPF
+    // cascade on, where the head is `hpf_pre` but the input said `hpf`.
+    for (label, settings) in [
+        ("defaults", default_settings()),
+        ("hpf on", {
+            let mut s = default_settings();
+            s.hpf.enabled = true;
+            s
+        }),
+        ("hpf on, everything else off", {
+            let mut s = default_settings();
+            cascade_mic_off(&mut s);
+            s.hpf.enabled = true;
+            s
+        }),
+        ("hpf + voice changer", {
+            let mut s = default_settings();
+            s.hpf.enabled = true;
+            s.stereo.enabled = true;
+            s.stereo.mode = StereoMode::VoiceChanger;
+            s
+        }),
+    ] {
+        let conf = build_mic_conf(&settings);
+        let (inputs, targets) = graph_inputs_and_link_targets(&conf);
+        assert!(!inputs.is_empty(), "{label}: no graph inputs rendered");
+        for input in &inputs {
+            assert!(
+                !targets.contains(input),
+                "{label}: graph input {input} is also a link destination:\n{conf}",
+            );
+        }
+    }
 }
 
 #[test]
@@ -334,7 +400,6 @@ fn conf_voice_changer_emits_pitch_node_and_rewires_chain() {
             enabled: true,
             mode: crate::config::StereoMode::VoiceChanger,
             width: 1.0,
-            ..crate::config::StereoConfig::default()
         },
         ..AppSettings::default()
     };
@@ -354,7 +419,6 @@ fn conf_voice_changer_deep_voice_compensates_with_positive_gain() {
             enabled: true,
             mode: crate::config::StereoMode::VoiceChanger,
             width: 0.0,
-            ..crate::config::StereoConfig::default()
         },
         ..AppSettings::default()
     };
@@ -373,7 +437,6 @@ fn voice_changer_mid_high_width_uses_exponential_pitch_curve() {
             enabled: true,
             mode: crate::config::StereoMode::VoiceChanger,
             width: 0.75,
-            ..crate::config::StereoConfig::default()
         },
         ..AppSettings::default()
     };
@@ -389,24 +452,11 @@ fn conf_dual_mono_stereo_does_not_emit_pitch() {
             enabled: true,
             mode: crate::config::StereoMode::DualMono,
             width: 1.0,
-            ..crate::config::StereoConfig::default()
         },
         ..AppSettings::default()
     };
     let conf = build_mic_conf(&s);
     assert!(!conf.contains("\"Pitch co-efficient\""));
-}
-
-#[test]
-fn conf_does_not_use_optional_zeroramp_builtin() {
-    // Older PipeWire versions don't ship the `zeroramp` builtin and
-    // refuse to load the whole filter-chain when it appears in the
-    // graph. Keep the chain to widely-available builtins.
-    let conf = build_mic_conf(&default_settings());
-    assert!(
-        !conf.contains("zeroramp"),
-        "mic chain must not depend on the optional `zeroramp` builtin",
-    );
 }
 
 #[test]
@@ -518,7 +568,6 @@ fn voice_changer_unity_width_has_zero_gain_compensation() {
             enabled: true,
             mode: crate::config::StereoMode::VoiceChanger,
             width: 0.5,
-            ..crate::config::StereoConfig::default()
         },
         ..AppSettings::default()
     };

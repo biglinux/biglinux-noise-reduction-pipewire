@@ -12,25 +12,27 @@
 
 #![cfg(not(miri))]
 
-use std::path::PathBuf;
-use std::process::Command;
+use big_os_kit::subprocess::{BigSubprocessOutput, BigSubprocessSpec};
 
 use tempfile::tempdir;
 
-fn cli_path() -> PathBuf {
+fn cli_path() -> String {
     // `CARGO_BIN_EXE_<name>` is set by Cargo for every test target so
     // we can locate the just-compiled binary regardless of the build
     // profile.
-    PathBuf::from(env!("CARGO_BIN_EXE_biglinux-microphone-cli"))
+    env!("CARGO_BIN_EXE_biglinux-microphone-cli").to_owned()
 }
 
-fn run(args: &[&str], xdg: &std::path::Path) -> std::process::Output {
-    Command::new(cli_path())
+fn run(args: &[&str], xdg: &std::path::Path) -> BigSubprocessOutput {
+    let program = cli_path();
+    BigSubprocessSpec::builder()
+        .program(program.clone())
         .args(args)
         .env("XDG_CONFIG_HOME", xdg)
-        .env_remove("HOME")
-        .env_remove("XDG_DATA_HOME")
-        .output()
+        .env_inherit(false)
+        .allow_list([program])
+        .build()
+        .run()
         .expect("failed to spawn cli")
 }
 
