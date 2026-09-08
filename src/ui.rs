@@ -60,7 +60,10 @@ mod tests {
     display_contract!(gtk_window_reset_dialog, assert_window_reset_dialog_contract);
     display_contract!(gtk_tuning_reset_dialog, assert_tuning_reset_dialog_contract);
     display_contract!(gtk_model_picker, assert_model_picker_contract);
-    display_contract!(gtk_equalizer, super::widgets::eq_card::assert_interaction_contract);
+    display_contract!(
+        gtk_equalizer,
+        super::widgets::eq_card::assert_interaction_contract
+    );
     display_contract!(gtk_spectrum_visibility, assert_spectrum_visibility_contract);
     display_contract!(gtk_populate_body, assert_populate_body_contract);
     display_contract!(gtk_window_actions, assert_window_actions_contract);
@@ -71,8 +74,14 @@ mod tests {
         gtk_factory_reset,
         assert_factory_reset_preserves_window_and_ui_preferences
     );
-    display_contract!(gtk_tuning_dropdown, assert_tuning_dropdown_and_banner_contract);
-    display_contract!(gtk_tuning_page, assert_tuning_page_populates_expected_sections);
+    display_contract!(
+        gtk_tuning_dropdown,
+        assert_tuning_dropdown_and_banner_contract
+    );
+    display_contract!(
+        gtk_tuning_page,
+        assert_tuning_page_populates_expected_sections
+    );
     display_contract!(gtk_tuning_apply, assert_tuning_apply_button_contract);
 
     fn assert_window_reset_dialog_contract() {

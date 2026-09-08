@@ -50,8 +50,7 @@ fn snapshot() -> Option<Vec<Value>> {
 
 fn has_node(graph: &[Value], name: &str) -> bool {
     graph.iter().any(|object| {
-        object["type"] == "PipeWire:Interface:Node"
-            && object["info"]["props"]["node.name"] == name
+        object["type"] == "PipeWire:Interface:Node" && object["info"]["props"]["node.name"] == name
     })
 }
 
@@ -61,7 +60,8 @@ fn await_state(mic: bool, output: bool, logs: &Path) {
         if let Some(graph) = snapshot() {
             let mic_present = has_node(&graph, MIC_NODE_NAME);
             let capture_present = has_node(&graph, MIC_CAPTURE_NODE_NAME);
-            if mic_present == mic && capture_present == mic
+            if mic_present == mic
+                && capture_present == mic
                 && has_node(&graph, OUTPUT_NODE_NAME) == output
             {
                 return;
@@ -71,7 +71,11 @@ fn await_state(mic: bool, output: bool, logs: &Path) {
             for entry in fs::read_dir(logs).expect("read diagnostics directory") {
                 let path = entry.expect("diagnostic entry").path();
                 if path.extension().is_some_and(|extension| extension == "log") {
-                    eprintln!("{}:\n{}", path.display(), fs::read_to_string(&path).unwrap_or_default());
+                    eprintln!(
+                        "{}:\n{}",
+                        path.display(),
+                        fs::read_to_string(&path).unwrap_or_default()
+                    );
                 }
             }
             panic!("PipeWire did not reach mic={mic}, output={output}");
@@ -83,7 +87,10 @@ fn await_state(mic: bool, output: bool, logs: &Path) {
 fn load_graph(path: &Path, log: &Path) -> Process {
     Process::start(
         env!("CARGO_BIN_EXE_biglinux-microphone-pwloader"),
-        &["libpipewire-module-filter-chain", path.to_str().expect("UTF-8 fixture path")],
+        &[
+            "libpipewire-module-filter-chain",
+            path.to_str().expect("UTF-8 fixture path"),
+        ],
         log,
     )
 }
@@ -91,11 +98,20 @@ fn load_graph(path: &Path, log: &Path) -> Process {
 #[test]
 #[ignore = "requires a private PipeWire session; run scripts/test-pipewire.sh"]
 fn generated_graphs_load_and_recover_independently() {
-    assert_eq!(std::env::var("BIGLINUX_AUDIO_SESSION_MODE").as_deref(), Ok("disposable"));
+    assert_eq!(
+        std::env::var("BIGLINUX_AUDIO_SESSION_MODE").as_deref(),
+        Ok("disposable")
+    );
     let runtime = std::env::var_os("XDG_RUNTIME_DIR").expect("private runtime directory");
-    assert_eq!(std::env::var_os("PIPEWIRE_RUNTIME_DIR"), Some(runtime.clone()));
+    assert_eq!(
+        std::env::var_os("PIPEWIRE_RUNTIME_DIR"),
+        Some(runtime.clone())
+    );
     assert!(Path::new(&runtime).join("biglinux-test-session").is_file());
-    assert!(!Path::new(&runtime).join("pipewire-0").exists(), "never reuse a running daemon");
+    assert!(
+        !Path::new(&runtime).join("pipewire-0").exists(),
+        "never reuse a running daemon"
+    );
 
     let directory = tempfile::tempdir().expect("fixture directory");
     let root = directory.path();
