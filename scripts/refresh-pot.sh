@@ -9,7 +9,7 @@ for tool in xtr xgettext msguniq msgcat msgcmp msgmerge python3; do
     command -v "$tool" >/dev/null || { printf 'Missing translation tool: %s\n' "$tool" >&2; exit 1; }
 done
 work="$(mktemp -d)"
-trap 'rm -rf -- "$work"' EXIT
+trap 'status=$?; rm -rf -- "$work" 2>/dev/null || :; exit "$status"' EXIT
 mapfile -t rust_sources < <(grep -vE '^\s*(#|$)' po/POTFILES.in | grep -E '\.rs$')
 mapfile -t qml_sources < <(grep -vE '^\s*(#|$)' po/POTFILES.in | grep -E '\.qml$')
 ((${#rust_sources[@]} > 0)) || { echo 'POTFILES.in has no Rust sources' >&2; exit 1; }

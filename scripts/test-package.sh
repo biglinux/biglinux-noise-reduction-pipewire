@@ -12,7 +12,7 @@ for tool in cargo rsync msgfmt desktop-file-validate appstreamcli python3 readel
     command -v "$tool" >/dev/null || { printf 'Required package test tool: %s\n' "$tool" >&2; exit 1; }
 done
 stage=$(mktemp -d)
-trap 'rm -rf -- "$stage"' EXIT
+trap 'status=$?; rm -rf -- "$stage" 2>/dev/null || :; exit "$status"' EXIT
 # shellcheck source=../packaging/arch/PKGBUILD
 source "$root/packaging/arch/PKGBUILD"
 msg2() { printf '%s\n' "$*"; }

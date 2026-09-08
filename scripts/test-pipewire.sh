@@ -16,7 +16,9 @@ done
 # The same feature set is used for compilation and execution.
 cargo test "${features[@]}" --locked --test pipewire_runtime --no-run
 session="$(mktemp -d)"
-trap 'rm -rf -- "$session"' EXIT
+# A daemon child still writing into the runtime directory can fail the removal.
+# Under `set -e` that would replace the fixture's own result with a cleanup error.
+trap 'status=$?; rm -rf -- "$session" 2>/dev/null || :; exit "$status"' EXIT
 mkdir -m 700 "$session/runtime" "$session/config" "$session/cache" "$session/data"
 : > "$session/runtime/biglinux-test-session"
 unset DBUS_SESSION_BUS_ADDRESS PULSE_SERVER PIPEWIRE_REMOTE

@@ -14,7 +14,9 @@ for tool in cargo python3 xvfb-run dbus-run-session timeout; do
     command -v "$tool" >/dev/null || { printf 'Required UI test tool: %s\n' "$tool" >&2; exit 1; }
 done
 suite="$(mktemp -d)"
-trap 'rm -rf -- "$suite"' EXIT
+# A DBus-activated portal child can repopulate the directory while it is being
+# removed. Under `set -e` a failing cleanup would replace the suite's own result.
+trap 'status=$?; rm -rf -- "$suite" 2>/dev/null || :; exit "$status"' EXIT
 cargo test "${features[@]}" --locked --lib --no-run --message-format=json > "$suite/build.jsonl"
 python3 - "$suite/build.jsonl" > "$suite/executable" <<'PY'
 import json
