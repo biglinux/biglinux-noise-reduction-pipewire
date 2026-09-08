@@ -270,6 +270,8 @@ pub fn audio_thread_share_cached(model: NoiseModel) -> Option<f32> {
         if let Some((stored, value)) = line.rsplit_once(' ')
             && stored == key
             && let Ok(share) = value.parse::<f32>()
+            && share.is_finite()
+            && share > 0.0
         {
             return Some(share);
         }

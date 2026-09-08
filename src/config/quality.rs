@@ -35,7 +35,7 @@ use super::NoiseModel;
 pub enum Quality {
     /// Let this computer decide, and change its mind when the machine changes.
     #[default]
-    #[serde(rename = "auto")]
+    #[serde(rename = "auto", alias = "automatic")]
     Automatic,
     /// The best model that will load, whatever it costs.
     #[serde(rename = "best")]
@@ -290,7 +290,7 @@ fn on_battery() -> Option<bool> {
 /// caller has no way to tell that apart from a model that simply failed.
 #[must_use]
 pub fn loadable(model: NoiseModel) -> NoiseModel {
-    if model.plugin_available() {
+    if model.plugin_loadable_cached() {
         model
     } else {
         LIGHT
