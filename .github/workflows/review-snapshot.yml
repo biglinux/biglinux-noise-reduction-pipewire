@@ -1,0 +1,29 @@
+name: Review source snapshot
+on:
+  push:
+    branches: [fix/review-audio-reliability-20260908]
+    paths: [.github/workflows/review-snapshot.yml]
+permissions:
+  contents: read
+jobs:
+  snapshot:
+    if: github.repository == 'biglinux/biglinux-noise-reduction-pipewire'
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          ref: bf6cfca75bb43d94766d2925624067ae0673a4e2
+          persist-credentials: false
+      - name: Export tracked source only, never credentials or the Git directory
+        run: |
+          set -euo pipefail
+          test "$(git rev-parse HEAD)" = bf6cfca75bb43d94766d2925624067ae0673a4e2
+          git archive --format=tar.gz --output="$RUNNER_TEMP/pr30-source.tar.gz" HEAD
+          sha256sum "$RUNNER_TEMP/pr30-source.tar.gz"
+      - uses: actions/upload-artifact@v4
+        with:
+          name: pr30-source-bf6cfca
+          path: ${{ runner.temp }}/pr30-source.tar.gz
+          retention-days: 1
+          if-no-files-found: error
