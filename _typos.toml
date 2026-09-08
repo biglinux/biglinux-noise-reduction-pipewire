@@ -11,6 +11,10 @@ extend-ignore-identifiers-re = [
     "wpctl",
     # KDE i18n function: typos splits "i18nd" into "i18" + "nd".
     "i18nd?",
+    # MPRIS specifies the signal name Seeked; do not rename the protocol.
+    "[Ss]eeked",
+    "seeked_position",
+    "emit_seeked",
 ]
 
 # Words typos flags but are valid in our context.
@@ -22,6 +26,9 @@ relm = "relm"
 Relm = "Relm"
 # Intel High Definition Audio.
 HDA = "HDA"
+# GTK terminology and percent-encoded café fixture.
+unparented = "unparented"
+caf = "caf"
 
 [files]
 extend-exclude = [

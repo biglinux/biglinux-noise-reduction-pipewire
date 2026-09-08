@@ -5,7 +5,7 @@
 //! Builds a media-player-style two-bar layout (top: pin/title/menu, bottom:
 //! transport + a seek slider) and shows the editor in a window so the miniature,
 //! its drop zones, and the draggable control buttons can be screenshot-verified.
-//! Drag/drop itself needs real pointer input (not driveable headless) — this
+//! Drag/drop itself needs real pointer input (not drivable headless) — this
 //! proves the widget RENDERS; interaction is covered on the VM.
 //!
 //! Run: `cargo run -p big-relm4-components --example zone_layout_editor_demo`.
