@@ -108,7 +108,7 @@ jobs:
         shell: bash
         run: |
           set +e
-          bash scripts/test-ui.sh > /tmp/gui.out 2>&1
+          timeout 180s bash scripts/test-ui.sh > /tmp/gui.out 2>&1
           status=$?
           tail -100 /tmp/gui.out
           exit "$status"
@@ -142,7 +142,9 @@ jobs:
         with:
           tool: cargo-audit,cargo-deny,cargo-machete
       - name: Dependency advisories including unsound code
-        run: cargo audit --deny unsound
+        run: |
+          cargo audit --deny unsound
+          cargo audit --deny unsound --file vendor/big-rust-components/Cargo.lock
       - name: License and source policy
         if: always()
         run: cargo deny check
@@ -156,9 +158,12 @@ jobs:
           set -euo pipefail
           find scripts -type f -name '*.sh' -print0 | xargs -0 -r shellcheck -e SC2034,SC2154
           shellcheck packaging/flatpak/generate-cargo-sources.sh
-          nix-instantiate --parse default.nix >/dev/null
-          nix-instantiate --parse flake.nix >/dev/null
-          nix-instantiate --parse packaging/nix/module.nix >/dev/null
+          # The disposable runner's packaged Nix daemon is not available to
+          # this user. Parse only, using the local store; do not build or run
+          # package expressions as root.
+          sudo env NIX_REMOTE=local nix-instantiate --parse default.nix >/dev/null
+          sudo env NIX_REMOTE=local nix-instantiate --parse flake.nix >/dev/null
+          sudo env NIX_REMOTE=local nix-instantiate --parse packaging/nix/module.nix >/dev/null
       - name: Translation completeness and extraction
         if: always()
         shell: bash
