@@ -175,9 +175,9 @@ fn run() -> Result<(), String> {
     let mut modules: Vec<(CString, CString, String)> = Vec::with_capacity(raw_args.len() / 2);
     for pair in raw_args.chunks_exact(2) {
         let module_name = &pair[0];
-        let args_path = &pair[1];
-        let module_args = read_to_string(std::path::Path::new(args_path))
-            .map_err(|e| format!("read {args_path}: {e}"))?;
+        let args_path = resolve_args_path(&pair[1])?;
+        let module_args = read_to_string(&args_path)
+            .map_err(|e| format!("read {}: {e}", args_path.display()))?;
         let module_name_c =
             CString::new(module_name.clone()).map_err(|e| format!("module name: {e}"))?;
         let module_args_c = CString::new(module_args).map_err(|e| format!("module args: {e}"))?;
@@ -273,7 +273,27 @@ fn run() -> Result<(), String> {
     Ok(())
 }
 
+fn resolve_args_path(argument: &str) -> Result<std::path::PathBuf, String> {
+    if let Some(name) = argument.strip_prefix("@config/") {
+        if !matches!(name, "mic.args" | "aec.args" | "output.args") {
+            return Err("unknown application configuration name".into());
+        }
+        let root = dirs::config_dir().ok_or("XDG configuration directory is unavailable")?;
+        Ok(root.join("biglinux-microphone").join(name))
+    } else {
+        Ok(std::path::PathBuf::from(argument))
+    }
+}
+
 fn main() -> ExitCode {
+    let mut arguments = std::env::args().skip(1);
+    if arguments.next().as_deref() == Some("--check-config") {
+        return match arguments.next().map(|name| resolve_args_path(&name)) {
+            Some(Ok(path)) if path.is_file() => ExitCode::SUCCESS,
+            _ => ExitCode::FAILURE,
+        };
+    }
+
     if let Err(e) = run() {
         eprintln!("biglinux-microphone-pwloader: {e}");
         return ExitCode::FAILURE;

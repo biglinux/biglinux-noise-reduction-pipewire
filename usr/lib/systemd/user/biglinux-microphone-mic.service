@@ -26,7 +26,6 @@ Requisite=pipewire.service
 # The reconciler writes the args file before starting this unit;
 # a missing file means "user turned this chain off" and must not
 # produce a Restart=on-failure loop.
-ConditionPathExists=%h/.config/biglinux-microphone/mic.args
 
 # Hard-stop a crash loop (e.g. an unloadable LADSPA plugin) after five
 # quick failures instead of restarting every 2 s forever; the GUI
@@ -36,10 +35,11 @@ StartLimitIntervalSec=30
 StartLimitBurst=5
 
 [Service]
+ExecCondition=/usr/bin/biglinux-microphone-pwloader --check-config @config/mic.args
 Type=simple
 # Loads libpipewire-module-filter-chain inside this client process,
 # sharing the daemon's clock with every other node in the graph.
-ExecStart=/usr/bin/biglinux-microphone-pwloader libpipewire-module-filter-chain %h/.config/biglinux-microphone/mic.args
+ExecStart=/usr/bin/biglinux-microphone-pwloader libpipewire-module-filter-chain @config/mic.args
 Restart=on-failure
 RestartSec=2s
 StandardOutput=journal

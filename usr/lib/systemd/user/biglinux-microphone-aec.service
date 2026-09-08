@@ -9,7 +9,6 @@ Requisite=pipewire.service
 # The reconciler writes the args file before starting this unit;
 # a missing file means "user turned this chain off" and must not
 # produce a Restart=on-failure loop.
-ConditionPathExists=%h/.config/biglinux-microphone/aec.args
 
 # Hard-stop a crash loop (e.g. an unloadable LADSPA plugin) after five
 # quick failures instead of restarting every 2 s forever; the GUI
@@ -19,11 +18,12 @@ StartLimitIntervalSec=30
 StartLimitBurst=5
 
 [Service]
+ExecCondition=/usr/bin/biglinux-microphone-pwloader --check-config @config/aec.args
 Type=simple
 # Hosts libpipewire-module-echo-cancel inside the loader's client
 # context. The cleaned `echo-cancel-source` is exported to the daemon
 # and is what the mic chain pins as its capture target when AEC is on.
-ExecStart=/usr/bin/biglinux-microphone-pwloader libpipewire-module-echo-cancel %h/.config/biglinux-microphone/aec.args
+ExecStart=/usr/bin/biglinux-microphone-pwloader libpipewire-module-echo-cancel @config/aec.args
 Restart=on-failure
 RestartSec=2s
 StandardOutput=journal
