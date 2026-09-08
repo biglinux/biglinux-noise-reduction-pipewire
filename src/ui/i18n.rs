@@ -21,8 +21,22 @@ pub fn i18n(s: &str) -> String {
 /// that lookup fails (typical during `cargo run`), falls back to the
 /// in-tree `locale/` directory so developers can iterate without
 /// installing the crate.
+///
+/// Must be called from `main`'s thread before any other thread starts —
+/// see the `setlocale` call below.
 pub fn init_gettext() {
-    setlocale(LocaleCategory::LcAll, "");
+    // SAFETY: `setlocale` mutates process-global locale state that C
+    // library calls read without synchronisation, so it is sound only
+    // while this process is single-threaded (RUSTSEC-2026-0244).
+    //
+    // `ui::run` calls this before `AudioMonitor::start` spawns the
+    // capture thread and before `RelmApp::run` enters GTK, and the only
+    // code ahead of it is argument inspection. This is also the sole
+    // `setlocale` call in the crate and in the vendored components, so
+    // nothing else can be racing it.
+    unsafe {
+        setlocale(LocaleCategory::LcAll, "");
+    }
     bind_domain();
     gettextrs::textdomain(GETTEXT_PACKAGE).expect("textdomain");
 }

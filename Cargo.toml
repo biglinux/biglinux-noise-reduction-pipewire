@@ -89,7 +89,11 @@ gio = "0.22"
 cairo = { version = "0.22", package = "cairo-rs" }
 
 # gettext bindings for translating user-facing strings.
-gettext-rs = { version = "0.7", features = ["gettext-system"] }
+#
+# 0.8 is the floor because 0.7 marked `setlocale` safe when it is not
+# (RUSTSEC-2026-0244): concurrent calls corrupt memory. 0.8 makes it
+# `unsafe` and documents the condition; see `ui::i18n::init_gettext`.
+gettext-rs = { version = "0.8", features = ["gettext-system"] }
 
 # Shared subprocess runner: argv-only spawns with concurrent stdout/stderr
 # pipe draining (no >64 KiB deadlock on `pw-cli ls Node`), a kill timeout, and
