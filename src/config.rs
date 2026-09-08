@@ -54,6 +54,8 @@ pub use ui::{UiConfig, WindowConfig};
 #[derive(Debug, Clone, Default, PartialEq, Serialize, Deserialize)]
 #[serde(default)]
 pub struct AppSettings {
+    /// Temporary master bypass; individual effect preferences are retained.
+    pub mic_bypass: bool,
     pub noise_reduction: NoiseReductionConfig,
     pub gate: GateConfig,
     pub compressor: CompressorConfig,
@@ -74,6 +76,22 @@ pub struct AppSettings {
 }
 
 impl AppSettings {
+    pub fn set_microphone_enabled(&mut self, enabled: bool) {
+        self.mic_bypass = !enabled;
+        if enabled && !crate::pipeline::mic_chain_wanted(self) {
+            self.noise_reduction.enabled = true;
+        }
+    }
+
+    /// Materialize effective flags without destroying the saved choices.
+    pub fn runtime_settings(&self) -> Self {
+        let mut effective = self.clone();
+        if self.mic_bypass {
+            crate::pipeline::cascade_mic_off(&mut effective);
+        }
+        effective
+    }
+
     /// Strict transaction read: migration, validation and normalization use
     /// one byte snapshot. Malformed files are never converted to defaults.
     pub fn load_strict() -> io::Result<Self> {
@@ -164,7 +182,7 @@ impl AppSettings {
     /// A `Manual` install chose its model by hand and must pay none of that,
     /// yet all three callers used to read it before asking.
     pub fn settle_quality(&mut self) {
-        if !self.quality.decides_the_model() {
+        if !self.quality.decides_the_model() || self.filters_running() == 0 {
             return;
         }
         let machine = Machine::read(self.filters_running());
@@ -192,7 +210,10 @@ impl AppSettings {
     /// rather than a second demand on it.
     #[must_use]
     pub fn filters_running(&self) -> usize {
-        usize::from(self.noise_reduction.enabled) + usize::from(self.output_filter.enabled)
+        let microphone = usize::from(!self.mic_bypass && self.noise_reduction.enabled);
+        let output = usize::from(self.output_filter.enabled && self.output_filter.noise_reduction.enabled);
+        let channels = if self.output_filter.channel_mode == OutputChannelMode::Stereo { 2 } else { 1 };
+        microphone + output * channels
     }
 
     /// Persist atomically through the shared storage boundary so a crash

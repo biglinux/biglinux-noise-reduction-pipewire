@@ -94,6 +94,8 @@ fn baseline_path() -> PathBuf {
 
 /// Apply saved settings and propagate every required service failure.
 pub fn apply(settings: &AppSettings, force: bool) -> io::Result<()> {
+    let effective = settings.runtime_settings();
+    let settings = &effective;
     pipeline::apply(settings)?;
     let previous: Option<AppSettings> = std::fs::read(baseline_path())
         .ok()

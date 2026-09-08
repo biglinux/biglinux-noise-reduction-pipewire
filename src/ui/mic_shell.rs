@@ -17,7 +17,6 @@ use gtk::{Orientation, gio, glib};
 use relm4::{Component, ComponentParts, ComponentSender};
 
 use crate::config::{AppSettings, NoiseModel, StereoMode, app_id, app_version, settings_file};
-use crate::pipeline::cascade_mic_off;
 use crate::services::audio_monitor::{AudioMonitor, MonitorConfig};
 
 use super::health::{self, Health};
@@ -468,14 +467,9 @@ impl Component for MicShell {
             // Body-control transitions. The widget already shows the new value;
             // the mutation triggers the debounced apply. No rebuild (the visible
             // Simple-view controls don't depend on these fields).
-            MicInput::NoiseFilterToggled(on) => self.mutate_settings(&sender, |s| {
-                s.noise_reduction.enabled = on;
-                if !on {
-                    // Single Simple-view master: cascade so one click tears down
-                    // every reason the mic worker would stay alive.
-                    cascade_mic_off(s);
-                }
-            }),
+            MicInput::NoiseFilterToggled(on) => {
+                self.mutate_settings(&sender, |settings| settings.set_microphone_enabled(on));
+            }
             MicInput::MicIntensityChanged(v) => {
                 self.mutate_settings(&sender, |s| s.noise_reduction.strength = v);
             }
@@ -493,7 +487,10 @@ impl Component for MicShell {
 
             // ── Advanced mic-chain ────────────────────────────────────
             MicInput::MicNrEnabled(on) => {
-                self.mutate_settings(&sender, |s| s.noise_reduction.enabled = on);
+                self.mutate_settings(&sender, |s| {
+                    s.noise_reduction.enabled = on;
+                    if on { s.mic_bypass = false; }
+                });
             }
             MicInput::MicEchoModeChanged(mode) => {
                 self.mutate_settings(&sender, |s| s.echo_cancel.mode = mode);
@@ -514,16 +511,25 @@ impl Component for MicShell {
                 self.mutate_settings(&sender, |s| s.noise_reduction.voice_recovery = v);
             }
             MicInput::MicHpfToggled(on) => {
-                self.mutate_settings(&sender, |s| s.hpf.enabled = on);
+                self.mutate_settings(&sender, |s| {
+                    s.hpf.enabled = on;
+                    if on { s.mic_bypass = false; }
+                });
             }
             MicInput::MicGateToggled(on) => {
-                self.mutate_settings(&sender, |s| s.gate.enabled = on);
+                self.mutate_settings(&sender, |s| {
+                    s.gate.enabled = on;
+                    if on { s.mic_bypass = false; }
+                });
             }
             MicInput::MicGateIntensityChanged(v) => {
                 self.mutate_settings(&sender, |s| s.gate.intensity = v);
             }
             MicInput::MicCompressorToggled(on) => {
-                self.mutate_settings(&sender, |s| s.compressor.enabled = on);
+                self.mutate_settings(&sender, |s| {
+                    s.compressor.enabled = on;
+                    if on { s.mic_bypass = false; }
+                });
             }
             MicInput::MicCompressorIntensityChanged(v) => {
                 self.mutate_settings(&sender, |s| s.compressor.intensity = v);
@@ -531,10 +537,12 @@ impl Component for MicShell {
             MicInput::MicEq(mutation) => {
                 self.mutate_settings(&sender, |s| {
                     eq_card::apply_eq_mutation(&mut s.equalizer, mutation);
+                    if s.equalizer.enabled { s.mic_bypass = false; }
                 });
             }
             MicInput::MicVoiceChangerToggled(on) => self.mutate_settings(&sender, |s| {
                 s.stereo.enabled = on;
+                if on { s.mic_bypass = false; }
                 s.stereo.mode = if on {
                     StereoMode::VoiceChanger
                 } else {

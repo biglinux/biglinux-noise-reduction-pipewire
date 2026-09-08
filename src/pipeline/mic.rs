@@ -141,13 +141,14 @@ pub fn mic_chain_wanted(settings: &AppSettings) -> bool {
     // EC alone is enough to keep the chain materialised: without the
     // smart filter we'd produce an `echo-cancel-source` that no app
     // would pick up, since recording apps target the default source.
+    !settings.mic_bypass && (
     settings.noise_reduction.enabled
         || settings.gate.enabled
         || settings.hpf.enabled
-        || settings.stereo.enabled
+        || (settings.stereo.enabled && settings.stereo.mode == StereoMode::VoiceChanger)
         || settings.equalizer.enabled
         || settings.compressor.enabled
-        || settings.echo_cancel.enabled
+        || settings.echo_cancel.enabled)
 }
 
 /// True when the GTCRN node should be present in the mic graph.
@@ -158,8 +159,9 @@ pub fn mic_chain_wanted(settings: &AppSettings) -> bool {
 /// pipeline entirely — both expensive and a transient-smearing source.
 #[must_use]
 pub fn ai_node_in_mic_chain(settings: &AppSettings) -> bool {
+    !settings.mic_bypass && (
     settings.noise_reduction.enabled
-        || (settings.gate.enabled && !settings.noise_reduction.model.is_attenuation_only())
+        || (settings.gate.enabled && !settings.noise_reduction.model.is_attenuation_only()))
 }
 
 fn mic_nodes(settings: &AppSettings) -> Vec<Node> {

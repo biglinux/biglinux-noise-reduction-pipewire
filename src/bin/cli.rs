@@ -392,11 +392,8 @@ fn toggle_mic() -> ExitCode {
         Ok(settings) => settings,
         Err(error) => return exit_with_error(&error.to_string()),
     };
-    if settings.noise_reduction.enabled {
-        pipeline::cascade_mic_off(&mut settings);
-    } else {
-        settings.noise_reduction.enabled = true;
-    }
+    let enabled = !pipeline::mic_chain_wanted(&settings);
+    settings.set_microphone_enabled(enabled);
     match apply_settings(&mut settings, false) {
         Ok(()) => ExitCode::SUCCESS,
         Err(error) => exit_with_error(&error),
@@ -451,8 +448,8 @@ fn set_one(key: Option<String>, value: Option<String>) -> ExitCode {
         // Off cascades, exactly as `toggle-mic` does: leaving the chain
         // alive on `echo_cancel`/`stereo` defaults is not "off".
         Key::Mic => match on_or_off(&value) {
-            Some(true) => settings.noise_reduction.enabled = true,
-            Some(false) => pipeline::cascade_mic_off(&mut settings),
+            Some(true) => settings.set_microphone_enabled(true),
+            Some(false) => settings.set_microphone_enabled(false),
             None => return not_a_switch(&name, &value),
         },
         Key::MicIntensity => match fraction(&value) {
@@ -596,7 +593,7 @@ fn not_a_percentage(name: &str, value: &str) -> ExitCode {
 /// leave the plasmoid switch stuck after the user disables NR alone.
 fn print_status() -> ExitCode {
     let s = AppSettings::load();
-    let mic = s.noise_reduction.enabled;
+    let mic = pipeline::mic_chain_wanted(&s);
     let output = s.output_filter.enabled;
     println!("{{\"mic_enabled\":{mic},\"output_enabled\":{output}}}");
     ExitCode::SUCCESS
