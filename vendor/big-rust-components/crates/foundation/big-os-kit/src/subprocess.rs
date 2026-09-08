@@ -86,7 +86,7 @@ impl BigSubprocessAllowList {
     /// Returns `true` when the program is permitted.
     #[must_use]
     pub fn permits(&self, program: &str) -> bool {
-        self.allowed.is_empty() || self.allowed.contains(program)
+        self.allowed.contains(program)
     }
 }
 
@@ -381,7 +381,7 @@ impl BigSubprocessSpec {
     /// output nor waits.
     ///
     /// stdin/stdout/stderr are redirected to null regardless of the spec's
-    /// capture modes; the child is not reaped by this process. Validation
+    /// capture modes; a dedicated reaper collects its exit status. Validation
     /// applies as in [`Self::spawn`].
     ///
     /// # Errors
@@ -394,8 +394,23 @@ impl BigSubprocessSpec {
         cmd.stdin(Stdio::null());
         cmd.stdout(Stdio::null());
         cmd.stderr(Stdio::null());
-        let detached_child = cmd.spawn().map_err(BigSubprocessError::Spawn)?;
-        notify_spawn_observer(detached_child.id(), &self.program);
+        let child = cmd.spawn().map_err(BigSubprocessError::Spawn)?;
+        notify_spawn_observer(child.id(), &self.program);
+        let child = std::sync::Arc::new(std::sync::Mutex::new(Some(child)));
+        let worker_child = std::sync::Arc::clone(&child);
+        let reaper = std::thread::Builder::new().name("subprocess-reaper".into()).spawn(move || {
+            if let Ok(mut slot) = worker_child.lock() && let Some(mut child) = slot.take() {
+                let _ = child.wait();
+            }
+        });
+        if let Err(error) = reaper {
+            // Failed thread creation must not leak an unowned child.
+            if let Ok(mut slot) = child.lock() && let Some(mut child) = slot.take() {
+                let _ = child.kill();
+                let _ = child.wait();
+            }
+            return Err(BigSubprocessError::Io(error));
+        }
         Ok(())
     }
 }
@@ -590,6 +605,9 @@ pub enum BigSubprocessError {
     /// Configured timeout elapsed before the child exited.
     #[error("subprocess timed out")]
     Timeout,
+    /// Captured output exceeded its configured safety budget.
+    #[error("subprocess {stream} exceeded the {limit}-byte capture limit")]
+    CaptureLimit { stream: &'static str, limit: usize },
     /// External cancellation flag was set before the child exited. The child
     /// was killed on the same path as [`Self::Timeout`].
     #[error("subprocess cancelled")]
@@ -608,6 +626,11 @@ pub enum BigSubprocessError {
         byte: u8,
     },
 }
+
+#[cfg(unix)]
+mod unix_exec;
+#[cfg(unix)]
+use unix_exec::run_resolved;
 
 // Reject NUL, LF, CR, DEL in any argv token. Keeps the spec compatible
 // with the kernel argv contract and with naive log parsers downstream.
@@ -654,12 +677,14 @@ fn build_command(spec: &BigSubprocessSpec) -> std::process::Command {
 
 /// Why the wait loop stopped: normal exit, deadline, or external cancel.
 /// Cancel and timeout share the same kill path but map to distinct errors.
+#[cfg(not(unix))]
 enum WaitOutcome {
     Exited(std::process::ExitStatus),
     TimedOut,
     Cancelled,
 }
 
+#[cfg(not(unix))]
 fn run_resolved(
     spec: &BigSubprocessSpec,
     _resolved: &BigSubprocessResolved,
@@ -739,6 +764,7 @@ fn run_resolved(
     })
 }
 
+#[cfg(any(test, not(unix)))]
 fn drain_capped<R: std::io::Read>(
     reader: &mut R,
     buf: &mut Vec<u8>,
@@ -763,19 +789,21 @@ fn drain_capped<R: std::io::Read>(
 }
 
 fn redact_in_place(needles: &[String], buf: &mut Vec<u8>) {
-    if needles.is_empty() {
-        return;
-    }
-    let Ok(text) = std::str::from_utf8(buf) else {
-        return;
-    };
-    let mut redacted = text.to_string();
-    for needle in needles {
-        if !needle.is_empty() {
-            redacted = redacted.replace(needle, "[REDACTED]");
+    for needle in needles.iter().filter(|needle| !needle.is_empty()) {
+        let needle = needle.as_bytes();
+        let mut result = Vec::with_capacity(buf.len());
+        let mut offset = 0;
+        while offset < buf.len() {
+            if buf[offset..].starts_with(needle) {
+                result.extend_from_slice(b"[REDACTED]");
+                offset += needle.len();
+            } else {
+                result.push(buf[offset]);
+                offset += 1;
+            }
         }
+        *buf = result;
     }
-    *buf = redacted.into_bytes();
 }
 
 #[cfg(test)]
