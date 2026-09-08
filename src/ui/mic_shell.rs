@@ -362,8 +362,12 @@ impl Component for MicShell {
         sender: ComponentSender<Self>,
         root: &Self::Root,
     ) {
-        if self.is_closing && !matches!(message,
-            MicInput::CloseSaveRetry | MicInput::CloseWithoutSaving | MicInput::CloseCancelled) {
+        if self.is_closing
+            && !matches!(
+                message,
+                MicInput::CloseSaveRetry | MicInput::CloseWithoutSaving | MicInput::CloseCancelled
+            )
+        {
             return;
         }
         match message {
@@ -374,7 +378,9 @@ impl Component for MicShell {
                 self.is_closing = false;
                 self.applies = ApplyTracker::default();
                 self.should_probe_after_apply = true;
-                widgets.banner.set_title(&i18n("Changes have not been saved. You can keep editing or close without saving."));
+                widgets.banner.set_title(&i18n(
+                    "Changes have not been saved. You can keep editing or close without saving.",
+                ));
                 widgets.banner.set_button_label(None);
                 widgets.banner.set_revealed(true);
                 widgets.body.set_sensitive(true);
@@ -644,7 +650,6 @@ impl Component for MicShell {
                         .send(MicInput::ExternalSettingsChanged);
                 }
 
-
                 match result {
                     Ok(()) if self.should_probe_after_apply => {
                         self.should_probe_after_apply = false;
@@ -668,7 +673,9 @@ impl Component for MicShell {
             }
             MicCommandOutput::ClosePreferencesSaved(result) => {
                 self.close_save_in_flight = false;
-                if !self.is_closing { return; }
+                if !self.is_closing {
+                    return;
+                }
                 match result {
                     Ok(()) => self.stop_monitor(widgets, &sender),
                     Err(error) => {
@@ -682,7 +689,10 @@ impl Component for MicShell {
                         dialog.add_response("retry", &i18n("Try again"));
                         dialog.set_default_response(Some("cancel"));
                         dialog.set_close_response("cancel");
-                        dialog.set_response_appearance("discard", adw::ResponseAppearance::Destructive);
+                        dialog.set_response_appearance(
+                            "discard",
+                            adw::ResponseAppearance::Destructive,
+                        );
                         let input = sender.input_sender().clone();
                         dialog.connect_response(None, move |_, response| {
                             let message = match response {
@@ -828,7 +838,9 @@ impl MicShell {
         root: &adw::ApplicationWindow,
         sender: &ComponentSender<Self>,
     ) {
-        if self.is_closing { return; }
+        if self.is_closing {
+            return;
+        }
         self.is_closing = true;
         self.cancel_apply_debounce();
         widgets.banner.set_title(&i18n("Saving settings…"));
@@ -850,11 +862,14 @@ impl MicShell {
     }
 
     fn save_before_close(&mut self, sender: &ComponentSender<Self>) {
-        if self.close_save_in_flight { return; }
+        if self.close_save_in_flight {
+            return;
+        }
         self.close_save_in_flight = true;
         let work = self.state.close_work();
         sender.oneshot_command(async move {
-            let result = relm4::spawn_blocking(move || work.run()).await
+            let result = relm4::spawn_blocking(move || work.run())
+                .await
                 .unwrap_or_else(|error| Err(error.to_string()));
             MicCommandOutput::ClosePreferencesSaved(result)
         });

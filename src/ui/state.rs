@@ -228,8 +228,8 @@ pub(super) struct CloseWork {
 impl CloseWork {
     pub(super) fn run(self) -> Result<(), String> {
         drop(self.loopback);
-        let _guard = crate::config::storage::SettingsLock::acquire()
-            .map_err(|error| error.to_string())?;
+        let _guard =
+            crate::config::storage::SettingsLock::acquire().map_err(|error| error.to_string())?;
         let latest = AppSettings::load_strict().map_err(|error| error.to_string())?;
         let merged = crate::config::storage::merge(&self.baseline, &self.desired, &latest)
             .map_err(|error| error.to_string())?;
@@ -240,7 +240,10 @@ impl CloseWork {
 impl AppState {
     pub(super) fn close_work(&self) -> CloseWork {
         CloseWork {
-            baseline: self.last_persisted.borrow().clone()
+            baseline: self
+                .last_persisted
+                .borrow()
+                .clone()
                 .unwrap_or_else(|| self.settings.borrow().clone()),
             desired: self.settings.borrow().clone(),
             loopback: self.loopback.borrow_mut().take(),
