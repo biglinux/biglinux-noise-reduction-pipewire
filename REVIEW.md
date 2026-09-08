@@ -36,21 +36,30 @@ paths and gettext extraction corrections remain in this PR.
 
 ## Reproduction
 
+One functional execution, the same sequence `ci.yml` runs and
+`docs/testing-native.md` documents. Clippy with every feature is an analysis of
+the build configuration, not a second functional run.
+
 ```sh
+python3 -m unittest discover -s .github/ci -p 'test_*.py'
 cargo fmt --all --check
 cargo clippy --all-targets --all-features --locked -- -D warnings
-cargo test --all-features --locked -- --test-threads=1
-bash scripts/test-ui.sh
 cargo test --no-default-features --locked -- --test-threads=1
+bash scripts/test-ui.sh --no-default-features
+bash scripts/test-pipewire.sh --no-default-features
 node --test tests/plasmoid_status.test.cjs
 bash scripts/refresh-pot.sh --check
-bash scripts/quality-check.sh --ci
 ```
 
 Use the PR validation comment and the artifact's `tested-commit.txt` for actual
 results. A workbench workflow's own commit can differ from its pinned application
 checkout; never infer the tested application revision from the workflow's SHA.
 A failed test step does not prove subsequent tests were executed.
+
+Passing this sequence is the integration criterion for this PR. The criteria for
+publishing a stable package are separate and live in `docs/release-candidate.md`:
+a real installation and upgrade, a disposable BigLinux session, hardware audio,
+the Plasma applet and screen-reader acceptance.
 
 ## Remaining acceptance boundaries
 

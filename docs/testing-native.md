@@ -67,6 +67,16 @@ node --test tests/plasmoid_status.test.cjs
 bash scripts/refresh-pot.sh --check
 ```
 
+Doctests build and run a helper binary under `TMPDIR`. On a BigLinux workstation
+`/tmp` is mounted `noexec`, so `cargo test` reports `doctest failed` there while
+every other test passes. Point `TMPDIR` at an executable path — for example
+`TMPDIR=~/.cache/biglinux-microphone-tests` — before counting that step.
+
+The declared toolchain is `rust-toolchain.toml` (1.97.1, the version BigLinux
+ships). CI pins newer toolchains for some jobs, so keep the strict Clippy gate
+clean on 1.97.1 as well: a lint the newer Clippy suppresses still fails on the
+toolchain this document tells a maintainer to use.
+
 The maintainers validate their own jemalloc fork separately. This application
 CI does not rebuild upstream jemalloc, apply compatibility patches, run an
 allocator probe, or repeat the suites across allocator variants. Runtime tests
