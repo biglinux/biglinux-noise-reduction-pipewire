@@ -38,7 +38,8 @@ pub struct OutputFilterSettings {
 impl Default for OutputFilterSettings {
     fn default() -> Self {
         Self {
-            channel_mode: OutputChannelMode::Stereo,            enabled: false,
+            channel_mode: OutputChannelMode::Stereo,
+            enabled: false,
             noise_reduction: NoiseReductionConfig {
                 enabled: true,
                 ..NoiseReductionConfig::default()

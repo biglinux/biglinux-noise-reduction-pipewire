@@ -211,8 +211,13 @@ impl AppSettings {
     #[must_use]
     pub fn filters_running(&self) -> usize {
         let microphone = usize::from(!self.mic_bypass && self.noise_reduction.enabled);
-        let output = usize::from(self.output_filter.enabled && self.output_filter.noise_reduction.enabled);
-        let channels = if self.output_filter.channel_mode == OutputChannelMode::Stereo { 2 } else { 1 };
+        let output =
+            usize::from(self.output_filter.enabled && self.output_filter.noise_reduction.enabled);
+        let channels = if self.output_filter.channel_mode == OutputChannelMode::Stereo {
+            2
+        } else {
+            1
+        };
         microphone + output * channels
     }
 

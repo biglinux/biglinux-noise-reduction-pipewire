@@ -86,7 +86,8 @@ pub fn build_output_conf(settings: &AppSettings) -> String {
 /// The economical mono variant below is an explicit user choice, not a hidden
 /// side effect of enabling an equalizer or turning neural processing off.
 fn build_stereo_conf(settings: &AppSettings) -> String {
-    let mono: Vec<Node> = output_nodes(settings).into_iter()
+    let mono: Vec<Node> = output_nodes(settings)
+        .into_iter()
         .filter(|node| !matches!(node.name.as_str(), "mixer" | "copy_l" | "copy_r"))
         .collect();
     let mut nodes = Vec::with_capacity(mono.len() * 2);
@@ -94,24 +95,37 @@ fn build_stereo_conf(settings: &AppSettings) -> String {
     let mut inputs = Vec::with_capacity(2);
     let mut outputs = Vec::with_capacity(2);
     for prefix in ["", "right_"] {
-        let chain: Vec<Node> = mono.iter().cloned().map(|mut node| {
-            node.name = format!("{prefix}{}", node.name);
-            node
-        }).collect();
+        let chain: Vec<Node> = mono
+            .iter()
+            .cloned()
+            .map(|mut node| {
+                node.name = format!("{prefix}{}", node.name);
+                node
+            })
+            .collect();
         if let (Some(first), Some(last)) = (chain.first(), chain.last()) {
             inputs.push(format!("{}:{}", first.name, first.input_port));
             outputs.push(format!("{}:{}", last.name, last.output_port));
         }
         for pair in chain.windows(2) {
-            links.push(Link::new(format!("{}:{}", pair[0].name, pair[0].output_port),
-                format!("{}:{}", pair[1].name, pair[1].input_port)));
+            links.push(Link::new(
+                format!("{}:{}", pair[0].name, pair[0].output_port),
+                format!("{}:{}", pair[1].name, pair[1].input_port),
+            ));
         }
         nodes.extend(chain);
     }
     Graph {
-        description: OUTPUT_DESCRIPTION.into(), media_name: OUTPUT_DESCRIPTION.into(),
-        nodes, links, inputs, outputs, capture_props: capture_props(), playback_props: playback_props(),
-    }.render()
+        description: OUTPUT_DESCRIPTION.into(),
+        media_name: OUTPUT_DESCRIPTION.into(),
+        nodes,
+        links,
+        inputs,
+        outputs,
+        capture_props: capture_props(),
+        playback_props: playback_props(),
+    }
+    .render()
 }
 
 /// True when GTCRN should *process* (Enable=1.0) inside the output

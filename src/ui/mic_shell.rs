@@ -489,7 +489,9 @@ impl Component for MicShell {
             MicInput::MicNrEnabled(on) => {
                 self.mutate_settings(&sender, |s| {
                     s.noise_reduction.enabled = on;
-                    if on { s.mic_bypass = false; }
+                    if on {
+                        s.mic_bypass = false;
+                    }
                 });
             }
             MicInput::MicEchoModeChanged(mode) => {
@@ -513,13 +515,17 @@ impl Component for MicShell {
             MicInput::MicHpfToggled(on) => {
                 self.mutate_settings(&sender, |s| {
                     s.hpf.enabled = on;
-                    if on { s.mic_bypass = false; }
+                    if on {
+                        s.mic_bypass = false;
+                    }
                 });
             }
             MicInput::MicGateToggled(on) => {
                 self.mutate_settings(&sender, |s| {
                     s.gate.enabled = on;
-                    if on { s.mic_bypass = false; }
+                    if on {
+                        s.mic_bypass = false;
+                    }
                 });
             }
             MicInput::MicGateIntensityChanged(v) => {
@@ -528,7 +534,9 @@ impl Component for MicShell {
             MicInput::MicCompressorToggled(on) => {
                 self.mutate_settings(&sender, |s| {
                     s.compressor.enabled = on;
-                    if on { s.mic_bypass = false; }
+                    if on {
+                        s.mic_bypass = false;
+                    }
                 });
             }
             MicInput::MicCompressorIntensityChanged(v) => {
@@ -537,12 +545,16 @@ impl Component for MicShell {
             MicInput::MicEq(mutation) => {
                 self.mutate_settings(&sender, |s| {
                     eq_card::apply_eq_mutation(&mut s.equalizer, mutation);
-                    if s.equalizer.enabled { s.mic_bypass = false; }
+                    if s.equalizer.enabled {
+                        s.mic_bypass = false;
+                    }
                 });
             }
             MicInput::MicVoiceChangerToggled(on) => self.mutate_settings(&sender, |s| {
                 s.stereo.enabled = on;
-                if on { s.mic_bypass = false; }
+                if on {
+                    s.mic_bypass = false;
+                }
                 s.stereo.mode = if on {
                     StereoMode::VoiceChanger
                 } else {
@@ -558,7 +570,9 @@ impl Component for MicShell {
 
             // ── Advanced output-chain ─────────────────────────────────
             MicInput::OutputChannelsChanged(mode) => {
-                self.mutate_settings(&sender, |settings| settings.output_filter.channel_mode = mode);
+                self.mutate_settings(&sender, |settings| {
+                    settings.output_filter.channel_mode = mode
+                });
             }
             MicInput::OutputModelChanged(model) => {
                 self.mutate_settings(&sender, |s| {

@@ -45,16 +45,21 @@ pub fn build(state: &Rc<AppState>, input: &relm4::Sender<MicInput>) -> gtk::Widg
             &i18n("Keep stereo (recommended)"), &i18n("Combine to mono (lower CPU use)"),
         ]))
         .build();
-    channels.set_selected(u32::from(state.settings().output_filter.channel_mode == crate::config::OutputChannelMode::Mono));
+    channels.set_selected(u32::from(
+        state.settings().output_filter.channel_mode == crate::config::OutputChannelMode::Mono,
+    ));
     let sender = input.clone();
     channels.connect_selected_notify(move |row| {
-        let mode = if row.selected() == 1 { crate::config::OutputChannelMode::Mono } else { crate::config::OutputChannelMode::Stereo };
+        let mode = if row.selected() == 1 {
+            crate::config::OutputChannelMode::Mono
+        } else {
+            crate::config::OutputChannelMode::Stereo
+        };
         let _ = sender.send(MicInput::OutputChannelsChanged(mode));
     });
     let group = adw::PreferencesGroup::new();
     group.add(&channels);
     content.append(&group);
-
 
     content.append(&section_header(&i18n("AI noise reduction"), 16));
     content.append(model_card(state, input).widget());

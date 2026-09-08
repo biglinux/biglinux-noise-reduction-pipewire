@@ -291,7 +291,10 @@ fn mic_params(s: &AppSettings) -> Vec<(String, f64)> {
 fn output_params(s: &AppSettings) -> Vec<(String, f64)> {
     let mut parameters = output_params_mono(s);
     if s.output_filter.channel_mode == crate::config::OutputChannelMode::Stereo {
-        let right: Vec<_> = parameters.iter().map(|(key, value)| (format!("right_{key}"), *value)).collect();
+        let right: Vec<_> = parameters
+            .iter()
+            .map(|(key, value)| (format!("right_{key}"), *value))
+            .collect();
         parameters.extend(right);
     }
     parameters
