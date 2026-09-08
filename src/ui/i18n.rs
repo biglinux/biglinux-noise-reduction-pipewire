@@ -12,7 +12,9 @@ use crate::config::GETTEXT_PACKAGE;
 /// Translate a string through the application gettext domain.
 #[must_use]
 pub fn i18n(s: &str) -> String {
-    if s.is_empty() { return String::new(); }
+    if s.is_empty() {
+        return String::new();
+    }
     gettextrs::dgettext(GETTEXT_PACKAGE, s)
 }
 
