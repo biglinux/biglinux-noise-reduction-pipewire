@@ -51,6 +51,7 @@ mod tests {
         assert_populate_body_contract();
         assert_window_actions_contract();
         assert_window_build_contract();
+        assert_meter_range_contract();
         assert_monitor_binding_contract();
         assert_factory_reset_preserves_window_and_ui_preferences();
         assert_tuning_dropdown_and_banner_contract();
@@ -246,6 +247,27 @@ mod tests {
         assert!(window.content().is_some());
         assert!(window.lookup_action("reset-defaults").is_some());
         assert!(window.lookup_action("about").is_some());
+    }
+
+    #[cfg(not(miri))]
+    fn assert_meter_range_contract() {
+        let spectrum = super::widgets::spectrum::Spectrum::new();
+        let (meter, readout) = spectrum.meter_for_contract();
+        assert_eq!(meter.min_value(), 0.0);
+        assert_eq!(meter.max_value(), 1.0);
+        assert_eq!(meter.value(), 0.0);
+        spectrum.push_frame(&SpectrumFrame {
+            bands_db: vec![-30.0; 30],
+            rms_db: -30.0,
+            peak_db: -6.0,
+            seq: 0,
+        });
+        assert_eq!(meter.value(), 0.5);
+        assert!(readout.text().contains("-30"));
+        assert!(readout.text().contains("-6"));
+        for offset in ["low", "high", "full"] {
+            assert!((0.0..=1.0).contains(&meter.offset_value(offset).unwrap()));
+        }
     }
 
     #[cfg(not(miri))]

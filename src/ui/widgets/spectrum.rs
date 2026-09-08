@@ -79,11 +79,13 @@ impl Spectrum {
         let root = gtk::Box::new(gtk::Orientation::Vertical, 6);
         let readout = gtk::Label::builder().xalign(0.0).wrap(true).build();
         readout.set_text(&i18n("Speak normally to check your microphone level."));
-        let level = gtk::LevelBar::for_interval(-60.0, 0.0);
-        level.set_value(-60.0);
-        level.add_offset_value("low", -30.0);
-        level.add_offset_value("high", -6.0);
-        level.add_offset_value("full", -1.0);
+        // GtkLevelBar accepts nonnegative values, not the physical dB scale.
+        // Keep its value/offsets normalized and expose dB through text.
+        let level = gtk::LevelBar::for_interval(0.0, 1.0);
+        level.set_value(0.0);
+        level.add_offset_value("low", meter_fraction(-30.0));
+        level.add_offset_value("high", meter_fraction(-6.0));
+        level.add_offset_value("full", meter_fraction(-1.0));
         level.update_property(&[
             gtk::accessible::Property::Label(&i18n("Microphone level meter")),
             gtk::accessible::Property::Description(&i18n(
@@ -140,12 +142,19 @@ impl Spectrum {
             self.last_meter_update.set(Some(now));
             let rms = finite_db(frame.rms_db);
             let peak = finite_db(frame.peak_db);
-            self.level.set_value(f64::from(rms));
+            self.level.set_value(meter_fraction(rms));
             let text = i18n("Level: {level} dB · Peak: {peak} dB")
                 .replace("{level}", &format!("{rms:.0}"))
                 .replace("{peak}", &format!("{peak:.0}"));
             self.readout.set_text(&text);
+            self.level
+                .update_property(&[gtk::accessible::Property::ValueText(&text)]);
         }
+    }
+
+    #[cfg(test)]
+    pub(in crate::ui) fn meter_for_contract(&self) -> (&gtk::LevelBar, &gtk::Label) {
+        (&self.level, &self.readout)
     }
 
     #[cfg(test)]
@@ -196,6 +205,10 @@ impl Spectrum {
     }
 }
 
+fn meter_fraction(db: f32) -> f64 {
+    f64::from((finite_db(db) + 60.0) / 60.0)
+}
+
 fn finite_db(value: f32) -> f32 {
     if value.is_finite() {
         value.clamp(-60.0, 0.0)
@@ -219,6 +232,11 @@ mod tests;
 mod meter_value_tests {
     #[test]
     fn native_meter_values_stay_finite_and_inside_the_range() {
+        assert_eq!(super::meter_fraction(-60.0), 0.0);
+        assert_eq!(super::meter_fraction(-30.0), 0.5);
+        assert_eq!(super::meter_fraction(0.0), 1.0);
+        assert_eq!(super::meter_fraction(f32::NAN), 0.0);
+        assert_eq!(super::meter_fraction(20.0), 1.0);
         assert_eq!(super::finite_db(f32::NAN), -60.0);
         assert_eq!(super::finite_db(f32::INFINITY), -60.0);
         assert_eq!(super::finite_db(-120.0), -60.0);
