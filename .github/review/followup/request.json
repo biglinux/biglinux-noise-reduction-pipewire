@@ -1,1 +1,23 @@
-{"patch":"batch-01.b64","base":"bf6cfca75bb43d94766d2925624067ae0673a4e2","tree":"4497bd4c90f77c40ed6e1155eb6a4d48396c6bfe","sha256":"e115e8b1dee3822fd6090ecbd267561f97b91c4bf1215db51d2e1a7390f3ea78","transport_corrections":[[4519,"Y","Q"]],"translations":{"Microphone unavailable. Reconnecting…":"Microfone indisponível. Reconectando…","Microphone monitoring is unavailable.":"O monitoramento do microfone está indisponível.","Audio settings could not be read. Check file permissions and reopen this window.":"Não foi possível ler as configurações de áudio. Verifique as permissões dos arquivos e reabra esta janela.","Settings were saved, but audio still needs to restart. Apply to try again.":"As configurações foram salvas, mas o áudio ainda precisa reiniciar. Clique em Aplicar para tentar novamente."}}
+{
+  "format": "line-edits",
+  "patch": "batch-02.b64",
+  "parts": ["batch-02-part1.b64", "batch-02-part2.b64", "batch-02-part3.b64", "batch-02-part4.b64"],
+  "base": "dcd1da89e2b5e725a8e0f74fbfc46b89c42791aa",
+  "tree": "9dab190398fffd5ea8b00c0872cc662b002b805a",
+  "sha256": "a956df2fb5980723eeb6e89911c95cf4c887de2bb8d4308140561c3093d54f62",
+  "transport_corrections": [[1255, "", "P1VJMoOVjr1rN56f47F/h0Xx+stgAmbw+/VTV21q"], [17395, "t", "y"], [24475, "e", ""]],
+  "translations": {
+    "Check the audio connection, then check again. Your preferences are kept.": "Verifique a conexão de áudio e tente novamente. Suas preferências foram mantidas.",
+    "Choose another installed model, or install this model and its required runtime, then check again.": "Escolha outro modelo instalado ou instale este modelo e a biblioteca necessária. Depois, verifique novamente.",
+    "Lowers large boosts and caps sample peaks for microphone and playback. This can reduce overall volume; it cannot repair distorted recordings. Leave on unless you manage gain in another audio tool.": "Reduz aumentos excessivos e limita picos no microfone e na reprodução. Isso pode diminuir o volume geral; não corrige gravações já distorcidas. Mantenha ligado, a menos que você controle o ganho em outra ferramenta de áudio.",
+    "Microphone effects": "Efeitos do microfone",
+    "Microphone effects are paused. Your choices below are preserved.": "Os efeitos do microfone estão pausados. Suas escolhas abaixo foram preservadas.",
+    "Pause or resume all microphone effects without changing your choices.": "Pause ou retome todos os efeitos do microfone sem alterar suas escolhas.",
+    "Preview active. The previous buffer will be restored automatically.": "Prévia ativa. A reserva de áudio anterior será restaurada automaticamente.",
+    "Preview finished.": "Prévia concluída.",
+    "Protect against excessive peaks": "Proteger contra picos excessivos",
+    "Restoring the previous audio buffer…": "Restaurando a reserva de áudio anterior…",
+    "Starting the audio preview…": "Iniciando a prévia de áudio…",
+    "The selected noise model is unavailable: {model}.": "O modelo de redução de ruído escolhido não está disponível: {model}."
+  }
+}
