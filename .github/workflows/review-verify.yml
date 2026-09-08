@@ -18,13 +18,11 @@ jobs:
       - run: pacman -Syu --noconfirm --needed git gdb xorg-server-xvfb xorg-xauth dbus ttf-dejavu python shellcheck pipewire-audio swh-plugins
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
         with:
-          ref: 728ef0e51e1381ea03d20f671565291acb0c4d09
+          ref: 50b881cb4d84e9c559a68309eecf491900be4e7a
           persist-credentials: false
       - uses: ./.github/actions/install-system-deps
-      - name: Validate the required C23-compatible allocator
-        shell: bash
-        run: bash scripts/ci-jemalloc.sh > /tmp/allocator.log 2>&1
       - uses: dtolnay/rust-toolchain@6bed0761d98439e5a578e2877258200ad565ba87
+        id: rust
         with:
           toolchain: 1.98.1
           components: clippy,rustfmt
@@ -32,7 +30,12 @@ jobs:
         with:
           shared-key: review-workbench
           cache-on-failure: true
+      - name: Validate the required C23-compatible allocator
+        id: allocator
+        shell: bash
+        run: bash scripts/ci-jemalloc.sh > /tmp/allocator.log 2>&1
       - name: Source identity and formatting
+        if: '!cancelled() && steps.rust.outcome == ''success'''
         shell: bash
         run: |
           set -euo pipefail
@@ -40,27 +43,27 @@ jobs:
           cargo fmt --all --check
           shellcheck scripts/test-ui.sh scripts/test-pipewire.sh scripts/ci-jemalloc.sh
       - name: Strict Clippy
-        if: '!cancelled()'
+        if: '!cancelled() && steps.rust.outcome == ''success'''
         shell: bash
         run: cargo clippy --all-targets --all-features --locked -- -D warnings > /tmp/clippy.log 2>&1
       - name: All default-feature regressions
-        if: '!cancelled()'
+        if: '!cancelled() && steps.allocator.outcome == ''success'''
         shell: bash
         run: cargo test --all-features --locked -- --test-threads=1 > /tmp/regressions.log 2>&1
       - name: GTK contracts with compatible jemalloc
-        if: '!cancelled()'
+        if: '!cancelled() && steps.allocator.outcome == ''success'''
         shell: bash
         run: timeout --kill-after=10s 600s bash scripts/test-ui.sh > /tmp/gtk-jemalloc.log 2>&1
       - name: GTK contracts with the system allocator
-        if: '!cancelled()'
+        if: '!cancelled() && steps.rust.outcome == ''success'''
         shell: bash
         run: timeout --kill-after=10s 600s bash scripts/test-ui.sh --no-default-features > /tmp/gtk-system.log 2>&1
       - name: System allocator regressions
-        if: '!cancelled()'
+        if: '!cancelled() && steps.rust.outcome == ''success'''
         shell: bash
         run: cargo test --no-default-features --locked -- --test-threads=1 > /tmp/system-regressions.log 2>&1
       - name: Native PipeWire graph loading and independent recovery
-        if: '!cancelled()'
+        if: '!cancelled() && steps.allocator.outcome == ''success'''
         shell: bash
         run: bash scripts/test-pipewire.sh > /tmp/pipewire.log 2>&1
       - name: Summarize exact diagnostics
@@ -79,12 +82,12 @@ jobs:
               for i, line in enumerate(lines):
                   if any(word in line for word in ('error', 'FAILED', 'FAIL:', 'PASS', 'panicked', 'SIGSEGV', 'Gtk-', 'Adwaita-', 'test result:', 'GTK contracts:')):
                       print('\n'.join(lines[max(0, i-1):min(len(lines), i+5)]))
-              if name == 'allocator':
-                  print('\n'.join(lines[-20:]))
+              if name in ('allocator', 'pipewire'):
+                  print('\n'.join(lines[-30:]))
           PY
       - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
         if: always()
         with:
-          name: verification-728ef0e
+          name: verification-50b881c
           path: /tmp/*.log
           retention-days: 3
