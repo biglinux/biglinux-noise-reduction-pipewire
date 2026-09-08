@@ -39,6 +39,27 @@ pub fn build(state: &Rc<AppState>, input: &relm4::Sender<MicInput>) -> gtk::Widg
         .margin_end(24)
         .build();
 
+    let master = adw::SwitchRow::builder()
+        .title(i18n("Microphone effects"))
+        .subtitle(i18n(
+            "Pause or resume all microphone effects without changing your choices.",
+        ))
+        .active(crate::pipeline::mic_chain_wanted(&state.settings()))
+        .build();
+    let sender = input.clone();
+    master.connect_active_notify(move |row| {
+        let _ = sender.send(MicInput::NoiseFilterToggled(row.is_active()));
+    });
+    let group = adw::PreferencesGroup::new();
+    group.add(&master);
+    content.append(&group);
+    if state.settings().mic_bypass {
+        let paused = adw::Banner::new(&i18n(
+            "Microphone effects are paused. Your choices below are preserved.",
+        ));
+        paused.set_revealed(true);
+        content.append(&paused);
+    }
     content.append(&mic_combo_card(state, input));
     content.append(self_listen_delay_card(state, input).widget());
     content.append(echo_cancel_card(state, input).widget());

@@ -124,6 +124,7 @@ pub(super) fn populate_body(
             body.append(&stack);
         }
     }
+    state.mark_view_current();
     let weak_body = body.downgrade();
     glib::idle_add_local_once(move || {
         let Some(body) = weak_body.upgrade() else {

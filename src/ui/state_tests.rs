@@ -285,3 +285,20 @@ fn stereo_nr_toggle_rebuilds_the_conditional_neural_stage() {
     next.output_filter.noise_reduction.enabled = !prev.output_filter.noise_reduction.enabled;
     assert!(output_topology_changed(Some(&prev), &next));
 }
+
+#[test]
+fn mirrored_choices_track_worker_normalization_but_not_slider_drags() {
+    let state = AppState::new(AppSettings::default());
+    assert!(!state.view_needs_sync());
+    state.mutate(|s| s.noise_reduction.strength = 0.47);
+    assert!(!state.view_needs_sync());
+    state.mutate(|s| s.noise_reduction.model = crate::config::NoiseModel::DeepFilterNet3);
+    assert!(state.view_needs_sync());
+    state.mark_view_current();
+    assert!(!state.view_needs_sync());
+    state.mutate(|s| s.quality = crate::config::Quality::Manual);
+    assert!(state.view_needs_sync());
+    state.mark_view_current();
+    state.mutate(|s| s.set_microphone_enabled(false));
+    assert!(state.view_needs_sync());
+}

@@ -454,7 +454,12 @@ fn set_one(key: Option<String>, value: Option<String>) -> ExitCode {
         Key::Echo => match biglinux_microphone::config::EchoMode::parse(&value) {
             // Only the mode: `settle` below derives `enabled` from it, so
             // setting the flag here as well duplicated the rule that owns it.
-            Some(mode) => settings.echo_cancel.mode = mode,
+            Some(mode) => {
+                settings.echo_cancel.mode = mode;
+                if mode != biglinux_microphone::config::EchoMode::Never {
+                    settings.mic_bypass = false;
+                }
+            }
             None => {
                 return exit_with_error(&format!(
                     "set {name}: `{value}` is not one of auto, on, off"
@@ -489,6 +494,9 @@ fn set_one(key: Option<String>, value: Option<String>) -> ExitCode {
         Key::VoiceChanger => match on_or_off(&value) {
             Some(on) => {
                 settings.stereo.enabled = on;
+                if on {
+                    settings.mic_bypass = false;
+                }
                 settings.stereo.mode = if on {
                     biglinux_microphone::config::StereoMode::VoiceChanger
                 } else {

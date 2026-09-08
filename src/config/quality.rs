@@ -211,9 +211,9 @@ fn automatic(machine: &Machine, standing: Option<NoiseModel>) -> NoiseModel {
     if machine.filters > 1 {
         return LIGHT;
     }
-    // What the model actually costs here, which is the only input that has been near the
-    // model. An absent reading means the plugin would not load, and `loadable` below is
-    // what answers that — refusing here as well would hide it.
+    // An asynchronous callback is not a valid capacity measurement unless
+    // the plugin also confirms that its worker processed the requested blocks.
+    // Unknown measurements keep the baseline model; explicit Best is separate.
     if machine.heavy_share.is_some_and(|share| share > TOO_DEAR) {
         return LIGHT;
     }
@@ -293,7 +293,10 @@ pub fn loadable(model: NoiseModel) -> NoiseModel {
     if model.plugin_loadable_cached() {
         model
     } else {
-        LIGHT
+        super::noise_model::REALTIME_LAVFI_MODELS
+            .into_iter()
+            .find(|candidate| candidate.plugin_loadable_cached())
+            .unwrap_or(LIGHT)
     }
 }
 
@@ -338,7 +341,7 @@ mod tests {
     }
 
     /// A machine where the heavy model measured too dear gets the light one, and a
-    /// machine that could not be measured at all is not punished for it.
+    /// missing or unverifiable reading conservatively keeps the light model.
     #[test]
     fn what_the_model_costs_here_is_enough_on_its_own() {
         let dear = Machine {

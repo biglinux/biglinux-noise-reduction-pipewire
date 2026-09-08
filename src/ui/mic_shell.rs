@@ -496,7 +496,12 @@ impl Component for MicShell {
                 });
             }
             MicInput::MicEchoModeChanged(mode) => {
-                self.mutate_settings(&sender, |s| s.echo_cancel.mode = mode);
+                self.mutate_settings(&sender, |s| {
+                    s.echo_cancel.mode = mode;
+                    if mode != crate::config::EchoMode::Never {
+                        s.mic_bypass = false;
+                    }
+                });
             }
             MicInput::PreferFastCpusChanged(enabled) => {
                 self.mutate_settings(&sender, |settings| {
@@ -621,6 +626,12 @@ impl Component for MicShell {
                 });
             }
         }
+        // Only dependent selections require rebuilding. Slider changes keep
+        // their widgets, focus and drag gestures; programmatic setup connects
+        // handlers only after establishing the initial value.
+        if self.state.view_needs_sync() && !self.is_closing {
+            self.repopulate(widgets, sender.input_sender());
+        }
     }
 
     fn update_cmd_with_view(
@@ -681,6 +692,12 @@ impl Component for MicShell {
                 if !tracking.is_settled {
                     return;
                 }
+                // The worker may have selected a different available model.
+                // Do not rely on our own disk notification, which is correctly
+                // ignored as a local acknowledgement.
+                if self.state.view_needs_sync() {
+                    self.repopulate(widgets, sender.input_sender());
+                }
                 if std::mem::take(&mut self.settings_reload_pending) && !self.is_closing {
                     let _ = sender
                         .input_sender()
@@ -708,6 +725,7 @@ impl Component for MicShell {
                 }
                 if tracking.is_current && tracking.next.is_none() && !self.is_closing {
                     self.show_health(widgets, &health);
+                    self.repopulate(widgets, sender.input_sender());
                 }
             }
             MicCommandOutput::ClosePreferencesSaved(result) => {
@@ -846,8 +864,9 @@ impl MicShell {
         let Some(request) = self.applies.begin_health() else {
             return false;
         };
+        let settings = self.state.settings().clone();
         sender.oneshot_command(async move {
-            let health = relm4::spawn_blocking(health::probe)
+            let health = relm4::spawn_blocking(move || health::probe(&settings))
                 .await
                 .unwrap_or_else(|error| {
                     log::error!("audio health worker failed: {error}");

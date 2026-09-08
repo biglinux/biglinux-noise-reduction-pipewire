@@ -146,7 +146,6 @@ impl AppSettings {
         settings.equalizer.normalize();
         settings.output_filter.equalizer.normalize();
         settings.window = settings.window.sanitized();
-        settings.demote_unavailable_models();
         Ok(settings)
     }
 
@@ -161,17 +160,6 @@ impl AppSettings {
             error!("settings: could not read {}: {error}", path.display());
             Self::default()
         })
-    }
-
-    /// Settings may persist an optional model from a previous run while
-    /// its LADSPA package has since been uninstalled — or left present
-    /// but unloadable (see [`NoiseModel::plugin_loadable_cached`]). Demote silently
-    /// to the default GTCRN variant so the rendered filter-chain
-    /// doesn't reference a broken .so.
-    fn demote_unavailable_models(&mut self) {
-        self.noise_reduction.model = available_or_default(self.noise_reduction.model);
-        self.output_filter.noise_reduction.model =
-            available_or_default(self.output_filter.noise_reduction.model);
     }
 
     /// Put §38's choice into effect: pick the model and write it into both chains.
@@ -189,7 +177,11 @@ impl AppSettings {
         if !self.quality.decides_the_model() || self.filters_running() == 0 {
             return;
         }
-        let machine = Machine::read(self.filters_running());
+        let machine = if self.quality == Quality::Automatic {
+            Machine::read(self.filters_running())
+        } else {
+            Machine::default()
+        };
         let wanted = quality::loadable(quality::choose(
             self.quality,
             &machine,
@@ -250,14 +242,6 @@ impl AppSettings {
         atomic_write_private(path, &json)?;
         debug!("settings: saved to {}", path.display());
         Ok(json)
-    }
-}
-
-fn available_or_default(model: NoiseModel) -> NoiseModel {
-    if model == NoiseModel::default() || model.plugin_loadable_cached() {
-        model
-    } else {
-        NoiseModel::default()
     }
 }
 
@@ -360,6 +344,25 @@ mod tests {
         assert_eq!(
             s.output_filter.equalizer.bands,
             EqualizerConfig::default().bands
+        );
+    }
+}
+
+#[cfg(test)]
+mod manual_model_tests {
+    #[test]
+    fn reading_preferences_never_replaces_a_manual_model() {
+        let directory = tempfile::tempdir().unwrap();
+        let path = directory.path().join("settings.json");
+        std::fs::write(
+            &path,
+            r#"{"quality":"manual","noise_reduction":{"model":4}}"#,
+        )
+        .unwrap();
+        let settings = super::AppSettings::load_from_strict(&path).unwrap();
+        assert_eq!(
+            settings.noise_reduction.model,
+            super::NoiseModel::DpdfnetV8Hr
         );
     }
 }

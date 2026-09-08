@@ -26,7 +26,7 @@
 //! restarts `biglinux-microphone-output.service` only. WirePlumber is
 //! **never restarted**.
 
-use std::cell::RefCell;
+use std::cell::{Cell, RefCell};
 use std::collections::VecDeque;
 use std::fmt;
 use std::rc::Rc;
@@ -191,7 +191,31 @@ impl ApplyCompletion {
 }
 
 /// Shared GTK-main-thread state.
+#[derive(Clone, Copy, PartialEq, Eq)]
+struct MirroredChoices {
+    quality: crate::config::Quality,
+    mic_model: crate::config::NoiseModel,
+    output_model: crate::config::NoiseModel,
+    paused: bool,
+    mic_wanted: bool,
+    capabilities: u64,
+}
+
+impl MirroredChoices {
+    fn of(settings: &AppSettings) -> Self {
+        Self {
+            quality: settings.quality,
+            mic_model: settings.noise_reduction.model,
+            output_model: settings.output_filter.noise_reduction.model,
+            paused: settings.mic_bypass,
+            mic_wanted: crate::pipeline::mic_chain_wanted(settings),
+            capabilities: crate::config::noise_model::capability_generation(),
+        }
+    }
+}
+
 pub struct AppState {
+    mirrored_choices: Cell<MirroredChoices>,
     // The tuning page owns an independent draft and no Rc<AppState>. Keeping
     // this widget avoids losing unapplied choices on external JSON updates.
     tuning_page: RefCell<Option<gtk::Widget>>,
@@ -242,6 +266,15 @@ impl CloseWork {
 }
 
 impl AppState {
+    pub(super) fn mark_view_current(&self) {
+        self.mirrored_choices
+            .set(MirroredChoices::of(&self.settings.borrow()));
+    }
+
+    pub(super) fn view_needs_sync(&self) -> bool {
+        self.mirrored_choices.get() != MirroredChoices::of(&self.settings.borrow())
+    }
+
     pub(super) fn tuning_page(&self) -> gtk::Widget {
         self.tuning_page
             .borrow_mut()
@@ -271,6 +304,7 @@ impl AppState {
     pub fn new(settings: AppSettings) -> Rc<Self> {
         let persisted = settings.clone();
         Rc::new(Self {
+            mirrored_choices: Cell::new(MirroredChoices::of(&settings)),
             tuning_page: RefCell::new(None),
             active_page: RefCell::new("mic".to_owned()),
             settings: RefCell::new(settings),
@@ -439,6 +473,7 @@ fn run_apply(
     };
     snapshot = merged;
     if prev.is_none() {
+        crate::config::noise_model::refresh_runtime_availability();
         crate::pipeline::purge_legacy_files();
     }
 

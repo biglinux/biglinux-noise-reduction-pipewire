@@ -22,12 +22,8 @@ struct ModelChoice {
 
 /// Build the model `DropDown` and wire its selection to `on_change`.
 ///
-/// `initial` is the persisted model from `AppSettings`. If the user has
-/// an optional model saved but its plugin is now missing, the caller is
-/// expected to have already demoted it via
-/// [`crate::config::AppSettings::demote_unavailable_models`]; this
-/// builder still treats unavailable rows defensively and falls back to
-/// the default model when needed.
+/// The initial selection is a preference. Unavailable models are explained and
+/// cannot be selected as a new choice; native probing happens on workers.
 pub fn build<F>(initial: NoiseModel, on_change: F) -> gtk::DropDown
 where
     F: Fn(NoiseModel) + 'static,
@@ -35,7 +31,7 @@ where
     // Loadability, not bare file presence: a present-but-unloadable
     // plugin (broken native dependency) must not be selectable — picking
     // it would crash-loop the mic unit.
-    build_with_availability(initial, on_change, NoiseModel::plugin_loadable_cached)
+    build_with_availability(initial, on_change, NoiseModel::plugin_loadable_snapshot)
 }
 
 /// Capability input is injectable so display tests do not depend on LADSPA
@@ -89,15 +85,20 @@ where
 
     let dropdown = gtk::DropDown::new(Some(string_model), gtk::Expression::NONE);
     dropdown.set_factory(Some(&factory));
-    dropdown.set_selected(model_to_index(initial, &choices));
+    let initial_index = choices
+        .iter()
+        .position(|choice| choice.model == initial)
+        .map_or_else(|| default_index(&choices), |index| index as u32);
+    dropdown.set_selected(initial_index);
     dropdown.set_sensitive(choices.iter().any(|choice| choice.is_available));
-
+    let previous = std::cell::Cell::new(initial_index);
     dropdown.connect_selected_notify(move |dropdown| {
         let selected = dropdown.selected();
         if selected_index_unavailable(selected, &choices) {
-            dropdown.set_selected(model_to_index(NoiseModel::default(), &choices));
+            dropdown.set_selected(previous.get());
             return;
         }
+        previous.set(selected);
         on_change(index_to_model(selected, &choices));
     });
 
@@ -155,6 +156,7 @@ fn selected_index_unavailable(selected_index: u32, choices: &[ModelChoice]) -> b
         .is_none_or(|choice| !choice.is_available)
 }
 
+#[cfg(test)]
 fn model_to_index(model: NoiseModel, choices: &[ModelChoice]) -> u32 {
     choices
         .iter()
