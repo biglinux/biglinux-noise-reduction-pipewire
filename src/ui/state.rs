@@ -217,7 +217,36 @@ pub struct AppState {
     loopback: RefCell<Option<Loopback>>,
 }
 
+/// Owned close task: saves preferences and stops only GUI-owned resources.
+/// It never queries PipeWire or starts/restarts an audio service.
+pub(super) struct CloseWork {
+    baseline: AppSettings,
+    desired: AppSettings,
+    loopback: Option<Loopback>,
+}
+
+impl CloseWork {
+    pub(super) fn run(self) -> Result<(), String> {
+        drop(self.loopback);
+        let _guard = crate::config::storage::SettingsLock::acquire()
+            .map_err(|error| error.to_string())?;
+        let latest = AppSettings::load_strict().map_err(|error| error.to_string())?;
+        let merged = crate::config::storage::merge(&self.baseline, &self.desired, &latest)
+            .map_err(|error| error.to_string())?;
+        merged.save().map_err(|error| error.to_string())
+    }
+}
+
 impl AppState {
+    pub(super) fn close_work(&self) -> CloseWork {
+        CloseWork {
+            baseline: self.last_persisted.borrow().clone()
+                .unwrap_or_else(|| self.settings.borrow().clone()),
+            desired: self.settings.borrow().clone(),
+            loopback: self.loopback.borrow_mut().take(),
+        }
+    }
+
     #[must_use]
     pub fn new(settings: AppSettings) -> Rc<Self> {
         let persisted = settings.clone();

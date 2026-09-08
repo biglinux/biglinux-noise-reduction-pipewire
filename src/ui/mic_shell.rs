@@ -60,6 +60,9 @@ pub(super) struct MicShellInit {
 pub(super) enum MicInput {
     /// The window manager requested a clean close.
     CloseRequested,
+    CloseSaveRetry,
+    CloseWithoutSaving,
+    CloseCancelled,
     /// The main menu requested the reset confirmation dialog.
     RestoreDefaultsRequested,
     /// The reset confirmation dialog was accepted.
@@ -151,6 +154,7 @@ pub(super) enum MicCommandOutput {
     /// The spectrum worker and its `pw-cat` child were reaped off the GTK
     /// thread after the final settings revision settled.
     MonitorStopped,
+    ClosePreferencesSaved(Result<(), String>),
     OverrideRemovalCompleted {
         path: std::path::PathBuf,
         result: Result<wp_override_warning::OverrideRemoval, String>,
@@ -176,6 +180,7 @@ pub(super) struct MicShell {
     state: Rc<AppState>,
     banner_action: BannerAction,
     is_closing: bool,
+    close_save_in_flight: bool,
     should_probe_after_apply: bool,
     applies: ApplyTracker,
     apply_debounce: Option<SourceId>,
@@ -329,6 +334,7 @@ impl Component for MicShell {
             state,
             banner_action: BannerAction::None,
             is_closing: false,
+            close_save_in_flight: false,
             should_probe_after_apply: true,
             applies,
             apply_debounce: None,
@@ -356,11 +362,24 @@ impl Component for MicShell {
         sender: ComponentSender<Self>,
         root: &Self::Root,
     ) {
-        if self.is_closing {
+        if self.is_closing && !matches!(message,
+            MicInput::CloseSaveRetry | MicInput::CloseWithoutSaving | MicInput::CloseCancelled) {
             return;
         }
         match message {
             MicInput::CloseRequested => self.close(widgets, root, &sender),
+            MicInput::CloseSaveRetry => self.save_before_close(&sender),
+            MicInput::CloseWithoutSaving => self.stop_monitor(widgets, &sender),
+            MicInput::CloseCancelled => {
+                self.is_closing = false;
+                self.applies = ApplyTracker::default();
+                self.should_probe_after_apply = true;
+                widgets.banner.set_title(&i18n("Changes have not been saved. You can keep editing or close without saving."));
+                widgets.banner.set_button_label(None);
+                widgets.banner.set_revealed(true);
+                widgets.body.set_sensitive(true);
+                self.banner_action = BannerAction::None;
+            }
             MicInput::RestoreDefaultsRequested => {
                 let dialog = window::reset_confirmation_dialog();
                 let sender = sender.clone();
@@ -604,6 +623,12 @@ impl Component for MicShell {
                     return;
                 };
                 let result = self.state.finish_apply(*completion);
+                if self.is_closing {
+                    // Finish the worker already running, but never gate closing
+                    // on an audio retry or dispatch another queued graph update.
+                    self.save_before_close(&sender);
+                    return;
+                }
                 if result.is_ok() {
                     self.applies.record_applied(request);
                 }
@@ -619,17 +644,6 @@ impl Component for MicShell {
                         .send(MicInput::ExternalSettingsChanged);
                 }
 
-                if self.is_closing {
-                    match result {
-                        Ok(()) => self.stop_monitor(widgets, &sender),
-                        Err(cause) => {
-                            self.is_closing = false;
-                            self.repopulate(widgets, sender.input_sender());
-                            self.show_apply_failure(widgets, &cause);
-                        }
-                    }
-                    return;
-                }
 
                 match result {
                     Ok(()) if self.should_probe_after_apply => {
@@ -650,6 +664,36 @@ impl Component for MicShell {
                 }
                 if tracking.is_current && tracking.next.is_none() && !self.is_closing {
                     self.show_health(widgets, &health);
+                }
+            }
+            MicCommandOutput::ClosePreferencesSaved(result) => {
+                self.close_save_in_flight = false;
+                if !self.is_closing { return; }
+                match result {
+                    Ok(()) => self.stop_monitor(widgets, &sender),
+                    Err(error) => {
+                        log::warn!("close: preferences were not saved: {error}");
+                        let dialog = adw::AlertDialog::builder()
+                            .heading(i18n("Settings could not be saved"))
+                            .body(i18n("Another application may be changing the settings, or the settings file is not writable. Try again, keep this window open, or close without saving your latest changes."))
+                            .build();
+                        dialog.add_response("cancel", &i18n("Keep window open"));
+                        dialog.add_response("discard", &i18n("Close without saving"));
+                        dialog.add_response("retry", &i18n("Try again"));
+                        dialog.set_default_response(Some("cancel"));
+                        dialog.set_close_response("cancel");
+                        dialog.set_response_appearance("discard", adw::ResponseAppearance::Destructive);
+                        let input = sender.input_sender().clone();
+                        dialog.connect_response(None, move |_, response| {
+                            let message = match response {
+                                "retry" => MicInput::CloseSaveRetry,
+                                "discard" => MicInput::CloseWithoutSaving,
+                                _ => MicInput::CloseCancelled,
+                            };
+                            let _ = input.send(message);
+                        });
+                        dialog.present(Some(root));
+                    }
                 }
             }
             MicCommandOutput::MonitorStopped => {
@@ -700,7 +744,7 @@ impl MicShell {
         self.banner_action = BannerAction::RetryApply;
         self.should_probe_after_apply = true;
         widgets.banner.set_revealed(true);
-        widgets.body.set_sensitive(false);
+        widgets.body.set_sensitive(true);
     }
 
     fn show_checking(&mut self, widgets: &MicShellWidgets) {
@@ -784,26 +828,36 @@ impl MicShell {
         root: &adw::ApplicationWindow,
         sender: &ComponentSender<Self>,
     ) {
-        if self.is_closing {
-            return;
-        }
+        if self.is_closing { return; }
         self.is_closing = true;
         self.cancel_apply_debounce();
-        self.show_checking(widgets);
-        let persisted_window = self.state.settings().window.clone();
-        let width = current_window_dimension(root.width(), persisted_window.width);
-        let height = current_window_dimension(root.height(), persisted_window.height);
-        let maximized = root.is_maximized();
+        widgets.banner.set_title(&i18n("Saving settings…"));
+        widgets.banner.set_button_label(None);
+        widgets.banner.set_revealed(true);
+        widgets.body.set_sensitive(false);
+        let window = self.state.settings().window.clone();
+        let width = current_window_dimension(root.width(), window.width);
+        let height = current_window_dimension(root.height(), window.height);
         self.state.mutate(|settings| {
             settings.monitor.enabled = false;
             settings.window.width = width;
             settings.window.height = height;
-            settings.window.maximized = maximized;
+            settings.window.maximized = root.is_maximized();
         });
-        self.applies.settings_changed();
-        if let Some(request) = self.applies.mark_current_ready() {
-            self.spawn_apply_request(sender, request);
+        if !self.state.has_active_apply() {
+            self.save_before_close(sender);
         }
+    }
+
+    fn save_before_close(&mut self, sender: &ComponentSender<Self>) {
+        if self.close_save_in_flight { return; }
+        self.close_save_in_flight = true;
+        let work = self.state.close_work();
+        sender.oneshot_command(async move {
+            let result = relm4::spawn_blocking(move || work.run()).await
+                .unwrap_or_else(|error| Err(error.to_string()));
+            MicCommandOutput::ClosePreferencesSaved(result)
+        });
     }
 
     fn stop_monitor(&mut self, widgets: &MicShellWidgets, sender: &ComponentSender<Self>) {
@@ -853,7 +907,7 @@ impl MicShell {
                 widgets.banner.set_button_label(Some(&i18n("Check again")));
                 self.banner_action = BannerAction::Recheck;
                 widgets.banner.set_revealed(true);
-                widgets.body.set_sensitive(false);
+                widgets.body.set_sensitive(true);
             }
         }
     }
