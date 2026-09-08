@@ -259,6 +259,8 @@ COMMANDS:
     apply           Write every config file under the user's XDG dirs
     remove          Delete every config file previously written by apply
     list-apps       Scan the PipeWire graph for routable audio streams
+    models          Print one JSON row per noise model: plugin, label,
+                    sample rate and whether that plugin loads here
     measure-model N Measure the installed model in a separate process
     watch           Follow output changes for automatic echo cancellation
     autostart       Reconcile the PipeWire graph with the saved settings
