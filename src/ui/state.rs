@@ -127,6 +127,7 @@ struct ApplyOutcome {
 pub(super) struct ApplyWork {
     request: ApplyRequest,
     previous: Option<AppSettings>,
+    baseline: AppSettings,
     snapshot: AppSettings,
     loopback: Option<Loopback>,
 }
@@ -138,7 +139,7 @@ impl ApplyWork {
 
     /// Run all blocking PipeWire/persistence work and return a typed result.
     pub(super) fn run(self) -> ApplyCompletion {
-        let outcome = run_apply(self.previous, self.snapshot, self.loopback);
+        let outcome = run_apply(self.previous, self.baseline, self.snapshot, self.loopback);
         ApplyCompletion {
             request: self.request,
             outcome: Some(outcome),
@@ -222,10 +223,11 @@ pub struct AppState {
 impl AppState {
     #[must_use]
     pub fn new(settings: AppSettings) -> Rc<Self> {
+        let persisted = settings.clone();
         Rc::new(Self {
             settings: RefCell::new(settings),
             last_applied: RefCell::new(None),
-            last_persisted: RefCell::new(None),
+            last_persisted: RefCell::new(Some(persisted)),
             local_apply_snapshot: RefCell::new(None),
             uncertain_local_writes: RefCell::new(VecDeque::new()),
             loopback: RefCell::new(None),
@@ -233,6 +235,10 @@ impl AppState {
     }
 
     #[must_use]
+    pub(super) fn has_active_apply(&self) -> bool {
+        self.local_apply_snapshot.borrow().is_some()
+    }
+
     pub fn settings(&self) -> std::cell::Ref<'_, AppSettings> {
         self.settings.borrow()
     }
@@ -267,8 +273,19 @@ impl AppState {
         if *self.settings.borrow() == new {
             return false;
         }
-        *self.settings.borrow_mut() = new;
-        true
+        let baseline = self.last_persisted.borrow().clone()
+            .unwrap_or_else(|| self.settings.borrow().clone());
+        match crate::config::storage::merge(&baseline, &self.settings.borrow(), &new) {
+            Ok(merged) => {
+                *self.last_persisted.borrow_mut() = Some(new);
+                *self.settings.borrow_mut() = merged;
+                true
+            }
+            Err(error) => {
+                log::warn!("settings: preserving local edits after external conflict: {error}");
+                false
+            }
+        }
     }
 
     /// Move an immutable apply snapshot and the current loopback handle into a
@@ -283,6 +300,7 @@ impl AppState {
         ApplyWork {
             request,
             previous: prev,
+            baseline: self.last_persisted.borrow().clone().unwrap_or_else(|| snapshot.clone()),
             snapshot,
             loopback: self.loopback.borrow_mut().take(),
         }
@@ -316,6 +334,11 @@ impl AppState {
         };
         *self.loopback.borrow_mut() = outcome.loopback;
         if outcome.was_persisted {
+            if let Some(local) = &local_snapshot {
+                let rebased = crate::config::storage::rebase_local(
+                    &local.snapshot, &self.settings.borrow(), &outcome.snapshot);
+                *self.settings.borrow_mut() = rebased;
+            }
             *self.last_persisted.borrow_mut() = Some(outcome.snapshot.clone());
         }
         match outcome.status {
@@ -335,9 +358,26 @@ impl AppState {
 /// returned in the outcome.
 fn run_apply(
     prev: Option<AppSettings>,
+    baseline: AppSettings,
     mut snapshot: AppSettings,
     loopback_in: Option<Loopback>,
 ) -> ApplyOutcome {
+    let transaction = crate::config::storage::SettingsLock::acquire()
+        .and_then(|guard| {
+            let latest = AppSettings::load_strict()?;
+            let merged = crate::config::storage::merge(&baseline, &snapshot, &latest)?;
+            Ok((guard, merged))
+        });
+    let (_settings_lock, merged) = match transaction {
+        Ok(transaction) => transaction,
+        Err(error) => return ApplyOutcome {
+            snapshot,
+            loopback: loopback_in,
+            was_persisted: false,
+            status: ApplyStatus::Failed(error.to_string()),
+        },
+    };
+    snapshot = merged;
     if prev.is_none() {
         crate::pipeline::purge_legacy_files();
     }

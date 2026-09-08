@@ -22,6 +22,7 @@ mod paths;
 pub mod plugin_cost;
 mod processing;
 mod quality;
+pub mod storage;
 mod ui;
 
 use std::io;
@@ -73,6 +74,26 @@ pub struct AppSettings {
 }
 
 impl AppSettings {
+    pub fn load_strict() -> io::Result<Self> {
+        let path = settings_file();
+        match std::fs::read(&path) {
+            Ok(bytes) => {
+                let value: serde_json::Value = serde_json::from_slice(&bytes)
+                    .map_err(|error| io::Error::new(io::ErrorKind::InvalidData, error))?;
+                if !value.is_object() {
+                    return Err(io::Error::new(io::ErrorKind::InvalidData, "settings must be a JSON object"));
+                }
+                // Validate the schema before using the compatibility loader.
+                // Old quality spelling is accepted by its serde alias.
+                serde_json::from_value::<Self>(value).map_err(|error|
+                    io::Error::new(io::ErrorKind::InvalidData, error))?;
+                Ok(Self::load_from(&path))
+            }
+            Err(error) if error.kind() == io::ErrorKind::NotFound => Ok(Self::default()),
+            Err(error) => Err(error),
+        }
+    }
+
     /// Load from the default location (`~/.config/biglinux-microphone/settings.json`).
     /// Missing file → defaults. Malformed JSON → defaults + error log.
     #[must_use]
@@ -205,9 +226,10 @@ impl AppSettings {
     }
 
     pub fn save_to(&self, path: &Path) -> io::Result<()> {
-        let mut json = serde_json::to_vec_pretty(self)
-            .map_err(|e| io::Error::new(io::ErrorKind::InvalidData, e))?;
-        json.push(b'\n');
+        let json = storage::serialized_preserving_unknown(self, path)?;
+        if std::fs::read(path).is_ok_and(|existing| existing == json) {
+            return Ok(());
+        }
         atomic_write_private(path, &json)?;
         debug!("settings: saved to {}", path.display());
         Ok(())
@@ -238,6 +260,7 @@ pub(crate) fn atomic_write_private(path: &Path, bytes: &[u8]) -> io::Result<()> 
             gio::Cancellable::NONE,
         )
         .map_err(io::Error::other)?;
+    std::fs::File::open(path)?.sync_all()?;
     std::fs::File::open(parent)?.sync_all()
 }
 

@@ -180,6 +180,7 @@ pub(super) struct MicShell {
     applies: ApplyTracker,
     apply_debounce: Option<SourceId>,
     settings_loads: SettingsLoadTracker,
+    settings_reload_pending: bool,
     monitor: Option<Rc<AudioMonitor>>,
     settings_monitor: Option<gio::FileMonitor>,
 }
@@ -332,6 +333,7 @@ impl Component for MicShell {
             applies,
             apply_debounce: None,
             settings_loads: SettingsLoadTracker::default(),
+            settings_reload_pending: false,
             monitor: Some(monitor),
             settings_monitor,
         };
@@ -424,6 +426,10 @@ impl Component for MicShell {
                 BannerAction::None | BannerAction::RetryInProgress => {}
             },
             MicInput::ExternalSettingsChanged => {
+                if self.state.has_active_apply() {
+                    self.settings_reload_pending = true;
+                    return;
+                }
                 let Some(generation) = self.settings_loads.begin() else {
                     log::error!("settings reload generation exhausted");
                     return;
@@ -606,6 +612,9 @@ impl Component for MicShell {
                 }
                 if !tracking.is_settled {
                     return;
+                }
+                if std::mem::take(&mut self.settings_reload_pending) && !self.is_closing {
+                    let _ = sender.input_sender().send(MicInput::ExternalSettingsChanged);
                 }
 
                 if self.is_closing {

@@ -322,6 +322,10 @@ fn dump_output_conf() -> ExitCode {
 }
 
 fn apply_configs() -> ExitCode {
+    let _settings_lock = match biglinux_microphone::config::storage::SettingsLock::acquire() {
+        Ok(lock) => lock,
+        Err(error) => return exit_with_error(&error.to_string()),
+    };
     let s = AppSettings::load();
     if let Err(e) = pipeline::apply(&s) {
         return exit_with_error(&format!("apply: {e}"));
@@ -346,6 +350,10 @@ fn apply_configs() -> ExitCode {
 }
 
 fn remove_configs() -> ExitCode {
+    let _settings_lock = match biglinux_microphone::config::storage::SettingsLock::acquire() {
+        Ok(lock) => lock,
+        Err(error) => return exit_with_error(&error.to_string()),
+    };
     match pipeline::remove_all() {
         Ok(()) => {
             println!("removed generated configs");
@@ -365,6 +373,10 @@ fn exit_with_error(message: &str) -> ExitCode {
 /// currently asks for. Called by the systemd user unit on login and
 /// available manually for `biglinux-microphone-cli autostart`.
 fn autostart() -> ExitCode {
+    let _settings_lock = match biglinux_microphone::config::storage::SettingsLock::acquire() {
+        Ok(lock) => lock,
+        Err(error) => return exit_with_error(&error.to_string()),
+    };
     pipeline::purge_legacy_files();
     let mut settings = AppSettings::load();
 
@@ -398,6 +410,10 @@ fn autostart() -> ExitCode {
 /// topology change the live path can't handle (e.g. a new LADSPA
 /// plugin, or manual config editing). Does **not** touch WirePlumber.
 fn reload_services() -> ExitCode {
+    let _settings_lock = match biglinux_microphone::config::storage::SettingsLock::acquire() {
+        Ok(lock) => lock,
+        Err(error) => return exit_with_error(&error.to_string()),
+    };
     let settings = AppSettings::load();
     if let Err(e) = pipeline::apply(&settings) {
         return exit_with_error(&format!("reload apply: {e}"));
@@ -499,6 +515,10 @@ fn live_update() -> ExitCode {
 /// `echo_cancel`/`stereo` defaults. On only re-enables `noise_reduction`
 /// — the user can re-enable individual sub-filters from the GUI.
 fn toggle_mic() -> ExitCode {
+    let _settings_lock = match biglinux_microphone::config::storage::SettingsLock::acquire() {
+        Ok(lock) => lock,
+        Err(error) => return exit_with_error(&error.to_string()),
+    };
     let mut settings = AppSettings::load();
     let new_state = !settings.noise_reduction.enabled;
     if new_state {
@@ -530,6 +550,10 @@ fn toggle_mic() -> ExitCode {
 /// Flip `output_filter.enabled` and reconcile the standalone output
 /// unit. Used by the Plasma applet.
 fn toggle_output() -> ExitCode {
+    let _settings_lock = match biglinux_microphone::config::storage::SettingsLock::acquire() {
+        Ok(lock) => lock,
+        Err(error) => return exit_with_error(&error.to_string()),
+    };
     let mut settings = AppSettings::load();
     let new_state = !settings.output_filter.enabled;
     settings.output_filter.enabled = new_state;
@@ -557,6 +581,10 @@ fn toggle_output() -> ExitCode {
 /// one. Every unit is reconciled afterwards — each reconciler decides
 /// from the saved settings, so calling all three is right for any key.
 fn set_one(key: Option<String>, value: Option<String>) -> ExitCode {
+    let _settings_lock = match biglinux_microphone::config::storage::SettingsLock::acquire() {
+        Ok(lock) => lock,
+        Err(error) => return exit_with_error(&error.to_string()),
+    };
     let (Some(name), Some(value)) = (key, value) else {
         return exit_with_error(&format!(
             "set: needs a key and a value. Keys: {}",
@@ -774,6 +802,10 @@ fn list_audio_apps() -> ExitCode {
 /// visible in the PipeWire graph — that's the same signal the GUI
 /// toggle would have to recover from.
 fn repair() -> ExitCode {
+    let _settings_lock = match biglinux_microphone::config::storage::SettingsLock::acquire() {
+        Ok(lock) => lock,
+        Err(error) => return exit_with_error(&error.to_string()),
+    };
     use big_os_kit::subprocess::{BigSubprocessOutputMode, BigSubprocessSpec};
 
     let settings = AppSettings::load();
