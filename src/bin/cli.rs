@@ -18,7 +18,6 @@
 //! | `set`          | Set one named setting to a given value and re-apply |
 //! | `status`       | Print one-line JSON: `{"mic_enabled":…,"output_enabled":…}` |
 
-use std::io;
 use std::process::ExitCode;
 
 use big_os_kit::subprocess::{BigSubprocessOutputMode, BigSubprocessSpec};
@@ -89,20 +88,7 @@ impl Key {
     const NAMES: &'static str = "mic, mic-intensity, voice-clarity, echo, output-voices, \
                                  equalizer, voice-changer, voice-pitch, quality, eq-preset";
 
-    /// Whether honouring this key means a filter chain has to come or go.
-    /// Everything else is a port of a chain that is already loaded, which
-    /// `apply_live` moves without an interruption.
-    ///
-    /// `voice-pitch` is a percentage and still belongs here: the pitch
-    /// shifter is two nodes the graph only carries while the voice changer is
-    /// on, and `mic_params` deliberately pushes no `pitch:` control (the
-    /// phase vocoder is a topology change, which is what `needs_mic_reload`
-    /// says about the same field). Classifying it as a mere quantity meant
-    /// the args were rewritten and nothing ever reloaded, so the new pitch
-    /// never reached the running chain.
-    fn changes_the_graph(self) -> bool {
-        !matches!(self, Self::MicIntensity | Self::VoiceClarity)
-    }
+
 }
 
 impl Cmd {
@@ -322,45 +308,23 @@ fn dump_output_conf() -> ExitCode {
 }
 
 fn apply_configs() -> ExitCode {
-    let _settings_lock = match biglinux_microphone::config::storage::SettingsLock::acquire() {
-        Ok(lock) => lock,
-        Err(error) => return exit_with_error(&error.to_string()),
-    };
-    let s = AppSettings::load();
-    if let Err(e) = pipeline::apply(&s) {
-        return exit_with_error(&format!("apply: {e}"));
-    }
-    println!("applied {}", pipeline::mic_conf_path().display());
-    let out_path = pipeline::output_conf_path();
-    if s.output_filter.enabled {
-        println!("applied {}", out_path.display());
-    } else {
-        // `pipeline::apply` always writes the args file (bypass-mode
-        // graph); only the service is kept stopped while disabled.
-        println!(
-            "output filter disabled — {} written in bypass mode, service stopped",
-            out_path.display()
-        );
-    }
-
-    reconcile_aec_service(&s);
-    reconcile_mic_chain(&s);
-    reconcile_output_service(&s);
-    ExitCode::SUCCESS
+    reconcile_saved(false)
 }
 
 fn remove_configs() -> ExitCode {
-    let _settings_lock = match biglinux_microphone::config::storage::SettingsLock::acquire() {
-        Ok(lock) => lock,
+    let _guard = match biglinux_microphone::config::storage::SettingsLock::acquire() {
+        Ok(guard) => guard,
         Err(error) => return exit_with_error(&error.to_string()),
     };
-    match pipeline::remove_all() {
-        Ok(()) => {
-            println!("removed generated configs");
-            ExitCode::SUCCESS
-        }
-        Err(e) if e.kind() == io::ErrorKind::NotFound => ExitCode::SUCCESS,
-        Err(e) => exit_with_error(&format!("remove: {e}")),
+    let result = (|| -> std::io::Result<()> {
+        biglinux_microphone::services::pipewire::stop_mic_service()?;
+        biglinux_microphone::services::pipewire::stop_aec_service()?;
+        biglinux_microphone::services::pipewire::stop_output_service()?;
+        pipeline::remove_all()
+    })();
+    match result {
+        Ok(()) => ExitCode::SUCCESS,
+        Err(error) => exit_with_error(&error.to_string()),
     }
 }
 
@@ -373,100 +337,27 @@ fn exit_with_error(message: &str) -> ExitCode {
 /// currently asks for. Called by the systemd user unit on login and
 /// available manually for `biglinux-microphone-cli autostart`.
 fn autostart() -> ExitCode {
-    let _settings_lock = match biglinux_microphone::config::storage::SettingsLock::acquire() {
-        Ok(lock) => lock,
-        Err(error) => return exit_with_error(&error.to_string()),
-    };
     pipeline::purge_legacy_files();
-    let mut settings = AppSettings::load();
-
-    // §38 is decided here and not on every read: login is when the machine's answer can
-    // actually have changed — a laptop that was on mains yesterday is on battery now, and
-    // a model chosen for the wrong one of those is the difference between a filter that
-    // fits and one that misses blocks. Saved only when it moved, so an unchanged machine
-    // does not rewrite its settings file at every login.
-    let before = (settings.noise_reduction.model, settings.echo_cancel.enabled);
-    biglinux_microphone::services::echo::settle(&mut settings.echo_cancel);
-    settings.settle_quality();
-    if (settings.noise_reduction.model, settings.echo_cancel.enabled) != before
-        && let Err(e) = settings.save()
-    {
-        eprintln!("warning: autostart: saving the chosen model: {e}");
-    }
-
-    if let Err(e) = pipeline::apply(&settings) {
-        return exit_with_error(&format!("autostart apply: {e}"));
-    }
-
-    reconcile_aec_service(&settings);
-    reconcile_mic_chain(&settings);
-    reconcile_output_service(&settings);
-
-    println!("autostart: configuration reconciled");
-    ExitCode::SUCCESS
+    reconcile_saved(false)
 }
 
 /// Force-reload every pwloader unit from scratch. Useful after a
 /// topology change the live path can't handle (e.g. a new LADSPA
 /// plugin, or manual config editing). Does **not** touch WirePlumber.
 fn reload_services() -> ExitCode {
-    let _settings_lock = match biglinux_microphone::config::storage::SettingsLock::acquire() {
-        Ok(lock) => lock,
-        Err(error) => return exit_with_error(&error.to_string()),
-    };
-    let settings = AppSettings::load();
-    if let Err(e) = pipeline::apply(&settings) {
-        return exit_with_error(&format!("reload apply: {e}"));
-    }
-    // AEC first so `echo-cancel-source` exists by the time the mic
-    // loader resolves `target.object`.
-    reconcile_aec_service(&settings);
-    reconcile_mic_chain(&settings);
-    // Output unit only runs when its master is on — restart it from
-    // scratch when wanted (covers fresh start + topology pickup),
-    // otherwise stop it so no idle worker remains.
-    if settings.output_filter.enabled {
-        if let Err(e) = biglinux_microphone::services::pipewire::restart_output_service() {
-            eprintln!("warning: output service restart failed: {e}");
-        }
-    } else if let Err(e) = biglinux_microphone::services::pipewire::stop_output_service() {
-        eprintln!("warning: output service stop failed: {e}");
-    }
-    println!(
-        "reload: mic + AEC + output pwloader units reconciled \
-         (wireplumber untouched)"
-    );
-    ExitCode::SUCCESS
+    reconcile_saved(true)
 }
 
 /// Reconcile the mic loader unit with the master mic-side switches.
 /// The unit must be running whenever any mic filter is wanted; stop
 /// it otherwise so `mic-biglinux` doesn't hang around as a dead node.
-fn reconcile_mic_chain(settings: &AppSettings) {
-    use biglinux_microphone::services::pipewire::{restart_mic_service, stop_mic_service};
-    if pipeline::mic_chain_wanted(settings) {
-        if let Err(e) = restart_mic_service() {
-            eprintln!("warning: mic loader reload failed: {e}");
-        }
-    } else if let Err(e) = stop_mic_service() {
-        eprintln!("warning: mic loader stop failed: {e}");
-    }
-}
+
 
 /// Reconcile the AEC loader unit. Independent lifecycle from the mic
 /// loader: when AEC is wanted the EC source must exist before the mic
 /// chain resolves its capture target, so callers run this *before*
 /// reconciling the mic unit.
-fn reconcile_aec_service(settings: &AppSettings) {
-    use biglinux_microphone::services::pipewire::{restart_aec_service, stop_aec_service};
-    if settings.echo_cancel.enabled {
-        if let Err(e) = restart_aec_service() {
-            eprintln!("warning: AEC loader reload failed: {e}");
-        }
-    } else if let Err(e) = stop_aec_service() {
-        eprintln!("warning: AEC loader stop failed: {e}");
-    }
-}
+
 
 /// Bring the standalone output unit up when the user wants the chain
 /// running, and tear it down when they turn the master off so no idle
@@ -476,36 +367,16 @@ fn reconcile_aec_service(settings: &AppSettings) {
 /// removes the virtual sink — Chromium-based browsers pause playback
 /// when their target sink disappears, which is the accepted price for
 /// not keeping a dormant worker running.
-fn reconcile_output_service(settings: &AppSettings) {
-    use biglinux_microphone::services::pipewire::{start_output_service, stop_output_service};
 
-    if settings.output_filter.enabled {
-        if let Err(e) = start_output_service() {
-            eprintln!("warning: output service start failed: {e}");
-        }
-    } else if let Err(e) = stop_output_service() {
-        eprintln!("warning: output service stop failed: {e}");
-    }
-}
 
 /// Push current settings into the already-loaded filter-chain without
 /// restarting any service. Safe to call repeatedly.
 fn live_update() -> ExitCode {
     let settings = AppSettings::load();
     match biglinux_microphone::services::pipewire::apply_live(&settings) {
-        Ok(outcome) => {
-            if outcome.fully_applied(&settings) {
-                println!("live-update: ok");
-            } else {
-                println!(
-                    "live-update: partial — mic_pushed={} output_pushed={} \
-                     (run `reload` if a filter-chain node is missing)",
-                    outcome.mic_pushed, outcome.output_pushed,
-                );
-            }
-            ExitCode::SUCCESS
-        }
-        Err(e) => exit_with_error(&format!("live-update: {e}")),
+        Ok(outcome) if outcome.fully_applied(&settings) => ExitCode::SUCCESS,
+        Ok(_) => exit_with_error("The filter is not ready. Run reload or repair."),
+        Err(error) => exit_with_error(&error.to_string()),
     }
 }
 
@@ -515,62 +386,41 @@ fn live_update() -> ExitCode {
 /// `echo_cancel`/`stereo` defaults. On only re-enables `noise_reduction`
 /// — the user can re-enable individual sub-filters from the GUI.
 fn toggle_mic() -> ExitCode {
-    let _settings_lock = match biglinux_microphone::config::storage::SettingsLock::acquire() {
-        Ok(lock) => lock,
+    let _guard = match biglinux_microphone::config::storage::SettingsLock::acquire() {
+        Ok(guard) => guard,
         Err(error) => return exit_with_error(&error.to_string()),
     };
-    let mut settings = AppSettings::load();
-    let new_state = !settings.noise_reduction.enabled;
-    if new_state {
-        settings.noise_reduction.enabled = true;
-    } else {
+    let mut settings = match AppSettings::load_strict() {
+        Ok(settings) => settings,
+        Err(error) => return exit_with_error(&error.to_string()),
+    };
+    if settings.noise_reduction.enabled {
         pipeline::cascade_mic_off(&mut settings);
+    } else {
+        settings.noise_reduction.enabled = true;
     }
-
-    if let Err(e) = settings.save() {
-        return exit_with_error(&format!("toggle-mic save: {e}"));
+    match apply_settings(&mut settings, false) {
+        Ok(()) => ExitCode::SUCCESS,
+        Err(error) => exit_with_error(&error),
     }
-    if let Err(e) = pipeline::apply(&settings) {
-        return exit_with_error(&format!("toggle-mic apply: {e}"));
-    }
-    if let Err(e) = biglinux_microphone::services::pipewire::apply_live(&settings) {
-        eprintln!("warning: live update failed: {e}");
-    }
-    reconcile_aec_service(&settings);
-    reconcile_mic_chain(&settings);
-
-    println!(
-        "toggle-mic: noise_reduction.enabled = {} (mic_chain_wanted = {})",
-        new_state,
-        pipeline::mic_chain_wanted(&settings),
-    );
-    ExitCode::SUCCESS
 }
 
 /// Flip `output_filter.enabled` and reconcile the standalone output
 /// unit. Used by the Plasma applet.
 fn toggle_output() -> ExitCode {
-    let _settings_lock = match biglinux_microphone::config::storage::SettingsLock::acquire() {
-        Ok(lock) => lock,
+    let _guard = match biglinux_microphone::config::storage::SettingsLock::acquire() {
+        Ok(guard) => guard,
         Err(error) => return exit_with_error(&error.to_string()),
     };
-    let mut settings = AppSettings::load();
-    let new_state = !settings.output_filter.enabled;
-    settings.output_filter.enabled = new_state;
-
-    if let Err(e) = settings.save() {
-        return exit_with_error(&format!("toggle-output save: {e}"));
+    let mut settings = match AppSettings::load_strict() {
+        Ok(settings) => settings,
+        Err(error) => return exit_with_error(&error.to_string()),
+    };
+    settings.output_filter.enabled = !settings.output_filter.enabled;
+    match apply_settings(&mut settings, false) {
+        Ok(()) => ExitCode::SUCCESS,
+        Err(error) => exit_with_error(&error),
     }
-    if let Err(e) = pipeline::apply(&settings) {
-        return exit_with_error(&format!("toggle-output apply: {e}"));
-    }
-    reconcile_output_service(&settings);
-    if let Err(e) = biglinux_microphone::services::pipewire::apply_live(&settings) {
-        eprintln!("warning: live update failed: {e}");
-    }
-
-    println!("toggle-output: output_filter.enabled = {new_state}");
-    ExitCode::SUCCESS
 }
 
 /// Set one named setting and bring the graph in line with it.
@@ -595,7 +445,10 @@ fn set_one(key: Option<String>, value: Option<String>) -> ExitCode {
         return exit_with_error(&format!("set: unknown key `{name}`. Keys: {}", Key::NAMES));
     };
 
-    let mut settings = AppSettings::load();
+    let mut settings = match AppSettings::load_strict() {
+        Ok(settings) => settings,
+        Err(error) => return exit_with_error(&error.to_string()),
+    };
     match key {
         // Off cascades, exactly as `toggle-mic` does: leaving the chain
         // alive on `echo_cancel`/`stereo` defaults is not "off".
@@ -702,26 +555,9 @@ fn set_one(key: Option<String>, value: Option<String>) -> ExitCode {
         },
     }
 
-    biglinux_microphone::services::echo::settle(&mut settings.echo_cancel);
-    if let Err(e) = settings.save() {
-        return exit_with_error(&format!("set {name}: save: {e}"));
+    if let Err(error) = apply_settings(&mut settings, false) {
+        return exit_with_error(&format!("set {name}: {error}"));
     }
-    if let Err(e) = pipeline::apply(&settings) {
-        return exit_with_error(&format!("set {name}: apply: {e}"));
-    }
-    // A unit restart is what makes a chain appear or disappear, and it costs a
-    // gap in the audio. A control that only moves a port of a chain already
-    // loaded must not pay for one: a slider dragged across its range would
-    // restart the graph at every stop.
-    if key.changes_the_graph() {
-        reconcile_aec_service(&settings);
-        reconcile_mic_chain(&settings);
-        reconcile_output_service(&settings);
-    }
-    if let Err(e) = biglinux_microphone::services::pipewire::apply_live(&settings) {
-        eprintln!("warning: live update failed: {e}");
-    }
-
     println!("set {name} = {value}");
     ExitCode::SUCCESS
 }
@@ -802,40 +638,7 @@ fn list_audio_apps() -> ExitCode {
 /// visible in the PipeWire graph — that's the same signal the GUI
 /// toggle would have to recover from.
 fn repair() -> ExitCode {
-    let _settings_lock = match biglinux_microphone::config::storage::SettingsLock::acquire() {
-        Ok(lock) => lock,
-        Err(error) => return exit_with_error(&error.to_string()),
-    };
-    use big_os_kit::subprocess::{BigSubprocessOutputMode, BigSubprocessSpec};
-
-    let settings = AppSettings::load();
-    if let Err(e) = pipeline::apply(&settings) {
-        return exit_with_error(&format!("repair apply: {e}"));
-    }
-    println!("regenerated {}", pipeline::mic_conf_path().display());
-    println!("regenerated {}", pipeline::output_conf_path().display());
-
-    let reset = |unit: &str| {
-        let _ = BigSubprocessSpec::builder()
-            .program("/usr/bin/systemctl")
-            .args(["--user", "reset-failed", unit])
-            .stdout(BigSubprocessOutputMode::Null)
-            .stderr(BigSubprocessOutputMode::Null)
-            .allow_list(["/usr/bin/systemctl"])
-            .build()
-            .run();
-    };
-    reset(biglinux_microphone::services::pipewire::MIC_UNIT);
-    reset(biglinux_microphone::services::pipewire::AEC_UNIT);
-    reset(biglinux_microphone::services::pipewire::OUTPUT_UNIT);
-
-    reconcile_aec_service(&settings);
-    reconcile_mic_chain(&settings);
-    reconcile_output_service(&settings);
-
-    println!("repair: configs rewritten, units reset and restarted");
-    println!("run `biglinux-microphone-cli doctor` to verify");
-    ExitCode::SUCCESS
+    reconcile_saved(true)
 }
 
 fn print_streams(streams: &[biglinux_microphone::services::pipewire::AppStream]) {
@@ -865,10 +668,13 @@ fn print_streams(streams: &[biglinux_microphone::services::pipewire::AppStream])
 fn watch_echo() -> ExitCode {
     use biglinux_microphone::services::echo::RouteWatch;
 
-    let _ = autostart();
+    if autostart() != ExitCode::SUCCESS {
+        return ExitCode::FAILURE;
+    }
     let mut child = match BigSubprocessSpec::builder()
         .program("/usr/bin/pw-dump")
         .arg("--monitor")
+        .stderr(BigSubprocessOutputMode::Inherit)
         .allow_list(["/usr/bin/pw-dump"])
         .stdout(BigSubprocessOutputMode::Capture)
         .build()
@@ -905,9 +711,34 @@ fn watch_echo() -> ExitCode {
         if settings.echo_cancel.mode == biglinux_microphone::config::EchoMode::Automatic
             && settings.echo_cancel.enabled != wanted
         {
-            let _ = autostart();
+            if autostart() != ExitCode::SUCCESS {
+        return ExitCode::FAILURE;
+    }
         }
     }
     let _ = child.wait();
     exit_with_error("PipeWire monitor disconnected")
+}
+
+fn apply_settings(settings: &mut AppSettings, force: bool) -> Result<(), String> {
+    settings.settle_quality();
+    biglinux_microphone::services::echo::settle(&mut settings.echo_cancel);
+    settings.save().map_err(|error| error.to_string())?;
+    biglinux_microphone::services::reconcile::apply(settings, force)
+        .map_err(|error| error.to_string())
+}
+
+fn reconcile_saved(force: bool) -> ExitCode {
+    let _guard = match biglinux_microphone::config::storage::SettingsLock::acquire() {
+        Ok(guard) => guard,
+        Err(error) => return exit_with_error(&error.to_string()),
+    };
+    let mut settings = match AppSettings::load_strict() {
+        Ok(settings) => settings,
+        Err(error) => return exit_with_error(&error.to_string()),
+    };
+    match apply_settings(&mut settings, force) {
+        Ok(()) => { println!("audio settings applied and verified"); ExitCode::SUCCESS }
+        Err(error) => exit_with_error(&error),
+    }
 }

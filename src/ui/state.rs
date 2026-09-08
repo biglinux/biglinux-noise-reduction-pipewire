@@ -34,12 +34,9 @@ use std::rc::Rc;
 use log::{debug, error, info};
 
 use crate::config::AppSettings;
-use crate::pipeline;
 use crate::services::loopback::Loopback;
-use crate::services::pipewire::{
-    apply_live, restart_mic_service, restart_output_service, start_aec_service, start_mic_service,
-    start_output_service, stop_aec_service, stop_mic_service, stop_output_service,
-};
+#[cfg(test)]
+use crate::services::reconcile::{needs_mic_reload, output_topology_changed};
 
 const MAX_UNCERTAIN_LOCAL_WRITES: usize = 8;
 
@@ -278,7 +275,8 @@ impl AppState {
             .borrow()
             .clone()
             .unwrap_or_else(|| self.settings.borrow().clone());
-        match crate::config::storage::merge(&baseline, &self.settings.borrow(), &new) {
+        let merged = crate::config::storage::merge(&baseline, &self.settings.borrow(), &new);
+        match merged {
             Ok(merged) => {
                 *self.last_persisted.borrow_mut() = Some(new);
                 *self.settings.borrow_mut() = merged;
@@ -413,85 +411,19 @@ fn run_apply(
         };
     }
 
-    // Tier 2 — rewrite on-disk drop-ins so the next login reproduces the state.
-    if let Err(e) = pipeline::apply(&snapshot) {
-        error!("state: failed to write pipeline configs: {e}");
+    if let Err(error) = crate::services::reconcile::apply(&snapshot, false) {
         return ApplyOutcome {
             snapshot,
             loopback: loopback_in,
             was_persisted: true,
-            status: ApplyStatus::Failed(format!("could not write audio configuration: {e}")),
+            status: ApplyStatus::Failed(error.to_string()),
         };
     }
-
-    // Tier 3 — push live control values. No restart, no dropout.
-    let live = match apply_live(&snapshot) {
-        Ok(o) => o,
-        Err(e) => {
-            error!("state: live control update failed: {e}");
-            return ApplyOutcome {
-                snapshot,
-                loopback: loopback_in,
-                was_persisted: true,
-                status: ApplyStatus::Failed(format!("live control update failed: {e}")),
-            };
-        }
+    let (loopback, status) = match reconcile_self_listen(prev.as_ref(), &snapshot, loopback_in) {
+        Ok(loopback) => (loopback, ApplyStatus::Applied),
+        Err(error) => (None, ApplyStatus::Failed(error)),
     };
-
-    // Tier 4 — drive each pwloader unit independently. AEC first because the
-    // mic chain pins `target.object = "echo-cancel-source"` when AEC is on, so
-    // the EC source must already exist by the time the mic loader resolves its
-    // capture target. Unit failures are collected instead of swallowed: the
-    // snapshot must not be recorded as applied (and the user must be told)
-    // when a required service did not actually reach its target state.
-    let mut unit_errors: Vec<String> = Vec::new();
-    if let Err(e) = reconcile_aec_service(prev.as_ref(), &snapshot) {
-        error!("state: {e}");
-        unit_errors.push(e);
-    }
-
-    let need_mic_reload = needs_mic_reload(prev.as_ref(), &snapshot) || !live.mic_pushed;
-    if need_mic_reload {
-        if pipeline::mic_chain_wanted(&snapshot) {
-            let was_running = prev.as_ref().is_some_and(pipeline::mic_chain_wanted);
-            if was_running {
-                info!("state: mic args changed — restarting mic loader");
-                if let Err(e) = restart_mic_service() {
-                    error!("state: failed to reload mic loader: {e}");
-                    unit_errors.push(format!("microphone filter reload failed: {e}"));
-                }
-            } else {
-                info!("state: mic chain wanted — starting mic loader");
-                if let Err(e) = start_mic_service() {
-                    error!("state: failed to start mic loader: {e}");
-                    unit_errors.push(format!("microphone filter start failed: {e}"));
-                }
-            }
-        } else if let Err(e) = stop_mic_service() {
-            error!("state: failed to stop mic loader: {e}");
-            unit_errors.push(format!("microphone filter stop failed: {e}"));
-        }
-    } else {
-        debug!("state: mic controls pushed live, no reload");
-    }
-
-    if let Err(e) = reconcile_output_service(prev.as_ref(), &snapshot) {
-        error!("state: {e}");
-        unit_errors.push(e);
-    }
-    let loopback = reconcile_self_listen(prev.as_ref(), &snapshot, loopback_in);
-
-    let status = if unit_errors.is_empty() {
-        ApplyStatus::Applied
-    } else {
-        ApplyStatus::Failed(unit_errors.join("; "))
-    };
-    ApplyOutcome {
-        snapshot,
-        loopback,
-        was_persisted: true,
-        status,
-    }
+    ApplyOutcome { snapshot, loopback, was_persisted: true, status }
 }
 
 /// Spawn or kill the `pw-loopback` subprocess so the user can hear their own
@@ -502,7 +434,7 @@ fn reconcile_self_listen(
     prev: Option<&AppSettings>,
     now: &AppSettings,
     mut loopback: Option<Loopback>,
-) -> Option<Loopback> {
+) -> Result<Option<Loopback>, String> {
     let was_on = prev.is_some_and(|s| s.monitor.enabled);
     let is_on = now.monitor.enabled;
 
@@ -510,13 +442,13 @@ fn reconcile_self_listen(
         if loopback.take().is_some() {
             debug!("state: stopped self-listen loopback");
         }
-        return None;
+        return Ok(None);
     }
 
     // is_on: bring the loopback up if it isn't already alive.
     let alive = loopback.as_mut().is_some_and(Loopback::is_alive);
     if alive && was_on && prev.is_some_and(|p| p.monitor.delay_ms == now.monitor.delay_ms) {
-        return loopback;
+        return Ok(loopback);
     }
 
     // Either fresh start, delay changed, or process died — recreate.
@@ -524,130 +456,13 @@ fn reconcile_self_listen(
     match Loopback::start(now.monitor.delay_ms) {
         Ok(handle) => {
             info!("state: self-listen loopback started");
-            Some(handle)
+            Ok(Some(handle))
         }
         Err(e) => {
             error!("state: self-listen loopback failed: {e}");
-            None
+            Err(format!("Could not start self-listen: {e}"))
         }
     }
-}
-
-/// Drive the standalone output unit so its `pipewire -c` worker only
-/// exists while the user actually wants the output filter. Disabling
-/// the master tears the virtual sink down — Chromium-based browsers
-/// pause playback when their target sink disappears, but that is the
-/// explicit price the user pays for not having an idle pipewire worker
-/// hanging around. Re-enabling spawns the worker again and `apply_live`
-/// repopulates the controls.
-///
-/// Topology changes (EQ band layout) can only take effect via a real
-/// restart, and we only attempt that when the master is on — i.e. the
-/// user is actively listening through the filter and a brief reload is
-/// expected.
-fn reconcile_output_service(prev: Option<&AppSettings>, now: &AppSettings) -> Result<(), String> {
-    let was_enabled = prev.is_some_and(|s| s.output_filter.enabled);
-    let is_enabled = now.output_filter.enabled;
-
-    if is_enabled && !was_enabled {
-        start_output_service().map_err(|e| format!("output filter start failed: {e}"))
-    } else if is_enabled && output_topology_changed(prev, now) {
-        restart_output_service().map_err(|e| format!("output filter restart failed: {e}"))
-    } else if !is_enabled && was_enabled {
-        stop_output_service().map_err(|e| format!("output filter stop failed: {e}"))
-    } else {
-        // is_enabled && !topology_changed → live update covered it.
-        // !is_enabled && !was_enabled → nothing to do.
-        Ok(())
-    }
-}
-
-/// Drive `biglinux-microphone-aec.service`. The EC source is the
-/// upstream of the mic chain when enabled, so we start/restart it
-/// before the caller touches the mic loader. Topology of the AEC
-/// args body is fixed (only the `enabled` flag toggles its existence),
-/// so any rewrite is purely "exists or not" — no in-process restart
-/// needed when the toggle stays true.
-///
-/// The "not wanted" branch always issues a `stop`, even when the
-/// previous snapshot also had AEC off. `systemctl stop` on an already
-/// inactive unit is a cheap no-op; the redundancy is what guarantees
-/// we collect any orphaned AEC pwloader that an out-of-process actor or
-/// stale mic-unit dependency left running. Without it, that AEC loader
-/// would keep consuming CPU even after the user disabled the toggle.
-fn reconcile_aec_service(prev: Option<&AppSettings>, now: &AppSettings) -> Result<(), String> {
-    let was_on = prev.is_some_and(|settings| settings.echo_cancel.enabled);
-    let is_on = now.echo_cancel.enabled;
-    if is_on {
-        if !was_on {
-            start_aec_service().map_err(|e| format!("echo-cancellation start failed: {e}"))?;
-        }
-        Ok(())
-    } else {
-        stop_aec_service().map_err(|e| format!("echo-cancellation stop failed: {e}"))
-    }
-}
-
-fn needs_mic_reload(prev: Option<&AppSettings>, now: &AppSettings) -> bool {
-    let was_wanted = prev.is_some_and(pipeline::mic_chain_wanted);
-    let now_wanted = pipeline::mic_chain_wanted(now);
-    if was_wanted != now_wanted {
-        return true;
-    }
-    if let Some(p) = prev {
-        let voice_was_on =
-            p.stereo.enabled && p.stereo.mode == crate::config::StereoMode::VoiceChanger;
-        let voice_is_on =
-            now.stereo.enabled && now.stereo.mode == crate::config::StereoMode::VoiceChanger;
-        let voice_changer_topology_changed = voice_was_on != voice_is_on
-            || (voice_is_on && (p.stereo.width - now.stereo.width).abs() > f32::EPSILON);
-        let ai_topology_changed =
-            pipeline::ai_node_in_mic_chain(p) != pipeline::ai_node_in_mic_chain(now);
-        // Selecting a different denoiser backend swaps the LADSPA
-        // plugin — different .so, different control
-        // surface, different port names. Only a reload picks that up.
-        // While an attenuation-only backend is active a separate SWH gate node also rides
-        // alongside `ai`, so toggling the gate flag has to reload too
-        // (instead of being a pure live update like with GTCRN's
-        // integrated gate).
-        let denoiser_topology_changed = p.noise_reduction.model != now.noise_reduction.model
-            || (now.noise_reduction.model.is_attenuation_only()
-                && p.gate.enabled != now.gate.enabled);
-        // `target.object = "echo-cancel-source"` is added on the capture
-        // side only when AEC is on. Toggling AEC rewrites that prop, so
-        // the chain must be reloaded before the graph can use/bypass the
-        // cleaned source.
-        let ec_target_changed = p.echo_cancel.enabled != now.echo_cancel.enabled;
-        // HPF is a 2-biquad cascade when enabled and a single
-        // pass-through node when disabled — toggling it adds/removes
-        // `hpf_pre` from the graph, so we must reload, not live-update.
-        let hpf_topology_changed = p.hpf.enabled != now.hpf.enabled;
-        p.equalizer.bands != now.equalizer.bands
-            || p.equalizer.preset != now.equalizer.preset
-            || p.equalizer.enabled != now.equalizer.enabled
-            || p.compressor.enabled != now.compressor.enabled
-            || voice_changer_topology_changed
-            || ai_topology_changed
-            || denoiser_topology_changed
-            || ec_target_changed
-            || hpf_topology_changed
-    } else {
-        now_wanted
-    }
-}
-
-fn output_topology_changed(prev: Option<&AppSettings>, now: &AppSettings) -> bool {
-    // GTCRN is permanently wired in the output graph; NR / master
-    // toggles flip its `Enable` port via the live update path. EQ
-    // band/preset changes rewrite the graph, and so does selecting a
-    // different denoiser backend (GTCRN vs attenuation-only) since the LADSPA
-    // plugin and port names differ.
-    prev.is_some_and(|p| {
-        p.output_filter.equalizer.bands != now.output_filter.equalizer.bands
-            || p.output_filter.equalizer.preset != now.output_filter.equalizer.preset
-            || p.output_filter.equalizer.enabled != now.output_filter.equalizer.enabled
-            || p.output_filter.noise_reduction.model != now.output_filter.noise_reduction.model
-    })
 }
 
 #[cfg(test)]
