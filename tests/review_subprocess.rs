@@ -1,9 +1,15 @@
 //! Real-child regressions for the shared subprocess boundary.
 #![cfg(not(miri))]
-use big_os_kit::subprocess::{BigSubprocessError, BigSubprocessSpec};
+use big_os_kit::subprocess::{BigSubprocessError, BigSubprocessOutputMode, BigSubprocessSpec};
+use std::io::Write;
+use std::os::fd::AsFd;
 use std::path::Path;
 use std::process::{Command, Stdio};
 use std::time::{Duration, Instant};
+
+const FIXTURE: &str = "BIGMIC_SUBPROCESS_PIPE_FIXTURE";
+const ROLE: &str = "BIGMIC_SUBPROCESS_PIPE_ROLE";
+const ENTRY: &str = "inherited_pipe_lifetimes_are_bounded_too";
 
 #[test]
 fn an_explicit_empty_allow_list_denies_execution() {
@@ -42,19 +48,56 @@ fn full_duplex_pipes_do_not_deadlock() {
     assert_eq!(result.stdout, payload);
 }
 
-// This short-lived fixture deliberately exits without waiting: the object
-// under test must terminate its descendant process group. No shell job-control
-// policy or ignored test is involved. The PID file proves spawn succeeded.
+fn fixture_spec(directory: &Path, mode: &str) -> BigSubprocessSpec {
+    BigSubprocessSpec::builder()
+        .program(std::env::current_exe().unwrap().to_str().unwrap())
+        .args(["--exact", ENTRY, "--nocapture"])
+        .env(FIXTURE, directory)
+        .env(ROLE, mode)
+        .stdout(BigSubprocessOutputMode::Capture)
+        .stderr(BigSubprocessOutputMode::Capture)
+        .timeout(Duration::from_secs(2))
+        .build()
+}
+
+// The subprocess deliberately exits with an unjoined descendant. That is the
+// failure scenario under test, not an application lifecycle recommendation.
 #[allow(clippy::zombie_processes)]
-fn exit_with_inherited_pipes(directory: &Path) -> ! {
-    let descendant = Command::new("sleep")
-        .arg("10")
+fn fixture_process(directory: &Path, mode: &str) -> ! {
+    if mode == "holder" || mode == "writer" {
+        // Own duplicate writer descriptors throughout the sleep. This does
+        // not depend on a shell, coreutils or libtest's Rust output capture.
+        let mut stdout =
+            std::fs::File::from(std::io::stdout().as_fd().try_clone_to_owned().unwrap());
+        let mut stderr =
+            std::fs::File::from(std::io::stderr().as_fd().try_clone_to_owned().unwrap());
+        std::fs::write(directory.join("ready"), std::process::id().to_string()).unwrap();
+        std::thread::sleep(if mode == "holder" {
+            Duration::from_secs(10)
+        } else {
+            Duration::from_millis(150)
+        });
+        stdout.write_all(b"late stdout\n").unwrap();
+        stderr.write_all(b"late stderr\n").unwrap();
+        std::process::exit(0);
+    }
+    let mut descendant = Command::new(std::env::current_exe().unwrap())
+        .args(["--exact", ENTRY, "--nocapture"])
+        .env(ROLE, if mode == "timeout" { "holder" } else { "writer" })
         .stdin(Stdio::null())
         .stdout(Stdio::inherit())
         .stderr(Stdio::inherit())
         .spawn()
         .expect("start the pipe-holding descendant");
-    std::fs::write(directory.join("pid"), descendant.id().to_string()).unwrap();
+    let deadline = Instant::now() + Duration::from_secs(1);
+    while !directory.join("ready").exists() {
+        if Instant::now() >= deadline {
+            let _ = descendant.kill();
+            let _ = descendant.wait();
+            panic!("Descendant did not acquire its inherited writer descriptors");
+        }
+        std::thread::sleep(Duration::from_millis(5));
+    }
     std::process::exit(0);
 }
 
@@ -62,57 +105,58 @@ fn exit_with_inherited_pipes(directory: &Path) -> ! {
 fn assert_descendant_stopped(pid: u32) {
     let deadline = Instant::now() + Duration::from_secs(1);
     loop {
-        let state = std::fs::read_to_string(format!("/proc/{pid}/stat"));
-        match state {
+        match std::fs::read_to_string(format!("/proc/{pid}/stat")) {
             Err(error) if error.kind() == std::io::ErrorKind::NotFound => return,
             Ok(stat) => {
-                // The orphan can briefly be a zombie pending the container's
-                // init reaper. It must not remain runnable or hold live pipes.
-                let state = stat.rsplit_once(") ").map(|(_, tail)| tail.as_bytes()[0]);
+                // A zombie can remain briefly until the container's init
+                // reaps it. It must not remain runnable or hold live pipes.
+                let state = stat
+                    .rsplit_once(") ")
+                    .and_then(|(_, tail)| tail.bytes().next());
                 if matches!(state, Some(b'Z' | b'X')) {
                     return;
                 }
             }
             Err(error) => panic!("Cannot inspect descendant {pid}: {error}"),
         }
-        assert!(Instant::now() < deadline, "Descendant {pid} was not stopped");
+        assert!(
+            Instant::now() < deadline,
+            "Descendant {pid} was not stopped"
+        );
         std::thread::sleep(Duration::from_millis(10));
     }
 }
 
 #[test]
 fn inherited_pipe_lifetimes_are_bounded_too() {
-    const FIXTURE: &str = "BIGMIC_SUBPROCESS_PIPE_FIXTURE";
     if let Some(directory) = std::env::var_os(FIXTURE) {
-        exit_with_inherited_pipes(Path::new(&directory));
+        fixture_process(Path::new(&directory), &std::env::var(ROLE).unwrap());
     }
     let directory = tempfile::tempdir().unwrap();
-    let executable = std::env::current_exe().unwrap();
     let started = Instant::now();
-    let result = BigSubprocessSpec::builder()
-        .program(executable.to_str().unwrap())
-        .args([
-            "--exact",
-            "inherited_pipe_lifetimes_are_bounded_too",
-            "--nocapture",
-        ])
-        .env(FIXTURE, directory.path())
-        .timeout(Duration::from_secs(1))
-        .build()
-        .run();
-    let pid: u32 = std::fs::read_to_string(directory.path().join("pid"))
+    let result = fixture_spec(directory.path(), "timeout").run();
+    let pid: u32 = std::fs::read_to_string(directory.path().join("ready"))
         .expect("The deadline must exercise inherited pipes, not failed startup")
         .parse()
         .unwrap();
     assert!(
         matches!(result, Err(BigSubprocessError::Timeout)),
-        "Inherited captured pipes must not be reported as completed: {result:?}"
+        "Captured writers still open after child exit: {result:?}"
     );
-    assert!(started.elapsed() < Duration::from_secs(3));
+    assert!(started.elapsed() < Duration::from_secs(4));
     #[cfg(target_os = "linux")]
     assert_descendant_stopped(pid);
     #[cfg(not(target_os = "linux"))]
     let _ = pid;
+}
+
+#[test]
+fn descendant_output_is_not_truncated_after_direct_child_exits() {
+    let directory = tempfile::tempdir().unwrap();
+    let result = fixture_spec(directory.path(), "late-output").run().unwrap();
+    assert!(result.status.success());
+    assert!(result.stdout.ends_with(b"late stdout\n"));
+    assert!(result.stderr.ends_with(b"late stderr\n"));
 }
 
 #[test]
