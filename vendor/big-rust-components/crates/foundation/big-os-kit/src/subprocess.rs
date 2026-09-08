@@ -46,7 +46,9 @@
 use std::collections::HashSet;
 use std::ffi::OsString;
 use std::path::PathBuf;
-use std::sync::atomic::{AtomicBool, Ordering};
+use std::sync::atomic::AtomicBool;
+#[cfg(any(test, not(unix)))]
+use std::sync::atomic::Ordering;
 use std::time::Duration;
 
 use bon::Builder;
@@ -613,7 +615,12 @@ pub enum BigSubprocessError {
     Timeout,
     /// Captured output exceeded its configured safety budget.
     #[error("subprocess {stream} exceeded the {limit}-byte capture limit")]
-    CaptureLimit { stream: &'static str, limit: usize },
+    CaptureLimit {
+        /// Captured stream that exceeded the limit: stdout or stderr.
+        stream: &'static str,
+        /// Maximum number of bytes permitted for that stream.
+        limit: usize,
+    },
     /// External cancellation flag was set before the child exited. The child
     /// was killed on the same path as [`Self::Timeout`].
     #[error("subprocess cancelled")]
