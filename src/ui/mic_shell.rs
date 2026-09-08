@@ -499,10 +499,14 @@ impl Component for MicShell {
                 self.mutate_settings(&sender, |s| s.echo_cancel.mode = mode);
             }
             MicInput::PreferFastCpusChanged(enabled) => {
-                self.mutate_settings(&sender, |settings| settings.runtime.prefer_fast_cpus = enabled);
+                self.mutate_settings(&sender, |settings| {
+                    settings.runtime.prefer_fast_cpus = enabled
+                });
             }
             MicInput::ReserveMemoryChanged(enabled) => {
-                self.mutate_settings(&sender, |settings| settings.runtime.reserve_memory = enabled);
+                self.mutate_settings(&sender, |settings| {
+                    settings.runtime.reserve_memory = enabled
+                });
             }
             MicInput::QualityChanged(quality) => {
                 self.mutate_settings(&sender, |s| s.quality = quality);

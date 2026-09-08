@@ -54,7 +54,9 @@ fn prefer_fast_allowed_cpus() {
 
     // SAFETY: cpu_set_t is an initialized bitset of the size passed to libc.
     let mut allowed: libc::cpu_set_t = unsafe { mem::zeroed() };
-    if unsafe { libc::sched_getaffinity(0, mem::size_of::<libc::cpu_set_t>(), &raw mut allowed) } != 0 {
+    if unsafe { libc::sched_getaffinity(0, mem::size_of::<libc::cpu_set_t>(), &raw mut allowed) }
+        != 0
+    {
         return;
     }
     let mut cpus: Vec<(usize, u64)> = Vec::new();
@@ -152,9 +154,13 @@ fn lock_pages_in_ram() {
 mod runtime_preferences;
 
 fn loader_preferences() -> runtime_preferences::RuntimeConfig {
-    let Some(root) = dirs::config_dir() else { return Default::default(); };
-    let Some(value) = std::fs::read(root.join("biglinux-microphone/settings.json")).ok()
-        .and_then(|bytes| serde_json::from_slice::<serde_json::Value>(&bytes).ok()) else {
+    let Some(root) = dirs::config_dir() else {
+        return Default::default();
+    };
+    let Some(value) = std::fs::read(root.join("biglinux-microphone/settings.json"))
+        .ok()
+        .and_then(|bytes| serde_json::from_slice::<serde_json::Value>(&bytes).ok())
+    else {
         return Default::default();
     };
     serde_json::from_value(value["runtime"].clone()).unwrap_or_default()
@@ -180,8 +186,8 @@ fn run() -> Result<(), String> {
     for pair in raw_args.chunks_exact(2) {
         let module_name = &pair[0];
         let args_path = resolve_args_path(&pair[1])?;
-        let module_args = read_to_string(&args_path)
-            .map_err(|e| format!("read {}: {e}", args_path.display()))?;
+        let module_args =
+            read_to_string(&args_path).map_err(|e| format!("read {}: {e}", args_path.display()))?;
         let module_name_c =
             CString::new(module_name.clone()).map_err(|e| format!("module name: {e}"))?;
         let module_args_c = CString::new(module_args).map_err(|e| format!("module args: {e}"))?;
@@ -189,7 +195,9 @@ fn run() -> Result<(), String> {
     }
 
     let preferences = loader_preferences();
-    if preferences.prefer_fast_cpus { prefer_fast_allowed_cpus(); }
+    if preferences.prefer_fast_cpus {
+        prefer_fast_allowed_cpus();
+    }
 
     pw::init();
 
@@ -222,7 +230,9 @@ fn run() -> Result<(), String> {
         }
     }
 
-    if preferences.reserve_memory { lock_pages_in_ram(); }
+    if preferences.reserve_memory {
+        lock_pages_in_ram();
+    }
 
     // Watch whether the denoiser keeps up. The plugin counts its own hops;
     // reading them from here rather than from the worker is the point — a

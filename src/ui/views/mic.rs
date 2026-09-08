@@ -437,7 +437,10 @@ fn compressor_card(state: &Rc<AppState>, input: &relm4::Sender<MicInput>) -> Did
     card
 }
 
-fn resource_options(state: &Rc<AppState>, input: &relm4::Sender<MicInput>) -> adw::PreferencesGroup {
+fn resource_options(
+    state: &Rc<AppState>,
+    input: &relm4::Sender<MicInput>,
+) -> adw::PreferencesGroup {
     let group = adw::PreferencesGroup::new();
     let details = adw::ExpanderRow::builder()
         .title(i18n("Performance options"))
@@ -448,13 +451,17 @@ fn resource_options(state: &Rc<AppState>, input: &relm4::Sender<MicInput>) -> ad
         .subtitle(i18n("May help on some computers, but can use more power. The automatic system choice is usually best."))
         .active(state.settings().runtime.prefer_fast_cpus).build();
     let sender = input.clone();
-    fast.connect_active_notify(move |row| { let _ = sender.send(MicInput::PreferFastCpusChanged(row.is_active())); });
+    fast.connect_active_notify(move |row| {
+        let _ = sender.send(MicInput::PreferFastCpusChanged(row.is_active()));
+    });
     let memory = adw::SwitchRow::builder()
         .title(i18n("Keep loaded audio data in memory"))
         .subtitle(i18n("May reduce pauses under memory pressure, but leaves less RAM for other applications. This is optional and limited by the system."))
         .active(state.settings().runtime.reserve_memory).build();
     let sender = input.clone();
-    memory.connect_active_notify(move |row| { let _ = sender.send(MicInput::ReserveMemoryChanged(row.is_active())); });
+    memory.connect_active_notify(move |row| {
+        let _ = sender.send(MicInput::ReserveMemoryChanged(row.is_active()));
+    });
     details.add_row(&fast);
     details.add_row(&memory);
     group.add(&details);

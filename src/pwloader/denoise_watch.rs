@@ -139,17 +139,30 @@ impl DenoiseWatch {
             socket.send_to(message.as_bytes(), "/run/systemd/journal/socket")
         });
         if sent.is_err() {
-            eprintln!("noise reduction: {} ({:.1}% processed)",
-                if degraded { "not keeping up" } else { "recovered" }, ratio * 100.0);
+            eprintln!(
+                "noise reduction: {} ({:.1}% processed)",
+                if degraded {
+                    "not keeping up"
+                } else {
+                    "recovered"
+                },
+                ratio * 100.0
+            );
         }
     }
-
 }
 
 fn journal_message(degraded: bool, ratio: f64) -> String {
-    format!("MESSAGE_ID={MESSAGE_ID}\nPRIORITY={}\nDENOISE_RATIO={:.1}\nMESSAGE=Noise reduction {}\n",
-        if degraded { 4 } else { 6 }, ratio * 100.0,
-        if degraded { "is not keeping up" } else { "has recovered" })
+    format!(
+        "MESSAGE_ID={MESSAGE_ID}\nPRIORITY={}\nDENOISE_RATIO={:.1}\nMESSAGE=Noise reduction {}\n",
+        if degraded { 4 } else { 6 },
+        ratio * 100.0,
+        if degraded {
+            "is not keeping up"
+        } else {
+            "has recovered"
+        }
+    )
 }
 
 impl Drop for DenoiseWatch {
