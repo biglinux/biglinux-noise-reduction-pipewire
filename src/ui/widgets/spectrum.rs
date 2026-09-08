@@ -181,6 +181,12 @@ impl Spectrum {
         let animate =
             gtk::Settings::default().is_none_or(|settings| settings.is_gtk_enable_animations());
         if !animate {
+            let mut state = self.state.borrow_mut();
+            state.bands = state.target_bands;
+            state.peaks = state.target_bands;
+            state.peak_level = state.target_peak;
+            state.peak_hold = state.target_peak;
+            drop(state);
             self.area.queue_draw();
             return;
         }
@@ -208,3 +214,15 @@ impl Drop for Spectrum {
 
 #[cfg(test)]
 mod tests;
+
+#[cfg(test)]
+mod meter_value_tests {
+    #[test]
+    fn native_meter_values_stay_finite_and_inside_the_range() {
+        assert_eq!(super::finite_db(f32::NAN), -60.0);
+        assert_eq!(super::finite_db(f32::INFINITY), -60.0);
+        assert_eq!(super::finite_db(-120.0), -60.0);
+        assert_eq!(super::finite_db(20.0), 0.0);
+        assert_eq!(super::finite_db(-18.0), -18.0);
+    }
+}
