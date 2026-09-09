@@ -194,7 +194,7 @@ fn print_models() -> ExitCode {
     }
 
     let mut rows = Vec::new();
-    for value in 0..=8_u8 {
+    for value in 0..=10_u8 {
         let Ok(model) = NoiseModel::try_from(value) else {
             continue;
         };
