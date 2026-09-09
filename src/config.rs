@@ -152,6 +152,28 @@ impl AppSettings {
         {
             output.remove("routed_apps");
         }
+        // No screen has ever offered the lookahead, so a file carrying the old
+        // 60 is carrying a default, not a choice — and that default costs 48 ms
+        // of microphone delay for no measurable onset gain (the numbers are on
+        // `LOOKAHEAD_MS_DEFAULT`). Dropping the key lets the new default apply.
+        // Any other value stays: that one somebody typed.
+        for path in [
+            ["noise_reduction"].as_slice(),
+            ["output_filter", "noise_reduction"].as_slice(),
+        ] {
+            let mut at = Some(&mut value);
+            for key in path {
+                at = at.and_then(|node| node.get_mut(*key));
+            }
+            if let Some(noise) = at.and_then(serde_json::Value::as_object_mut)
+                && noise
+                    .get("lookahead_ms")
+                    .and_then(serde_json::Value::as_u64)
+                    == Some(60)
+            {
+                noise.remove("lookahead_ms");
+            }
+        }
         let mut settings: Self = serde_json::from_value(value)
             .map_err(|error| io::Error::new(io::ErrorKind::InvalidData, error))?;
         settings.equalizer.normalize();

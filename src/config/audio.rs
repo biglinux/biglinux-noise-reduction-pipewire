@@ -13,9 +13,20 @@ use serde::{Deserialize, Serialize};
 // The model owner preserves the established LADSPA identifiers and serialized values.
 
 pub const STRENGTH_DEFAULT: f32 = 1.0;
-// 60 ms gives the lookahead buffer enough frames to backdate VAD decisions
-// across speech onsets, avoiding clipped first syllables after silence.
-pub const LOOKAHEAD_MS_DEFAULT: u32 = 60;
+// The lookahead buffer backdates VAD decisions across speech onsets, so the
+// first syllable after silence is not clipped. It also delays the microphone by
+// every millisecond of it: measured through the shipped plugin at a 960-sample
+// block, the noise reducer's own delay is 28.0 ms at 0 ms of lookahead, 44.0 at
+// 20, 76.0 at 40 and 92.0 at the 60 this used to ask for.
+//
+// 20 ms is where the onset it exists to protect stops improving. Averaged over
+// eight onsets that follow at least 200 ms of silence, the first 20 ms of
+// speech comes out 2.47 dB below that utterance's own steady level at 0 ms of
+// lookahead, 1.82 dB at 20 ms and 1.95 dB at 60 ms; on white and keyboard noise
+// the three settings are indistinguishable (within 0.03 dB), and the pause
+// floor does not improve either (-15.75 dB at 20 ms against -15.46 dB at 60).
+// So the last 40 ms bought 48 ms of latency and nothing else.
+pub const LOOKAHEAD_MS_DEFAULT: u32 = 20;
 pub const MODEL_BLENDING_DEFAULT: f32 = 0.0;
 // 1.0 — restore the full HF tail from the dry signal above the model's
 // 8 kHz internal cutoff. Paired with `gtcrn_speech_strength` softening

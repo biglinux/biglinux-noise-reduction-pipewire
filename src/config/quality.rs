@@ -149,43 +149,40 @@ const ROOMY: f32 = 0.35;
 /// | model | p99 of deadline | whole CPU | PESQ | delay |
 /// | --- | --- | --- | --- | --- |
 /// | DeepFilterNet3 | 63 % | 46 % | 3.34 | 20 ms |
-/// | DPDFNet v2 48k HR | 0.8 % | 33 % | 3.12 | 150 ms |
-/// | GTCRN DNS3 | 29 % | 13 % | 2.53 | 27 ms |
-/// | DPDFNet v8 48k HR | 0.8 % | 57 % | 3.00 | 150 ms |
+/// | DPDFNet v2 48k HR | 0.8 % | 33 % | 3.12 | 150 ms → 70 ms |
+/// | GTCRN DNS3 | 29 % | 13 % | 2.53 | 44 ms |
+/// | DPDFNet v8 48k HR | 0.8 % | 57 % | 3.00 | 150 ms → 70 ms |
 ///
-/// The delay column was re-measured against each shipped plugin at its own sample rate
-/// with no resampler in the path: DeepFilterNet3 960 samples (20.0 ms) and GTCRN 1280
-/// (26.7 ms), both matching what they document, and every DPDFNet variant 7200 samples
-/// at 48 kHz (150.0 ms) or 2080 at 16 kHz (130.0 ms) — the same figure across model
-/// depth and independent of the host block size from 160 to 4096 samples.
+/// The delay column is measured against each shipped plugin at its own sample rate with
+/// no resampler in the path. DeepFilterNet3 comes to 960 samples (20.0 ms), matching what
+/// it documents.
 ///
-/// The 60 ms this column used to carry was not invented: it is what DPDFNet is designed
-/// to cost. Upstream's export defaults are `df_order = 5`, `df_lookahead = 2` and
-/// `conv_lookahead = 2`, so one 20 ms analysis window plus four 10 ms lookahead frames
-/// is ~60 ms, and the README's "first output after 20 ms, then ~10 ms per block"
-/// describes streaming granularity rather than the whole path.
+/// GTCRN's own floor is 1344 samples (28.0 ms) and does not move with the host block. The
+/// rest is this application's `LookaheadMs`, which delays the microphone one STFT frame
+/// per 16 ms asked for: 44.0 ms at the 20 ms now configured, 92.0 ms at the 60 ms that
+/// used to be. The 26.7 ms this column carried was the plugin measured with *its* default
+/// lookahead, not the chain we build.
 ///
-/// The network is not what costs the difference. Driving the same graph — the ONNX the
-/// OBS plugin ships, `state_size` 56436 and `freq_bins` 481, byte-for-byte the shape the
-/// installed IR declares — frame by frame through a minimal reference host measured
-/// exactly 1920 samples, 4.00 hops, 40.0 ms, which is what that plugin documents as the
-/// model's internal delay. With one analysis window on top, a host that compensates
-/// lands on the designed 60 ms.
+/// The DPDFNet arrow is a plugin fix, not a model change, and it needs a `dpdfnet-ladspa`
+/// newer than 26.08.29: that wrapper lagged the emitted hop by the host's whole callback,
+/// so it delivered 70 ms at a 480-sample block, 80 at 960, 100 at 1920 and 150 in
+/// ffmpeg's converter while exporting 60 ms as its latency in every one of those cases.
+/// With the lag fixed at one hop the figure is 70 ms at every block and the export agrees
+/// with the audio. Until that package is rebuilt, read 80 ms here — the chain's own
+/// quantum is 960.
 ///
-/// So the remaining ~90 ms belongs to the `dpdfnet-ladspa` wrapper, which has no notion
-/// of that 4-hop output delay: it primes its analysis buffer with a window of zeros,
-/// slides by hops and drains a queue, while the model's declared `center = 1` STFT and
-/// its 4 hops of spectral delay go uncompensated. The OBS plugin reads the same models'
-/// `output_delay_hops` (defaulting to four when the metadata is absent, which it is),
-/// discards that warm-up and aligns its blend to it.
+/// The network was never what cost it. Driving the same graph — the ONNX the OBS plugin
+/// ships, `state_size` 56436 and `freq_bins` 481, byte-for-byte the shape the installed
+/// IR declares — frame by frame through a minimal reference host measured exactly 1920
+/// samples, 4.00 hops, 40.0 ms, which is what that plugin documents as the model's
+/// internal delay. One analysis window and one hop of handoff on top is the 70 ms above.
 ///
 /// DeepFilterNet3 scores highest and runs its network on the audio thread, so two thirds
 /// of the deadline is gone before the rest of the graph is served — on a machine slower
 /// than this one that is a dropout, which is the fault this whole stack exists to avoid.
 /// DPDFNet answers from a worker and leaves the callback almost empty, for 0.22 of PESQ.
-/// That trade was taken against the model's designed 60 ms, which a call tolerates; the
-/// 150 ms the shipped plugin actually delivers is not, so this choice is due a revisit
-/// once the plugin's extra delay is explained or fixed.
+/// The trade was taken against a 60 ms figure the plugin did not deliver; at the 70 ms it
+/// delivers once rebuilt it stands, and it is 26 ms above `LIGHT` rather than 106.
 ///
 /// `DpdfnetV8Hr` is in the catalogue and is never a step here: it costs almost twice the
 /// CPU of v2 and scored *below* it on every intrusive metric.

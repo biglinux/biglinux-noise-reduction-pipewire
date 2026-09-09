@@ -133,6 +133,15 @@ pub const EC_CAPTURE_NODE_NAME: &str = "echo-cancel-capture";
 /// measured with the canceller loaded. Four hundred and eighty is better again
 /// and is left alone: 10 ms wakeups across every node on the graph is a cost
 /// the whole desktop pays, not just this chain.
+///
+/// The `plugin` column is the shape a plugin has when its own handoff follows
+/// the block, which `dpdfnet-ladspa` 26.08.29 did and neither GTCRN nor a
+/// rebuilt DPDFNet does — those are flat, 44 ms and 70 ms whatever the block.
+/// So the case for 960 over 1920 is now the fill alone, and it still holds.
+/// What changed is that 480 would also stop a rebuilt DPDFNet blocking its
+/// callback waiting for its worker — measured 0 % of the period at 480 against
+/// 20 % at 960 — which is a reason to revisit the wakeup trade, not to reverse
+/// it here.
 pub(crate) const AEC_NODE_LATENCY: &str = "960/48000";
 /// File name of the AEC args body, consumed by
 /// `biglinux-microphone-pwloader` (started by
