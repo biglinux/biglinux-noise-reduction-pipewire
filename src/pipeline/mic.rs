@@ -182,7 +182,16 @@ fn mic_nodes(settings: &AppSettings) -> Vec<Node> {
     };
 
     if ai_node_in_mic_chain(settings) {
+        // The pad protects the network from clipping inside its own inference;
+        // the makeup returns the level before anything calibrated in dB.
+        let padded = super::gain_safety::pads_neural_input(settings, false);
+        if padded {
+            nodes.push(super::gain_safety::neural_pad());
+        }
         nodes.push(denoiser_node(settings));
+        if padded {
+            nodes.push(super::gain_safety::neural_makeup());
+        }
     }
     // Attenuation-only backends have an independent gate. Keeping the gate
     // enabled must not keep the neural network running after NR is disabled.

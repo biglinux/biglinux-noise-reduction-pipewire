@@ -268,15 +268,21 @@ fn output_nodes(settings: &AppSettings) -> Vec<Node> {
         // 2 stays at gain 0 so it contributes nothing.
         Node::builtin("mixer", LABEL_MIXER).with_controls([("Gain 1", 0.5), ("Gain 2", 0.5)]),
         Node::builtin("hpf", LABEL_BQ_HIGHPASS).with_controls([("Freq", hpf_freq), ("Q", 0.707)]),
-        // GTCRN is always wired in; toggling master flips its Enable
-        // port between 0 and 1, which the live update path can push
-        // without restarting the unit. DFN3 has no Enable port, so
-        // master-off renders it with Attenuation Limit = 0 instead.
-        denoiser,
-        gate,
-        compressor,
-        param_eq_node(settings),
     ];
+    // Same pad/makeup pair as the mic chain, for the same reason.
+    let padded = super::gain_safety::pads_neural_input(settings, true);
+    if padded {
+        nodes.push(super::gain_safety::neural_pad());
+    }
+    // GTCRN is always wired in; toggling master flips its Enable
+    // port between 0 and 1, which the live update path can push
+    // without restarting the unit. DFN3 has no Enable port, so
+    // master-off renders it with Attenuation Limit = 0 instead.
+    nodes.push(denoiser);
+    if padded {
+        nodes.push(super::gain_safety::neural_makeup());
+    }
+    nodes.extend([gate, compressor, param_eq_node(settings)]);
     nodes.extend(super::gain_safety::nodes(settings, true));
     nodes.push(Node::builtin("copy_l", LABEL_COPY));
     nodes.push(Node::builtin("copy_r", LABEL_COPY));
