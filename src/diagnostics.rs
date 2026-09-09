@@ -230,6 +230,10 @@ fn check_echo_cancel(report: &mut Report, settings: &AppSettings) {
             "[skip] AEC reference: nothing is playing, so there is no speaker \
              signal to cancel yet"
         ),
+        AecReference::NothingRecording => println!(
+            "[skip] AEC reference: no application is recording, and the routing \
+             hook keeps the reference unlinked until one is"
+        ),
         AecReference::Missing => report.check(
             "AEC reference linked to physical ALSA sink",
             false,
@@ -245,7 +249,11 @@ enum AecReference {
     Linked,
     /// No application is playing, so WirePlumber has no reference to route.
     NothingPlaying,
-    /// Something is playing and the reference is still absent.
+    /// Nothing is recording, so the routing hook's own gate keeps the
+    /// reference unlinked on purpose.
+    NothingRecording,
+    /// Something is playing, something is recording, and the reference is
+    /// still absent.
     Missing,
 }
 
@@ -278,11 +286,46 @@ fn aec_reference_state(link_dump: &str) -> AecReference {
     let playback_running = lines
         .iter()
         .any(|line| line.contains("alsa_output.") && line.contains(":playback_"));
-    if playback_running {
-        AecReference::Missing
-    } else {
-        AecReference::NothingPlaying
+    if !playback_running {
+        return AecReference::NothingPlaying;
     }
+    // The routing hook unlinks the reference tap whenever no application is
+    // recording, so that playing music does not drag the physical microphone
+    // into RUNNING. Demanding the link while that gate is closed made `doctor`
+    // fail on a desktop that was working correctly — observed here with a
+    // browser playing and nothing recording, and green the moment a recorder
+    // appeared.
+    if !has_capture_consumer(&lines) {
+        return AecReference::NothingRecording;
+    }
+    AecReference::Missing
+}
+
+/// Is an application reading the microphone chain?
+///
+/// Our own nodes link to each other — `echo-cancel-source` feeds
+/// `mic-biglinux-capture` whether or not anybody is listening — so a consumer
+/// is a link *out* of the chain's source ports into a node that is not part of
+/// the chain.
+fn has_capture_consumer(lines: &[&str]) -> bool {
+    const CHAIN: [&str; 4] = [
+        "mic-biglinux-capture",
+        "mic-biglinux",
+        "echo-cancel-capture",
+        "echo-cancel-source",
+    ];
+    lines.iter().enumerate().any(|(index, line)| {
+        let source = line.starts_with("mic-biglinux:") || line.starts_with("echo-cancel-source:");
+        source
+            && lines
+                .iter()
+                .skip(index + 1)
+                .take_while(|next| next.starts_with(' '))
+                .any(|next| {
+                    next.contains("|->")
+                        && !CHAIN.iter().any(|node| next.contains(&format!("{node}:")))
+                })
+    })
 }
 
 /// Detect a stale `~/.local/share/wireplumber/scripts/biglinux/` copy
@@ -463,6 +506,19 @@ alsa_output.pci-0000_00_1f.3.analog-stereo:playback_FL
 alsa_output.pci-0000_00_1f.3.analog-stereo:playback_FL
   |<- Firefox:output_FL
 echo-cancel-sink:input_FL
+mic-biglinux:capture_FL
+  |-> pw-record:input_FL
+";
+
+    /// The state observed on the maintainer's desktop: a browser playing,
+    /// nothing recording, and the routing hook holding the reference open.
+    const PLAYING_WITHOUT_A_RECORDER: &str = "\
+alsa_output.pci-0000_00_1f.3.analog-stereo:playback_FL
+  |<- Google Chrome:output_FL
+echo-cancel-source:capture_MONO
+  |-> mic-biglinux-capture:input_MONO
+mic-biglinux-capture:input_MONO
+  |<- echo-cancel-source:capture_MONO
 ";
 
     const IDLE_DESKTOP: &str = "\
@@ -493,5 +549,13 @@ echo-cancel-sink:input_FL
             AecReference::NothingPlaying
         );
         assert_eq!(aec_reference_state(""), AecReference::NothingPlaying);
+    }
+
+    #[test]
+    fn playback_alone_does_not_demand_a_reference_the_hook_refuses_to_link() {
+        assert_eq!(
+            aec_reference_state(PLAYING_WITHOUT_A_RECORDER),
+            AecReference::NothingRecording
+        );
     }
 }

@@ -137,11 +137,37 @@ pub const EC_CAPTURE_NODE_NAME: &str = "echo-cancel-capture";
 /// The `plugin` column is the shape a plugin has when its own handoff follows
 /// the block, which `dpdfnet-ladspa` 26.08.29 did and neither GTCRN nor a
 /// rebuilt DPDFNet does — those are flat, 44 ms and 70 ms whatever the block.
-/// So the case for 960 over 1920 is now the fill alone, and it still holds.
-/// What changed is that 480 would also stop a rebuilt DPDFNet blocking its
-/// callback waiting for its worker — measured 0 % of the period at 480 against
-/// 20 % at 960 — which is a reason to revisit the wakeup trade, not to reverse
-/// it here.
+/// So the case for 960 over 1920 is the fill alone now, and it still holds.
+///
+/// Re-measured after that, because 480 also stops a rebuilt DPDFNet blocking
+/// its callback on its worker. Both chains were run in a real graph at 480, 960
+/// and 1920 under sixteen CPU stressors and two memory stressors:
+///
+/// | quantum | GTCRN | DPDFNet | ERR | sample splices |
+/// | --- | --- | --- | --- | --- |
+/// | 480 | ok | ok | 0 | 0 |
+/// | 960 | ok | ok | 0 | 0 |
+/// | 1920 | ok | ok | 0 | 0 |
+///
+/// Nothing cut at any of the three, so reliability does not choose between them
+/// on this machine, and the decision falls back to headroom on the machines we
+/// do not have. That is what keeps 960: GTCRN runs its network **on the audio
+/// thread**, one inference per callback whatever the block, so its cost is
+/// absolute rather than proportional — p99 4.83 ms measured. At 480 that leaves
+/// 5.2 ms of a 10 ms period, and the DeepFilterNet3 underruns already on record
+/// here were single hops of 10.4–17.5 ms, every one of which a 480 deadline
+/// would have missed outright. At 960 the same inference leaves 11.8 ms.
+///
+/// DPDFNet would prefer 480 (0 % of the period blocked against 20 %), but its
+/// blocking turned out to be a scheduling problem rather than a block-size one:
+/// with its worker at `SCHED_FIFO`, p99 under the same load is 31 % of the
+/// period and every hop comes back enhanced. Fixed in the plugin, so 960 costs
+/// it compute time and nothing else.
+///
+/// A per-model quantum is possible — switching models reloads the chain anyway,
+/// so the lock is released and re-taken — and is deliberately not done: it would
+/// make the wakeup rate of every node on the desktop depend on which microphone
+/// model somebody picked.
 pub(crate) const AEC_NODE_LATENCY: &str = "960/48000";
 /// File name of the AEC args body, consumed by
 /// `biglinux-microphone-pwloader` (started by
