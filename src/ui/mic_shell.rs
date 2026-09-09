@@ -1004,12 +1004,12 @@ impl MicShell {
 /// What the banner says when applying the settings fails.
 ///
 /// The reconciler's error chain is a diagnostic, not a message: it concatenates
-/// every clause it collected, including `Debug`-formatted argv and raw exit
-/// codes, and reached the banner verbatim — "systemctl [\"--user\", \"restart\",
-/// \"biglinux-microphone-aec.service\"] exited with Some(5)". What the person in
-/// front of the window needs is that their choices survived and that they can
-/// retry; the chain goes to the journal, and `doctor` reports the same state in
-/// detail for whoever is diagnosing it.
+/// every clause it collected, including a `Debug`-formatted argv array and a raw
+/// `ExitStatus`, and it reached the banner verbatim — a sentence naming
+/// `systemctl`, its arguments and its exit code. What the person in front of the
+/// window needs is that their choices survived and that they can retry; the
+/// chain goes to the journal, and `doctor` reports the same state in detail for
+/// whoever is diagnosing it.
 fn apply_failure_title() -> String {
     i18n(
         "Could not apply the audio settings. Your choices are saved — the audio services have not accepted them yet.",
