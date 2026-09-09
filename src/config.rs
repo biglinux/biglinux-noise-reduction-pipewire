@@ -96,6 +96,14 @@ impl AppSettings {
         if self.mic_bypass {
             crate::pipeline::cascade_mic_off(&mut effective);
         }
+        // A catalogue model the live graph cannot drive would leave the chain
+        // running a plugin that does nothing; run the nearest one it can.
+        effective.noise_reduction.model = effective.noise_reduction.model.live_equivalent();
+        effective.output_filter.noise_reduction.model = effective
+            .output_filter
+            .noise_reduction
+            .model
+            .live_equivalent();
         effective
     }
 
@@ -279,6 +287,39 @@ mod tests {
         let path = dir.path().join("nonexistent.json");
         let s = AppSettings::load_from(&path);
         assert_eq!(s, AppSettings::default());
+    }
+
+    #[test]
+    fn an_offline_only_model_runs_as_its_live_equivalent_without_losing_the_choice() {
+        let settings = AppSettings {
+            quality: Quality::Manual,
+            noise_reduction: NoiseReductionConfig {
+                model: NoiseModel::DpdfnetV8,
+                ..NoiseReductionConfig::default()
+            },
+            output_filter: OutputFilterSettings {
+                noise_reduction: NoiseReductionConfig {
+                    model: NoiseModel::DpdfnetV2,
+                    ..NoiseReductionConfig::default()
+                },
+                ..OutputFilterSettings::default()
+            },
+            ..AppSettings::default()
+        };
+
+        let effective = settings.runtime_settings();
+
+        assert_eq!(effective.noise_reduction.model, NoiseModel::DpdfnetV8Hr);
+        assert_eq!(
+            effective.output_filter.noise_reduction.model,
+            NoiseModel::DpdfnetV2Hr
+        );
+        // The saved document still carries what was asked for.
+        assert_eq!(settings.noise_reduction.model, NoiseModel::DpdfnetV8);
+        assert_eq!(
+            settings.output_filter.noise_reduction.model,
+            NoiseModel::DpdfnetV2
+        );
     }
 
     #[test]

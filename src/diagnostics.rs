@@ -61,6 +61,7 @@ pub fn doctor() -> ExitCode {
         env!("CARGO_PKG_VERSION")
     );
 
+    check_live_model(&mut report, &settings);
     check_ladspa_plugins(&mut report);
     check_runtime_daemons(&mut report);
     check_systemd_units(&mut report);
@@ -97,6 +98,24 @@ impl Report {
             self.failed = self.failed.saturating_add(1);
         }
     }
+}
+
+/// The saved model against the one the live chain can actually run.
+///
+/// The catalogue also carries 16 kHz models meant for offline pipelines. The
+/// picker hides them, but a settings file can name one, and the live chain
+/// would then host a plugin that produces no denoising at all. The effective
+/// snapshot substitutes the nearest model it can drive; this line is how a
+/// person finds out that happened.
+fn check_live_model(report: &mut Report, settings: &AppSettings) {
+    let requested = settings.noise_reduction.model;
+    let effective = settings.runtime_settings().noise_reduction.model;
+    let detail = if requested == effective {
+        format!("{requested:?}")
+    } else {
+        format!("{requested:?} cannot run in the live chain; using {effective:?} instead")
+    };
+    report.check("Live noise model", requested == effective, &detail);
 }
 
 fn check_ladspa_plugins(report: &mut Report) {

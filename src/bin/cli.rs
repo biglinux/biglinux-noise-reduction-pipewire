@@ -301,13 +301,14 @@ fn dump_settings() -> ExitCode {
 }
 
 fn dump_mic_conf() -> ExitCode {
-    let s = AppSettings::load();
+    // The effective snapshot, so the dump is the graph `apply` would write.
+    let s = AppSettings::load().runtime_settings();
     print!("{}", pipeline::build_mic_conf_for(&s));
     ExitCode::SUCCESS
 }
 
 fn dump_output_conf() -> ExitCode {
-    let s = AppSettings::load();
+    let s = AppSettings::load().runtime_settings();
     print!("{}", pipeline::build_output_conf_for(&s));
     ExitCode::SUCCESS
 }

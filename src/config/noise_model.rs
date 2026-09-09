@@ -139,6 +139,29 @@ impl NoiseModel {
         }
     }
 
+    /// The model the live chain runs when this one is asked for.
+    ///
+    /// The 16 kHz plugins are driven at the chain's 48 kHz and then do no work
+    /// at all: measured on a private graph, `DpdfnetV8` gave 0.00 dB of pause
+    /// reduction on speech with noise and used 1 % of a core, against 12.30 dB
+    /// and 55 % for its high-resolution sibling. The picker hides them, but a
+    /// settings file can still name one, and a chain that silently stops
+    /// denoising is worse than one that runs the nearest model it can drive.
+    /// `doctor` reports the substitution so it is visible.
+    #[must_use]
+    pub fn live_equivalent(self) -> Self {
+        match self {
+            Self::DpdfnetV2 => Self::DpdfnetV2Hr,
+            Self::DpdfnetV4 | Self::DpdfnetV8 => Self::DpdfnetV8Hr,
+            Self::DpdfnetBaseline => Self::default(),
+            Self::GtcrnDns3
+            | Self::GtcrnVctk
+            | Self::DeepFilterNet3
+            | Self::DpdfnetV2Hr
+            | Self::DpdfnetV8Hr => self,
+        }
+    }
+
     /// LADSPA `model` control-port value to select this variant.
     ///
     /// For dual-model GTCRN plugins this picks DNS3 (`0.0`) vs VCTK
@@ -376,6 +399,37 @@ fn runtime_loadable(name: &str) -> bool {
         libc::dlclose(handle);
     }
     true
+}
+
+#[cfg(test)]
+mod live_equivalent_tests {
+    use super::NoiseModel;
+
+    #[test]
+    fn every_catalogue_model_maps_to_one_the_live_chain_can_drive() {
+        for value in 0..=8_u8 {
+            let model = NoiseModel::try_from(value).expect("catalogue value");
+            let live = model.live_equivalent();
+            assert!(
+                live.is_realtime_lavfi_supported(),
+                "{model:?} maps to {live:?}, which the live chain cannot drive"
+            );
+            assert_eq!(live.lavfi_sample_rate(), 48_000, "{model:?} -> {live:?}");
+        }
+    }
+
+    #[test]
+    fn a_live_capable_model_is_never_substituted() {
+        for model in [
+            NoiseModel::GtcrnDns3,
+            NoiseModel::GtcrnVctk,
+            NoiseModel::DeepFilterNet3,
+            NoiseModel::DpdfnetV2Hr,
+            NoiseModel::DpdfnetV8Hr,
+        ] {
+            assert_eq!(model.live_equivalent(), model);
+        }
+    }
 }
 
 #[cfg(test)]
