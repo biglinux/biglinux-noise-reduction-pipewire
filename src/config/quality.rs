@@ -153,6 +153,15 @@ const ROOMY: f32 = 0.35;
 /// | GTCRN DNS3 | 29 % | 13 % | 2.53 | 44 ms |
 /// | DPDFNet v8 48k HR | 0.8 % | 57 % | 3.00 | 150 ms → 70 ms |
 ///
+/// Two split-band variants join the realtime set: the 16 kHz DPDFNet networks run
+/// full-band at 48 kHz, with the band above 8 kHz reconstructed in the wrapper rather than
+/// resampled away. They cost less CPU than the 48 kHz hi-res networks and keep DPDFNet's
+/// denoising in the band that carries speech — `dpdfnet2_sb` 70 ms and 2.48 s of a core per
+/// 10 s of audio against the HR variant's 3.14 s, `baseline_sb` 1.81 s. Whether either
+/// should become a tier here is a listening decision, so `HEAVY`/`LIGHT` are unchanged for
+/// now; the picker offers them and the automatic policy leaves them alone until an
+/// intrusive-metric run over the test split ranks them against the tiers above.
+///
 /// The delay column is measured against each shipped plugin at its own sample rate with
 /// no resampler in the path. DeepFilterNet3 comes to 960 samples (20.0 ms), matching what
 /// it documents.

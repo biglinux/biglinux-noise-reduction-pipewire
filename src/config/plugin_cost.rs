@@ -157,7 +157,16 @@ pub fn audio_thread_share(model: NoiseModel) -> Option<f32> {
 }
 
 fn measure(handle: *mut c_void, want: &CString, model: NoiseModel) -> Option<f32> {
-    let asynchronous = matches!(model, NoiseModel::DpdfnetV2Hr | NoiseModel::DpdfnetV8Hr);
+    // Every DPDFNet plugin runs inference on a worker thread and publishes the
+    // hop counters, split-band variants included; a cheap callback alone is not
+    // proof of denoising for any of them.
+    let asynchronous = matches!(
+        model,
+        NoiseModel::DpdfnetV2Hr
+            | NoiseModel::DpdfnetV8Hr
+            | NoiseModel::DpdfnetV2Sb
+            | NoiseModel::DpdfnetBaselineSb
+    );
     let hops = if asynchronous {
         // These shipped plugins publish process-global atomic hop counters.
         // Without this evidence a cheap callback is not proof of denoising.

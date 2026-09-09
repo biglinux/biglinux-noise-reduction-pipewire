@@ -143,6 +143,8 @@ fn model_label(model: NoiseModel) -> &'static str {
         NoiseModel::DeepFilterNet3 => "DeepFilterNet3 (48 kHz)",
         NoiseModel::DpdfnetV2Hr => "DPDFNet-2 HR (48 kHz)",
         NoiseModel::DpdfnetV8Hr => "DPDFNet-8 HR (48 kHz)",
+        NoiseModel::DpdfnetV2Sb => "DPDFNet-2 (48 kHz)",
+        NoiseModel::DpdfnetBaselineSb => "DPDFNet baseline (48 kHz)",
         NoiseModel::DpdfnetBaseline
         | NoiseModel::DpdfnetV2
         | NoiseModel::DpdfnetV4

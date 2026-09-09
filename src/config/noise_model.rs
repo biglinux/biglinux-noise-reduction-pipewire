@@ -24,6 +24,10 @@ const DPDFNET_V2_16K_LADSPA_PATH: &str = "/usr/lib/ladspa/libdpdfnet_dpdfnet2_la
 const DPDFNET_V4_16K_LADSPA_PATH: &str = "/usr/lib/ladspa/libdpdfnet_dpdfnet4_ladspa.so";
 /// Absolute path of the 16 kHz DPDFNet v8 plugin.
 const DPDFNET_V8_16K_LADSPA_PATH: &str = "/usr/lib/ladspa/libdpdfnet_dpdfnet8_ladspa.so";
+/// Absolute path of the DPDFNet baseline split-band (48 kHz host) plugin.
+const DPDFNET_BASELINE_SB_LADSPA_PATH: &str = "/usr/lib/ladspa/libdpdfnet_baseline_sb_ladspa.so";
+/// Absolute path of the DPDFNet v2 split-band (48 kHz host) plugin.
+const DPDFNET_V2_SB_LADSPA_PATH: &str = "/usr/lib/ladspa/libdpdfnet_dpdfnet2_sb_ladspa.so";
 
 /// LADSPA plugin label advertised by the GTCRN mono noise reducer.
 pub const LABEL_GTCRN_MONO: &str = "gtcrn_mono";
@@ -41,18 +45,24 @@ const LABEL_DPDFNET_V2_16K_MONO: &str = "dpdfnet2_mono";
 const LABEL_DPDFNET_V4_16K_MONO: &str = "dpdfnet4_mono";
 /// LADSPA plugin label for the 16 kHz DPDFNet v8 mono reducer.
 const LABEL_DPDFNET_V8_16K_MONO: &str = "dpdfnet8_mono";
+/// LADSPA plugin label for the DPDFNet baseline split-band mono reducer.
+const LABEL_DPDFNET_BASELINE_SB_MONO: &str = "baseline_sb_mono";
+/// LADSPA plugin label for the DPDFNet v2 split-band mono reducer.
+const LABEL_DPDFNET_V2_SB_MONO: &str = "dpdfnet2_sb_mono";
 
 /// Models exposed to the realtime LAVFI/PipeWire playback chain.
 ///
 /// The order here is the order shown to users in the dropdown and stored
 /// in their settings file; the persisted discriminants are part of the current
 /// settings contract and must not be reshuffled.
-pub const REALTIME_LAVFI_MODELS: [NoiseModel; 5] = [
+pub const REALTIME_LAVFI_MODELS: [NoiseModel; 7] = [
     NoiseModel::GtcrnDns3,
     NoiseModel::GtcrnVctk,
     NoiseModel::DeepFilterNet3,
     NoiseModel::DpdfnetV2Hr,
     NoiseModel::DpdfnetV8Hr,
+    NoiseModel::DpdfnetV2Sb,
+    NoiseModel::DpdfnetBaselineSb,
 ];
 
 /// Stable identifier of a noise-reduction model.
@@ -91,6 +101,10 @@ pub enum NoiseModel {
     DpdfnetV4 = 7,
     /// 16 kHz DPDFNet v8 model (offline pipelines only).
     DpdfnetV8 = 8,
+    /// DPDFNet v2 split-band: the 16 kHz network run full-band at 48 kHz.
+    DpdfnetV2Sb = 9,
+    /// DPDFNet baseline split-band: full-band at 48 kHz, lowest compute.
+    DpdfnetBaselineSb = 10,
 }
 
 impl TryFrom<u8> for NoiseModel {
@@ -107,6 +121,8 @@ impl TryFrom<u8> for NoiseModel {
             6 => Ok(Self::DpdfnetV2),
             7 => Ok(Self::DpdfnetV4),
             8 => Ok(Self::DpdfnetV8),
+            9 => Ok(Self::DpdfnetV2Sb),
+            10 => Ok(Self::DpdfnetBaselineSb),
             other => Err(format!("unknown NoiseModel value: {other}")),
         }
     }
@@ -134,7 +150,9 @@ impl NoiseModel {
             | Self::GtcrnVctk
             | Self::DeepFilterNet3
             | Self::DpdfnetV2Hr
-            | Self::DpdfnetV8Hr => true,
+            | Self::DpdfnetV8Hr
+            | Self::DpdfnetV2Sb
+            | Self::DpdfnetBaselineSb => true,
             Self::DpdfnetBaseline | Self::DpdfnetV2 | Self::DpdfnetV4 | Self::DpdfnetV8 => false,
         }
     }
@@ -158,7 +176,9 @@ impl NoiseModel {
             | Self::GtcrnVctk
             | Self::DeepFilterNet3
             | Self::DpdfnetV2Hr
-            | Self::DpdfnetV8Hr => self,
+            | Self::DpdfnetV8Hr
+            | Self::DpdfnetV2Sb
+            | Self::DpdfnetBaselineSb => self,
         }
     }
 
@@ -178,7 +198,9 @@ impl NoiseModel {
             | Self::DpdfnetBaseline
             | Self::DpdfnetV2
             | Self::DpdfnetV4
-            | Self::DpdfnetV8 => 0.0,
+            | Self::DpdfnetV8
+            | Self::DpdfnetV2Sb
+            | Self::DpdfnetBaselineSb => 0.0,
         }
     }
 
@@ -224,7 +246,9 @@ impl NoiseModel {
             | Self::DpdfnetBaseline
             | Self::DpdfnetV2
             | Self::DpdfnetV4
-            | Self::DpdfnetV8 => Some(OPENVINO_RUNTIME_LIBRARY),
+            | Self::DpdfnetV8
+            | Self::DpdfnetV2Sb
+            | Self::DpdfnetBaselineSb => Some(OPENVINO_RUNTIME_LIBRARY),
         }
     }
 
@@ -299,6 +323,11 @@ impl NoiseModel {
             Self::DpdfnetV2 => (DPDFNET_V2_16K_LADSPA_PATH, LABEL_DPDFNET_V2_16K_MONO),
             Self::DpdfnetV4 => (DPDFNET_V4_16K_LADSPA_PATH, LABEL_DPDFNET_V4_16K_MONO),
             Self::DpdfnetV8 => (DPDFNET_V8_16K_LADSPA_PATH, LABEL_DPDFNET_V8_16K_MONO),
+            Self::DpdfnetV2Sb => (DPDFNET_V2_SB_LADSPA_PATH, LABEL_DPDFNET_V2_SB_MONO),
+            Self::DpdfnetBaselineSb => (
+                DPDFNET_BASELINE_SB_LADSPA_PATH,
+                LABEL_DPDFNET_BASELINE_SB_MONO,
+            ),
         }
     }
 
@@ -407,7 +436,7 @@ mod live_equivalent_tests {
 
     #[test]
     fn every_catalogue_model_maps_to_one_the_live_chain_can_drive() {
-        for value in 0..=8_u8 {
+        for value in 0..=10_u8 {
             let model = NoiseModel::try_from(value).expect("catalogue value");
             let live = model.live_equivalent();
             assert!(
