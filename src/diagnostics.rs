@@ -220,26 +220,69 @@ fn check_echo_cancel(report: &mut Report, settings: &AppSettings) {
         .run()
         .map(|o| o.stdout_lossy())
         .unwrap_or_default();
-    let aec_ref_to_alsa =
-        link_dump.lines().any(|l| {
-            l.contains("alsa_output.") && l.contains(":monitor_") && {
-                link_dump
-                    .lines()
-                    .skip_while(|x| *x != l)
-                    .nth(1)
-                    .is_some_and(|n| n.contains("echo-cancel-sink:input_"))
-            }
-        }) || link_dump.lines().any(|l| {
-            l.contains("echo-cancel-sink:input_")
-                && link_dump.lines().skip_while(|x| *x != l).take(8).any(|n| {
-                    n.contains("|<-") && n.contains("alsa_output.") && n.contains(":monitor_")
-                })
-        });
-    report.check(
-        "AEC reference linked to physical ALSA sink",
-        aec_ref_to_alsa,
-        "pw-link -l | grep -A1 echo-cancel-sink",
-    );
+    match aec_reference_state(&link_dump) {
+        AecReference::Linked => report.check(
+            "AEC reference linked to physical ALSA sink",
+            true,
+            "pw-link -l | grep -A1 echo-cancel-sink",
+        ),
+        AecReference::NothingPlaying => println!(
+            "[skip] AEC reference: nothing is playing, so there is no speaker \
+             signal to cancel yet"
+        ),
+        AecReference::Missing => report.check(
+            "AEC reference linked to physical ALSA sink",
+            false,
+            "pw-link -l | grep -A1 echo-cancel-sink",
+        ),
+    }
+}
+
+/// What the graph says about the canceller's reference signal.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+enum AecReference {
+    /// A physical sink's monitor feeds `echo-cancel-sink`.
+    Linked,
+    /// No application is playing, so WirePlumber has no reference to route.
+    NothingPlaying,
+    /// Something is playing and the reference is still absent.
+    Missing,
+}
+
+/// Decide from a `pw-link -l` dump alone, so the rule can be tested.
+///
+/// Requiring the reference unconditionally made `doctor` fail on an idle
+/// desktop — observed on the maintainer's workstation, every check green except
+/// this one, exit code 1 — and a diagnostic that cries wolf is one people learn
+/// to ignore. The reference only exists while something plays.
+fn aec_reference_state(link_dump: &str) -> AecReference {
+    let lines: Vec<&str> = link_dump.lines().collect();
+    let monitor_into_sink = lines.iter().enumerate().any(|(index, line)| {
+        line.contains("alsa_output.")
+            && line.contains(":monitor_")
+            && lines
+                .get(index + 1)
+                .is_some_and(|next| next.contains("echo-cancel-sink:input_"))
+    });
+    let sink_from_monitor = lines.iter().enumerate().any(|(index, line)| {
+        line.contains("echo-cancel-sink:input_")
+            && lines.iter().skip(index + 1).take(8).any(|next| {
+                next.contains("|<-") && next.contains("alsa_output.") && next.contains(":monitor_")
+            })
+    });
+    if monitor_into_sink || sink_from_monitor {
+        return AecReference::Linked;
+    }
+    // A running playback stream shows up as a link into the sink's own
+    // playback ports; without one there is nothing for the canceller to hear.
+    let playback_running = lines
+        .iter()
+        .any(|line| line.contains("alsa_output.") && line.contains(":playback_"));
+    if playback_running {
+        AecReference::Missing
+    } else {
+        AecReference::NothingPlaying
+    }
 }
 
 /// Detect a stale `~/.local/share/wireplumber/scripts/biglinux/` copy
@@ -402,5 +445,53 @@ fn dump_journal(unit: &str) {
         }
         Ok(_) => println!("(journalctl returned non-zero — not enough permissions?)"),
         Err(e) => println!("(journalctl unavailable: {e})"),
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::{AecReference, aec_reference_state};
+
+    const MONITOR_LINKED: &str = "\
+alsa_output.pci-0000_00_1f.3.analog-stereo:monitor_FL
+  |-> echo-cancel-sink:input_FL
+alsa_output.pci-0000_00_1f.3.analog-stereo:playback_FL
+  |<- Firefox:output_FL
+";
+
+    const PLAYING_WITHOUT_REFERENCE: &str = "\
+alsa_output.pci-0000_00_1f.3.analog-stereo:playback_FL
+  |<- Firefox:output_FL
+echo-cancel-sink:input_FL
+";
+
+    const IDLE_DESKTOP: &str = "\
+alsa_input.usb-AKG:capture_AUX0
+  |-> echo-cancel-capture:input_FL
+echo-cancel-source:capture_MONO
+  |-> mic-biglinux-capture:input_MONO
+";
+
+    #[test]
+    fn the_reference_counts_as_linked_from_either_direction_of_the_dump() {
+        assert_eq!(aec_reference_state(MONITOR_LINKED), AecReference::Linked);
+        let reversed = "\
+echo-cancel-sink:input_FL
+  |<- alsa_output.pci-0000_00_1f.3.analog-stereo:monitor_FL
+";
+        assert_eq!(aec_reference_state(reversed), AecReference::Linked);
+    }
+
+    #[test]
+    fn a_missing_reference_is_only_a_failure_while_something_plays() {
+        assert_eq!(
+            aec_reference_state(PLAYING_WITHOUT_REFERENCE),
+            AecReference::Missing
+        );
+        assert_eq!(
+            aec_reference_state(IDLE_DESKTOP),
+            AecReference::NothingPlaying
+        );
+        assert_eq!(aec_reference_state(""), AecReference::NothingPlaying);
     }
 }
