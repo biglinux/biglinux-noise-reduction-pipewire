@@ -1,14 +1,10 @@
 name: Build Package
 
-# BigLinux package-build webhook trigger. Only fires for branches whose
-# name contains `stable` or `testing` so day-to-day development pushes
-# (and Dependabot branches) don't kick off package builds.
+# The deployment hooks below are intentionally disabled. Do not start an
+# empty job on every stable/testing push. Keep explicit manual access until
+# the maintainer enables a real package-build integration.
 on:
   workflow_dispatch:
-  push:
-    branches:
-      - "**stable**"
-      - "**testing**"
 
 permissions:
   contents: read
@@ -21,7 +17,11 @@ jobs:
   build:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          persist-credentials: false
+      - name: Report the disabled packaging integration
+        run: echo 'Package webhooks are disabled; no package was built or published.'
       # - name: Send Hooks BigLinux Build Package
       #   shell: bash
       #   run: |
@@ -37,7 +37,6 @@ jobs:
       #             "branch": "${{ github.ref_name }}",
       #             "url": "https://github.com/${{ github.repository }}"
       #           }'
-
       # - name: Invoke deployment hook
       #   uses: johannes-huther/webhook.sh@v1
       #   env:

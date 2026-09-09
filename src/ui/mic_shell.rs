@@ -17,7 +17,6 @@ use gtk::{Orientation, gio, glib};
 use relm4::{Component, ComponentParts, ComponentSender};
 
 use crate::config::{AppSettings, NoiseModel, StereoMode, app_id, app_version, settings_file};
-use crate::pipeline::cascade_mic_off;
 use crate::services::audio_monitor::{AudioMonitor, MonitorConfig};
 
 use super::health::{self, Health};
@@ -40,7 +39,10 @@ pub fn run() -> glib::ExitCode {
     if let Some(result) = early_cli(&std::env::args_os().collect::<Vec<_>>()) {
         return result;
     }
-    init_gettext();
+    if let Err(error) = init_gettext() {
+        eprintln!("Could not initialize translations safely: {error}");
+        return glib::ExitCode::FAILURE;
+    }
     let app = adw::Application::builder().application_id(app_id()).build();
     let state = AppState::new(AppSettings::load());
     let monitor = Rc::new(AudioMonitor::start(MonitorConfig::default()));
@@ -60,6 +62,9 @@ pub(super) struct MicShellInit {
 pub(super) enum MicInput {
     /// The window manager requested a clean close.
     CloseRequested,
+    CloseSaveRetry,
+    CloseWithoutSaving,
+    CloseCancelled,
     /// The main menu requested the reset confirmation dialog.
     RestoreDefaultsRequested,
     /// The reset confirmation dialog was accepted.
@@ -95,6 +100,9 @@ pub(super) enum MicInput {
     /// WebRTC echo-cancellation toggle.
     MicEchoModeChanged(crate::config::EchoMode),
     QualityChanged(crate::config::Quality),
+    PreferFastCpusChanged(bool),
+    ReserveMemoryChanged(bool),
+    GainSafetyChanged(bool),
     /// Mic neural-model selection.
     MicModelChanged(NoiseModel),
     /// Mic voice-presence (high-frequency recovery) intensity.
@@ -121,6 +129,7 @@ pub(super) enum MicInput {
     // ── Advanced output-chain controls (views::output) ────────────────
     /// Output neural-model selection.
     OutputModelChanged(NoiseModel),
+    OutputChannelsChanged(crate::config::OutputChannelMode),
     /// Output voice-presence intensity.
     OutputVoiceRecoveryChanged(f32),
     /// Output high-pass filter toggle.
@@ -151,6 +160,7 @@ pub(super) enum MicCommandOutput {
     /// The spectrum worker and its `pw-cat` child were reaped off the GTK
     /// thread after the final settings revision settled.
     MonitorStopped,
+    ClosePreferencesSaved(Result<(), String>),
     OverrideRemovalCompleted {
         path: std::path::PathBuf,
         result: Result<wp_override_warning::OverrideRemoval, String>,
@@ -176,10 +186,12 @@ pub(super) struct MicShell {
     state: Rc<AppState>,
     banner_action: BannerAction,
     is_closing: bool,
+    close_save_in_flight: bool,
     should_probe_after_apply: bool,
     applies: ApplyTracker,
     apply_debounce: Option<SourceId>,
     settings_loads: SettingsLoadTracker,
+    settings_reload_pending: bool,
     monitor: Option<Rc<AudioMonitor>>,
     settings_monitor: Option<gio::FileMonitor>,
 }
@@ -228,7 +240,6 @@ impl Component for MicShell {
         }
 
         let header = adw::HeaderBar::new();
-        header.set_decoration_layout(Some(":minimize,maximize,close"));
         let mode_picker = window::build_mode_picker(initial_mode);
         header.pack_start(&mode_picker.container);
         let primary_menu = build_flat_action_popover_button(&window::primary_menu_spec());
@@ -328,10 +339,12 @@ impl Component for MicShell {
             state,
             banner_action: BannerAction::None,
             is_closing: false,
+            close_save_in_flight: false,
             should_probe_after_apply: true,
             applies,
             apply_debounce: None,
             settings_loads: SettingsLoadTracker::default(),
+            settings_reload_pending: false,
             monitor: Some(monitor),
             settings_monitor,
         };
@@ -354,11 +367,30 @@ impl Component for MicShell {
         sender: ComponentSender<Self>,
         root: &Self::Root,
     ) {
-        if self.is_closing {
+        if self.is_closing
+            && !matches!(
+                message,
+                MicInput::CloseSaveRetry | MicInput::CloseWithoutSaving | MicInput::CloseCancelled
+            )
+        {
             return;
         }
         match message {
             MicInput::CloseRequested => self.close(widgets, root, &sender),
+            MicInput::CloseSaveRetry => self.save_before_close(&sender),
+            MicInput::CloseWithoutSaving => self.stop_monitor(widgets, &sender),
+            MicInput::CloseCancelled => {
+                self.is_closing = false;
+                self.applies = ApplyTracker::default();
+                self.should_probe_after_apply = true;
+                widgets.banner.set_title(&i18n(
+                    "Changes have not been saved. You can keep editing or close without saving.",
+                ));
+                widgets.banner.set_button_label(None);
+                widgets.banner.set_revealed(true);
+                widgets.body.set_sensitive(true);
+                self.banner_action = BannerAction::None;
+            }
             MicInput::RestoreDefaultsRequested => {
                 let dialog = window::reset_confirmation_dialog();
                 let sender = sender.clone();
@@ -424,6 +456,10 @@ impl Component for MicShell {
                 BannerAction::None | BannerAction::RetryInProgress => {}
             },
             MicInput::ExternalSettingsChanged => {
+                if self.state.has_active_apply() {
+                    self.settings_reload_pending = true;
+                    return;
+                }
                 let Some(generation) = self.settings_loads.begin() else {
                     log::error!("settings reload generation exhausted");
                     return;
@@ -436,14 +472,9 @@ impl Component for MicShell {
             // Body-control transitions. The widget already shows the new value;
             // the mutation triggers the debounced apply. No rebuild (the visible
             // Simple-view controls don't depend on these fields).
-            MicInput::NoiseFilterToggled(on) => self.mutate_settings(&sender, |s| {
-                s.noise_reduction.enabled = on;
-                if !on {
-                    // Single Simple-view master: cascade so one click tears down
-                    // every reason the mic worker would stay alive.
-                    cascade_mic_off(s);
-                }
-            }),
+            MicInput::NoiseFilterToggled(on) => {
+                self.mutate_settings(&sender, |settings| settings.set_microphone_enabled(on));
+            }
             MicInput::MicIntensityChanged(v) => {
                 self.mutate_settings(&sender, |s| s.noise_reduction.strength = v);
             }
@@ -461,10 +492,39 @@ impl Component for MicShell {
 
             // ── Advanced mic-chain ────────────────────────────────────
             MicInput::MicNrEnabled(on) => {
-                self.mutate_settings(&sender, |s| s.noise_reduction.enabled = on);
+                self.mutate_settings(&sender, |s| {
+                    s.noise_reduction.enabled = on;
+                    if on {
+                        s.mic_bypass = false;
+                    }
+                });
             }
             MicInput::MicEchoModeChanged(mode) => {
-                self.mutate_settings(&sender, |s| s.echo_cancel.mode = mode);
+                self.mutate_settings(&sender, |s| {
+                    s.echo_cancel.mode = mode;
+                    if mode != crate::config::EchoMode::Never {
+                        s.mic_bypass = false;
+                    }
+                });
+            }
+            MicInput::PreferFastCpusChanged(enabled) => {
+                self.mutate_settings(&sender, |settings| {
+                    settings.runtime.prefer_fast_cpus = enabled;
+                });
+            }
+            MicInput::GainSafetyChanged(enabled) => {
+                self.mutate_settings(&sender, |settings| {
+                    settings.gain_safety = if enabled {
+                        crate::config::GainSafety::Automatic
+                    } else {
+                        crate::config::GainSafety::Unrestricted
+                    };
+                });
+            }
+            MicInput::ReserveMemoryChanged(enabled) => {
+                self.mutate_settings(&sender, |settings| {
+                    settings.runtime.reserve_memory = enabled;
+                });
             }
             MicInput::QualityChanged(quality) => {
                 self.mutate_settings(&sender, |s| s.quality = quality);
@@ -482,16 +542,31 @@ impl Component for MicShell {
                 self.mutate_settings(&sender, |s| s.noise_reduction.voice_recovery = v);
             }
             MicInput::MicHpfToggled(on) => {
-                self.mutate_settings(&sender, |s| s.hpf.enabled = on);
+                self.mutate_settings(&sender, |s| {
+                    s.hpf.enabled = on;
+                    if on {
+                        s.mic_bypass = false;
+                    }
+                });
             }
             MicInput::MicGateToggled(on) => {
-                self.mutate_settings(&sender, |s| s.gate.enabled = on);
+                self.mutate_settings(&sender, |s| {
+                    s.gate.enabled = on;
+                    if on {
+                        s.mic_bypass = false;
+                    }
+                });
             }
             MicInput::MicGateIntensityChanged(v) => {
                 self.mutate_settings(&sender, |s| s.gate.intensity = v);
             }
             MicInput::MicCompressorToggled(on) => {
-                self.mutate_settings(&sender, |s| s.compressor.enabled = on);
+                self.mutate_settings(&sender, |s| {
+                    s.compressor.enabled = on;
+                    if on {
+                        s.mic_bypass = false;
+                    }
+                });
             }
             MicInput::MicCompressorIntensityChanged(v) => {
                 self.mutate_settings(&sender, |s| s.compressor.intensity = v);
@@ -499,10 +574,16 @@ impl Component for MicShell {
             MicInput::MicEq(mutation) => {
                 self.mutate_settings(&sender, |s| {
                     eq_card::apply_eq_mutation(&mut s.equalizer, mutation);
+                    if s.equalizer.enabled {
+                        s.mic_bypass = false;
+                    }
                 });
             }
             MicInput::MicVoiceChangerToggled(on) => self.mutate_settings(&sender, |s| {
                 s.stereo.enabled = on;
+                if on {
+                    s.mic_bypass = false;
+                }
                 s.stereo.mode = if on {
                     StereoMode::VoiceChanger
                 } else {
@@ -517,6 +598,11 @@ impl Component for MicShell {
             }
 
             // ── Advanced output-chain ─────────────────────────────────
+            MicInput::OutputChannelsChanged(mode) => {
+                self.mutate_settings(&sender, |settings| {
+                    settings.output_filter.channel_mode = mode;
+                });
+            }
             MicInput::OutputModelChanged(model) => {
                 self.mutate_settings(&sender, |s| {
                     s.output_filter.noise_reduction.model = model;
@@ -552,6 +638,12 @@ impl Component for MicShell {
                     eq_card::apply_eq_mutation(&mut s.output_filter.equalizer, mutation);
                 });
             }
+        }
+        // Only dependent selections require rebuilding. Slider changes keep
+        // their widgets, focus and drag gestures; programmatic setup connects
+        // handlers only after establishing the initial value.
+        if self.state.view_needs_sync() && !self.is_closing {
+            self.repopulate(widgets, sender.input_sender());
         }
     }
 
@@ -598,6 +690,12 @@ impl Component for MicShell {
                     return;
                 };
                 let result = self.state.finish_apply(*completion);
+                if self.is_closing {
+                    // Finish the worker already running, but never gate closing
+                    // on an audio retry or dispatch another queued graph update.
+                    self.save_before_close(&sender);
+                    return;
+                }
                 if result.is_ok() {
                     self.applies.record_applied(request);
                 }
@@ -607,17 +705,16 @@ impl Component for MicShell {
                 if !tracking.is_settled {
                     return;
                 }
-
-                if self.is_closing {
-                    match result {
-                        Ok(()) => self.stop_monitor(widgets, &sender),
-                        Err(cause) => {
-                            self.is_closing = false;
-                            self.repopulate(widgets, sender.input_sender());
-                            self.show_apply_failure(widgets, &cause);
-                        }
-                    }
-                    return;
+                // The worker may have selected a different available model.
+                // Do not rely on our own disk notification, which is correctly
+                // ignored as a local acknowledgement.
+                if self.state.view_needs_sync() {
+                    self.repopulate(widgets, sender.input_sender());
+                }
+                if std::mem::take(&mut self.settings_reload_pending) && !self.is_closing {
+                    let _ = sender
+                        .input_sender()
+                        .send(MicInput::ExternalSettingsChanged);
                 }
 
                 match result {
@@ -634,11 +731,49 @@ impl Component for MicShell {
                 let Some(tracking) = self.applies.complete_health(request) else {
                     return;
                 };
-                if let Some(next) = tracking.next {
+                if !self.is_closing
+                    && let Some(next) = tracking.next
+                {
                     self.spawn_apply_request(&sender, next);
                 }
                 if tracking.is_current && tracking.next.is_none() && !self.is_closing {
                     self.show_health(widgets, &health);
+                    self.repopulate(widgets, sender.input_sender());
+                }
+            }
+            MicCommandOutput::ClosePreferencesSaved(result) => {
+                self.close_save_in_flight = false;
+                if !self.is_closing {
+                    return;
+                }
+                match result {
+                    Ok(()) => self.stop_monitor(widgets, &sender),
+                    Err(error) => {
+                        log::warn!("close: preferences were not saved: {error}");
+                        let dialog = adw::AlertDialog::builder()
+                            .heading(i18n("Settings could not be saved"))
+                            .body(i18n("Another application may be changing the settings, or the settings file is not writable. Try again, keep this window open, or close without saving your latest changes."))
+                            .build();
+                        dialog.add_response("cancel", &i18n("Keep window open"));
+                        dialog.add_response("discard", &i18n("Close without saving"));
+                        dialog.add_response("retry", &i18n("Try again"));
+                        dialog.set_default_response(Some("cancel"));
+                        dialog.set_close_response("cancel");
+                        dialog.set_response_appearance(
+                            "discard",
+                            adw::ResponseAppearance::Destructive,
+                        );
+                        let input = sender.input_sender().clone();
+                        dialog.connect_response(None, move |_, response| {
+                            let message = match response {
+                                "retry" => MicInput::CloseSaveRetry,
+                                "discard" => MicInput::CloseWithoutSaving,
+                                _ => MicInput::CloseCancelled,
+                            };
+                            let _ = input.send(message);
+                        });
+                        dialog.present(Some(root));
+                    }
                 }
             }
             MicCommandOutput::MonitorStopped => {
@@ -684,12 +819,14 @@ impl MicShell {
     }
 
     fn show_apply_failure(&mut self, widgets: &MicShellWidgets, cause: &str) {
-        widgets.banner.set_title(&apply_failure_title(cause));
+        // The chain names units, argv and exit codes: journal material.
+        log::warn!("applying the audio settings failed: {cause}");
+        widgets.banner.set_title(&apply_failure_title());
         widgets.banner.set_button_label(Some(&i18n("Try again")));
         self.banner_action = BannerAction::RetryApply;
         self.should_probe_after_apply = true;
         widgets.banner.set_revealed(true);
-        widgets.body.set_sensitive(false);
+        widgets.body.set_sensitive(true);
     }
 
     fn show_checking(&mut self, widgets: &MicShellWidgets) {
@@ -742,8 +879,9 @@ impl MicShell {
         let Some(request) = self.applies.begin_health() else {
             return false;
         };
+        let settings = self.state.settings().clone();
         sender.oneshot_command(async move {
-            let health = relm4::spawn_blocking(health::probe)
+            let health = relm4::spawn_blocking(move || health::probe(&settings))
                 .await
                 .unwrap_or_else(|error| {
                     log::error!("audio health worker failed: {error}");
@@ -778,21 +916,36 @@ impl MicShell {
         }
         self.is_closing = true;
         self.cancel_apply_debounce();
-        self.show_checking(widgets);
-        let persisted_window = self.state.settings().window.clone();
-        let width = current_window_dimension(root.width(), persisted_window.width);
-        let height = current_window_dimension(root.height(), persisted_window.height);
-        let maximized = root.is_maximized();
+        widgets.banner.set_title(&i18n("Saving settings…"));
+        widgets.banner.set_button_label(None);
+        widgets.banner.set_revealed(true);
+        widgets.body.set_sensitive(false);
+        let window = self.state.settings().window.clone();
+        let width = current_window_dimension(root.width(), window.width);
+        let height = current_window_dimension(root.height(), window.height);
         self.state.mutate(|settings| {
             settings.monitor.enabled = false;
             settings.window.width = width;
             settings.window.height = height;
-            settings.window.maximized = maximized;
+            settings.window.maximized = root.is_maximized();
         });
-        self.applies.settings_changed();
-        if let Some(request) = self.applies.mark_current_ready() {
-            self.spawn_apply_request(sender, request);
+        if !self.state.has_active_apply() {
+            self.save_before_close(sender);
         }
+    }
+
+    fn save_before_close(&mut self, sender: &ComponentSender<Self>) {
+        if self.close_save_in_flight {
+            return;
+        }
+        self.close_save_in_flight = true;
+        let work = self.state.close_work();
+        sender.oneshot_command(async move {
+            let result = relm4::spawn_blocking(move || work.run())
+                .await
+                .unwrap_or_else(|error| Err(error.to_string()));
+            MicCommandOutput::ClosePreferencesSaved(result)
+        });
     }
 
     fn stop_monitor(&mut self, widgets: &MicShellWidgets, sender: &ComponentSender<Self>) {
@@ -842,14 +995,25 @@ impl MicShell {
                 widgets.banner.set_button_label(Some(&i18n("Check again")));
                 self.banner_action = BannerAction::Recheck;
                 widgets.banner.set_revealed(true);
-                widgets.body.set_sensitive(false);
+                widgets.body.set_sensitive(true);
             }
         }
     }
 }
 
-fn apply_failure_title(cause: &str) -> String {
-    format!("{} {cause}", i18n("Could not apply the audio settings:"))
+/// What the banner says when applying the settings fails.
+///
+/// The reconciler's error chain is a diagnostic, not a message: it concatenates
+/// every clause it collected, including a `Debug`-formatted argv array and a raw
+/// `ExitStatus`, and it reached the banner verbatim — a sentence naming
+/// `systemctl`, its arguments and its exit code. What the person in front of the
+/// window needs is that their choices survived and that they can retry; the
+/// chain goes to the journal, and `doctor` reports the same state in detail for
+/// whoever is diagnosing it.
+fn apply_failure_title() -> String {
+    i18n(
+        "Could not apply the audio settings. Your choices are saved — the audio services have not accepted them yet.",
+    )
 }
 
 fn current_window_dimension(actual: i32, persisted: u32) -> u32 {

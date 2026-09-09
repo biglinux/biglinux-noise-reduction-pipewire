@@ -15,3 +15,4 @@ src/ui/widgets/source_picker.rs
 src/ui/widgets/spectrum.rs
 src/ui/widgets/wp_override_warning.rs
 usr/share/plasma/plasmoids/br.com.biglinux.micnoise/contents/ui/main.qml
+src/ui/i18n.rs

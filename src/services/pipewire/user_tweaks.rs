@@ -39,6 +39,9 @@ use crate::config::atomic_write_private as atomic_write;
 use crate::pipeline::remove_file_if_exists;
 use std::fs::read_to_string;
 
+mod transaction;
+pub(crate) use transaction::{TuningRevision, TuningWriteFailure};
+
 /// Sample-rate options the UI exposes. `Standard` keeps the upstream /
 /// distro default of 48 kHz only — every other variant adds the listed
 /// rates to `default.clock.allowed-rates` so audiophile DACs can run
@@ -126,6 +129,19 @@ impl UserTweaks {
             || self.bt_sbc_xq.is_some()
             || self.bt_call_autoswitch.is_some()
             || self.alsa_no_suspend.is_some()
+    }
+
+    /// Load an exact revision for conflict checking, not just parsed values.
+    pub(crate) fn load_snapshot() -> io::Result<(Self, TuningRevision)> {
+        let revision = TuningRevision::load()?;
+        Ok((revision.settings()?, revision))
+    }
+
+    pub(crate) fn apply_checked(
+        &self,
+        expected: &TuningRevision,
+    ) -> Result<TuningRevision, TuningWriteFailure> {
+        TuningRevision::write_checked(self, expected)
     }
 
     /// Write both drop-in files atomically. Files with no relevant

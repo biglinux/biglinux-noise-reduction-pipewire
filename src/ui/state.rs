@@ -26,7 +26,7 @@
 //! restarts `biglinux-microphone-output.service` only. WirePlumber is
 //! **never restarted**.
 
-use std::cell::RefCell;
+use std::cell::{Cell, RefCell};
 use std::collections::VecDeque;
 use std::fmt;
 use std::rc::Rc;
@@ -34,12 +34,9 @@ use std::rc::Rc;
 use log::{debug, error, info};
 
 use crate::config::AppSettings;
-use crate::pipeline;
 use crate::services::loopback::Loopback;
-use crate::services::pipewire::{
-    apply_live, restart_mic_service, restart_output_service, start_aec_service, start_mic_service,
-    start_output_service, stop_aec_service, stop_mic_service, stop_output_service,
-};
+#[cfg(test)]
+use crate::services::reconcile::{needs_mic_reload, output_topology_changed};
 
 const MAX_UNCERTAIN_LOCAL_WRITES: usize = 8;
 
@@ -127,6 +124,7 @@ struct ApplyOutcome {
 pub(super) struct ApplyWork {
     request: ApplyRequest,
     previous: Option<AppSettings>,
+    baseline: AppSettings,
     snapshot: AppSettings,
     loopback: Option<Loopback>,
 }
@@ -138,7 +136,7 @@ impl ApplyWork {
 
     /// Run all blocking PipeWire/persistence work and return a typed result.
     pub(super) fn run(self) -> ApplyCompletion {
-        let outcome = run_apply(self.previous, self.snapshot, self.loopback);
+        let outcome = run_apply(self.previous, self.baseline, self.snapshot, self.loopback);
         ApplyCompletion {
             request: self.request,
             outcome: Some(outcome),
@@ -193,7 +191,35 @@ impl ApplyCompletion {
 }
 
 /// Shared GTK-main-thread state.
+#[derive(Clone, Copy, PartialEq, Eq)]
+struct MirroredChoices {
+    quality: crate::config::Quality,
+    mic_model: crate::config::NoiseModel,
+    output_model: crate::config::NoiseModel,
+    paused: bool,
+    mic_wanted: bool,
+    capabilities: u64,
+}
+
+impl MirroredChoices {
+    fn of(settings: &AppSettings) -> Self {
+        Self {
+            quality: settings.quality,
+            mic_model: settings.noise_reduction.model,
+            output_model: settings.output_filter.noise_reduction.model,
+            paused: settings.mic_bypass,
+            mic_wanted: crate::pipeline::mic_chain_wanted(settings),
+            capabilities: crate::config::noise_model::capability_generation(),
+        }
+    }
+}
+
 pub struct AppState {
+    mirrored_choices: Cell<MirroredChoices>,
+    // The tuning page owns an independent draft and no Rc<AppState>. Keeping
+    // this widget avoids losing unapplied choices on external JSON updates.
+    tuning_page: RefCell<Option<gtk::Widget>>,
+    active_page: RefCell<String>,
     settings: RefCell<AppSettings>,
     /// Last snapshot that was successfully applied. Used to decide
     /// whether the current change needs an expensive mic-chain reload
@@ -219,13 +245,71 @@ pub struct AppState {
     loopback: RefCell<Option<Loopback>>,
 }
 
+/// Owned close task: saves preferences and stops only GUI-owned resources.
+/// It never queries PipeWire or starts/restarts an audio service.
+pub(super) struct CloseWork {
+    baseline: AppSettings,
+    desired: AppSettings,
+    loopback: Option<Loopback>,
+}
+
+impl CloseWork {
+    pub(super) fn run(self) -> Result<(), String> {
+        drop(self.loopback);
+        let _guard =
+            crate::config::storage::SettingsLock::acquire().map_err(|error| error.to_string())?;
+        let latest = AppSettings::load_strict().map_err(|error| error.to_string())?;
+        let merged = crate::config::storage::merge(&self.baseline, &self.desired, &latest)
+            .map_err(|error| error.to_string())?;
+        merged.save().map_err(|error| error.to_string())
+    }
+}
+
 impl AppState {
+    pub(super) fn mark_view_current(&self) {
+        self.mirrored_choices
+            .set(MirroredChoices::of(&self.settings.borrow()));
+    }
+
+    pub(super) fn view_needs_sync(&self) -> bool {
+        self.mirrored_choices.get() != MirroredChoices::of(&self.settings.borrow())
+    }
+
+    pub(super) fn tuning_page(&self) -> gtk::Widget {
+        self.tuning_page
+            .borrow_mut()
+            .get_or_insert_with(super::views::advanced::build)
+            .clone()
+    }
+    pub(super) fn active_page(&self) -> String {
+        self.active_page.borrow().clone()
+    }
+    pub(super) fn remember_page(&self, name: &str) {
+        name.clone_into(&mut self.active_page.borrow_mut());
+    }
+
+    pub(super) fn close_work(&self) -> CloseWork {
+        CloseWork {
+            baseline: self
+                .last_persisted
+                .borrow()
+                .clone()
+                .unwrap_or_else(|| self.settings.borrow().clone()),
+            desired: self.settings.borrow().clone(),
+            loopback: self.loopback.borrow_mut().take(),
+        }
+    }
+
     #[must_use]
     pub fn new(settings: AppSettings) -> Rc<Self> {
+        let persisted = settings.clone();
         Rc::new(Self {
+            mirrored_choices: Cell::new(MirroredChoices::of(&settings)),
+            tuning_page: RefCell::new(None),
+            active_page: RefCell::new("mic".to_owned()),
             settings: RefCell::new(settings),
             last_applied: RefCell::new(None),
-            last_persisted: RefCell::new(None),
+            last_persisted: RefCell::new(Some(persisted)),
             local_apply_snapshot: RefCell::new(None),
             uncertain_local_writes: RefCell::new(VecDeque::new()),
             loopback: RefCell::new(None),
@@ -233,6 +317,10 @@ impl AppState {
     }
 
     #[must_use]
+    pub(super) fn has_active_apply(&self) -> bool {
+        self.local_apply_snapshot.borrow().is_some()
+    }
+
     pub fn settings(&self) -> std::cell::Ref<'_, AppSettings> {
         self.settings.borrow()
     }
@@ -267,8 +355,23 @@ impl AppState {
         if *self.settings.borrow() == new {
             return false;
         }
-        *self.settings.borrow_mut() = new;
-        true
+        let baseline = self
+            .last_persisted
+            .borrow()
+            .clone()
+            .unwrap_or_else(|| self.settings.borrow().clone());
+        let merged = crate::config::storage::merge(&baseline, &self.settings.borrow(), &new);
+        match merged {
+            Ok(merged) => {
+                *self.last_persisted.borrow_mut() = Some(new);
+                *self.settings.borrow_mut() = merged;
+                true
+            }
+            Err(error) => {
+                log::warn!("settings: preserving local edits after external conflict: {error}");
+                false
+            }
+        }
     }
 
     /// Move an immutable apply snapshot and the current loopback handle into a
@@ -283,6 +386,11 @@ impl AppState {
         ApplyWork {
             request,
             previous: prev,
+            baseline: self
+                .last_persisted
+                .borrow()
+                .clone()
+                .unwrap_or_else(|| snapshot.clone()),
             snapshot,
             loopback: self.loopback.borrow_mut().take(),
         }
@@ -316,6 +424,14 @@ impl AppState {
         };
         *self.loopback.borrow_mut() = outcome.loopback;
         if outcome.was_persisted {
+            if let Some(local) = &local_snapshot {
+                let rebased = crate::config::storage::rebase_local(
+                    &local.snapshot,
+                    &self.settings.borrow(),
+                    &outcome.snapshot,
+                );
+                *self.settings.borrow_mut() = rebased;
+            }
             *self.last_persisted.borrow_mut() = Some(outcome.snapshot.clone());
         }
         match outcome.status {
@@ -335,10 +451,29 @@ impl AppState {
 /// returned in the outcome.
 fn run_apply(
     prev: Option<AppSettings>,
+    baseline: AppSettings,
     mut snapshot: AppSettings,
     loopback_in: Option<Loopback>,
 ) -> ApplyOutcome {
+    let transaction = crate::config::storage::SettingsLock::acquire().and_then(|guard| {
+        let latest = AppSettings::load_strict()?;
+        let merged = crate::config::storage::merge(&baseline, &snapshot, &latest)?;
+        Ok((guard, merged))
+    });
+    let (_settings_lock, merged) = match transaction {
+        Ok(transaction) => transaction,
+        Err(error) => {
+            return ApplyOutcome {
+                snapshot,
+                loopback: loopback_in,
+                was_persisted: false,
+                status: ApplyStatus::Failed(error.to_string()),
+            };
+        }
+    };
+    snapshot = merged;
     if prev.is_none() {
+        crate::config::noise_model::refresh_runtime_availability();
         crate::pipeline::purge_legacy_files();
     }
 
@@ -362,78 +497,17 @@ fn run_apply(
         };
     }
 
-    // Tier 2 — rewrite on-disk drop-ins so the next login reproduces the state.
-    if let Err(e) = pipeline::apply(&snapshot) {
-        error!("state: failed to write pipeline configs: {e}");
+    if let Err(error) = crate::services::reconcile::apply(&snapshot, false) {
         return ApplyOutcome {
             snapshot,
             loopback: loopback_in,
             was_persisted: true,
-            status: ApplyStatus::Failed(format!("could not write audio configuration: {e}")),
+            status: ApplyStatus::Failed(error.to_string()),
         };
     }
-
-    // Tier 3 — push live control values. No restart, no dropout.
-    let live = match apply_live(&snapshot) {
-        Ok(o) => o,
-        Err(e) => {
-            error!("state: live control update failed: {e}");
-            return ApplyOutcome {
-                snapshot,
-                loopback: loopback_in,
-                was_persisted: true,
-                status: ApplyStatus::Failed(format!("live control update failed: {e}")),
-            };
-        }
-    };
-
-    // Tier 4 — drive each pwloader unit independently. AEC first because the
-    // mic chain pins `target.object = "echo-cancel-source"` when AEC is on, so
-    // the EC source must already exist by the time the mic loader resolves its
-    // capture target. Unit failures are collected instead of swallowed: the
-    // snapshot must not be recorded as applied (and the user must be told)
-    // when a required service did not actually reach its target state.
-    let mut unit_errors: Vec<String> = Vec::new();
-    if let Err(e) = reconcile_aec_service(prev.as_ref(), &snapshot) {
-        error!("state: {e}");
-        unit_errors.push(e);
-    }
-
-    let need_mic_reload = needs_mic_reload(prev.as_ref(), &snapshot) || !live.mic_pushed;
-    if need_mic_reload {
-        if pipeline::mic_chain_wanted(&snapshot) {
-            let was_running = prev.as_ref().is_some_and(pipeline::mic_chain_wanted);
-            if was_running {
-                info!("state: mic args changed — restarting mic loader");
-                if let Err(e) = restart_mic_service() {
-                    error!("state: failed to reload mic loader: {e}");
-                    unit_errors.push(format!("microphone filter reload failed: {e}"));
-                }
-            } else {
-                info!("state: mic chain wanted — starting mic loader");
-                if let Err(e) = start_mic_service() {
-                    error!("state: failed to start mic loader: {e}");
-                    unit_errors.push(format!("microphone filter start failed: {e}"));
-                }
-            }
-        } else if let Err(e) = stop_mic_service() {
-            error!("state: failed to stop mic loader: {e}");
-            unit_errors.push(format!("microphone filter stop failed: {e}"));
-        }
-    } else {
-        debug!("state: mic controls pushed live, no reload");
-    }
-
-    if let Err(e) = reconcile_output_service(prev.as_ref(), &snapshot) {
-        error!("state: {e}");
-        unit_errors.push(e);
-    }
-    let loopback = reconcile_self_listen(prev.as_ref(), &snapshot, loopback_in);
-
-    let status = if unit_errors.is_empty() {
-        ApplyStatus::Applied
-    } else {
-        ApplyStatus::Failed(unit_errors.join("; "))
+    let (loopback, status) = match reconcile_self_listen(prev.as_ref(), &snapshot, loopback_in) {
+        Ok(loopback) => (loopback, ApplyStatus::Applied),
+        Err(error) => (None, ApplyStatus::Failed(error)),
     };
     ApplyOutcome {
         snapshot,
@@ -451,7 +525,7 @@ fn reconcile_self_listen(
     prev: Option<&AppSettings>,
     now: &AppSettings,
     mut loopback: Option<Loopback>,
-) -> Option<Loopback> {
+) -> Result<Option<Loopback>, String> {
     let was_on = prev.is_some_and(|s| s.monitor.enabled);
     let is_on = now.monitor.enabled;
 
@@ -459,13 +533,13 @@ fn reconcile_self_listen(
         if loopback.take().is_some() {
             debug!("state: stopped self-listen loopback");
         }
-        return None;
+        return Ok(None);
     }
 
     // is_on: bring the loopback up if it isn't already alive.
     let alive = loopback.as_mut().is_some_and(Loopback::is_alive);
     if alive && was_on && prev.is_some_and(|p| p.monitor.delay_ms == now.monitor.delay_ms) {
-        return loopback;
+        return Ok(loopback);
     }
 
     // Either fresh start, delay changed, or process died — recreate.
@@ -473,130 +547,13 @@ fn reconcile_self_listen(
     match Loopback::start(now.monitor.delay_ms) {
         Ok(handle) => {
             info!("state: self-listen loopback started");
-            Some(handle)
+            Ok(Some(handle))
         }
         Err(e) => {
             error!("state: self-listen loopback failed: {e}");
-            None
+            Err(format!("Could not start self-listen: {e}"))
         }
     }
-}
-
-/// Drive the standalone output unit so its `pipewire -c` worker only
-/// exists while the user actually wants the output filter. Disabling
-/// the master tears the virtual sink down — Chromium-based browsers
-/// pause playback when their target sink disappears, but that is the
-/// explicit price the user pays for not having an idle pipewire worker
-/// hanging around. Re-enabling spawns the worker again and `apply_live`
-/// repopulates the controls.
-///
-/// Topology changes (EQ band layout) can only take effect via a real
-/// restart, and we only attempt that when the master is on — i.e. the
-/// user is actively listening through the filter and a brief reload is
-/// expected.
-fn reconcile_output_service(prev: Option<&AppSettings>, now: &AppSettings) -> Result<(), String> {
-    let was_enabled = prev.is_some_and(|s| s.output_filter.enabled);
-    let is_enabled = now.output_filter.enabled;
-
-    if is_enabled && !was_enabled {
-        start_output_service().map_err(|e| format!("output filter start failed: {e}"))
-    } else if is_enabled && output_topology_changed(prev, now) {
-        restart_output_service().map_err(|e| format!("output filter restart failed: {e}"))
-    } else if !is_enabled && was_enabled {
-        stop_output_service().map_err(|e| format!("output filter stop failed: {e}"))
-    } else {
-        // is_enabled && !topology_changed → live update covered it.
-        // !is_enabled && !was_enabled → nothing to do.
-        Ok(())
-    }
-}
-
-/// Drive `biglinux-microphone-aec.service`. The EC source is the
-/// upstream of the mic chain when enabled, so we start/restart it
-/// before the caller touches the mic loader. Topology of the AEC
-/// args body is fixed (only the `enabled` flag toggles its existence),
-/// so any rewrite is purely "exists or not" — no in-process restart
-/// needed when the toggle stays true.
-///
-/// The "not wanted" branch always issues a `stop`, even when the
-/// previous snapshot also had AEC off. `systemctl stop` on an already
-/// inactive unit is a cheap no-op; the redundancy is what guarantees
-/// we collect any orphaned AEC pwloader that an out-of-process actor or
-/// stale mic-unit dependency left running. Without it, that AEC loader
-/// would keep consuming CPU even after the user disabled the toggle.
-fn reconcile_aec_service(prev: Option<&AppSettings>, now: &AppSettings) -> Result<(), String> {
-    let was_on = prev.is_some_and(|settings| settings.echo_cancel.enabled);
-    let is_on = now.echo_cancel.enabled;
-    if is_on {
-        if !was_on {
-            start_aec_service().map_err(|e| format!("echo-cancellation start failed: {e}"))?;
-        }
-        Ok(())
-    } else {
-        stop_aec_service().map_err(|e| format!("echo-cancellation stop failed: {e}"))
-    }
-}
-
-fn needs_mic_reload(prev: Option<&AppSettings>, now: &AppSettings) -> bool {
-    let was_wanted = prev.is_some_and(pipeline::mic_chain_wanted);
-    let now_wanted = pipeline::mic_chain_wanted(now);
-    if was_wanted != now_wanted {
-        return true;
-    }
-    if let Some(p) = prev {
-        let voice_was_on =
-            p.stereo.enabled && p.stereo.mode == crate::config::StereoMode::VoiceChanger;
-        let voice_is_on =
-            now.stereo.enabled && now.stereo.mode == crate::config::StereoMode::VoiceChanger;
-        let voice_changer_topology_changed = voice_was_on != voice_is_on
-            || (voice_is_on && (p.stereo.width - now.stereo.width).abs() > f32::EPSILON);
-        let ai_topology_changed =
-            pipeline::ai_node_in_mic_chain(p) != pipeline::ai_node_in_mic_chain(now);
-        // Selecting a different denoiser backend swaps the LADSPA
-        // plugin — different .so, different control
-        // surface, different port names. Only a reload picks that up.
-        // While an attenuation-only backend is active a separate SWH gate node also rides
-        // alongside `ai`, so toggling the gate flag has to reload too
-        // (instead of being a pure live update like with GTCRN's
-        // integrated gate).
-        let denoiser_topology_changed = p.noise_reduction.model != now.noise_reduction.model
-            || (now.noise_reduction.model.is_attenuation_only()
-                && p.gate.enabled != now.gate.enabled);
-        // `target.object = "echo-cancel-source"` is added on the capture
-        // side only when AEC is on. Toggling AEC rewrites that prop, so
-        // the chain must be reloaded before the graph can use/bypass the
-        // cleaned source.
-        let ec_target_changed = p.echo_cancel.enabled != now.echo_cancel.enabled;
-        // HPF is a 2-biquad cascade when enabled and a single
-        // pass-through node when disabled — toggling it adds/removes
-        // `hpf_pre` from the graph, so we must reload, not live-update.
-        let hpf_topology_changed = p.hpf.enabled != now.hpf.enabled;
-        p.equalizer.bands != now.equalizer.bands
-            || p.equalizer.preset != now.equalizer.preset
-            || p.equalizer.enabled != now.equalizer.enabled
-            || p.compressor.enabled != now.compressor.enabled
-            || voice_changer_topology_changed
-            || ai_topology_changed
-            || denoiser_topology_changed
-            || ec_target_changed
-            || hpf_topology_changed
-    } else {
-        now_wanted
-    }
-}
-
-fn output_topology_changed(prev: Option<&AppSettings>, now: &AppSettings) -> bool {
-    // GTCRN is permanently wired in the output graph; NR / master
-    // toggles flip its `Enable` port via the live update path. EQ
-    // band/preset changes rewrite the graph, and so does selecting a
-    // different denoiser backend (GTCRN vs attenuation-only) since the LADSPA
-    // plugin and port names differ.
-    prev.is_some_and(|p| {
-        p.output_filter.equalizer.bands != now.output_filter.equalizer.bands
-            || p.output_filter.equalizer.preset != now.output_filter.equalizer.preset
-            || p.output_filter.equalizer.enabled != now.output_filter.equalizer.enabled
-            || p.output_filter.noise_reduction.model != now.output_filter.noise_reduction.model
-    })
 }
 
 #[cfg(test)]

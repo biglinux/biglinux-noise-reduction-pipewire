@@ -30,9 +30,11 @@ use std::time::Duration;
 
 use async_channel::Sender as AsyncSender;
 use big_os_kit::subprocess::BigSubprocessChild;
-use log::{debug, warn};
+use log::warn;
 
-pub use analyzer::{Analyzer, AnalyzerConfig, amplitude_to_db, hann_window, peak_dbfs, rms_dbfs};
+pub use analyzer::{
+    Analyzer, AnalyzerConfig, amplitude_to_db, band_range_hz, hann_window, peak_dbfs, rms_dbfs,
+};
 use capture::Capture;
 pub use types::{
     DEFAULT_BAND_COUNT, DEFAULT_FFT_SIZE, DEFAULT_HOP_SIZE, DEFAULT_SAMPLE_RATE, Event,
@@ -76,9 +78,9 @@ impl AudioMonitor {
     /// channel; the worker then exits.
     #[must_use]
     pub fn start(monitor_config: MonitorConfig) -> Self {
-        let (events_tx, events_rx) = async_channel::bounded::<Event>(64);
+        let (events_tx, events_rx) = async_channel::bounded::<Event>(1);
         let stop = Arc::new(AtomicBool::new(false));
-        let active = Arc::new(AtomicBool::new(true));
+        let active = Arc::new(AtomicBool::new(false));
         let capture_child = Arc::new(Mutex::new(None));
         let worker_stop = Arc::clone(&stop);
         let worker_active = Arc::clone(&active);
@@ -118,18 +120,21 @@ impl AudioMonitor {
         self.events_rx.clone()
     }
 
-    /// Pause / resume the FFT loop. When paused the worker stops pumping
-    /// pw-cat and emitting frames so the pipe back-pressures pw-cat into
-    /// blocking on its write — both processes drop to ~0 CPU until the
-    /// next `set_active(true)` call. Used to silence the monitor while
+    /// Pause / resume capture and FFT. Pausing terminates the owned
+    /// pw-cat child instead of blocking its real-time output pipe. Capture
+    /// is recreated when the meter becomes visible again. Used to silence the monitor while
     /// the spectrum widget is hidden.
     pub fn set_active(&self, on: bool) {
         self.active.store(on, Ordering::Release);
+        if !on {
+            let child = self.capture_child.lock().ok().and_then(|slot| slot.clone());
+            stop_capture_child(child);
+        }
     }
 
     #[cfg(test)]
     pub(crate) fn contract_handle() -> (Self, AsyncSender<Event>) {
-        let (events_tx, events_rx) = async_channel::bounded::<Event>(64);
+        let (events_tx, events_rx) = async_channel::bounded::<Event>(1);
         let monitor = Self {
             events_rx,
             stop: Arc::new(AtomicBool::new(false)),
@@ -201,52 +206,88 @@ fn run_worker(
     active: Arc<AtomicBool>,
     capture_child: Arc<Mutex<Option<Arc<Mutex<BigSubprocessChild>>>>>,
 ) {
-    let mut capture = match Capture::spawn(
-        monitor_config.analyzer.sample_rate,
-        monitor_config.analyzer.fft_size,
-        monitor_config.hop_size,
-    ) {
-        Ok(c) => c,
-        Err(e) => {
-            let _ = tx.try_send(Event::Fatal(format!("pw-cat spawn: {e}")));
-            return;
-        }
-    };
-    if let Ok(mut registered_child) = capture_child.lock() {
-        *registered_child = Some(capture.cancellation_handle());
-    }
-
+    let mut capture: Option<Capture> = None;
     let mut analyzer = Analyzer::new(monitor_config.analyzer.clone());
-
-    debug!("audio monitor: loop start");
+    let mut window = Vec::with_capacity(monitor_config.analyzer.fft_size);
+    let mut retry_at = std::time::Instant::now();
     while !stop.load(Ordering::Acquire) {
         if !active.load(Ordering::Acquire) {
-            // Spectrum widget is hidden: skip pump+FFT+send so pw-cat
-            // back-pressures itself into idle. Cheap atomic poll.
+            drop(capture.take());
+            if let Ok(mut slot) = capture_child.lock() {
+                slot.take();
+            }
             thread::sleep(PAUSED_POLL);
             continue;
         }
-        if let Err(e) = capture.pump() {
-            let _ = tx.try_send(Event::Fatal(format!("pw-cat read: {e}")));
-            break;
+        if capture.is_none() {
+            if std::time::Instant::now() < retry_at {
+                thread::sleep(PAUSED_POLL);
+                continue;
+            }
+            match Capture::spawn(
+                monitor_config.analyzer.sample_rate,
+                monitor_config.analyzer.fft_size,
+                monitor_config.hop_size,
+            ) {
+                Ok(next) => {
+                    if let Ok(mut slot) = capture_child.lock() {
+                        *slot = Some(next.cancellation_handle());
+                    }
+                    capture = Some(next);
+                    if stop.load(Ordering::Acquire) || !active.load(Ordering::Acquire) {
+                        continue;
+                    }
+                }
+                Err(error) => {
+                    if tx
+                        .force_send(Event::Recovering(format!(
+                            "Microphone monitoring unavailable: {error}"
+                        )))
+                        .is_err()
+                    {
+                        break;
+                    }
+                    retry_at = std::time::Instant::now() + Duration::from_secs(2);
+                    continue;
+                }
+            }
         }
-        if !capture.ready() {
+        let Some(current) = capture.as_mut() else {
+            continue;
+        };
+        if let Err(error) = current.pump() {
+            drop(capture.take());
+            if let Ok(mut slot) = capture_child.lock() {
+                slot.take();
+            }
+            if active.load(Ordering::Acquire) && !stop.load(Ordering::Acquire) {
+                if tx
+                    .force_send(Event::Recovering(format!(
+                        "Microphone monitoring interrupted: {error}"
+                    )))
+                    .is_err()
+                {
+                    break;
+                }
+                retry_at = std::time::Instant::now() + Duration::from_secs(2);
+            }
             continue;
         }
-        let window = capture.window_snapshot();
+        if !current.ready() {
+            continue;
+        }
+        current.copy_window_into(&mut window);
         let frame = analyzer.analyze_samples(&window);
-        match tx.try_send(Event::Frame(frame)) {
-            // UI is falling behind — drop the frame; the next tick will
-            // overwrite the visualisation anyway.
-            Ok(()) | Err(async_channel::TrySendError::Full(_)) => {}
-            Err(async_channel::TrySendError::Closed(_)) => break,
+        // Latest-value delivery: after a slow UI frame, show the present,
+        // not a queue of obsolete microphone levels.
+        if tx.force_send(Event::Frame(frame)).is_err() {
+            break;
         }
     }
     drop(capture);
-    if let Ok(mut registered_child) = capture_child.lock() {
-        registered_child.take();
+    if let Ok(mut slot) = capture_child.lock() {
+        slot.take();
     }
-    debug!("audio monitor: loop exited");
 }
 
 #[cfg(test)]

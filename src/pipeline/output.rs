@@ -61,6 +61,9 @@ pub const OUTPUT_CONF_FILE: &str = "output.args";
 /// Render the output filter-chain config text for the current settings.
 #[must_use]
 pub fn build_output_conf(settings: &AppSettings) -> String {
+    if settings.output_filter.channel_mode == crate::config::OutputChannelMode::Stereo {
+        return build_stereo_conf(settings);
+    }
     let nodes = output_nodes(settings);
     let links = output_links(&nodes);
 
@@ -77,6 +80,52 @@ pub fn build_output_conf(settings: &AppSettings) -> String {
     };
 
     graph.render()
+}
+
+/// Two independent mono processors preserve left/right phase and panning.
+/// The economical mono variant below is an explicit user choice, not a hidden
+/// side effect of enabling an equalizer or turning neural processing off.
+fn build_stereo_conf(settings: &AppSettings) -> String {
+    let mono: Vec<Node> = output_nodes(settings)
+        .into_iter()
+        .filter(|node| !matches!(node.name.as_str(), "mixer" | "copy_l" | "copy_r"))
+        .collect();
+    let mut nodes = Vec::with_capacity(mono.len() * 2);
+    let mut links = Vec::with_capacity(mono.len().saturating_sub(1) * 2);
+    let mut inputs = Vec::with_capacity(2);
+    let mut outputs = Vec::with_capacity(2);
+    for prefix in ["", "right_"] {
+        let chain: Vec<Node> = mono
+            .iter()
+            .cloned()
+            .map(|mut node| {
+                node.name = format!("{prefix}{}", node.name);
+                node
+            })
+            .collect();
+        if let (Some(first), Some(last)) = (chain.first(), chain.last()) {
+            inputs.push(format!("{}:{}", first.name, first.input_port));
+            outputs.push(format!("{}:{}", last.name, last.output_port));
+        }
+        for pair in chain.windows(2) {
+            links.push(Link::new(
+                format!("{}:{}", pair[0].name, pair[0].output_port),
+                format!("{}:{}", pair[1].name, pair[1].input_port),
+            ));
+        }
+        nodes.extend(chain);
+    }
+    Graph {
+        description: OUTPUT_DESCRIPTION.into(),
+        media_name: OUTPUT_DESCRIPTION.into(),
+        nodes,
+        links,
+        inputs,
+        outputs,
+        capture_props: capture_props(),
+        playback_props: playback_props(),
+    }
+    .render()
 }
 
 /// True when GTCRN should *process* (Enable=1.0) inside the output
@@ -118,7 +167,9 @@ fn output_nodes(settings: &AppSettings) -> Vec<Node> {
     // and port names. The reconciler treats `model` changes as
     // restart-worthy, so live-toggling between the two is intentionally
     // not graceful (one-shot restart on swap).
-    let denoiser = if nr.model.is_attenuation_only() {
+    let denoiser = if !nr.enabled {
+        Node::builtin("ai", LABEL_COPY)
+    } else if nr.model.is_attenuation_only() {
         // Attenuation-only plugins have no `Enable` port, so master-off
         // / NR-off renders the node with `Attenuation Limit = 0` to make
         // it a passthrough.
@@ -212,22 +263,30 @@ fn output_nodes(settings: &AppSettings) -> Vec<Node> {
         ),
     ]);
 
-    vec![
+    let mut nodes = vec![
         // FL + FR → mono. Both inputs feed channel 1 of the mixer; channel
         // 2 stays at gain 0 so it contributes nothing.
         Node::builtin("mixer", LABEL_MIXER).with_controls([("Gain 1", 0.5), ("Gain 2", 0.5)]),
         Node::builtin("hpf", LABEL_BQ_HIGHPASS).with_controls([("Freq", hpf_freq), ("Q", 0.707)]),
-        // GTCRN is always wired in; toggling master flips its Enable
-        // port between 0 and 1, which the live update path can push
-        // without restarting the unit. DFN3 has no Enable port, so
-        // master-off renders it with Attenuation Limit = 0 instead.
-        denoiser,
-        gate,
-        compressor,
-        param_eq_node(settings),
-        Node::builtin("copy_l", LABEL_COPY),
-        Node::builtin("copy_r", LABEL_COPY),
-    ]
+    ];
+    // Same pad/makeup pair as the mic chain, for the same reason.
+    let padded = super::gain_safety::pads_neural_input(settings, true);
+    if padded {
+        nodes.push(super::gain_safety::neural_pad());
+    }
+    // GTCRN is always wired in; toggling master flips its Enable
+    // port between 0 and 1, which the live update path can push
+    // without restarting the unit. DFN3 has no Enable port, so
+    // master-off renders it with Attenuation Limit = 0 instead.
+    nodes.push(denoiser);
+    if padded {
+        nodes.push(super::gain_safety::neural_makeup());
+    }
+    nodes.extend([gate, compressor, param_eq_node(settings)]);
+    nodes.extend(super::gain_safety::nodes(settings, true));
+    nodes.push(Node::builtin("copy_l", LABEL_COPY));
+    nodes.push(Node::builtin("copy_r", LABEL_COPY));
+    nodes
 }
 
 fn param_eq_node(settings: &AppSettings) -> Node {
@@ -262,25 +321,29 @@ fn param_eq_node(settings: &AppSettings) -> Node {
 }
 
 fn output_links(nodes: &[Node]) -> Vec<Link> {
-    // The denoiser node's port names depend on the backend (GTCRN uses
-    // "Input"/"Output", DFN3 uses "Audio In"/"Audio Out"). Look the
-    // active node up so the rendered links stay in sync with whichever
-    // plugin was emitted by `output_nodes`.
-    let ai = nodes
+    let linear: Vec<&Node> = nodes
         .iter()
-        .find(|n| n.name == "ai")
-        .expect("output graph always wires the `ai` denoiser node");
-    let ai_in = format!("ai:{}", ai.input_port);
-    let ai_out = format!("ai:{}", ai.output_port);
-    vec![
-        Link::new("mixer:Out", "hpf:In"),
-        Link::new("hpf:Out", ai_in),
-        Link::new(ai_out, "gate:Input"),
-        Link::new("gate:Output", "compressor:Input"),
-        Link::new("compressor:Output", "eq:In 1"),
-        Link::new("eq:Out 1", "copy_l:In"),
-        Link::new("eq:Out 1", "copy_r:In"),
-    ]
+        .filter(|node| !matches!(node.name.as_str(), "mixer" | "copy_l" | "copy_r"))
+        .collect();
+    let mut links = Vec::with_capacity(linear.len() + 2);
+    if let Some(first) = linear.first() {
+        links.push(Link::new(
+            "mixer:Out",
+            format!("{}:{}", first.name, first.input_port),
+        ));
+    }
+    for pair in linear.windows(2) {
+        links.push(Link::new(
+            format!("{}:{}", pair[0].name, pair[0].output_port),
+            format!("{}:{}", pair[1].name, pair[1].input_port),
+        ));
+    }
+    if let Some(last) = linear.last() {
+        let out = format!("{}:{}", last.name, last.output_port);
+        links.push(Link::new(out.clone(), "copy_l:In"));
+        links.push(Link::new(out, "copy_r:In"));
+    }
+    links
 }
 
 fn capture_props() -> String {
@@ -297,10 +360,10 @@ fn capture_props() -> String {
     // The filter graph's nodes are exported to the daemon and driven
     // by the daemon's data-loop — single clock, no cross-process
     // drift. We still pass `node.async = true` as belt-and-braces:
-    // it lets PipeWire insert an adaptive resampler if a downstream
-    // sink ends up with a slightly different negotiated rate (Bluetooth
-    // links and some USB mics renegotiate when codecs switch), without
-    // any cost in the common case where rates agree.
+    // it changes scheduling and can add one graph cycle of latency. A downstream
+    // sink with a different negotiated rate (Bluetooth
+    // or a USB device) relies on separate adapter/resampler policy, not this flag;
+    // do not describe this scheduling trade-off as cost-free.
     //
     // No explicit `node.latency` / `node.lock-quantum` — pinning a
     // quantum here forces a buffer size the hw sink may not have

@@ -147,9 +147,8 @@ fn reload_when_mic_hpf_toggles() {
 }
 
 #[test]
-fn output_topology_unchanged_when_only_nr_enabled_toggles() {
-    // GTCRN stays in the output graph regardless of NR — toggling
-    // its Enable port is a live update, not a restart trigger.
+fn mono_nr_toggle_rebuilds_the_conditional_neural_stage() {
+    // Mono and stereo use the same conditional neural stage.
     let prev = AppSettings {
         output_filter: OutputFilterSettings {
             enabled: true,
@@ -157,13 +156,14 @@ fn output_topology_unchanged_when_only_nr_enabled_toggles() {
                 enabled: false,
                 ..NoiseReductionConfig::default()
             },
+            channel_mode: crate::config::OutputChannelMode::Mono,
             ..OutputFilterSettings::default()
         },
         ..AppSettings::default()
     };
     let mut next = prev.clone();
     next.output_filter.noise_reduction.enabled = true;
-    assert!(!output_topology_changed(Some(&prev), &next));
+    assert!(output_topology_changed(Some(&prev), &next));
 }
 
 #[test]
@@ -270,4 +270,35 @@ fn file_monitor_cannot_roll_newer_edits_back_to_an_in_flight_local_snapshot() {
     let _next_work = state.apply_work(next_request);
     assert!(!state.external_replace(local_snapshot));
     assert_eq!(state.settings().noise_reduction.strength, 0.73);
+}
+
+#[test]
+fn stereo_nr_toggle_rebuilds_the_conditional_neural_stage() {
+    let prev = AppSettings {
+        output_filter: OutputFilterSettings {
+            enabled: true,
+            ..OutputFilterSettings::default()
+        },
+        ..AppSettings::default()
+    };
+    let mut next = prev.clone();
+    next.output_filter.noise_reduction.enabled = !prev.output_filter.noise_reduction.enabled;
+    assert!(output_topology_changed(Some(&prev), &next));
+}
+
+#[test]
+fn mirrored_choices_track_worker_normalization_but_not_slider_drags() {
+    let state = AppState::new(AppSettings::default());
+    assert!(!state.view_needs_sync());
+    state.mutate(|s| s.noise_reduction.strength = 0.47);
+    assert!(!state.view_needs_sync());
+    state.mutate(|s| s.noise_reduction.model = crate::config::NoiseModel::DeepFilterNet3);
+    assert!(state.view_needs_sync());
+    state.mark_view_current();
+    assert!(!state.view_needs_sync());
+    state.mutate(|s| s.quality = crate::config::Quality::Manual);
+    assert!(state.view_needs_sync());
+    state.mark_view_current();
+    state.mutate(|s| s.set_microphone_enabled(false));
+    assert!(state.view_needs_sync());
 }

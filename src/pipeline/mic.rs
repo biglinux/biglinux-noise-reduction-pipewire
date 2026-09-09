@@ -141,13 +141,14 @@ pub fn mic_chain_wanted(settings: &AppSettings) -> bool {
     // EC alone is enough to keep the chain materialised: without the
     // smart filter we'd produce an `echo-cancel-source` that no app
     // would pick up, since recording apps target the default source.
-    settings.noise_reduction.enabled
-        || settings.gate.enabled
-        || settings.hpf.enabled
-        || settings.stereo.enabled
-        || settings.equalizer.enabled
-        || settings.compressor.enabled
-        || settings.echo_cancel.enabled
+    !settings.mic_bypass
+        && (settings.noise_reduction.enabled
+            || settings.gate.enabled
+            || settings.hpf.enabled
+            || (settings.stereo.enabled && settings.stereo.mode == StereoMode::VoiceChanger)
+            || settings.equalizer.enabled
+            || settings.compressor.enabled
+            || settings.echo_cancel.enabled)
 }
 
 /// True when the GTCRN node should be present in the mic graph.
@@ -158,7 +159,9 @@ pub fn mic_chain_wanted(settings: &AppSettings) -> bool {
 /// pipeline entirely — both expensive and a transient-smearing source.
 #[must_use]
 pub fn ai_node_in_mic_chain(settings: &AppSettings) -> bool {
-    settings.noise_reduction.enabled || settings.gate.enabled
+    !settings.mic_bypass
+        && (settings.noise_reduction.enabled
+            || (settings.gate.enabled && !settings.noise_reduction.model.is_attenuation_only()))
 }
 
 fn mic_nodes(settings: &AppSettings) -> Vec<Node> {
@@ -179,13 +182,21 @@ fn mic_nodes(settings: &AppSettings) -> Vec<Node> {
     };
 
     if ai_node_in_mic_chain(settings) {
-        nodes.push(denoiser_node(settings));
-        // DFN3 has no integrated gate, unlike GTCRN. When the user wants
-        // the silence gate alongside DFN3 we wire a standalone SWH gate
-        // immediately after it (same plugin the output chain uses).
-        if settings.noise_reduction.model.is_attenuation_only() && settings.gate.enabled {
-            nodes.push(standalone_gate_node(settings));
+        // The pad protects the network from clipping inside its own inference;
+        // the makeup returns the level before anything calibrated in dB.
+        let padded = super::gain_safety::pads_neural_input(settings, false);
+        if padded {
+            nodes.push(super::gain_safety::neural_pad());
         }
+        nodes.push(denoiser_node(settings));
+        if padded {
+            nodes.push(super::gain_safety::neural_makeup());
+        }
+    }
+    // Attenuation-only backends have an independent gate. Keeping the gate
+    // enabled must not keep the neural network running after NR is disabled.
+    if settings.noise_reduction.model.is_attenuation_only() && settings.gate.enabled {
+        nodes.push(standalone_gate_node(settings));
     }
 
     if settings.compressor.enabled {
@@ -207,6 +218,7 @@ fn mic_nodes(settings: &AppSettings) -> Vec<Node> {
         );
     }
 
+    nodes.extend(super::gain_safety::nodes(settings, false));
     nodes.push(Node::builtin("copy_l", LABEL_COPY));
     nodes.push(Node::builtin("copy_r", LABEL_COPY));
     nodes

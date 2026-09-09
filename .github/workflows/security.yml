@@ -1,75 +1,32 @@
 name: Security
 
+# Changes are audited by CI. This scheduled pass detects newly published
+# advisories even when neither lockfile has changed. It does not rebuild the
+# application, repeat Miri or rerun the PR's secret scan.
 on:
-  push:
-    branches:
-      - main
-      - "**stable**"
-      - "**testing**"
-    paths:
-      - "Cargo.toml"
-      - "Cargo.lock"
-      - "src/**"
-      - ".github/workflows/security.yml"
-      - ".github/actions/install-system-deps/**"
-  pull_request:
-    branches: [main]
-    paths:
-      - "Cargo.toml"
-      - "Cargo.lock"
-      - "src/**"
   schedule:
-    # Daily — picks up new RustSec advisories without waiting for a PR.
     - cron: '30 5 * * *'
+  workflow_dispatch:
 
 permissions:
   contents: read
-  security-events: write
 
 concurrency:
-  group: ${{ github.workflow }}-${{ github.ref }}
+  group: scheduled-security-${{ github.ref }}
   cancel-in-progress: true
 
 jobs:
   audit:
-    name: cargo-audit (RustSec)
+    name: Scheduled RustSec vulnerabilities and unsound dependencies
     runs-on: ubuntu-latest
+    timeout-minutes: 15
     steps:
-      - uses: actions/checkout@v4
-      - uses: rustsec/audit-check@v2.0.0
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
         with:
-          token: ${{ secrets.GITHUB_TOKEN }}
-
-  # TruffleHog scans the diff (PR) or full history (push/cron) for
-  # leaked secrets. It's the free OSS replacement for gitleaks-action,
-  # which started requiring a paid license in v2.
-  secrets:
-    name: trufflehog (secret scan)
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
+          persist-credentials: false
+      - uses: taiki-e/install-action@v2
         with:
-          fetch-depth: 0
-      - uses: trufflesecurity/trufflehog@main
-        with:
-          extra_args: --results=verified,unknown
-
-  miri:
-    name: Miri (UB detection on safe code)
-    runs-on: ubuntu-latest
-    container: archlinux:latest
-    timeout-minutes: 30
-    steps:
-      - run: pacman -Sy --noconfirm --needed git
-      - uses: actions/checkout@v4
-      - uses: ./.github/actions/install-system-deps
-      - uses: dtolnay/rust-toolchain@nightly
-        with:
-          components: miri
-      - uses: Swatinem/rust-cache@v2
-      - name: Run Miri on pure-logic config tests
-        env:
-          MIRIFLAGS: -Zmiri-disable-isolation
-        # Filter quoted to avoid YAML parsing the trailing `::` as a
-        # mapping value separator.
-        run: "cargo +nightly miri test --lib config::"
+          tool: cargo-audit
+      - run: cargo audit --deny unsound
+      - name: Vendored workspace lockfile
+        run: cargo audit --deny unsound --file vendor/big-rust-components/Cargo.lock

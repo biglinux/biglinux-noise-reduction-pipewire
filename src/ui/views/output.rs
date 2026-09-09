@@ -7,7 +7,7 @@
 
 use std::rc::Rc;
 
-use gtk::prelude::*;
+use adw::prelude::*;
 use gtk::{Box as GtkBox, Orientation, ScrolledWindow};
 
 use crate::config::GATE_INTENSITY_MAX;
@@ -38,6 +38,29 @@ pub fn build(state: &Rc<AppState>, input: &relm4::Sender<MicInput>) -> gtk::Widg
         .build();
 
     content.append(super::simple::output_card(state, input).widget());
+    let channels = adw::ComboRow::builder()
+        .title(i18n("Stereo or lower CPU use"))
+        .subtitle(i18n("Stereo keeps left and right separate for music and video. Mono uses fewer resources but combines both sides; use it mainly for speech."))
+        .model(&gtk::StringList::new(&[
+            &i18n("Keep stereo (recommended)"), &i18n("Combine to mono (lower CPU use)"),
+        ]))
+        .build();
+    channels.set_selected(u32::from(
+        state.settings().output_filter.channel_mode == crate::config::OutputChannelMode::Mono,
+    ));
+    let sender = input.clone();
+    channels.connect_selected_notify(move |row| {
+        let mode = if row.selected() == 1 {
+            crate::config::OutputChannelMode::Mono
+        } else {
+            crate::config::OutputChannelMode::Stereo
+        };
+        let _ = sender.send(MicInput::OutputChannelsChanged(mode));
+    });
+    let group = adw::PreferencesGroup::new();
+    group.add(&channels);
+    content.append(&group);
+    content.append(&super::mic::gain_safety_card(state, input));
 
     content.append(&section_header(&i18n("AI noise reduction"), 16));
     content.append(model_card(state, input).widget());

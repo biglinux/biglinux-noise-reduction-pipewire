@@ -10,9 +10,19 @@ use super::audio::{GateConfig, HpfConfig, NoiseReductionConfig};
 use super::equalizer::EqualizerConfig;
 use super::processing::CompressorConfig;
 
+/// Spatial audio is preserved unless the user explicitly chooses mono.
+#[derive(Debug, Clone, Copy, Default, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(rename_all = "snake_case")]
+pub enum OutputChannelMode {
+    #[default]
+    Stereo,
+    Mono,
+}
+
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 #[serde(default, deny_unknown_fields)]
 pub struct OutputFilterSettings {
+    pub channel_mode: OutputChannelMode,
     pub enabled: bool,
     pub noise_reduction: NoiseReductionConfig,
     pub hpf: HpfConfig,
@@ -28,6 +38,7 @@ pub struct OutputFilterSettings {
 impl Default for OutputFilterSettings {
     fn default() -> Self {
         Self {
+            channel_mode: OutputChannelMode::Stereo,
             enabled: false,
             noise_reduction: NoiseReductionConfig {
                 enabled: true,

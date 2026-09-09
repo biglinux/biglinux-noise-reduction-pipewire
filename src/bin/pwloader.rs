@@ -44,29 +44,24 @@ use denoise_watch::DenoiseWatch;
 use pipewire as pw;
 use pw::loop_::Signal;
 
-/// On Intel/ARM hybrid CPUs (e.g. i5-13400 with 6 P-cores @ 4.6 GHz +
-/// 4 E-cores @ 3.3 GHz), the kernel can land an FIFO-priority audio
-/// thread on an E-core. PipeWire's `module-rt` sets `uclamp.min=768`
-/// to bias toward fast cores, but `intel_pstate=active` ignores that
-/// hint for *core selection* — it only affects per-core frequency
-/// scaling. The data-loop thread then runs ~30 % slower and the
-/// extra latency surfaces as audible micro-stutters in heavy filter
-/// chains (DPDFNet, DeepFilterNet3).
-///
-/// Pin the loader process to the set of CPUs whose `cpuinfo_max_freq`
-/// matches the system maximum. Threads spawned later (PipeWire's
-/// data-loop) inherit this mask, so the entire filter graph stays on
-/// P-cores. On homogeneous CPUs (every core at the same max freq),
-/// this is a no-op.
-fn pin_to_p_cores() {
+/// Optional frequency-based preference, restricted to the existing affinity
+/// mask. Frequency is only a heuristic, not proof of a P/E-core topology.
+fn prefer_fast_allowed_cpus() {
     let Ok(online_cpus) = read_to_string(std::path::Path::new("/sys/devices/system/cpu/online"))
     else {
         return;
     };
 
+    // SAFETY: cpu_set_t is an initialized bitset of the size passed to libc.
+    let mut allowed: libc::cpu_set_t = unsafe { mem::zeroed() };
+    if unsafe { libc::sched_getaffinity(0, mem::size_of::<libc::cpu_set_t>(), &raw mut allowed) }
+        != 0
+    {
+        return;
+    }
     let mut cpus: Vec<(usize, u64)> = Vec::new();
     for cpu in parse_online_cpus(&online_cpus) {
-        if cpu >= libc::CPU_SETSIZE as usize {
+        if cpu >= libc::CPU_SETSIZE as usize || !unsafe { libc::CPU_ISSET(cpu, &allowed) } {
             continue;
         }
         let path = std::path::Path::new("/sys/devices/system/cpu")
@@ -109,7 +104,7 @@ fn pin_to_p_cores() {
         let rc = libc::sched_setaffinity(0, mem::size_of::<libc::cpu_set_t>(), &raw const set);
         if rc == 0 {
             eprintln!(
-                "biglinux-microphone-pwloader: pinned to P-cores {p_cores:?} ({max_freq} kHz)"
+                "biglinux-microphone-pwloader: opted in to allowed high-frequency CPUs {p_cores:?} ({max_freq} kHz)"
             );
         } else {
             let error = std::io::Error::last_os_error();
@@ -137,14 +132,13 @@ fn parse_online_cpus(raw: &str) -> Vec<usize> {
         .collect()
 }
 
-/// `mlockall(MCL_CURRENT | MCL_FUTURE)` — see the call site in `run()` for
-/// the rationale. Failure is non-fatal: the log line lets the operator
-/// know the spike-mitigation guard didn't engage but the loader keeps
-/// going so audio still works.
+/// Opt-in reservation of mappings already loaded. Never use MCL_FUTURE:
+/// later runtime allocations must not fail merely because a lock budget is
+/// exhausted. PipeWire retains ownership of its own real-time buffers.
 fn lock_pages_in_ram() {
     // SAFETY: `mlockall` is a libc function with no preconditions on
     // process state. The flag bits are documented constants.
-    let rc = unsafe { libc::mlockall(libc::MCL_CURRENT | libc::MCL_FUTURE) };
+    let rc = unsafe { libc::mlockall(libc::MCL_CURRENT) };
     if rc == 0 {
         eprintln!("biglinux-microphone-pwloader: mlockall() OK — pages pinned");
         return;
@@ -152,8 +146,24 @@ fn lock_pages_in_ram() {
     let error = std::io::Error::last_os_error();
     eprintln!(
         "biglinux-microphone-pwloader: mlockall() failed ({error}) — \
-         expect occasional pw-top spikes from page faults; check RLIMIT_MEMLOCK"
+         memory reservation was not enabled; automatic paging remains in use"
     );
+}
+
+#[path = "../config/runtime.rs"]
+mod runtime_preferences;
+
+fn loader_preferences() -> runtime_preferences::RuntimeConfig {
+    let Some(root) = dirs::config_dir() else {
+        return runtime_preferences::RuntimeConfig::default();
+    };
+    let Some(value) = std::fs::read(root.join("biglinux-microphone/settings.json"))
+        .ok()
+        .and_then(|bytes| serde_json::from_slice::<serde_json::Value>(&bytes).ok())
+    else {
+        return runtime_preferences::RuntimeConfig::default();
+    };
+    serde_json::from_value(value["runtime"].clone()).unwrap_or_default()
 }
 
 /// How often to sample the denoiser's counters. Long enough that the timer
@@ -173,32 +183,21 @@ fn run() -> Result<(), String> {
     // Parse + read every (module, args-file) pair up front so a bad path
     // exits before we touch PipeWire.
     let mut modules: Vec<(CString, CString, String)> = Vec::with_capacity(raw_args.len() / 2);
-    for pair in raw_args.chunks_exact(2) {
+    for pair in raw_args.as_chunks::<2>().0 {
         let module_name = &pair[0];
-        let args_path = &pair[1];
-        let module_args = read_to_string(std::path::Path::new(args_path))
-            .map_err(|e| format!("read {args_path}: {e}"))?;
+        let args_path = resolve_args_path(&pair[1])?;
+        let module_args =
+            read_to_string(&args_path).map_err(|e| format!("read {}: {e}", args_path.display()))?;
         let module_name_c =
             CString::new(module_name.clone()).map_err(|e| format!("module name: {e}"))?;
         let module_args_c = CString::new(module_args).map_err(|e| format!("module args: {e}"))?;
         modules.push((module_name_c, module_args_c, module_name.clone()));
     }
 
-    // Pin BEFORE pw::init() so the data-loop thread (spawned inside
-    // libpipewire) inherits the affinity mask.
-    pin_to_p_cores();
-
-    // Lock all current and future pages into RAM. The PipeWire data-loop
-    // runs SCHED_FIFO at prio 83, but a major page fault inside ORT (cold
-    // weight pages, lazy mmap-backed regions, freshly allocated arena
-    // pages) still stalls the audio thread for milliseconds — long enough
-    // to spike pw-top from ~0.8 ms to >5 ms after a few seconds of run.
-    // MCL_FUTURE pre-faults every subsequent allocation, so ORT's first
-    // post-silence inference can't trip a fault. Best-effort: when
-    // RLIMIT_MEMLOCK is too low (no rtkit / non-audio group), we log and
-    // continue — the system stays functional but may still exhibit
-    // fault-related latency spikes.
-    lock_pages_in_ram();
+    let preferences = loader_preferences();
+    if preferences.prefer_fast_cpus {
+        prefer_fast_allowed_cpus();
+    }
 
     pw::init();
 
@@ -229,6 +228,10 @@ fn run() -> Result<(), String> {
         if module.is_null() {
             return Err(format!("pw_context_load_module failed for {module_name}"));
         }
+    }
+
+    if preferences.reserve_memory {
+        lock_pages_in_ram();
     }
 
     // Watch whether the denoiser keeps up. The plugin counts its own hops;
@@ -273,7 +276,27 @@ fn run() -> Result<(), String> {
     Ok(())
 }
 
+fn resolve_args_path(argument: &str) -> Result<std::path::PathBuf, String> {
+    if let Some(name) = argument.strip_prefix("@config/") {
+        if !matches!(name, "mic.args" | "aec.args" | "output.args") {
+            return Err("unknown application configuration name".into());
+        }
+        let root = dirs::config_dir().ok_or("XDG configuration directory is unavailable")?;
+        Ok(root.join("biglinux-microphone").join(name))
+    } else {
+        Ok(std::path::PathBuf::from(argument))
+    }
+}
+
 fn main() -> ExitCode {
+    let mut arguments = std::env::args().skip(1);
+    if arguments.next().as_deref() == Some("--check-config") {
+        return match arguments.next().map(|name| resolve_args_path(&name)) {
+            Some(Ok(path)) if path.is_file() => ExitCode::SUCCESS,
+            _ => ExitCode::FAILURE,
+        };
+    }
+
     if let Err(e) = run() {
         eprintln!("biglinux-microphone-pwloader: {e}");
         return ExitCode::FAILURE;

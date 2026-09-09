@@ -31,14 +31,14 @@
 //! deleting both drop-ins. We never auto-clear on app shutdown — the
 //! user file is meant to outlive the GUI session.
 
-use std::cell::RefCell;
+use std::cell::{Cell, RefCell};
 use std::rc::Rc;
 
 use adw::prelude::*;
 use gtk::{Box as GtkBox, Orientation, ScrolledWindow, gio, glib};
 
 use super::super::i18n::i18n;
-use crate::services::pipewire::user_tweaks::{SampleRates, UserTweaks};
+use crate::services::pipewire::user_tweaks::{SampleRates, TuningRevision, UserTweaks};
 use apply::apply_clicked;
 pub(in crate::ui) use apply::reset_audio_settings_dialog;
 #[cfg(test)]
@@ -46,6 +46,60 @@ pub(in crate::ui) use apply::trigger_apply_button_contract;
 
 mod apply;
 use super::super::widgets::didactic::{DidacticCard, labelled_row, section_header};
+
+/// Editable values and the last successfully applied snapshot are distinct.
+pub(super) struct TuningSelection {
+    current: RefCell<UserTweaks>,
+    applied: RefCell<UserTweaks>,
+    persisted: RefCell<TuningRevision>,
+    restart_pending: Cell<bool>,
+    busy: Cell<bool>,
+    content: glib::WeakRef<GtkBox>,
+    apply_button: RefCell<glib::WeakRef<gtk::Button>>,
+    reset_button: RefCell<glib::WeakRef<gtk::Button>>,
+    dropdowns: RefCell<Vec<glib::WeakRef<gtk::DropDown>>>,
+    preview: RefCell<Option<crate::services::preview::QuantumPreview>>,
+    preview_busy: Cell<bool>,
+    preview_feedback: RefCell<Option<String>>,
+}
+
+impl TuningSelection {
+    fn new(initial: UserTweaks) -> Self {
+        Self {
+            persisted: RefCell::new(TuningRevision::from_settings(&initial)),
+            restart_pending: Cell::new(false),
+            applied: RefCell::new(initial.clone()),
+            current: RefCell::new(initial),
+            busy: Cell::new(false),
+            content: glib::WeakRef::new(),
+            apply_button: RefCell::new(glib::WeakRef::new()),
+            reset_button: RefCell::new(glib::WeakRef::new()),
+            dropdowns: RefCell::new(Vec::new()),
+            preview: RefCell::new(None),
+            preview_busy: Cell::new(false),
+            preview_feedback: RefCell::new(None),
+        }
+    }
+    fn borrow(&self) -> std::cell::Ref<'_, UserTweaks> {
+        self.current.borrow()
+    }
+    fn borrow_mut(&self) -> std::cell::RefMut<'_, UserTweaks> {
+        self.current.borrow_mut()
+    }
+    fn register(&self, dropdown: &gtk::DropDown) {
+        self.dropdowns.borrow_mut().push(dropdown.downgrade());
+    }
+    fn reset_controls(&self) {
+        for dropdown in self
+            .dropdowns
+            .borrow()
+            .iter()
+            .filter_map(glib::WeakRef::upgrade)
+        {
+            dropdown.set_selected(0);
+        }
+    }
+}
 
 /// Build the Tuning page. Returns a scrollable container ready to be
 /// added to the [`adw::ViewStack`] in `views::window::populate_body`.
@@ -71,11 +125,21 @@ pub fn build() -> gtk::Widget {
     // once the read lands (empty until then).
     let content_weak = content.downgrade();
     glib::spawn_future_local(async move {
-        let tweaks = gio::spawn_blocking(UserTweaks::load_from_disk)
-            .await
-            .unwrap_or_default();
+        let result = gio::spawn_blocking(UserTweaks::load_snapshot).await;
         if let Some(content) = content_weak.upgrade() {
-            populate_tuning_page(&content, tweaks);
+            match result {
+                Ok(Ok((tweaks, revision))) => {
+                    populate_tuning_page(&content, tweaks, Some(revision));
+                }
+                other => {
+                    log::warn!("tuning configuration could not be read: {other:?}");
+                    let label = gtk::Label::new(Some(&i18n(
+                        "Audio settings could not be read. Check file permissions and reopen this window.",
+                    )));
+                    label.set_wrap(true);
+                    content.append(&label);
+                }
+            }
         }
     });
     scroll.upcast()
@@ -83,8 +147,11 @@ pub fn build() -> gtk::Widget {
 
 /// Build the Tuning page cards from the already-loaded on-disk selection. Split
 /// from [`build`] so the disk read can run off the main loop first.
-fn populate_tuning_page(content: &GtkBox, initial: UserTweaks) {
-    let selection = Rc::new(RefCell::new(initial));
+fn populate_tuning_page(content: &GtkBox, initial: UserTweaks, revision: Option<TuningRevision>) {
+    let selection = Rc::new(TuningSelection::new(initial));
+    if let Some(revision) = revision {
+        *selection.persisted.borrow_mut() = revision;
+    }
 
     let banner = adw::Banner::builder()
         .title(i18n("The standard audio settings are in use."))
@@ -107,7 +174,10 @@ fn populate_tuning_page(content: &GtkBox, initial: UserTweaks) {
         .build();
     content.append(&intro);
 
+    selection.content.set(Some(content));
     let toolbar = action_toolbar();
+    *selection.apply_button.borrow_mut() = toolbar.apply.downgrade();
+    *selection.reset_button.borrow_mut() = toolbar.reset.downgrade();
     content.append(&toolbar.row);
 
     // ── Bluetooth ────────────────────────────────────────────────────
@@ -147,6 +217,7 @@ fn populate_tuning_page(content: &GtkBox, initial: UserTweaks) {
             dialog.connect_response(None, move |dlg, response| {
                 if is_reset_response(response) {
                     *selection.borrow_mut() = UserTweaks::default();
+                    selection.reset_controls();
                     refresh_banner(&banner, &selection);
                     // No separate synchronous `UserTweaks::clear()`: applying the
                     // now-default selection renders empty drop-ins, and
@@ -199,16 +270,38 @@ fn action_toolbar() -> ActionToolbar {
     ActionToolbar { row, apply, reset }
 }
 
-fn refresh_banner(banner: &adw::Banner, selection: &Rc<RefCell<UserTweaks>>) {
+fn refresh_banner(banner: &adw::Banner, selection: &Rc<TuningSelection>) {
+    let dirty =
+        *selection.borrow() != *selection.applied.borrow() || selection.restart_pending.get();
     let modified = selection.borrow().is_modified();
-    banner.set_title(&banner_title_for_modified_state(modified));
-    banner.set_revealed(modified);
+    let busy = selection.busy.get() || selection.preview_busy.get();
+    let title = if busy {
+        i18n("Applying audio settings…")
+    } else if selection.restart_pending.get() {
+        i18n("Settings were saved, but audio still needs to restart. Apply to try again.")
+    } else if dirty {
+        i18n("Changes are not applied yet. Apply them when you are ready.")
+    } else if modified {
+        i18n("Your audio settings are active.")
+    } else {
+        i18n("The standard audio settings are in use.")
+    };
+    banner.set_title(&title);
+    banner.set_revealed(dirty || modified || busy);
+    if let Some(button) = selection.apply_button.borrow().upgrade() {
+        button.set_sensitive(dirty && !busy);
+    }
+    if let Some(button) = selection.reset_button.borrow().upgrade() {
+        button.set_sensitive((modified || selection.applied.borrow().is_modified()) && !busy);
+    }
 }
 
+#[cfg(test)]
 fn banner_title_for_modified_state(is_modified: bool) -> String {
     i18n(banner_title_message_for_modified_state(is_modified))
 }
 
+#[cfg(test)]
 fn banner_title_message_for_modified_state(is_modified: bool) -> &'static str {
     if is_modified {
         "Custom settings active. Click Apply to enable them."
@@ -219,7 +312,7 @@ fn banner_title_message_for_modified_state(is_modified: bool) -> &'static str {
 
 // ── Bluetooth cards ──────────────────────────────────────────────────
 
-fn bt_call_card(selection: &Rc<RefCell<UserTweaks>>, banner: &adw::Banner) -> DidacticCard {
+fn bt_call_card(selection: &Rc<TuningSelection>, banner: &adw::Banner) -> DidacticCard {
     let card = DidacticCard::new(
         "bluetooth_call.svg",
         &i18n("Bluetooth call mode"),
@@ -247,11 +340,12 @@ fn bt_call_card(selection: &Rc<RefCell<UserTweaks>>, banner: &adw::Banner) -> Di
             refresh_banner(&banner, &selection);
         }
     });
+    selection.register(&dropdown);
     card.add_row(&labelled_row(&i18n("Behaviour"), &dropdown));
     card
 }
 
-fn bt_latency_card(selection: &Rc<RefCell<UserTweaks>>, banner: &adw::Banner) -> DidacticCard {
+fn bt_latency_card(selection: &Rc<TuningSelection>, banner: &adw::Banner) -> DidacticCard {
     let card = DidacticCard::new(
         "bluetooth_latency.svg",
         &i18n("Bluetooth audio buffer"),
@@ -282,11 +376,12 @@ fn bt_latency_card(selection: &Rc<RefCell<UserTweaks>>, banner: &adw::Banner) ->
             refresh_banner(&banner, &selection);
         }
     });
+    selection.register(&dropdown);
     card.add_row(&labelled_row(&i18n("Buffer size"), &dropdown));
     card
 }
 
-fn bt_codec_card(selection: &Rc<RefCell<UserTweaks>>, banner: &adw::Banner) -> DidacticCard {
+fn bt_codec_card(selection: &Rc<TuningSelection>, banner: &adw::Banner) -> DidacticCard {
     let card = DidacticCard::new(
         "bluetooth_codec.svg",
         &i18n("High-quality Bluetooth audio (SBC-XQ)"),
@@ -311,6 +406,7 @@ fn bt_codec_card(selection: &Rc<RefCell<UserTweaks>>, banner: &adw::Banner) -> D
             refresh_banner(&banner, &selection);
         }
     });
+    selection.register(&dropdown);
     card.add_row(&labelled_row(
         &i18n("Higher Bluetooth audio quality (SBC-XQ)"),
         &dropdown,
@@ -320,7 +416,7 @@ fn bt_codec_card(selection: &Rc<RefCell<UserTweaks>>, banner: &adw::Banner) -> D
 
 // ── Stability / performance cards ────────────────────────────────────
 
-fn quantum_card(selection: &Rc<RefCell<UserTweaks>>, banner: &adw::Banner) -> DidacticCard {
+fn quantum_card(selection: &Rc<TuningSelection>, banner: &adw::Banner) -> DidacticCard {
     let card = DidacticCard::new(
         "quantum.svg",
         &i18n("Audio responsiveness"),
@@ -355,34 +451,116 @@ fn quantum_card(selection: &Rc<RefCell<UserTweaks>>, banner: &adw::Banner) -> Di
             refresh_banner(&banner, &selection);
         }
     });
+    selection.register(&dropdown);
     card.add_row(&labelled_row(&i18n("Reaction speed"), &dropdown));
-    // Heard before it is saved. A number measured in milliseconds cannot be judged from a
-    // dropdown, and the alternative is save, restart, listen, start again — four steps to
-    // answer a question the ear settles in two seconds. PipeWire's live override is obeyed
-    // at once and forgotten at the end of the session, so nothing written down can be wrong
-    // here: nothing is written down.
     let listen = gtk::Button::builder()
-        .label(i18n("Listen to it now"))
+        .label(i18n("Try for 15 seconds"))
         .halign(gtk::Align::Start)
+        .build();
+    listen.set_tooltip_text(Some(&i18n("Temporarily changes the audio buffer for all applications. Stop the preview to return to the previous value.")));
+    let feedback = gtk::Label::builder()
+        .xalign(0.0)
+        .wrap(true)
+        .visible(false)
         .build();
     {
         let selection = Rc::clone(selection);
-        listen.connect_clicked(move |listen| {
-            let frames = selection.borrow().quantum.unwrap_or(1024);
-            let heard = crate::services::pipewire::preview_quantum(frames);
-            listen.set_label(&if heard {
-                i18n("Playing at this setting until you log out")
-            } else {
-                i18n("This computer would not let it be tried")
+        let banner = banner.clone();
+        listen.connect_clicked(move |button| {
+            if selection.busy.get() || selection.preview_busy.replace(true) { return; }
+            refresh_banner(&banner, &selection);
+            let previous = selection.preview.borrow_mut().take();
+            let stopping = previous.is_some();
+            let frames = selection.borrow().quantum.unwrap_or(0);
+            *selection.preview_feedback.borrow_mut() = Some(if stopping {
+                i18n("Restoring the previous audio buffer…")
+            } else { i18n("Starting the audio preview…") });
+            button.set_sensitive(false);
+            let weak_button = button.downgrade();
+            let weak_banner = banner.downgrade();
+            let selection = Rc::clone(&selection);
+            glib::spawn_future_local(async move {
+                let result = gio::spawn_blocking(move || {
+                    if let Some(mut preview) = previous {
+                        preview.stop().map(|()| None)
+                    } else {
+                        crate::services::preview::QuantumPreview::start(frames).map(Some)
+                    }
+                }).await.unwrap_or_else(|_| Err(std::io::Error::other("preview worker failed")));
+                selection.preview_busy.set(false);
+                let Some(button) = weak_button.upgrade() else { return; };
+                button.set_sensitive(true);
+                match result {
+                    Ok(preview) => {
+                        *selection.preview_feedback.borrow_mut() = Some(if preview.is_some() {
+                            i18n("Preview active. The previous buffer will be restored automatically.")
+                        } else { i18n("Preview finished.") });
+                        *selection.preview.borrow_mut() = preview;
+                    }
+                    Err(error) => {
+                        log::warn!("buffer preview: {error}");
+                        *selection.preview_feedback.borrow_mut() = Some(i18n(
+                            "The audio preview could not be started or restored. Check the audio connection and try again."));
+                    }
+                }
+                if let Some(banner) = weak_banner.upgrade() {
+                    refresh_banner(&banner, &selection);
+                }
             });
-            listen.set_sensitive(false);
         });
     }
+    let weak_selection = Rc::downgrade(selection);
+    let weak_button = listen.downgrade();
+    let weak_feedback = feedback.downgrade();
+    let weak_dropdown = dropdown.downgrade();
+    glib::timeout_add_local(std::time::Duration::from_millis(500), move || {
+        let (Some(selection), Some(button), Some(feedback)) = (
+            weak_selection.upgrade(),
+            weak_button.upgrade(),
+            weak_feedback.upgrade(),
+        ) else {
+            return glib::ControlFlow::Break;
+        };
+        let completed = selection
+            .preview
+            .borrow_mut()
+            .as_mut()
+            .and_then(crate::services::preview::QuantumPreview::completion);
+        if let Some(result) = completed {
+            selection.preview.borrow_mut().take();
+            *selection.preview_feedback.borrow_mut() = Some(match result {
+                Ok(()) => i18n("Preview finished."),
+                Err(error) => {
+                    log::warn!("preview restoration: {error}");
+                    i18n(
+                        "The audio preview could not be started or restored. Check the audio connection and try again.",
+                    )
+                }
+            });
+        }
+        let active = selection.preview.borrow().is_some();
+        let busy = selection.preview_busy.get() || selection.busy.get();
+        button.set_sensitive(!busy);
+        button.set_label(&if active {
+            i18n("Stop preview")
+        } else {
+            i18n("Try for 15 seconds")
+        });
+        if let Some(dropdown) = weak_dropdown.upgrade() {
+            dropdown.set_sensitive(!active && !busy);
+        }
+        if let Some(message) = selection.preview_feedback.borrow().as_ref() {
+            feedback.set_text(message);
+            feedback.set_visible(true);
+        }
+        glib::ControlFlow::Continue
+    });
     card.add_row(&listen);
+    card.add_row(&feedback);
     card
 }
 
-fn headroom_usb_card(selection: &Rc<RefCell<UserTweaks>>, banner: &adw::Banner) -> DidacticCard {
+fn headroom_usb_card(selection: &Rc<TuningSelection>, banner: &adw::Banner) -> DidacticCard {
     let card = DidacticCard::new(
         "headroom_usb.svg",
         &i18n("USB audio safety margin"),
@@ -402,11 +580,12 @@ fn headroom_usb_card(selection: &Rc<RefCell<UserTweaks>>, banner: &adw::Banner) 
             refresh_banner(&banner, &selection);
         }
     });
+    selection.register(&dropdown);
     card.add_row(&labelled_row(&i18n("Margin"), &dropdown));
     card
 }
 
-fn headroom_pci_card(selection: &Rc<RefCell<UserTweaks>>, banner: &adw::Banner) -> DidacticCard {
+fn headroom_pci_card(selection: &Rc<TuningSelection>, banner: &adw::Banner) -> DidacticCard {
     let card = DidacticCard::new(
         "headroom_pci.svg",
         &i18n("Built-in audio safety margin"),
@@ -427,11 +606,12 @@ fn headroom_pci_card(selection: &Rc<RefCell<UserTweaks>>, banner: &adw::Banner) 
             refresh_banner(&banner, &selection);
         }
     });
+    selection.register(&dropdown);
     card.add_row(&labelled_row(&i18n("Margin"), &dropdown));
     card
 }
 
-fn alsa_suspend_card(selection: &Rc<RefCell<UserTweaks>>, banner: &adw::Banner) -> DidacticCard {
+fn alsa_suspend_card(selection: &Rc<TuningSelection>, banner: &adw::Banner) -> DidacticCard {
     let card = DidacticCard::new(
         "alsa_suspend.svg",
         &i18n("Avoid the click at the start of sounds"),
@@ -461,13 +641,14 @@ fn alsa_suspend_card(selection: &Rc<RefCell<UserTweaks>>, banner: &adw::Banner) 
             refresh_banner(&banner, &selection);
         }
     });
+    selection.register(&dropdown);
     card.add_row(&labelled_row(&i18n("Speaker sleep"), &dropdown));
     card
 }
 
 // ── Sound-quality cards ──────────────────────────────────────────────
 
-fn sample_rates_card(selection: &Rc<RefCell<UserTweaks>>, banner: &adw::Banner) -> DidacticCard {
+fn sample_rates_card(selection: &Rc<TuningSelection>, banner: &adw::Banner) -> DidacticCard {
     let card = DidacticCard::new(
         "sample_rates.svg",
         &i18n("Sound quality range"),
@@ -503,6 +684,7 @@ fn sample_rates_card(selection: &Rc<RefCell<UserTweaks>>, banner: &adw::Banner) 
             refresh_banner(&banner, &selection);
         }
     });
+    selection.register(&dropdown);
     card.add_row(&labelled_row(&i18n("Allowed quality"), &dropdown));
     card
 }
@@ -584,14 +766,14 @@ where
 
 #[cfg(test)]
 pub(in crate::ui) fn refresh_banner_contract(banner: &adw::Banner, tweaks: UserTweaks) {
-    let selection = Rc::new(RefCell::new(tweaks));
+    let selection = Rc::new(TuningSelection::new(tweaks));
     refresh_banner(banner, &selection);
 }
 
 #[cfg(test)]
 pub(in crate::ui) fn build_tuning_page_contract(tweaks: UserTweaks) -> GtkBox {
     let content = GtkBox::builder().orientation(Orientation::Vertical).build();
-    populate_tuning_page(&content, tweaks);
+    populate_tuning_page(&content, tweaks, None);
     content
 }
 

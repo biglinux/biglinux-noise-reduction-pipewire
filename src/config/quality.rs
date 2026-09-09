@@ -35,7 +35,7 @@ use super::NoiseModel;
 pub enum Quality {
     /// Let this computer decide, and change its mind when the machine changes.
     #[default]
-    #[serde(rename = "auto")]
+    #[serde(rename = "auto", alias = "automatic")]
     Automatic,
     /// The best model that will load, whatever it costs.
     #[serde(rename = "best")]
@@ -149,16 +149,40 @@ const ROOMY: f32 = 0.35;
 /// | model | p99 of deadline | whole CPU | PESQ | delay |
 /// | --- | --- | --- | --- | --- |
 /// | DeepFilterNet3 | 63 % | 46 % | 3.34 | 20 ms |
-/// | DPDFNet v2 48k HR | 0.8 % | 33 % | 3.12 | 60 ms |
-/// | GTCRN DNS3 | 29 % | 13 % | 2.53 | 24 ms |
-/// | DPDFNet v8 48k HR | 0.8 % | 57 % | 3.00 | 60 ms |
+/// | DPDFNet v2 48k HR | 0.8 % | 33 % | 3.12 | 150 ms → 70 ms |
+/// | GTCRN DNS3 | 29 % | 13 % | 2.53 | 44 ms |
+/// | DPDFNet v8 48k HR | 0.8 % | 57 % | 3.00 | 150 ms → 70 ms |
+///
+/// The delay column is measured against each shipped plugin at its own sample rate with
+/// no resampler in the path. DeepFilterNet3 comes to 960 samples (20.0 ms), matching what
+/// it documents.
+///
+/// GTCRN's own floor is 1344 samples (28.0 ms) and does not move with the host block. The
+/// rest is this application's `LookaheadMs`, which delays the microphone one STFT frame
+/// per 16 ms asked for: 44.0 ms at the 20 ms now configured, 92.0 ms at the 60 ms that
+/// used to be. The 26.7 ms this column carried was the plugin measured with *its* default
+/// lookahead, not the chain we build.
+///
+/// The DPDFNet arrow is a plugin fix, not a model change, and it needs a `dpdfnet-ladspa`
+/// newer than 26.08.29: that wrapper lagged the emitted hop by the host's whole callback,
+/// so it delivered 70 ms at a 480-sample block, 80 at 960, 100 at 1920 and 150 in
+/// ffmpeg's converter while exporting 60 ms as its latency in every one of those cases.
+/// With the lag fixed at one hop the figure is 70 ms at every block and the export agrees
+/// with the audio. Until that package is rebuilt, read 80 ms here — the chain's own
+/// quantum is 960.
+///
+/// The network was never what cost it. Driving the same graph — the ONNX the OBS plugin
+/// ships, `state_size` 56436 and `freq_bins` 481, byte-for-byte the shape the installed
+/// IR declares — frame by frame through a minimal reference host measured exactly 1920
+/// samples, 4.00 hops, 40.0 ms, which is what that plugin documents as the model's
+/// internal delay. One analysis window and one hop of handoff on top is the 70 ms above.
 ///
 /// DeepFilterNet3 scores highest and runs its network on the audio thread, so two thirds
 /// of the deadline is gone before the rest of the graph is served — on a machine slower
 /// than this one that is a dropout, which is the fault this whole stack exists to avoid.
-/// DPDFNet answers from a worker and leaves the callback almost empty, for 0.22 of PESQ
-/// and 36 ms of delay. Sixty milliseconds is well inside what a call tolerates, and a
-/// dropout is not, so the automatic choice takes the safe one.
+/// DPDFNet answers from a worker and leaves the callback almost empty, for 0.22 of PESQ.
+/// The trade was taken against a 60 ms figure the plugin did not deliver; at the 70 ms it
+/// delivers once rebuilt it stands, and it is 26 ms above `LIGHT` rather than 106.
 ///
 /// `DpdfnetV8Hr` is in the catalogue and is never a step here: it costs almost twice the
 /// CPU of v2 and scored *below* it on every intrusive metric.
@@ -211,10 +235,13 @@ fn automatic(machine: &Machine, standing: Option<NoiseModel>) -> NoiseModel {
     if machine.filters > 1 {
         return LIGHT;
     }
-    // What the model actually costs here, which is the only input that has been near the
-    // model. An absent reading means the plugin would not load, and `loadable` below is
-    // what answers that — refusing here as well would hide it.
-    if machine.heavy_share.is_some_and(|share| share > TOO_DEAR) {
+    // An asynchronous callback is not a valid capacity measurement unless
+    // the plugin also confirms that its worker processed the requested blocks.
+    // Unknown measurements keep the baseline model; explicit Best is separate.
+    if machine
+        .heavy_share
+        .is_none_or(|share| !share.is_finite() || share > TOO_DEAR)
+    {
         return LIGHT;
     }
 
@@ -290,10 +317,13 @@ fn on_battery() -> Option<bool> {
 /// caller has no way to tell that apart from a model that simply failed.
 #[must_use]
 pub fn loadable(model: NoiseModel) -> NoiseModel {
-    if model.plugin_available() {
+    if model.plugin_loadable_cached() {
         model
     } else {
-        LIGHT
+        super::noise_model::REALTIME_LAVFI_MODELS
+            .into_iter()
+            .find(|candidate| candidate.plugin_loadable_cached())
+            .unwrap_or(LIGHT)
     }
 }
 
@@ -338,7 +368,7 @@ mod tests {
     }
 
     /// A machine where the heavy model measured too dear gets the light one, and a
-    /// machine that could not be measured at all is not punished for it.
+    /// missing or unverifiable reading conservatively keeps the light model.
     #[test]
     fn what_the_model_costs_here_is_enough_on_its_own() {
         let dear = Machine {
@@ -351,7 +381,7 @@ mod tests {
             heavy_share: None,
             ..idle()
         };
-        assert_eq!(choose(Quality::Automatic, &unmeasured, None), HEAVY);
+        assert_eq!(choose(Quality::Automatic, &unmeasured, None), LIGHT);
 
         let just_under = Machine {
             heavy_share: Some(0.49),

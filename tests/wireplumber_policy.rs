@@ -1,28 +1,96 @@
-use std::path::Path;
-
-use std::fs::read_to_string;
+use std::fs::{self, read_to_string};
+use std::os::unix::fs::{PermissionsExt, symlink};
+use std::path::{Path, PathBuf};
+use std::process::Command;
 
 fn read_fixture(path: &str) -> String {
     read_to_string(Path::new(path)).unwrap()
 }
 
+/// Exercise the real package() function without compiling, installing a
+/// package, running its hooks or accessing the user's audio services.
+/// Placeholder binaries are input data, never executed. Runtime resources
+/// remain read-only in the checkout and all output stays in a private tree.
+fn stage_package_recipe(root: &Path, temporary: &Path) -> PathBuf {
+    let srcdir = temporary.join("source tree");
+    let source = srcdir.join("biglinux-noise-reduction-pipewire");
+    let package = temporary.join("staged package");
+    fs::create_dir_all(source.join("target/release")).unwrap();
+    fs::create_dir_all(&package).unwrap();
+    for binary in [
+        "biglinux-microphone",
+        "biglinux-microphone-cli",
+        "biglinux-microphone-probe",
+        "biglinux-microphone-pwloader",
+    ] {
+        fs::write(source.join("target/release").join(binary), b"fixture\n").unwrap();
+    }
+    for resource in ["usr", "docs", "LICENSE", "LICENSE-MIT", "README.md"] {
+        symlink(root.join(resource), source.join(resource)).unwrap();
+    }
+    let catalog = source.join("build-locale/pt_BR/LC_MESSAGES/biglinux-microphone.mo");
+    fs::create_dir_all(catalog.parent().unwrap()).unwrap();
+    fs::write(catalog, b"catalog fixture\n").unwrap();
+
+    let output = Command::new("/usr/bin/timeout")
+        .args([
+            "--kill-after=1s",
+            "10s",
+            "/usr/bin/bash",
+            "--noprofile",
+            "--norc",
+            "-euc",
+            "source \"$1\"; srcdir=$2; pkgdir=$3; package",
+            "package-fixture",
+        ])
+        .arg(root.join("packaging/arch/PKGBUILD"))
+        .arg(srcdir)
+        .arg(&package)
+        .env_remove("BASH_ENV")
+        .env_remove("ENV")
+        .env("BIGMIC_FORCE_GIT", "1")
+        .output()
+        .expect("execute package recipe in the disposable source tree");
+    assert!(
+        output.status.success(),
+        "package() failed: {}\n{}",
+        output.status,
+        String::from_utf8_lossy(&output.stderr)
+    );
+    package
+}
+
 #[test]
 fn packaged_wireplumber_files_are_installed_by_main_pkgbuild() {
-    let pkgbuild = read_fixture("packaging/arch/PKGBUILD");
+    let root = Path::new(env!("CARGO_MANIFEST_DIR"));
+    let temporary = tempfile::tempdir().unwrap();
+    let package = stage_package_recipe(root, temporary.path());
 
+    // Verify the effects of package(), not whether its source lists each
+    // resource individually. A bulk install of usr/ is equally valid, but
+    // omitting either policy file must still fail this regression.
     for path in [
         "usr/share/wireplumber/scripts/biglinux/echo-cancel-routing.lua",
         "usr/share/wireplumber/wireplumber.conf.d/60-biglinux-echo-cancel-routing.conf",
     ] {
-        assert!(
-            Path::new(path).exists(),
-            "{path} must exist in the source tree"
+        let original = root.join(path);
+        let installed = package.join(path);
+        assert!(original.is_file(), "{path} must exist in the source tree");
+        assert!(installed.is_file(), "package() did not install {path}");
+        assert_eq!(
+            fs::read(&installed).unwrap(),
+            fs::read(original).unwrap(),
+            "package() changed the contents of {path}"
         );
-        assert!(
-            pkgbuild.contains(path),
-            "{path} must be explicitly installed by packaging/arch/PKGBUILD",
-        );
+        let mode = fs::metadata(installed).unwrap().permissions().mode();
+        assert_eq!(mode & 0o444, 0o444, "{path} must be readable");
+        assert_eq!(mode & 0o6022, 0, "unsafe installed permissions for {path}");
     }
+    assert_eq!(
+        fs::read(package.join("usr/share/locale/pt_BR/LC_MESSAGES/biglinux-microphone.mo"))
+            .unwrap(),
+        b"catalog fixture\n"
+    );
 }
 
 #[test]

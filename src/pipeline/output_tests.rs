@@ -5,9 +5,10 @@ fn enabled_settings() -> AppSettings {
     AppSettings {
         output_filter: crate::config::OutputFilterSettings {
             enabled: true,
+            channel_mode: crate::config::OutputChannelMode::Mono,
             ..crate::config::OutputFilterSettings::default()
         },
-        ..AppSettings::default()
+        ..mono_settings()
     }
 }
 
@@ -56,8 +57,8 @@ fn conf_full_chain_is_linked() {
         r#"{ output = "ai:Output" input = "gate:Input" }"#,
         r#"{ output = "gate:Output" input = "compressor:Input" }"#,
         r#"{ output = "compressor:Output" input = "eq:In 1" }"#,
-        r#"{ output = "eq:Out 1" input = "copy_l:In" }"#,
-        r#"{ output = "eq:Out 1" input = "copy_r:In" }"#,
+        r#"{ output = "sample_ceiling:Out" input = "copy_l:In" }"#,
+        r#"{ output = "sample_ceiling:Out" input = "copy_r:In" }"#,
     ] {
         assert!(conf.contains(link), "missing link: {link}");
     }
@@ -77,9 +78,10 @@ fn output_conf_is_a_bare_module_args_body() {
                 enabled: true,
                 ..crate::config::NoiseReductionConfig::default()
             },
+            channel_mode: crate::config::OutputChannelMode::Mono,
             ..crate::config::OutputFilterSettings::default()
         },
-        ..AppSettings::default()
+        ..mono_settings()
     };
     let conf = build_output_conf(&s);
     assert!(conf.starts_with('{'));
@@ -128,8 +130,9 @@ fn master_off_forces_full_bypass_regardless_of_sub_flags() {
                 ..crate::config::EqualizerConfig::default()
             },
             target_sink_name: None,
+            channel_mode: crate::config::OutputChannelMode::Mono,
         },
-        ..AppSettings::default()
+        ..mono_settings()
     };
     let conf = build_output_conf(&s);
 
@@ -162,11 +165,9 @@ fn master_off_forces_full_bypass_regardless_of_sub_flags() {
 }
 
 #[test]
-fn nr_off_with_master_on_keeps_gtcrn_with_enable_zero() {
-    // Master is on, sub-effects routed normally, but noise
-    // reduction is off — the GTCRN node must remain wired with
-    // Enable=0 so the user can re-toggle NR via the live path
-    // without a service restart.
+fn nr_off_with_master_on_uses_a_copy_without_neural_processing() {
+    // A disabled neural stage is a cheap copy in both channel modes.
+    // Changing NR therefore changes topology and requires one chain reload.
     let s = AppSettings {
         output_filter: crate::config::OutputFilterSettings {
             enabled: true,
@@ -174,15 +175,17 @@ fn nr_off_with_master_on_keeps_gtcrn_with_enable_zero() {
                 enabled: false,
                 ..crate::config::NoiseReductionConfig::default()
             },
+            channel_mode: crate::config::OutputChannelMode::Mono,
             ..crate::config::OutputFilterSettings::default()
         },
-        ..AppSettings::default()
+        ..mono_settings()
     };
     let conf = build_output_conf(&s);
     assert!(conf.contains("name = \"ai\""));
-    assert!(conf.contains("\"Enable\" = 0.0"));
-    assert!(conf.contains(r#"{ output = "hpf:Out" input = "ai:Input" }"#));
-    assert!(conf.contains(r#"{ output = "ai:Output" input = "gate:Input" }"#));
+    assert!(!conf.contains("libgtcrn"));
+    assert!(!conf.contains("\"Enable\""));
+    assert!(conf.contains(r#"{ output = "hpf:Out" input = "ai:In" }"#));
+    assert!(conf.contains(r#"{ output = "ai:Out" input = "gate:Input" }"#));
 }
 
 #[test]
@@ -198,9 +201,10 @@ fn master_on_eq_off_renders_flat_regardless_of_preset() {
                 preset: "vocal-boost".to_owned(),
                 bands: vec![6.0; EQ_BAND_COUNT],
             },
+            channel_mode: crate::config::OutputChannelMode::Mono,
             ..crate::config::OutputFilterSettings::default()
         },
-        ..AppSettings::default()
+        ..mono_settings()
     };
     let conf = build_output_conf(&s);
     assert!(
@@ -256,9 +260,10 @@ fn ai_processing_on_renders_gtcrn_enable_one() {
                 enabled: true,
                 ..crate::config::NoiseReductionConfig::default()
             },
+            channel_mode: crate::config::OutputChannelMode::Mono,
             ..crate::config::OutputFilterSettings::default()
         },
-        ..AppSettings::default()
+        ..mono_settings()
     };
     let conf = build_output_conf(&s);
     assert!(
@@ -297,9 +302,10 @@ fn output_eq_prefers_explicit_bands_over_preset() {
                 preset: "voice_boost".to_owned(),
                 bands,
             },
+            channel_mode: crate::config::OutputChannelMode::Mono,
             ..crate::config::OutputFilterSettings::default()
         },
-        ..AppSettings::default()
+        ..mono_settings()
     };
     let conf = build_output_conf(&s);
     assert!(
@@ -310,4 +316,10 @@ fn output_eq_prefers_explicit_bands_over_preset() {
         !conf.contains("gain = 20.00"),
         "voice_boost preset must be ignored"
     );
+}
+
+fn mono_settings() -> AppSettings {
+    let mut settings = AppSettings::default();
+    settings.output_filter.channel_mode = crate::config::OutputChannelMode::Mono;
+    settings
 }

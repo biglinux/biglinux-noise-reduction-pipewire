@@ -69,7 +69,7 @@ use std::ptr::NonNull;
 /// so their pages never materialise — only the default `4*ncpus` pool is
 /// pathological.
 ///
-/// `background_thread:true` drives the decay timer while the process is idle, off
+/// Enabling `background_thread` after locale initialization drives decay while idle, off
 /// the main thread, so the aggressive `dirty_decay_ms:1000,muzzy_decay_ms:0`
 /// return costs no main-thread CPU (without it jemalloc only purges on a later
 /// alloc into the same arena — an idle shell never would). `tcache_max` and
@@ -80,13 +80,14 @@ use std::ptr::NonNull;
 ///
 /// Arena-pool sizing is boot-only — it cannot be set via `mallctl` at runtime,
 /// which is why this is a compile-time global and not a call in [`anchor`].
-/// Overridable for debugging via the `MALLOC_CONF` env var, which jemalloc
-/// applies after this symbol.
+/// Boot-time background work stays disabled until the application has initialized
+/// locale. Use `set_background_threads` afterwards; merely moving a call within
+/// main cannot prevent allocator workers created before main.
 #[allow(non_upper_case_globals)]
 #[unsafe(no_mangle)]
 pub static malloc_conf: Option<&'static u8> = {
     const OPTS: &[u8] =
-        b"narenas_ratio:1,background_thread:true,dirty_decay_ms:1000,muzzy_decay_ms:0\0";
+        b"narenas_ratio:1,background_thread:false,dirty_decay_ms:1000,muzzy_decay_ms:0\0";
     // Option<&u8> is a thin, non-null pointer here (null niche), matching
     // jemalloc's `const char *`; it points at the NUL-terminated option string.
     Some(&OPTS[0])
@@ -136,4 +137,39 @@ pub fn anchor() -> Option<&'static CStr> {
         // version string for mallctl("version").
         Some(CStr::from_ptr(version.as_ptr()))
     }
+}
+
+/// Change jemalloc's background workers through its documented dynamic API.
+/// Disabling terminates these workers synchronously, including a MALLOC_CONF
+/// override that enabled them before main. This does not stop unrelated threads.
+pub fn set_background_threads(enabled: bool) -> Result<(), i32> {
+    let mut value = enabled;
+    // SAFETY: background_thread accepts a bool of exactly this size. No
+    // borrowed pointer outlives mallctl, which synchronously consumes it.
+    let status = unsafe {
+        mallctl(
+            c"background_thread".as_ptr(),
+            std::ptr::null_mut(),
+            std::ptr::null_mut(),
+            (&raw mut value).cast::<c_void>(),
+            std::mem::size_of::<bool>(),
+        )
+    };
+    if status == 0 { Ok(()) } else { Err(status) }
+}
+
+/// Application default after locale/GTK initialization. Honor an explicit
+/// debugging override that opts out of background purging.
+pub fn background_threads_requested() -> bool {
+    std::env::var("MALLOC_CONF")
+        .ok()
+        .and_then(|options| {
+            options
+                .split(',')
+                .filter_map(|option| option.split_once(':'))
+                .filter(|(key, _)| *key == "background_thread")
+                .map(|(_, value)| value == "true")
+                .next_back()
+        })
+        .unwrap_or(true)
 }

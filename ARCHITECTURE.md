@@ -1,53 +1,87 @@
-# ARCHITECTURE — biglinux-microphone (noise-reduction-pipewire)
+# Architecture — Filter noise
 
-Human overview + features: `README.md`. Agent edit-map: `AGENTS.md`. This file is
-the cross-cutting architecture; `INVARIANTS.md` is the enforced contract.
+## Processes and ownership
 
-## 1. Purpose
+One Rust library (`biglinux_microphone`) and four entry points:
 
-AI microphone (and system-sound) noise reduction for PipeWire. A GTK4/libadwaita
-config window plus a Plasma 6 tray applet drive a LADSPA-hosted neural denoiser
-(GTCRN; optional DeepFilterNet3) and a swh-plugins processing chain (EQ, gate,
-compressor, pitch). One Rust library crate `biglinux_microphone` + three binaries.
+| Binary | Responsibility |
+| --- | --- |
+| `biglinux-microphone` | Relm4 GTK4/libadwaita window and its monitoring resources |
+| `biglinux-microphone-cli` | Settings mutations, diagnostics, reconciliation and session watch |
+| `biglinux-microphone-pwloader` | Host one PipeWire module in a client process |
+| `biglinux-microphone-probe` | Diagnostic measurements |
 
-## 2. Single source of truth
+The mic, echo canceller and playback loaders connect to the existing PipeWire
+server. They share the graph's scheduling/clock domain, not one daemon-owned
+processing thread. `node.async` is an asynchronous scheduling choice, not an
+adaptive-resampler switch; evaluate its added cycle latency separately.
 
-All three surfaces read/write **one** file:
-`~/.config/biglinux-microphone/settings.json`. The GTK window, the CLI, the
-plasmoid, and the running PipeWire chain stay in sync because each watches that
-file (`gio::FileMonitor` / `inotifywait`) and re-derives state on change. There is
-no second config or IPC channel — the file *is* the bus.
+## State contracts
 
-## 3. Binaries
+Desired preferences, effective processing settings and observed graph state are
+different. A master bypass changes the effective projection without erasing the
+user's sub-effect choices. The persistent JSON lives under
+`$XDG_CONFIG_HOME/biglinux-microphone`, with the usual home-directory fallback.
+Loaders and the applet resolve that same location.
 
-| Binary | Source | Role |
-|---|---|---|
-| `biglinux-microphone` | `src/bin/gui.rs` | GTK4/libadwaita config window. |
-| `biglinux-microphone-cli` | `src/bin/cli.rs` | Headless control + `doctor` diagnostics. |
-| `biglinux-microphone-pwloader` | `src/bin/pwloader.rs` | PipeWire module / RT host; the libc RT-setup `unsafe` lives here. |
+A stable sibling lock serializes participating writers. GUI edits are merged
+against their original snapshot; unrelated external fields survive and a
+conflicting change to the same field is reported. Invalid JSON is not silently
+overwritten. Atomic replacement protects a single file; it is not a multi-file
+transaction and does not by itself solve concurrent read-modify-write.
 
-## 4. Library layers (`src/`)
+## Applying changes
 
-| Layer | Path | Responsibility |
-|---|---|---|
-| `config` | `config/` | Settings model + atomic JSON persistence (`mod.rs::save`: temp → `sync_all` → rename). |
-| `pipeline` | `pipeline/` | Filter-chain `.conf` generation + systemd user-unit orchestration. Param-only edits push live; topology edits reload only the affected chain. |
-| `services` | `services/` | PipeWire/subprocess integration: `pw-cli`/`wpctl`/`journalctl` (argv arrays, no shell), live param push (`pipewire/live.rs`), audio monitor/analyzer, and `pipewire/user_tweaks.rs` (parse/merge PipeWire + WirePlumber config tweaks). |
-| `ui` | `ui/` | libadwaita views/widgets, state machine (`ui/state.rs`), spectrum/source-picker, gettext i18n. |
-| `diagnostics` | `diagnostics.rs` | `doctor` environment checks. |
+The UI coalesces edits and executes blocking work outside GTK's main thread.
+`services/reconcile.rs` is shared by CLI and GUI: render effective settings,
+compare the previous applied snapshot, inspect actual nodes, update live
+parameters where possible and reconcile only the affected loaders. AEC precedes
+the microphone that consumes it. Missing/error nodes and incomplete updates
+cannot be represented as fully applied settings. Failures propagate to callers.
 
-## 5. Apply flow
+Persistence, generated arguments, service state and plugin inference have
+separate failure modes. Successful `systemctl` invocation alone is insufficient;
+node presence is checked. Presence is still not proof of useful denoising, so
+processing-health counters and listening/measurement tests remain necessary.
 
-Setting change (UI/CLI/applet) → `config` model update + atomic save → `pipeline`
-regenerates the chain `.conf` → `services` either pushes a live `pw-cli` param
-(param-only delta) or reloads the affected systemd-managed chain (topology delta).
-Smart-filter routing (`filter.smart = true`) avoids virtual-device juggling.
+## Interface and lifecycle
 
-## 6. Native + runtime boundaries
+Relm4 owns the main application state and apply/health generations. The device
+picker performs blocking device operations on workers. The tuning page retains
+its edit model and distinguishes pending choices from applied settings. A
+buffer preview has a bounded lifetime and restores the prior override. Closing
+the window must release its monitor without requiring a healthy audio server.
 
-- PipeWire ≥ 1.4 + WirePlumber ≥ 0.5; GTK4 ≥ 4.20 / libadwaita ≥ 1.8.
-- LADSPA backends are system packages (`gtcrn-ladspa`, `swh-plugins`,
-  optional `deepfilternet-ladspa`) — never bundled; presence is detected at
-  runtime and gates the model dropdown.
-- `unsafe` is confined to FFI/RT setup (`pwloader.rs`) and two GTK/worker FFI
-  sites; each carries a `SAFETY` note.
+The microphone meter exposes a native GTK value and textual reading; the Cairo
+spectrum is supplemental. Respect reduced motion, preserve navigation context,
+and use visible labels plus accessible names for controls. Expert CPU affinity
+and memory-reservation choices are opt-in, not universal performance guarantees.
+
+## Monitoring and subprocesses
+
+FFT plans, windows, normalization and scratch buffers are reused. Visualization
+is bounded and favors recent frames; hidden capture must not intentionally block
+a real-time writer. The subprocess boundary uses argv arrays, explicit policies,
+nonblocking Unix I/O, bounded captured output, full-operation deadlines and
+process-group cleanup. An explicitly empty allow-list denies every executable.
+
+## Dependencies and translation
+
+Native target: Rust >= 1.97.1, GTK >= 4.22, libadwaita >= 1.9, PipeWire >= 1.4,
+WirePlumber >= 0.5, systemd user services, GTCRN and SWH LADSPA packages.
+Optional neural backends require their matching inference runtimes. Nix uses
+the system-allocator feature configuration rather than the BigLinux-specific
+jemalloc patch. Portability of packaged integrations must be tested separately.
+
+The gettext domain is `biglinux-microphone`. Rust `i18n` calls, deferred `mark`
+literals and QML `i18nd` calls share the catalog. Extraction coverage is checked
+independently of PO syntax and translation completeness. Empty UI text must not
+be resolved as gettext's reserved metadata header.
+
+## Tests and evidence
+
+Run `scripts/quality-check.sh --ci` for required portable gates,
+`scripts/test-ui.sh` for isolated graphical contracts, and
+`scripts/test-miri.sh` for the selected pure data-model tests. See `REVIEW.md`
+for finding-to-implementation mapping. No passing text-renderer test constitutes
+an acoustic benchmark or an accessibility/visual-design certification.

@@ -92,9 +92,16 @@ fn from_graph<'a>(graph: impl IntoIterator<Item = &'a Value> + Clone) -> Option<
     let device_id = props["device.id"]
         .as_u64()
         .or_else(|| props["device.id"].as_str()?.parse().ok());
-    let route = graph
+    let device = graph
         .into_iter()
-        .find(|object| object["id"].as_u64() == device_id)
+        .find(|object| object["id"].as_u64() == device_id);
+    // The form-factor lives on the device, not the sink node, so a Bluetooth
+    // or USB headset that names itself only reaches the decision when read
+    // from here — the node's copy is always absent.
+    let form_factor = device
+        .and_then(|device| device["info"]["props"]["device.form-factor"].as_str())
+        .or_else(|| props["device.form-factor"].as_str());
+    let route = device
         .and_then(|device| device["info"]["params"]["Route"].as_array())
         .and_then(|routes| {
             routes
@@ -103,21 +110,34 @@ fn from_graph<'a>(graph: impl IntoIterator<Item = &'a Value> + Clone) -> Option<
         })
         .and_then(|route| route["name"].as_str());
     Some(microphone_can_hear_it(
-        props["device.form-factor"]
-            .as_str()
-            .or_else(|| props["device.form_factor"].as_str()),
+        form_factor,
         route.or_else(|| props["port.name"].as_str()),
     ))
 }
 
+/// Whether the current output is acoustically coupled to the microphone.
+///
+/// True means the speaker can bleed back into the mic, so automatic mode runs
+/// the canceller; false is a private path — headphones or a headset — where it
+/// stays off. Two signals feed the decision and both are read, never the first
+/// present:
+///
+/// - the device form-factor, which a Bluetooth or USB device sets to `headset`
+///   / `headphone` / `speaker`; and
+/// - the active output route, which is the only thing that separates the
+///   headphone jack from the speaker on a built-in card whose form-factor is
+///   the useless `internal`.
+///
+/// A built-in line-out jack has no detection at all — it reads `available`
+/// forever and names no device — so it is left as coupled: automatic cannot
+/// tell headphones from powered speakers there, and `Always` / `Never` are the
+/// manual answers for that jack.
 fn microphone_can_hear_it(form_factor: Option<&str>, port: Option<&str>) -> bool {
-    if let Some(form) = form_factor {
-        return !matches!(form, "headphone" | "headset");
-    }
-    port.is_none_or(|port| {
-        let port = port.to_ascii_lowercase();
-        !port.contains("headphone") && !port.contains("headset")
-    })
+    let private = |value: &str| {
+        let value = value.to_ascii_lowercase();
+        value.contains("headphone") || value.contains("headset")
+    };
+    !(form_factor.is_some_and(private) || port.is_some_and(private))
 }
 
 #[cfg(test)]
@@ -127,11 +147,31 @@ mod tests {
     fn speakers_headphones_and_explicit_modes() {
         assert!(microphone_can_hear_it(None, None));
         assert!(microphone_can_hear_it(Some("speaker"), None));
+        assert!(microphone_can_hear_it(None, Some("analog-output-speaker")));
+        // A Bluetooth or USB headset names itself; the form-factor alone is
+        // enough to keep the canceller off.
         assert!(!microphone_can_hear_it(Some("headset"), None));
+        assert!(!microphone_can_hear_it(Some("headphone"), None));
         assert!(!microphone_can_hear_it(
             None,
             Some("analog-output-headphones")
         ));
+        // A built-in card reports the useless `internal`, so the headphone jack
+        // is only visible through the route: both signals are read, and the
+        // form-factor must not short-circuit the route.
+        assert!(!microphone_can_hear_it(
+            Some("internal"),
+            Some("analog-output-headphones")
+        ));
+        // The line-out jack has no detection and stays coupled — automatic
+        // cannot tell headphones from powered speakers there.
+        assert!(microphone_can_hear_it(None, Some("analog-output-lineout")));
+        assert!(microphone_can_hear_it(
+            Some("internal"),
+            Some("analog-output-lineout")
+        ));
+        // HDMI names a display's speakers, which share the room with the mic.
+        assert!(microphone_can_hear_it(None, Some("hdmi-output-0")));
         let mut config = EchoCancelConfig {
             enabled: false,
             mode: EchoMode::Always,
@@ -153,6 +193,19 @@ mod tests {
         graph[2]["info"]["params"]["Route"][0]["name"] = "analog-output-speaker".into();
         assert_eq!(from_graph(graph.as_array().unwrap()), Some(true));
         assert_eq!(from_graph(&[]), None);
+    }
+
+    #[test]
+    fn a_bluetooth_headset_is_read_from_the_device_not_the_silent_node() {
+        // The sink node carries no form-factor and no headphone route — exactly
+        // what a Bluetooth A2DP sink looks like. The device is where `headset`
+        // lives, and reading it there is what keeps the canceller off.
+        let graph = serde_json::json!([
+            {"id":1,"metadata":[{"key":"default.audio.sink","value":{"name":"bt-sink"}}]},
+            {"id":2,"info":{"props":{"node.name":"bt-sink","device.id":3}}},
+            {"id":3,"info":{"props":{"device.form-factor":"headset"},"params":{}}}
+        ]);
+        assert_eq!(from_graph(graph.as_array().unwrap()), Some(false));
     }
 
     #[test]

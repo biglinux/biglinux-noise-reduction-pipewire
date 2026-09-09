@@ -13,3 +13,10 @@ pub mod pipewire;
 pub mod system_audio;
 
 pub mod echo;
+
+/// Shared verified apply path for all application surfaces.
+pub mod reconcile;
+
+pub mod preview;
+
+pub mod settings_watch;

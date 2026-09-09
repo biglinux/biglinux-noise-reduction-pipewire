@@ -9,7 +9,6 @@ Wants=pipewire.service wireplumber.service
 # The reconciler writes the args file before starting this unit;
 # a missing file means "user turned this chain off" and must not
 # produce a Restart=on-failure loop.
-ConditionPathExists=%h/.config/biglinux-microphone/output.args
 
 # Hard-stop a crash loop (e.g. an unloadable LADSPA plugin) after five
 # quick failures instead of restarting every 2 s forever; the GUI
@@ -19,13 +18,14 @@ StartLimitIntervalSec=30
 StartLimitBurst=5
 
 [Service]
+ExecCondition=/usr/bin/biglinux-microphone-pwloader --check-config @config/output.args
 Type=simple
 # `biglinux-microphone-pwloader` connects to the running PipeWire
 # daemon as a regular client and asks it to instantiate
 # libpipewire-module-filter-chain inside this process. The daemon
 # drives every node, so the output filter shares the system clock
 # with the rest of the audio graph — no cross-process drift.
-ExecStart=/usr/bin/biglinux-microphone-pwloader libpipewire-module-filter-chain %h/.config/biglinux-microphone/output.args
+ExecStart=/usr/bin/biglinux-microphone-pwloader libpipewire-module-filter-chain @config/output.args
 Restart=on-failure
 RestartSec=2s
 StandardOutput=journal

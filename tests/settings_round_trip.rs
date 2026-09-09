@@ -37,9 +37,8 @@ fn save_then_load_restores_every_field() {
     let saved: serde_json::Value = serde_json::from_slice(&std::fs::read(&path).unwrap()).unwrap();
     assert_eq!(saved["noise_reduction"]["model"], 1);
     let loaded = AppSettings::load_from(&path);
-    if !s.noise_reduction.model.plugin_loadable() {
-        s.noise_reduction.model = biglinux_microphone::config::NoiseModel::default();
-    }
+    // Reading preferences must not silently replace the selected model when
+    // its runtime is unavailable. Availability is a separate worker decision.
     assert_eq!(loaded, s);
 }
 
@@ -141,4 +140,31 @@ fn legacy_routed_apps_does_not_discard_valid_output_settings() {
     std::fs::write(&path, bytes).unwrap();
     assert!(AppSettings::load_from(&path).output_filter.enabled);
     assert_eq!(std::fs::read(&path).unwrap(), bytes);
+}
+
+#[test]
+fn a_saved_sixty_millisecond_lookahead_gives_way_to_the_new_default() {
+    let dir = tempdir().unwrap();
+    let path = dir.path().join("settings.json");
+    let bytes = br#"{"noise_reduction":{"lookahead_ms":60,"strength":0.5},
+                     "output_filter":{"noise_reduction":{"lookahead_ms":60}}}"#;
+    std::fs::write(&path, bytes).unwrap();
+    let settings = AppSettings::load_from(&path);
+    let fresh = AppSettings::default().noise_reduction.lookahead_ms;
+    assert_eq!(settings.noise_reduction.lookahead_ms, fresh);
+    assert_eq!(settings.output_filter.noise_reduction.lookahead_ms, fresh);
+    // The 60 was the only thing dropped; everything beside it survives.
+    assert!((settings.noise_reduction.strength - 0.5).abs() < f32::EPSILON);
+    assert_eq!(std::fs::read(&path).unwrap(), bytes);
+}
+
+#[test]
+fn a_hand_picked_lookahead_is_left_alone() {
+    let dir = tempdir().unwrap();
+    let path = dir.path().join("settings.json");
+    std::fs::write(&path, br#"{"noise_reduction":{"lookahead_ms":35}}"#).unwrap();
+    assert_eq!(
+        AppSettings::load_from(&path).noise_reduction.lookahead_ms,
+        35
+    );
 }

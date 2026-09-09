@@ -44,6 +44,9 @@ pub struct Analyzer {
     fft: Arc<dyn Fft<f32>>,
     window: Vec<f32>,
     scratch: Vec<Complex32>,
+    fft_workspace: Vec<Complex32>,
+    magnitudes: Vec<f32>,
+    normalization: f32,
     band_boundaries: Vec<(usize, usize)>,
     seq: u64,
 }
@@ -51,16 +54,39 @@ pub struct Analyzer {
 impl Analyzer {
     #[must_use]
     pub fn new(configuration: AnalyzerConfig) -> Self {
+        assert!(
+            configuration.fft_size >= 4,
+            "FFT window must contain at least four samples"
+        );
+        assert!(configuration.sample_rate > 0, "sample rate must be nonzero");
+        assert!(
+            configuration.band_count > 0 && configuration.band_count <= configuration.fft_size / 2,
+            "band count must fit the FFT bins"
+        );
+        assert!(
+            configuration.min_hz.is_finite()
+                && configuration.max_hz.is_finite()
+                && configuration.min_hz > 0.0
+                && configuration.max_hz > configuration.min_hz
+                && configuration.min_hz < configuration.sample_rate as f32 / 2.0,
+            "frequency range must be finite, ordered and below Nyquist"
+        );
         let mut planner = FftPlanner::<f32>::new();
         let fft = planner.plan_fft_forward(configuration.fft_size);
         let window = hann_window(configuration.fft_size);
         let scratch = vec![Complex32::new(0.0, 0.0); configuration.fft_size];
+        let fft_workspace = vec![Complex32::new(0.0, 0.0); fft.get_inplace_scratch_len()];
+        let magnitudes = vec![0.0; configuration.fft_size / 2 + 1];
+        let normalization = 2.0 / window.iter().sum::<f32>();
         let band_boundaries = log_band_boundaries(&configuration);
         Self {
             configuration,
             fft,
             window,
             scratch,
+            fft_workspace,
+            magnitudes,
+            normalization,
             band_boundaries,
             seq: 0,
         }
@@ -82,25 +108,21 @@ impl Analyzer {
             self.scratch[i] = Complex32::new(s * self.window[i], 0.0);
         }
 
-        self.fft.process(&mut self.scratch);
+        self.fft
+            .process_with_scratch(&mut self.scratch, &mut self.fft_workspace);
 
         // Magnitude spectrum, normalised for the Hann window sum so a
         // full-scale tone at bin `k` reads close to 0 dBFS.
-        let norm = 2.0 / self.window.iter().sum::<f32>();
-        let half = self.configuration.fft_size / 2;
-        let mut mag = vec![0.0_f32; half];
-        for (i, m) in mag.iter_mut().enumerate() {
-            *m = self.scratch[i].norm() * norm;
+        for (value, sample) in self.magnitudes.iter_mut().zip(&self.scratch) {
+            *value = sample.norm() * self.normalization;
         }
+        let mag = &self.magnitudes;
 
         let bands_db: Vec<f32> = self
             .band_boundaries
             .iter()
             .map(|&(lo, hi)| {
-                let peak = mag[lo..=hi.min(half - 1)]
-                    .iter()
-                    .copied()
-                    .fold(0.0_f32, f32::max);
+                let peak = mag[lo..hi].iter().copied().fold(0.0_f32, f32::max);
                 amplitude_to_db(peak)
             })
             .collect();
@@ -173,44 +195,66 @@ pub fn peak_dbfs(samples: &[f32]) -> f32 {
     amplitude_to_db(peak)
 }
 
-/// Compute `(low_bin, high_bin)` boundaries for `band_count` log-spaced
-/// bands from `min_hz` to `max_hz` (inclusive on low end, exclusive on
-/// the high end except for the last band which extends to Nyquist).
-fn log_band_boundaries(configuration: &AnalyzerConfig) -> Vec<(usize, usize)> {
-    let bins = configuration.fft_size / 2;
-    let nyquist = f64::from(configuration.sample_rate) / 2.0;
-    let min = f64::from(configuration.min_hz).max(1.0);
-    let max = f64::from(configuration.max_hz).min(nyquist);
-    let log_min = min.log10();
-    let log_max = max.log10();
-    let band_count = configuration.band_count.max(1);
-
-    let mut out = Vec::with_capacity(band_count);
-    let mut last_hi = 0;
-    for i in 0..band_count {
-        let t0 = i as f64 / band_count as f64;
-        let t1 = (i + 1) as f64 / band_count as f64;
-        let f0 = 10_f64.powf(log_min + t0 * (log_max - log_min));
-        let f1 = 10_f64.powf(log_min + t1 * (log_max - log_min));
-
-        let lo_bin = (f0 * configuration.fft_size as f64 / f64::from(configuration.sample_rate))
-            .floor() as usize;
-        let hi_bin = (f1 * configuration.fft_size as f64 / f64::from(configuration.sample_rate))
-            .floor() as usize;
-
-        // Guarantee monotonic coverage: each band owns at least one bin
-        // and never overlaps with the previous one.
-        let lo = lo_bin.max(last_hi).min(bins.saturating_sub(1));
-        let hi = hi_bin.max(lo).min(bins.saturating_sub(1));
-        out.push((lo, hi));
-        last_hi = hi.saturating_add(1);
+/// Frequency edges shared by aggregation and the visible scale. Empty FFT
+/// buckets remain empty: inventing a bin shifts every following frequency.
+#[must_use]
+pub fn band_range_hz(configuration: &AnalyzerConfig, index: usize) -> Option<(f64, f64)> {
+    if index >= configuration.band_count || configuration.band_count == 0 {
+        return None;
     }
-    out
+    let low = f64::from(configuration.min_hz);
+    let high = f64::from(configuration.max_hz).min(f64::from(configuration.sample_rate) / 2.0);
+    let ratio = high / low;
+    let edge = |i: usize| low * ratio.powf(i as f64 / configuration.band_count as f64);
+    Some((edge(index), edge(index + 1)))
+}
+
+/// Half-open bin ranges implement the frequency edges exactly. Low bands
+/// narrower than the FFT resolution do not steal bins from adjacent bands.
+fn log_band_boundaries(configuration: &AnalyzerConfig) -> Vec<(usize, usize)> {
+    let bins = configuration.fft_size / 2 + 1;
+    let bin_hz = f64::from(configuration.sample_rate) / configuration.fft_size as f64;
+    (0..configuration.band_count)
+        .map(|index| {
+            let (low, high) = band_range_hz(configuration, index).expect("valid band index");
+            let lo = (low / bin_hz).ceil() as usize;
+            let mut hi = (high / bin_hz).ceil() as usize;
+            if index + 1 == configuration.band_count
+                && high >= f64::from(configuration.sample_rate) / 2.0
+            {
+                hi = bins;
+            }
+            (lo.min(bins), hi.min(bins))
+        })
+        .collect()
 }
 
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn repeated_analysis_reuses_its_working_storage() {
+        let mut analyzer = Analyzer::new(AnalyzerConfig::default());
+        let input = vec![0.0; analyzer.configuration.fft_size];
+        let buffers = (
+            analyzer.scratch.as_ptr(),
+            analyzer.fft_workspace.as_ptr(),
+            analyzer.magnitudes.as_ptr(),
+        );
+        for _ in 0..100 {
+            let frame = analyzer.analyze_samples(&input);
+            assert!(frame.bands_db.iter().all(|value| value.is_finite()));
+            assert_eq!(
+                buffers,
+                (
+                    analyzer.scratch.as_ptr(),
+                    analyzer.fft_workspace.as_ptr(),
+                    analyzer.magnitudes.as_ptr()
+                )
+            );
+        }
+    }
 
     #[test]
     fn hann_window_endpoints_are_zero() {
@@ -368,5 +412,66 @@ mod tests {
         };
         let mut a = Analyzer::new(configuration);
         a.analyze_samples(&[0.0_f32; 128]);
+    }
+}
+
+#[cfg(test)]
+mod frequency_contracts {
+    use super::*;
+
+    #[test]
+    fn narrow_low_bands_are_empty_instead_of_shifting_the_scale() {
+        let config = AnalyzerConfig::default();
+        let ranges = log_band_boundaries(&config);
+        assert!(ranges.iter().any(|(lo, hi)| lo == hi));
+        let bin_hz = f64::from(config.sample_rate) / config.fft_size as f64;
+        for (index, &(lo, hi)) in ranges.iter().enumerate() {
+            let (low, high) = band_range_hz(&config, index).unwrap();
+            for bin in lo..hi {
+                let hz = bin as f64 * bin_hz;
+                assert!(
+                    hz >= low && hz < high,
+                    "{index}: {hz} outside {low}..{high}"
+                );
+            }
+        }
+    }
+
+    #[test]
+    fn known_tones_land_in_the_frequency_band_actually_labelled() {
+        for rate in [44_100, 48_000] {
+            for size in [1024, 2048, 4096] {
+                let config = AnalyzerConfig {
+                    sample_rate: rate,
+                    fft_size: size,
+                    ..AnalyzerConfig::default()
+                };
+                for requested in [1000.0_f64, 4000.0, 8000.0] {
+                    let bin = (requested * size as f64 / f64::from(rate)).round();
+                    let hz = bin * f64::from(rate) / size as f64;
+                    let samples: Vec<f32> = (0..size)
+                        .map(|i| {
+                            (std::f64::consts::TAU * bin * i as f64 / size as f64).sin() as f32
+                                * 0.5
+                        })
+                        .collect();
+                    let expected = (0..config.band_count)
+                        .find(|&index| {
+                            let (low, high) = band_range_hz(&config, index).unwrap();
+                            hz >= low && hz < high
+                        })
+                        .unwrap();
+                    let frame = Analyzer::new(config.clone()).analyze_samples(&samples);
+                    let actual = frame
+                        .bands_db
+                        .iter()
+                        .enumerate()
+                        .max_by(|(_, a), (_, b)| a.total_cmp(b))
+                        .unwrap()
+                        .0;
+                    assert_eq!(actual, expected, "rate={rate} size={size} tone={hz}");
+                }
+            }
+        }
     }
 }

@@ -3,7 +3,8 @@
 //! Persisted denoiser identities and the installed LADSPA runtime contract.
 
 use std::path::Path;
-use std::sync::OnceLock;
+use std::sync::atomic::{AtomicU64, Ordering};
+use std::sync::{Mutex, OnceLock};
 
 use serde::{Deserialize, Serialize};
 
@@ -138,6 +139,29 @@ impl NoiseModel {
         }
     }
 
+    /// The model the live chain runs when this one is asked for.
+    ///
+    /// The 16 kHz plugins are driven at the chain's 48 kHz and then do no work
+    /// at all: measured on a private graph, `DpdfnetV8` gave 0.00 dB of pause
+    /// reduction on speech with noise and used 1 % of a core, against 12.30 dB
+    /// and 55 % for its high-resolution sibling. The picker hides them, but a
+    /// settings file can still name one, and a chain that silently stops
+    /// denoising is worse than one that runs the nearest model it can drive.
+    /// `doctor` reports the substitution so it is visible.
+    #[must_use]
+    pub fn live_equivalent(self) -> Self {
+        match self {
+            Self::DpdfnetV2 => Self::DpdfnetV2Hr,
+            Self::DpdfnetV4 | Self::DpdfnetV8 => Self::DpdfnetV8Hr,
+            Self::DpdfnetBaseline => Self::default(),
+            Self::GtcrnDns3
+            | Self::GtcrnVctk
+            | Self::DeepFilterNet3
+            | Self::DpdfnetV2Hr
+            | Self::DpdfnetV8Hr => self,
+        }
+    }
+
     /// LADSPA `model` control-port value to select this variant.
     ///
     /// For dual-model GTCRN plugins this picks DNS3 (`0.0`) vs VCTK
@@ -244,6 +268,15 @@ impl NoiseModel {
         self.plugin_available() && self.runtime_library().is_none_or(runtime_loadable_cached)
     }
 
+    /// Non-loading GTK snapshot. A pending native probe is not an available model.
+    #[must_use]
+    pub fn plugin_loadable_snapshot(self) -> bool {
+        self.plugin_available()
+            && self
+                .runtime_library()
+                .is_none_or(|name| runtime_snapshot(name) == Some(true))
+    }
+
     /// Whether the plugin uses a single attenuation control port.
     ///
     /// DeepFilterNet and DPDFNet plugins expose a single attenuation
@@ -276,7 +309,7 @@ impl NoiseModel {
     /// if they query it on a hot path.
     #[must_use]
     pub fn plugin_available(self) -> bool {
-        Path::new(self.plugin_and_label().0).exists()
+        Path::new(self.plugin_and_label().0).is_file()
     }
 }
 
@@ -294,19 +327,61 @@ const ONNX_RUNTIME_LIBRARY: &str = "libonnxruntime.so";
 /// Inference runtime the DPDFNet plugins load at first use.
 const OPENVINO_RUNTIME_LIBRARY: &str = "libopenvino_c.so";
 
-/// [`runtime_loadable`] resolved once per library, for the whole process.
-///
-/// Two libraries cover every model, so two slots are the whole cache. An
-/// unrecognised name is asked directly — there is nothing to amortise.
+/// Two runtimes cover the real-time model catalogue. Explicit health checks
+/// refresh the cache on a worker; GTK only reads the published snapshot.
+static RUNTIME_CACHE: OnceLock<Mutex<[Option<bool>; 2]>> = OnceLock::new();
+static CAPABILITY_GENERATION: AtomicU64 = AtomicU64::new(0);
+
+fn runtime_index(name: &str) -> Option<usize> {
+    match name {
+        ONNX_RUNTIME_LIBRARY => Some(0),
+        OPENVINO_RUNTIME_LIBRARY => Some(1),
+        _ => None,
+    }
+}
+
+fn runtime_snapshot(name: &str) -> Option<bool> {
+    let index = runtime_index(name)?;
+    RUNTIME_CACHE
+        .get_or_init(|| Mutex::new([None; 2]))
+        .lock()
+        .ok()?[index]
+}
+
+fn publish_runtimes(values: [Option<bool>; 2]) {
+    let mut cache = RUNTIME_CACHE
+        .get_or_init(|| Mutex::new([None; 2]))
+        .lock()
+        .unwrap_or_else(std::sync::PoisonError::into_inner);
+    if replace_runtime_values(&mut cache, values) {
+        CAPABILITY_GENERATION.fetch_add(1, Ordering::Release);
+    }
+}
+
+fn replace_runtime_values(current: &mut [Option<bool>; 2], next: [Option<bool>; 2]) -> bool {
+    let changed = *current != next;
+    *current = next;
+    changed
+}
+
+/// Runs native loader checks; call only on a worker or before UI startup.
+pub fn refresh_runtime_availability() {
+    publish_runtimes([
+        Some(runtime_loadable(ONNX_RUNTIME_LIBRARY)),
+        Some(runtime_loadable(OPENVINO_RUNTIME_LIBRARY)),
+    ]);
+}
+
+pub fn capability_generation() -> u64 {
+    CAPABILITY_GENERATION.load(Ordering::Acquire)
+}
+
 fn runtime_loadable_cached(name: &'static str) -> bool {
-    static ONNX: OnceLock<bool> = OnceLock::new();
-    static OPENVINO: OnceLock<bool> = OnceLock::new();
-    let slot = match name {
-        ONNX_RUNTIME_LIBRARY => &ONNX,
-        OPENVINO_RUNTIME_LIBRARY => &OPENVINO,
-        _ => return runtime_loadable(name),
-    };
-    *slot.get_or_init(|| runtime_loadable(name))
+    if let Some(value) = runtime_snapshot(name) {
+        return value;
+    }
+    refresh_runtime_availability();
+    runtime_snapshot(name).unwrap_or_else(|| runtime_loadable(name))
 }
 
 fn runtime_loadable(name: &str) -> bool {
@@ -327,6 +402,37 @@ fn runtime_loadable(name: &str) -> bool {
 }
 
 #[cfg(test)]
+mod live_equivalent_tests {
+    use super::NoiseModel;
+
+    #[test]
+    fn every_catalogue_model_maps_to_one_the_live_chain_can_drive() {
+        for value in 0..=8_u8 {
+            let model = NoiseModel::try_from(value).expect("catalogue value");
+            let live = model.live_equivalent();
+            assert!(
+                live.is_realtime_lavfi_supported(),
+                "{model:?} maps to {live:?}, which the live chain cannot drive"
+            );
+            assert_eq!(live.lavfi_sample_rate(), 48_000, "{model:?} -> {live:?}");
+        }
+    }
+
+    #[test]
+    fn a_live_capable_model_is_never_substituted() {
+        for model in [
+            NoiseModel::GtcrnDns3,
+            NoiseModel::GtcrnVctk,
+            NoiseModel::DeepFilterNet3,
+            NoiseModel::DpdfnetV2Hr,
+            NoiseModel::DpdfnetV8Hr,
+        ] {
+            assert_eq!(model.live_equivalent(), model);
+        }
+    }
+}
+
+#[cfg(test)]
 mod loader_tests {
     #[test]
     fn runtime_loader_accepts_existing_and_rejects_missing_or_nul_names() {
@@ -335,5 +441,26 @@ mod loader_tests {
             "lib-missing-microphone-fixture.so"
         ));
         assert!(!super::runtime_loadable("libc.so.6\0suffix"));
+    }
+}
+
+#[cfg(test)]
+mod refresh_tests {
+    #[test]
+    fn a_missing_runtime_can_become_available_without_restarting() {
+        let mut snapshot = [Some(false), Some(false)];
+        assert!(super::replace_runtime_values(
+            &mut snapshot,
+            [Some(true), Some(false)]
+        ));
+        assert_eq!(snapshot, [Some(true), Some(false)]);
+        assert!(!super::replace_runtime_values(
+            &mut snapshot,
+            [Some(true), Some(false)]
+        ));
+        assert!(super::replace_runtime_values(
+            &mut snapshot,
+            [Some(false), Some(false)]
+        ));
     }
 }

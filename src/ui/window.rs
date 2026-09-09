@@ -34,10 +34,10 @@ use crate::config::{AppSettings, app_id, app_version};
 use crate::services::audio_monitor::{AudioMonitor, Event as MonitorEvent};
 
 use super::app_kit_edges::{desktop, dialogs};
-use super::i18n::i18n;
+use super::i18n::{i18n, mark};
 use super::mic_shell::MicInput;
 use super::state::AppState;
-use super::views::{Mode, advanced, mic, output, simple};
+use super::views::{Mode, mic, output, simple};
 use super::widgets::spectrum::Spectrum;
 
 /// Replace the body contents and the header title widget so they match
@@ -54,6 +54,20 @@ pub(super) fn populate_body(
     spectrum_container: &gtk::Box,
     mode: Mode,
 ) {
+    let previous_focus = body.root().and_then(|root| root.focus());
+    let focus_path = previous_focus
+        .as_ref()
+        .and_then(|focus| child_path(body.upcast_ref(), focus));
+    let scroll_positions = collect_scroll_positions(body.upcast_ref());
+    let tuning = state.tuning_page();
+    if let Some(old_stack) = body.first_child().and_downcast::<adw::ViewStack>() {
+        if let Some(name) = old_stack.visible_child_name() {
+            state.remember_page(&name);
+        }
+        if tuning.parent().as_ref() == Some(old_stack.upcast_ref()) {
+            old_stack.remove(&tuning);
+        }
+    }
     while let Some(child) = body.first_child() {
         body.remove(&child);
     }
@@ -79,7 +93,7 @@ pub(super) fn populate_body(
                 "audio-headphones-symbolic",
             );
             stack.add_titled_with_icon(
-                &advanced::build(),
+                &tuning,
                 Some("tuning"),
                 &i18n("Tuning"),
                 "applications-system-symbolic",
@@ -88,14 +102,21 @@ pub(super) fn populate_body(
 
             let switcher = adw::ViewSwitcher::builder()
                 .stack(&stack)
-                .policy(adw::ViewSwitcherPolicy::Wide)
+                .policy(adw::ViewSwitcherPolicy::Narrow)
                 .build();
             header.set_title_widget(Some(&switcher));
 
+            stack.set_visible_child_name(&state.active_page());
             sync_spectrum_visibility(spectrum_container, &stack);
             {
                 let spectrum_container = spectrum_container.clone();
+                let weak_state = Rc::downgrade(state);
                 stack.connect_visible_child_name_notify(move |stack| {
+                    if let (Some(state), Some(name)) =
+                        (weak_state.upgrade(), stack.visible_child_name())
+                    {
+                        state.remember_page(&name);
+                    }
                     sync_spectrum_visibility(&spectrum_container, stack);
                 });
             }
@@ -103,6 +124,78 @@ pub(super) fn populate_body(
             body.append(&stack);
         }
     }
+    state.mark_view_current();
+    let weak_body = body.downgrade();
+    glib::idle_add_local_once(move || {
+        let Some(body) = weak_body.upgrade() else {
+            return;
+        };
+        for (path, value) in scroll_positions {
+            if let Some(scroll) =
+                child_at(body.upcast_ref(), &path).and_downcast::<gtk::ScrolledWindow>()
+            {
+                scroll.vadjustment().set_value(value);
+            }
+        }
+        if let Some(focus) = previous_focus.filter(|focus| focus.is_ancestor(&body)) {
+            focus.grab_focus();
+        } else if let Some((path, widget_type)) = focus_path
+            && let Some(widget) =
+                child_at(body.upcast_ref(), &path).filter(|widget| widget.type_() == widget_type)
+        {
+            widget.grab_focus();
+        }
+    });
+}
+
+fn child_path(root: &gtk::Widget, target: &gtk::Widget) -> Option<(Vec<usize>, glib::Type)> {
+    let mut path = Vec::new();
+    let mut widget = target.clone();
+    while widget != *root {
+        let parent = widget.parent()?;
+        let mut child = parent.first_child();
+        let mut index = 0;
+        while child.as_ref() != Some(&widget) {
+            child = child?.next_sibling();
+            index += 1;
+        }
+        path.push(index);
+        widget = parent;
+    }
+    path.reverse();
+    Some((path, target.type_()))
+}
+
+fn child_at(root: &gtk::Widget, path: &[usize]) -> Option<gtk::Widget> {
+    let mut widget = root.clone();
+    for &index in path {
+        let mut child = widget.first_child()?;
+        for _ in 0..index {
+            child = child.next_sibling()?;
+        }
+        widget = child;
+    }
+    Some(widget)
+}
+
+fn collect_scroll_positions(root: &gtk::Widget) -> Vec<(Vec<usize>, f64)> {
+    fn visit(widget: &gtk::Widget, path: &mut Vec<usize>, out: &mut Vec<(Vec<usize>, f64)>) {
+        if let Some(scroll) = widget.downcast_ref::<gtk::ScrolledWindow>() {
+            out.push((path.clone(), scroll.vadjustment().value()));
+        }
+        let mut child = widget.first_child();
+        let mut index = 0;
+        while let Some(widget) = child {
+            path.push(index);
+            visit(&widget, path, out);
+            path.pop();
+            child = widget.next_sibling();
+            index += 1;
+        }
+    }
+    let mut positions = Vec::new();
+    visit(root, &mut Vec::new(), &mut positions);
+    positions
 }
 
 /// The spectrum reflects the mic capture path, so we hide it on any
@@ -161,12 +254,12 @@ pub(super) fn primary_menu_spec() -> BigHamburgerMenuSpec {
     )
 }
 
-const PRIMARY_MENU_LABEL: &str = "Main menu";
+const PRIMARY_MENU_LABEL: &str = mark("Main menu");
 
 fn primary_menu_action_specs() -> [(&'static str, &'static str); 2] {
     [
-        ("Restore default settings", "win.reset-defaults"),
-        ("About Filter noise", "win.about"),
+        (mark("Restore default settings"), "win.reset-defaults"),
+        (mark("About Filter noise"), "win.about"),
     ]
 }
 
@@ -276,7 +369,15 @@ pub(super) fn bind_spectrum_to_monitor(spectrum: &Rc<Spectrum>, monitor: &Rc<Aud
             };
             match evt {
                 MonitorEvent::Frame(frame) => spectrum.push_frame(&frame),
-                MonitorEvent::Fatal(_) => break,
+                MonitorEvent::Recovering(cause) => {
+                    log::warn!("microphone meter reconnecting: {cause}");
+                    spectrum.set_unavailable(true);
+                }
+                MonitorEvent::Fatal(cause) => {
+                    log::error!("microphone meter stopped: {cause}");
+                    spectrum.set_unavailable(false);
+                    break;
+                }
             }
         }
     });
@@ -330,8 +431,8 @@ mod tests {
         assert_eq!(
             primary_menu_action_specs(),
             [
-                ("Restore default settings", "win.reset-defaults"),
-                ("About Filter noise", "win.about"),
+                (mark("Restore default settings"), "win.reset-defaults"),
+                (mark("About Filter noise"), "win.about"),
             ]
         );
     }

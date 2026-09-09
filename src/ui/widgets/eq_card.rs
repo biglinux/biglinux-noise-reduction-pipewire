@@ -22,7 +22,7 @@
 //! └──────────────────────────────────────────────────────────┘
 //! ```
 
-use std::cell::RefCell;
+use std::cell::Cell;
 use std::rc::Rc;
 
 use gtk::prelude::*;
@@ -81,24 +81,27 @@ pub fn build_eq_card(
     // RefCell guards "we are programmatically setting band values
     // because the user picked a preset" — without it the per-band
     // change handlers below would loop back into `Preset(custom)`.
-    let suppress: Rc<RefCell<bool>> = Rc::new(RefCell::new(false));
+    let suppress = Rc::new(Cell::new(false));
     {
         let apply = Rc::clone(&apply);
         let band_scales = Rc::clone(&band_scales);
         let suppress = Rc::clone(&suppress);
         let ids = eq_preset_ids();
         preset_dropdown.connect_selected_notify(move |dd| {
+            if suppress.get() {
+                return;
+            }
             let Some(id) = ids.get(dd.selected() as usize).copied() else {
                 return;
             };
             let Some(bands) = eq_preset_bands(id) else {
                 return;
             };
-            *suppress.borrow_mut() = true;
+            suppress.set(true);
             for (scale, gain) in band_scales.iter().zip(bands.iter()) {
                 scale.adjustment().set_value(f64::from(*gain));
             }
-            *suppress.borrow_mut() = false;
+            suppress.set(false);
             apply(EqMutation::Preset(id));
         });
     }
@@ -106,8 +109,12 @@ pub fn build_eq_card(
     for (idx, scale) in band_scales.iter().enumerate() {
         let apply = Rc::clone(&apply);
         let suppress = Rc::clone(&suppress);
+        // Weak: the dropdown already owns the scales through its callback.
+        let dropdown = preset_dropdown.downgrade();
+        let custom = eq_preset_ids().iter().position(|id| *id == "custom");
+        scale.set_widget_name(&format!("eq-band-{idx}"));
         scale.adjustment().connect_value_changed(move |a| {
-            if *suppress.borrow() {
+            if suppress.get() {
                 return;
             }
             let gain_db = (a.value() as f32).clamp(EQ_BAND_MIN, EQ_BAND_MAX);
@@ -115,7 +122,11 @@ pub fn build_eq_card(
                 index: idx,
                 gain_db,
             });
-            apply(EqMutation::Preset("custom"));
+            if let (Some(dropdown), Some(index)) = (dropdown.upgrade(), custom) {
+                suppress.set(true);
+                dropdown.set_selected(index as u32);
+                suppress.set(false);
+            }
         });
     }
 
@@ -137,7 +148,8 @@ pub fn apply_eq_mutation(eq: &mut EqualizerConfig, mutation: EqMutation) {
         }
         EqMutation::Band { index, gain_db } => {
             if let Some(slot) = eq.bands.get_mut(index) {
-                *slot = gain_db;
+                *slot = gain_db.clamp(EQ_BAND_MIN, EQ_BAND_MAX);
+                "custom".clone_into(&mut eq.preset);
             }
         }
     }
@@ -152,6 +164,8 @@ fn preset_dropdown(initial_id: &str) -> DropDown {
         dd.set_selected(idx as u32);
     }
     dd.set_hexpand(true);
+    dd.set_widget_name("eq-preset");
+    dd.update_property(&[gtk::accessible::Property::Label(&i18n("Preset"))]);
     dd
 }
 
@@ -195,26 +209,26 @@ fn build_band_scale() -> Scale {
 
 fn preset_row(dropdown: &DropDown) -> GtkBox {
     let row = GtkBox::builder()
-        .orientation(Orientation::Horizontal)
-        .spacing(12)
+        .orientation(Orientation::Vertical)
+        .spacing(6)
         .margin_start(16)
         .margin_end(16)
         .margin_bottom(12)
         .build();
-    let label = Label::builder()
-        .label(i18n("Preset"))
-        .xalign(0.0)
-        .width_request(140)
-        .build();
+    let label = Label::builder().label(i18n("Preset")).xalign(0.0).build();
     row.append(&label);
     row.append(dropdown);
     row
 }
 
-fn bands_row(scales: &[Scale]) -> GtkBox {
-    let row = GtkBox::builder()
+fn bands_row(scales: &[Scale]) -> gtk::FlowBox {
+    let row = gtk::FlowBox::builder()
         .orientation(Orientation::Horizontal)
-        .spacing(8)
+        .selection_mode(gtk::SelectionMode::None)
+        .min_children_per_line(2)
+        .max_children_per_line(EQ_BAND_COUNT as u32)
+        .column_spacing(8)
+        .row_spacing(12)
         .margin_start(16)
         .margin_end(16)
         .margin_bottom(16)
@@ -250,6 +264,50 @@ fn format_freq(hz: u32) -> String {
     } else {
         format!("{hz}")
     }
+}
+
+#[cfg(test)]
+pub(in crate::ui) fn assert_interaction_contract() {
+    fn find(widget: &gtk::Widget, name: &str) -> Option<gtk::Widget> {
+        if widget.widget_name() == name {
+            return Some(widget.clone());
+        }
+        let mut child = widget.first_child();
+        while let Some(current) = child {
+            if let Some(found) = find(&current, name) {
+                return Some(found);
+            }
+            child = current.next_sibling();
+        }
+        None
+    }
+    let initial = EqualizerConfig::default();
+    let preset_id = initial.preset.clone();
+    let expected = initial.bands.clone();
+    let state = Rc::new(std::cell::RefCell::new(initial.clone()));
+    let changed = Rc::clone(&state);
+    let card = build_eq_card(initial, "Equalizer".into(), String::new(), move |event| {
+        apply_eq_mutation(&mut changed.borrow_mut(), event);
+    });
+    let root: &gtk::Widget = card.widget().upcast_ref();
+    let dropdown = find(root, "eq-preset")
+        .unwrap()
+        .downcast::<DropDown>()
+        .unwrap();
+    let scale = find(root, "eq-band-0")
+        .unwrap()
+        .downcast::<Scale>()
+        .unwrap();
+    scale.set_value(7.0);
+    let ids = eq_preset_ids();
+    assert_eq!(ids[dropdown.selected() as usize], "custom");
+    assert_eq!(state.borrow().preset, "custom");
+    assert_eq!(state.borrow().bands[0], 7.0);
+    dropdown.set_selected(ids.iter().position(|id| *id == preset_id).unwrap() as u32);
+    assert_eq!(state.borrow().bands, expected);
+    // Minimum requested width must not contain ten side-by-side columns.
+    let minimum = root.measure(Orientation::Horizontal, -1).0;
+    assert!(minimum < 400, "equalizer minimum width: {minimum}");
 }
 
 #[cfg(test)]

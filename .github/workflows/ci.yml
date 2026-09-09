@@ -2,205 +2,359 @@ name: CI
 
 on:
   push:
-    branches:
-      - main
-      - "**stable**"
-      - "**testing**"
-    paths-ignore:
-      - "**.md"
-      - "docs/**"
-      - "po/**.po"
-      - "po/**.pot"
-      - ".github/dependabot.yml"
-      - ".github/workflows/codeql.yml"
-      - ".github/workflows/security.yml"
+    branches: [main, "**stable**", "**testing**"]
   pull_request:
     branches: [main]
-    paths-ignore:
-      - "**.md"
-      - "docs/**"
-      - "po/**.po"
-      - "po/**.pot"
-
-env:
-  CARGO_TERM_COLOR: always
-  RUSTFLAGS: -D warnings
-  CARGO_INCREMENTAL: "0"
+    types: [opened, synchronize, reopened, ready_for_review]
+  workflow_dispatch:
 
 permissions:
   contents: read
 
-# One run per ref. Pushing a fixup cancels the previous run.
+# A skipped duplicate push must not cancel its PR. Superseded revisions of
+# the same event do cancel obsolete work; no secondary validation workflow.
 concurrency:
-  group: ${{ github.workflow }}-${{ github.ref }}
+  group: ci-${{ github.event_name }}-${{ github.event.pull_request.number || github.ref }}
   cancel-in-progress: true
 
+env:
+  CARGO_TERM_COLOR: always
+  CARGO_INCREMENTAL: "0"
+  RUSTFLAGS: -D warnings
+  RUSTUP_TOOLCHAIN: "1.98.1"
+
 jobs:
-  # ── Compile jobs run inside Arch container because Cargo.toml gates
-  #    GTK 4.22 (`features = ["v4_22"]`) and ubuntu-latest only ships
-  #    GTK 4.14. Arch is also our deployment target (BigLinux/Manjaro)
-  #    so CI matches what users will run.
+  plan:
+    name: Select checks for changed files
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    permissions:
+      contents: read
+      pull-requests: read
+    outputs:
+      rust: ${{ steps.plan.outputs.rust }}
+      native: ${{ steps.plan.outputs.native }}
+      dependencies: ${{ steps.plan.outputs.dependencies }}
+      i18n: ${{ steps.plan.outputs.i18n }}
+      shell: ${{ steps.plan.outputs.shell }}
+      flatpak: ${{ steps.plan.outputs.flatpak }}
+      plasma: ${{ steps.plan.outputs.plasma }}
+      spelling: ${{ steps.plan.outputs.spelling }}
+      secrets: ${{ steps.plan.outputs.secrets }}
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - name: Test CI selection and release-gate policy
+        run: python3 -m unittest discover -s .github/ci -p 'test_*.py'
+      - id: plan
+        name: Compute one execution plan
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: python3 .github/ci/plan.py
+
   fmt:
     name: rustfmt
+    needs: plan
+    if: needs.plan.outputs.rust == 'true'
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-      - uses: dtolnay/rust-toolchain@stable
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
         with:
+          persist-credentials: false
+      - uses: dtolnay/rust-toolchain@6bed0761d98439e5a578e2877258200ad565ba87
+        with:
+          toolchain: "1.98.1"
           components: rustfmt
       - run: cargo fmt --all --check
 
-  clippy:
-    name: clippy (strict)
+  native:
+    name: Application contracts, GTK and private PipeWire graphs
+    needs: plan
+    if: needs.plan.outputs.native == 'true'
     runs-on: ubuntu-latest
     container: archlinux:latest
+    timeout-minutes: 30
+    defaults:
+      run:
+        shell: bash
     steps:
-      - run: pacman -Sy --noconfirm --needed git
-      - uses: actions/checkout@v4
-      - uses: ./.github/actions/install-system-deps
-      - uses: dtolnay/rust-toolchain@stable
+      - run: pacman -Syu --noconfirm --needed git xorg-server-xvfb xorg-xauth dbus ttf-dejavu python pipewire-audio swh-plugins
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
         with:
+          persist-credentials: false
+      - run: mkdir -p .ci-results/native
+      - uses: ./.github/actions/install-system-deps
+      - uses: dtolnay/rust-toolchain@6bed0761d98439e5a578e2877258200ad565ba87
+        id: rust
+        with:
+          toolchain: "1.98.1"
           components: clippy
-      - uses: Swatinem/rust-cache@v2
-      - run: cargo clippy --all-targets --all-features -- -D warnings
-
-  test:
-    name: tests (nextest)
-    runs-on: ubuntu-latest
-    container: archlinux:latest
-    steps:
-      - run: pacman -Sy --noconfirm --needed git
-      - uses: actions/checkout@v4
-      - uses: ./.github/actions/install-system-deps
-      - uses: dtolnay/rust-toolchain@stable
-      - uses: Swatinem/rust-cache@v2
-      - uses: taiki-e/install-action@v2
+      - uses: Swatinem/rust-cache@6323deb102c322ba6fcbdcafc7e3dddab59af2b6
         with:
-          tool: cargo-nextest
-      - run: cargo nextest run --all-features --locked
+          # New cache generation after inconsistent compiled/source diagnostics.
+          # Keep this constant; do not invalidate all dependencies on every push.
+          prefix-key: native-source-identity-v1
+      - name: Record and verify the exact build inputs
+        id: identity
+        env:
+          PR_HEAD: ${{ github.event.pull_request.head.sha || github.sha }}
+        run: |
+          {
+            printf 'PR head: %s\n' "$PR_HEAD"
+            git -c safe.directory="$PWD" rev-parse HEAD
+            rustc --version
+            pkg-config --modversion gtk4 libadwaita-1 libpipewire-0.3
+          } > .ci-results/native/environment.txt
+          python3 .github/ci/build_identity.py
+      - name: Strict Clippy, all targets and features
+        run: cargo clippy --all-targets --all-features --locked -- -D warnings 2>&1 | tee .ci-results/native/clippy.log
+      # Keep the distribution's allocator fork and production feature set.
+      # Application tests run once using the runner's system allocator.
+      - name: Unit, integration and documentation tests
+        if: '!cancelled() && steps.identity.outcome == ''success'''
+        run: cargo test --no-default-features --locked -- --test-threads=1 2>&1 | tee .ci-results/native/tests.log
+      - name: Independent GTK application contracts
+        if: '!cancelled() && steps.identity.outcome == ''success'''
+        run: bash scripts/test-ui.sh --no-default-features 2>&1 | tee .ci-results/native/gtk.log
+      - name: Real graph loading and recovery on a private PipeWire daemon
+        if: '!cancelled() && steps.identity.outcome == ''success'''
+        run: bash scripts/test-pipewire.sh --no-default-features 2>&1 | tee .ci-results/native/pipewire-runtime.log
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        if: always()
+        with:
+          name: native-contract-logs-${{ github.sha }}
+          path: .ci-results/native/
+          include-hidden-files: true
+          retention-days: 7
+          if-no-files-found: error
 
   msrv:
-    name: MSRV (1.97.1)
+    name: MSRV 1.97.1
+    needs: plan
+    # Adding the candidate label does not create a second workflow run.
+    if: needs.plan.outputs.rust == 'true' && (github.event_name != 'pull_request' || github.event.pull_request.draft == false || contains(github.event.pull_request.labels.*.name, 'release-candidate'))
     runs-on: ubuntu-latest
     container: archlinux:latest
+    timeout-minutes: 25
+    env:
+      RUSTUP_TOOLCHAIN: "1.97.1"
     steps:
-      - run: pacman -Sy --noconfirm --needed git
-      - uses: actions/checkout@v4
+      - run: pacman -Syu --noconfirm --needed git
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          persist-credentials: false
       - uses: ./.github/actions/install-system-deps
-      # Pinning toolchain via `with:` so Dependabot can't bump our MSRV
-      # by changing the action ref.
-      - uses: dtolnay/rust-toolchain@master
+      - uses: dtolnay/rust-toolchain@6bed0761d98439e5a578e2877258200ad565ba87
         with:
           toolchain: "1.97.1"
-      - uses: Swatinem/rust-cache@v2
+      - uses: Swatinem/rust-cache@6323deb102c322ba6fcbdcafc7e3dddab59af2b6
       - run: cargo build --all-features --locked
 
   release-build:
-    name: release build
+    name: Release build and staged native package
+    needs: plan
+    if: needs.plan.outputs.rust == 'true' && (github.event_name != 'pull_request' || github.event.pull_request.draft == false || contains(github.event.pull_request.labels.*.name, 'release-candidate'))
     runs-on: ubuntu-latest
     container: archlinux:latest
+    timeout-minutes: 30
+    defaults:
+      run:
+        shell: bash
     steps:
-      - run: pacman -Sy --noconfirm --needed git
-      - uses: actions/checkout@v4
+      - run: pacman -Syu --noconfirm --needed git rsync python gettext desktop-file-utils appstream
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          persist-credentials: false
+      - run: mkdir -p .ci-results/release
       - uses: ./.github/actions/install-system-deps
-      - uses: dtolnay/rust-toolchain@stable
-      - uses: Swatinem/rust-cache@v2
-      - run: cargo build --release --locked
+      - uses: dtolnay/rust-toolchain@6bed0761d98439e5a578e2877258200ad565ba87
+        id: rust
+        with:
+          toolchain: "1.98.1"
+      - uses: Swatinem/rust-cache@6323deb102c322ba6fcbdcafc7e3dddab59af2b6
+      # Calls the real recipe once; no second execution of application tests.
+      - name: Build, stage and validate the package payload
+        run: bash scripts/test-package.sh .ci-results/release 2>&1 | tee .ci-results/release/build.log
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        if: always()
+        with:
+          name: release-package-evidence-${{ github.sha }}
+          path: .ci-results/release/
+          include-hidden-files: true
+          retention-days: 7
+          if-no-files-found: error
 
   deny:
-    name: cargo-deny (advisories + licenses + bans)
+    name: Dependency licenses, bans and sources
+    needs: plan
+    if: needs.plan.outputs.dependencies == 'true'
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          persist-credentials: false
       - uses: taiki-e/install-action@v2
         with:
           tool: cargo-deny
-      - run: cargo deny check
+      - run: cargo deny check bans licenses sources
+
+  audit:
+    name: RustSec vulnerabilities and unsound dependencies
+    needs: plan
+    if: needs.plan.outputs.dependencies == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          persist-credentials: false
+      - uses: taiki-e/install-action@v2
+        with:
+          tool: cargo-audit
+      - run: cargo audit --deny unsound
+      - run: cargo audit --deny unsound --file vendor/big-rust-components/Cargo.lock
 
   machete:
-    name: cargo-machete (unused deps)
+    name: Unused dependencies
+    needs: plan
+    if: needs.plan.outputs.rust == 'true'
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          persist-credentials: false
       - uses: taiki-e/install-action@v2
         with:
           tool: cargo-machete
-      # `--with-metadata` resolves crates renamed in their own
-      # Cargo.toml. Without it the vendored big-relm4-components trips
-      # the same gettext-rs / `gettextrs` false positive the root
-      # manifest has to ignore by hand.
       - run: cargo machete --with-metadata
 
   typos:
-    name: typos (spellcheck)
+    name: Spelling and protocol-aware exceptions
+    needs: plan
+    if: needs.plan.outputs.spelling == 'true'
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          persist-credentials: false
       - uses: crate-ci/typos@master
 
   complexity:
-    name: lizard (CCN <= 25) + jscpd (duplication)
+    name: Complexity and duplication
+    needs: plan
+    if: needs.plan.outputs.rust == 'true'
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-      - name: Install lizard
-        run: pipx install lizard
-      - name: Install jscpd
-        run: npm install -g jscpd
-      - name: Cyclomatic complexity
-        run: lizard src/ -l rust -C 25 -w
-      - name: Duplicate-code detector
-        run: jscpd --min-lines 50 --min-tokens 100 --threshold 5 --reporters console --silent src/
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          persist-credentials: false
+      - run: pipx install lizard
+      - run: npm install -g jscpd
+      - run: lizard src/ -l rust -C 25 -w
+      - run: jscpd --min-lines 50 --min-tokens 100 --threshold 5 --reporters console --silent src/
 
   i18n:
-    name: gettext catalogs (msgfmt -c)
+    name: Rust/QML extraction coverage and gettext catalogs
+    needs: plan
+    if: needs.plan.outputs.i18n == 'true'
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-      - name: Install gettext
-        run: sudo apt-get update && sudo apt-get install -y gettext
-      - name: Validate every .po
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          persist-credentials: false
+      - uses: dtolnay/rust-toolchain@6bed0761d98439e5a578e2877258200ad565ba87
+        with:
+          toolchain: "1.98.1"
+      - run: sudo apt-get update && sudo apt-get install -y gettext
+      - uses: Swatinem/rust-cache@6323deb102c322ba6fcbdcafc7e3dddab59af2b6
+        with:
+          cache-targets: false
+      - run: cargo install xtr --version 0.1.11 --locked
+      - run: bash scripts/refresh-pot.sh --check
+      - name: Validate every catalog
         run: |
-          fail=0
+          set -euo pipefail
           for po in po/*.po; do
-            if ! msgfmt -c -o /dev/null "$po" 2>&1; then
-              echo "::error file=$po::invalid catalog"
-              fail=1
-            fi
+            msgfmt --check --check-header -o /dev/null "$po"
           done
-          exit "$fail"
 
   flatpak-manifest:
-    name: flatpak manifest lint
+    name: Flatpak metadata and offline source consistency, not runtime approval
+    needs: plan
+    if: needs.plan.outputs.flatpak == 'true'
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-      - name: YAML parse
-        run: python3 -c "import yaml; yaml.safe_load(open('packaging/flatpak/br.com.biglinux.microphone.yml'))"
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          persist-credentials: false
+      - run: sudo apt-get update && sudo apt-get install -y python3-yaml
+      - name: Parse manifest and verify registry checksums against Cargo.lock
+        run: |
+          /usr/bin/python3 - <<'PY'
+          import json, tomllib, yaml
+          from pathlib import Path
+          yaml.safe_load(Path('packaging/flatpak/br.com.biglinux.microphone.yml').read_text())
+          packages = tomllib.loads(Path('Cargo.lock').read_text())['package']
+          expected = {f"cargo/vendor/{p['name']}-{p['version']}": p['checksum']
+                      for p in packages if p.get('source', '').startswith('registry+')}
+          sources = json.loads(Path('packaging/flatpak/cargo-sources.json').read_text())
+          actual = {s['dest']: s['sha256'] for s in sources if s.get('type') == 'archive'}
+          assert actual == expected, 'Regenerate cargo-sources.json after changing Cargo.lock'
+          PY
 
   shell:
-    name: shellcheck
+    name: Shell scripts and package recipe
+    needs: plan
+    if: needs.plan.outputs.shell == 'true'
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-      - uses: ludeeus/action-shellcheck@master
-        env:
-          SHELLCHECK_OPTS: -e SC2034,SC2154
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
         with:
-          scandir: ./scripts
-          additional_files: |
-            packaging/flatpak/generate-cargo-sources.sh
+          persist-credentials: false
+      - run: sudo apt-get update && sudo apt-get install -y shellcheck
+      - run: shellcheck -e SC2034,SC2154 scripts/*.sh packaging/flatpak/generate-cargo-sources.sh packaging/arch/PKGBUILD packaging/arch/*.install
 
-  # PR-only — flags new dependencies introduced by the PR that have
-  # known advisories. Complements cargo-audit (which scans current
-  # state) by gating before merge.
-  dependency-review:
-    name: dependency-review (PR only)
+  plasmoid-contracts:
+    name: Plasma status transitions
+    needs: plan
+    if: needs.plan.outputs.plasma == 'true'
     runs-on: ubuntu-latest
-    if: github.event_name == 'pull_request'
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/dependency-review-action@v4
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
         with:
-          fail-on-severity: high
-          comment-summary-in-pr: on-failure
+          persist-credentials: false
+      - run: node --test tests/plasmoid_status.test.cjs
+
+  secrets:
+    name: Secret scan, including findings awaiting verification
+    needs: plan
+    if: needs.plan.outputs.secrets == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: trufflesecurity/trufflehog@166bf18f3a3fe52a6db9e1770568f52a0c40ff07
+        with:
+          version: '3.97.4'
+          extra_args: --results=verified,unknown
+
+  result:
+    name: CI result
+    if: always()
+    needs: [plan, fmt, native, msrv, release-build, deny, audit, machete, typos, complexity, i18n, flatpak-manifest, shell, plasmoid-contracts, secrets]
+    runs-on: ubuntu-latest
+    timeout-minutes: 2
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          persist-credentials: false
+      - name: Require execution and success from every selected check
+        env:
+          RESULTS: ${{ toJSON(needs) }}
+          RELEASE_REQUIRED: ${{ github.event_name != 'pull_request' || github.event.pull_request.draft == false || contains(github.event.pull_request.labels.*.name, 'release-candidate') }}
+        run: python3 .github/ci/result.py

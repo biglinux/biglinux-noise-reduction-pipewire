@@ -14,6 +14,8 @@ mod audio;
 pub mod dynamics;
 mod echo_cancel;
 mod equalizer;
+mod gain_safety;
+pub use gain_safety::GainSafety;
 pub mod noise_model;
 mod output_filter;
 mod paths;
@@ -22,12 +24,15 @@ mod paths;
 pub mod plugin_cost;
 mod processing;
 mod quality;
+mod runtime;
+pub use runtime::RuntimeConfig;
+pub mod storage;
 mod ui;
 
 use std::io;
 use std::path::Path;
 
-use log::{debug, error, info};
+use log::{debug, error};
 use serde::{Deserialize, Serialize};
 use std::fs::read_to_string;
 
@@ -40,7 +45,7 @@ pub use echo_cancel::{EchoCancelConfig, EchoMode};
 pub use equalizer::{
     EQ_BAND_COUNT, EQ_BAND_MAX, EQ_BAND_MIN, EqualizerConfig, eq_preset_bands, eq_preset_ids,
 };
-pub use output_filter::OutputFilterSettings;
+pub use output_filter::{OutputChannelMode, OutputFilterSettings};
 pub use paths::{
     APP_DATA_DIR, APP_ID, EQ_BANDS_HZ, GETTEXT_PACKAGE, app_id, app_version, config_dir,
     gettext_package, gtcrn_plugin, illustrations_dir, settings_file,
@@ -53,6 +58,10 @@ pub use ui::{UiConfig, WindowConfig};
 #[derive(Debug, Clone, Default, PartialEq, Serialize, Deserialize)]
 #[serde(default)]
 pub struct AppSettings {
+    pub runtime: RuntimeConfig,
+    pub gain_safety: GainSafety,
+    /// Temporary master bypass; individual effect preferences are retained.
+    pub mic_bypass: bool,
     pub noise_reduction: NoiseReductionConfig,
     pub gate: GateConfig,
     pub compressor: CompressorConfig,
@@ -73,85 +82,117 @@ pub struct AppSettings {
 }
 
 impl AppSettings {
-    /// Load from the default location (`~/.config/biglinux-microphone/settings.json`).
-    /// Missing file → defaults. Malformed JSON → defaults + error log.
-    #[must_use]
-    pub fn load() -> Self {
-        let path = settings_file();
-        Self::load_from(&path)
-    }
-
-    /// Load from an explicit path. Testable variant of [`AppSettings::load`].
-    pub fn load_from(path: &Path) -> Self {
-        let content = match read_to_string(path) {
-            Ok(content) => content,
-            Err(e) if e.kind() == io::ErrorKind::NotFound => {
-                info!("settings: no file at {}, using defaults", path.display());
-                return Self::default();
-            }
-            Err(e) => {
-                error!(
-                    "settings: read error at {}: {e} — falling back to defaults",
-                    path.display()
-                );
-                return Self::default();
-            }
-        };
-        let parsed = serde_json::from_str::<serde_json::Value>(&content).and_then(|mut value| {
-            // Older standalone settings only had the switch. An explicit off
-            // remains off when the automatic mode is introduced.
-            if let Some(echo) = value
-                .get_mut("echo_cancel")
-                .and_then(serde_json::Value::as_object_mut)
-                && !echo.contains_key("mode")
-                && echo.get("enabled") == Some(&serde_json::Value::Bool(false))
-            {
-                echo.insert("mode".into(), "off".into());
-            }
-            if value.get("quality").is_none()
-                && value
-                    .get("noise_reduction")
-                    .and_then(|noise| noise.get("model"))
-                    .is_some()
-                && let Some(settings) = value.as_object_mut()
-            {
-                settings.insert("quality".into(), "manual".into());
-            }
-            if let Some(output) = value
-                .get_mut("output_filter")
-                .and_then(serde_json::Value::as_object_mut)
-            {
-                output.remove("routed_apps");
-            }
-            serde_json::from_value::<Self>(value)
-        });
-        match parsed {
-            Ok(mut s) => {
-                s.equalizer.normalize();
-                s.output_filter.equalizer.normalize();
-                s.window = s.window.sanitized();
-                s.demote_unavailable_models();
-                s
-            }
-            Err(e) => {
-                error!(
-                    "settings: parse error at {}: {e} — falling back to defaults",
-                    path.display()
-                );
-                Self::default()
-            }
+    pub fn set_microphone_enabled(&mut self, enabled: bool) {
+        self.mic_bypass = !enabled;
+        if enabled && !crate::pipeline::mic_chain_wanted(self) {
+            self.noise_reduction.enabled = true;
         }
     }
 
-    /// Settings may persist an optional model from a previous run while
-    /// its LADSPA package has since been uninstalled — or left present
-    /// but unloadable (see [`NoiseModel::plugin_loadable_cached`]). Demote silently
-    /// to the default GTCRN variant so the rendered filter-chain
-    /// doesn't reference a broken .so.
-    fn demote_unavailable_models(&mut self) {
-        self.noise_reduction.model = available_or_default(self.noise_reduction.model);
-        self.output_filter.noise_reduction.model =
-            available_or_default(self.output_filter.noise_reduction.model);
+    /// Materialize effective flags without destroying the saved choices.
+    #[must_use]
+    pub fn runtime_settings(&self) -> Self {
+        let mut effective = self.clone();
+        if self.mic_bypass {
+            crate::pipeline::cascade_mic_off(&mut effective);
+        }
+        // A catalogue model the live graph cannot drive would leave the chain
+        // running a plugin that does nothing; run the nearest one it can.
+        effective.noise_reduction.model = effective.noise_reduction.model.live_equivalent();
+        effective.output_filter.noise_reduction.model = effective
+            .output_filter
+            .noise_reduction
+            .model
+            .live_equivalent();
+        effective
+    }
+
+    /// Strict transaction read: migration, validation and normalization use
+    /// one byte snapshot. Malformed files are never converted to defaults.
+    pub fn load_strict() -> io::Result<Self> {
+        Self::load_from_strict(&settings_file())
+    }
+
+    pub fn load_from_strict(path: &Path) -> io::Result<Self> {
+        let content = match read_to_string(path) {
+            Ok(content) => content,
+            Err(error) if error.kind() == io::ErrorKind::NotFound => return Ok(Self::default()),
+            Err(error) => return Err(error),
+        };
+        let mut value: serde_json::Value = serde_json::from_str(&content)
+            .map_err(|error| io::Error::new(io::ErrorKind::InvalidData, error))?;
+        if !value.is_object() {
+            return Err(io::Error::new(
+                io::ErrorKind::InvalidData,
+                "settings must be a JSON object",
+            ));
+        }
+        // Older standalone settings only had the switch. An explicit off
+        // remains off when the automatic mode is introduced.
+        if let Some(echo) = value
+            .get_mut("echo_cancel")
+            .and_then(serde_json::Value::as_object_mut)
+            && !echo.contains_key("mode")
+            && echo.get("enabled") == Some(&serde_json::Value::Bool(false))
+        {
+            echo.insert("mode".into(), "off".into());
+        }
+        if value.get("quality").is_none()
+            && value
+                .get("noise_reduction")
+                .and_then(|noise| noise.get("model"))
+                .is_some()
+            && let Some(settings) = value.as_object_mut()
+        {
+            settings.insert("quality".into(), "manual".into());
+        }
+        if let Some(output) = value
+            .get_mut("output_filter")
+            .and_then(serde_json::Value::as_object_mut)
+        {
+            output.remove("routed_apps");
+        }
+        // No screen has ever offered the lookahead, so a file carrying the old
+        // 60 is carrying a default, not a choice — and that default costs 48 ms
+        // of microphone delay for no measurable onset gain (the numbers are on
+        // `LOOKAHEAD_MS_DEFAULT`). Dropping the key lets the new default apply.
+        // Any other value stays: that one somebody typed.
+        for path in [
+            ["noise_reduction"].as_slice(),
+            ["output_filter", "noise_reduction"].as_slice(),
+        ] {
+            let mut at = Some(&mut value);
+            for key in path {
+                at = at.and_then(|node| node.get_mut(*key));
+            }
+            if let Some(noise) = at.and_then(serde_json::Value::as_object_mut)
+                && noise
+                    .get("lookahead_ms")
+                    .and_then(serde_json::Value::as_u64)
+                    == Some(60)
+            {
+                noise.remove("lookahead_ms");
+            }
+        }
+        let mut settings: Self = serde_json::from_value(value)
+            .map_err(|error| io::Error::new(io::ErrorKind::InvalidData, error))?;
+        settings.equalizer.normalize();
+        settings.output_filter.equalizer.normalize();
+        settings.window = settings.window.sanitized();
+        Ok(settings)
+    }
+
+    #[must_use]
+    pub fn load() -> Self {
+        Self::load_from(&settings_file())
+    }
+
+    /// Read-only compatibility entry point. Writers use load_strict instead.
+    pub fn load_from(path: &Path) -> Self {
+        Self::load_from_strict(path).unwrap_or_else(|error| {
+            error!("settings: could not read {}: {error}", path.display());
+            Self::default()
+        })
     }
 
     /// Put §38's choice into effect: pick the model and write it into both chains.
@@ -166,10 +207,14 @@ impl AppSettings {
     /// A `Manual` install chose its model by hand and must pay none of that,
     /// yet all three callers used to read it before asking.
     pub fn settle_quality(&mut self) {
-        if !self.quality.decides_the_model() {
+        if !self.quality.decides_the_model() || self.filters_running() == 0 {
             return;
         }
-        let machine = Machine::read(self.filters_running());
+        let machine = if self.quality == Quality::Automatic {
+            Machine::read(self.filters_running())
+        } else {
+            Machine::default()
+        };
         let wanted = quality::loadable(quality::choose(
             self.quality,
             &machine,
@@ -194,7 +239,15 @@ impl AppSettings {
     /// rather than a second demand on it.
     #[must_use]
     pub fn filters_running(&self) -> usize {
-        usize::from(self.noise_reduction.enabled) + usize::from(self.output_filter.enabled)
+        let microphone = usize::from(!self.mic_bypass && self.noise_reduction.enabled);
+        let output =
+            usize::from(self.output_filter.enabled && self.output_filter.noise_reduction.enabled);
+        let channels = if self.output_filter.channel_mode == OutputChannelMode::Stereo {
+            2
+        } else {
+            1
+        };
+        microphone + output * channels
     }
 
     /// Persist atomically through the shared storage boundary so a crash
@@ -205,20 +258,23 @@ impl AppSettings {
     }
 
     pub fn save_to(&self, path: &Path) -> io::Result<()> {
-        let mut json = serde_json::to_vec_pretty(self)
-            .map_err(|e| io::Error::new(io::ErrorKind::InvalidData, e))?;
-        json.push(b'\n');
+        self.save_to_revision(path).map(|_| ())
+    }
+
+    /// Return exactly the bytes this operation persisted, not a later read
+    /// that could acknowledge a concurrent writer's still-unapplied revision.
+    pub(crate) fn save_with_revision(&self) -> io::Result<Vec<u8>> {
+        self.save_to_revision(&settings_file())
+    }
+
+    fn save_to_revision(&self, path: &Path) -> io::Result<Vec<u8>> {
+        let json = storage::serialized_preserving_unknown(self, path)?;
+        if !path.is_symlink() && std::fs::read(path).is_ok_and(|existing| existing == json) {
+            return Ok(json);
+        }
         atomic_write_private(path, &json)?;
         debug!("settings: saved to {}", path.display());
-        Ok(())
-    }
-}
-
-fn available_or_default(model: NoiseModel) -> NoiseModel {
-    if model == NoiseModel::default() || model.plugin_loadable_cached() {
-        model
-    } else {
-        NoiseModel::default()
+        Ok(json)
     }
 }
 
@@ -238,6 +294,7 @@ pub(crate) fn atomic_write_private(path: &Path, bytes: &[u8]) -> io::Result<()> 
             gio::Cancellable::NONE,
         )
         .map_err(io::Error::other)?;
+    std::fs::File::open(path)?.sync_all()?;
     std::fs::File::open(parent)?.sync_all()
 }
 
@@ -252,6 +309,39 @@ mod tests {
         let path = dir.path().join("nonexistent.json");
         let s = AppSettings::load_from(&path);
         assert_eq!(s, AppSettings::default());
+    }
+
+    #[test]
+    fn an_offline_only_model_runs_as_its_live_equivalent_without_losing_the_choice() {
+        let settings = AppSettings {
+            quality: Quality::Manual,
+            noise_reduction: NoiseReductionConfig {
+                model: NoiseModel::DpdfnetV8,
+                ..NoiseReductionConfig::default()
+            },
+            output_filter: OutputFilterSettings {
+                noise_reduction: NoiseReductionConfig {
+                    model: NoiseModel::DpdfnetV2,
+                    ..NoiseReductionConfig::default()
+                },
+                ..OutputFilterSettings::default()
+            },
+            ..AppSettings::default()
+        };
+
+        let effective = settings.runtime_settings();
+
+        assert_eq!(effective.noise_reduction.model, NoiseModel::DpdfnetV8Hr);
+        assert_eq!(
+            effective.output_filter.noise_reduction.model,
+            NoiseModel::DpdfnetV2Hr
+        );
+        // The saved document still carries what was asked for.
+        assert_eq!(settings.noise_reduction.model, NoiseModel::DpdfnetV8);
+        assert_eq!(
+            settings.output_filter.noise_reduction.model,
+            NoiseModel::DpdfnetV2
+        );
     }
 
     #[test]
@@ -320,6 +410,25 @@ mod tests {
         assert_eq!(
             s.output_filter.equalizer.bands,
             EqualizerConfig::default().bands
+        );
+    }
+}
+
+#[cfg(test)]
+mod manual_model_tests {
+    #[test]
+    fn reading_preferences_never_replaces_a_manual_model() {
+        let directory = tempfile::tempdir().unwrap();
+        let path = directory.path().join("settings.json");
+        std::fs::write(
+            &path,
+            r#"{"quality":"manual","noise_reduction":{"model":4}}"#,
+        )
+        .unwrap();
+        let settings = super::AppSettings::load_from_strict(&path).unwrap();
+        assert_eq!(
+            settings.noise_reduction.model,
+            super::NoiseModel::DpdfnetV8Hr
         );
     }
 }

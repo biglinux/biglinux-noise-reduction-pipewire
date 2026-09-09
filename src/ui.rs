@@ -20,7 +20,7 @@ mod window;
 
 pub use mic_shell::run;
 
-#[cfg(test)]
+#[cfg(all(test, not(miri)))]
 mod tests {
     use std::cell::RefCell;
     use std::rc::Rc;
@@ -34,30 +34,56 @@ mod tests {
     use crate::services::pipewire::user_tweaks::UserTweaks;
     use crate::ui::state::AppState;
 
-    #[cfg(not(miri))]
-    #[test]
-    fn gtk_display_contracts_cover_dialogs_and_model_picker() {
+    fn init_display_contract() {
         let session_mode = std::env::var("BIGLINUX_UI_SESSION_MODE").unwrap_or_default();
-        if !matches!(session_mode.as_str(), "headless" | "vm" | "disposable") {
-            eprintln!("skip: GTK display contracts require KWin headless, VM, or disposable UI");
-            return;
-        }
-        gtk::init().expect("isolated GTK session is available");
-        assert_window_reset_dialog_contract();
-        assert_tuning_reset_dialog_contract();
-        assert_model_picker_contract();
-        assert_spectrum_visibility_contract();
-        assert_populate_body_contract();
-        assert_window_actions_contract();
-        assert_window_build_contract();
-        assert_monitor_binding_contract();
-        assert_factory_reset_preserves_window_and_ui_preferences();
-        assert_tuning_dropdown_and_banner_contract();
-        assert_tuning_page_populates_expected_sections();
-        assert_tuning_apply_button_contract();
+        assert!(
+            matches!(session_mode.as_str(), "headless" | "vm" | "disposable"),
+            "GTK contracts require an isolated session; run scripts/test-ui.sh"
+        );
+        // Adw widgets require libadwaita initialization, not just gtk::init().
+        // Each test runs in its own process: GTK must stay on its initializing
+        // thread even when the Rust test harness uses one worker per test.
+        adw::init().expect("isolated GTK/libadwaita session is available");
     }
 
-    #[cfg(not(miri))]
+    macro_rules! display_contract {
+        ($name:ident, $contract:path) => {
+            #[test]
+            #[ignore = "requires isolated display; run scripts/test-ui.sh"]
+            fn $name() {
+                init_display_contract();
+                $contract();
+            }
+        };
+    }
+
+    display_contract!(gtk_window_reset_dialog, assert_window_reset_dialog_contract);
+    display_contract!(gtk_tuning_reset_dialog, assert_tuning_reset_dialog_contract);
+    display_contract!(gtk_model_picker, assert_model_picker_contract);
+    display_contract!(
+        gtk_equalizer,
+        super::widgets::eq_card::assert_interaction_contract
+    );
+    display_contract!(gtk_spectrum_visibility, assert_spectrum_visibility_contract);
+    display_contract!(gtk_populate_body, assert_populate_body_contract);
+    display_contract!(gtk_window_actions, assert_window_actions_contract);
+    display_contract!(gtk_window_build, assert_window_build_contract);
+    display_contract!(gtk_meter_range, assert_meter_range_contract);
+    display_contract!(gtk_monitor_recovery, assert_monitor_binding_contract);
+    display_contract!(
+        gtk_factory_reset,
+        assert_factory_reset_preserves_window_and_ui_preferences
+    );
+    display_contract!(
+        gtk_tuning_dropdown,
+        assert_tuning_dropdown_and_banner_contract
+    );
+    display_contract!(
+        gtk_tuning_page,
+        assert_tuning_page_populates_expected_sections
+    );
+    display_contract!(gtk_tuning_apply, assert_tuning_apply_button_contract);
+
     fn assert_window_reset_dialog_contract() {
         let dialog = super::window::reset_confirmation_dialog();
 
@@ -78,7 +104,6 @@ mod tests {
         );
     }
 
-    #[cfg(not(miri))]
     fn assert_tuning_reset_dialog_contract() {
         let dialog = super::views::advanced::reset_audio_settings_dialog();
 
@@ -99,13 +124,14 @@ mod tests {
         );
     }
 
-    #[cfg(not(miri))]
     fn assert_model_picker_contract() {
         let picked_models = Rc::new(RefCell::new(Vec::new()));
         let picked_models_for_callback = Rc::clone(&picked_models);
-        let dropdown = super::widgets::model_picker::build(NoiseModel::GtcrnVctk, move |model| {
-            picked_models_for_callback.borrow_mut().push(model);
-        });
+        let dropdown = super::widgets::model_picker::build_with_availability(
+            NoiseModel::GtcrnVctk,
+            move |model| picked_models_for_callback.borrow_mut().push(model),
+            |_| true,
+        );
 
         assert_eq!(dropdown.selected(), 1);
         let model = dropdown.model().expect("model picker exposes a list model");
@@ -115,7 +141,6 @@ mod tests {
         assert_eq!(&*picked_models.borrow(), &[NoiseModel::GtcrnDns3]);
     }
 
-    #[cfg(not(miri))]
     fn assert_spectrum_visibility_contract() {
         let spectrum_container = gtk::Box::new(gtk::Orientation::Vertical, 0);
         let stack = adw::ViewStack::new();
@@ -140,7 +165,6 @@ mod tests {
         assert!(!spectrum_container.is_visible());
     }
 
-    #[cfg(not(miri))]
     fn assert_populate_body_contract() {
         let state = AppState::new(AppSettings::default());
         let (sender, _receiver) = relm4::channel::<super::mic_shell::MicInput>();
@@ -184,7 +208,6 @@ mod tests {
         assert!(!spectrum_container.is_visible());
     }
 
-    #[cfg(not(miri))]
     fn assert_window_actions_contract() {
         let application = registered_test_application("br.com.biglinux.NoiseReduction.ActionsTest");
         let window = adw::ApplicationWindow::builder()
@@ -217,7 +240,6 @@ mod tests {
         assert_eq!(about_dialog.developer_name().as_str(), "BigLinux Team");
     }
 
-    #[cfg(not(miri))]
     fn assert_window_build_contract() {
         let application = registered_test_application("br.com.biglinux.NoiseReduction.BuildTest");
         let (monitor, _events_tx) = AudioMonitor::contract_handle();
@@ -247,7 +269,26 @@ mod tests {
         assert!(window.lookup_action("about").is_some());
     }
 
-    #[cfg(not(miri))]
+    fn assert_meter_range_contract() {
+        let spectrum = super::widgets::spectrum::Spectrum::new();
+        let (meter, readout) = spectrum.meter_for_contract();
+        assert_eq!(meter.min_value(), 0.0);
+        assert_eq!(meter.max_value(), 1.0);
+        assert_eq!(meter.value(), 0.0);
+        spectrum.push_frame(&SpectrumFrame {
+            bands_db: vec![-30.0; 30],
+            rms_db: -30.0,
+            peak_db: -6.0,
+            seq: 0,
+        });
+        assert_eq!(meter.value(), 0.5);
+        assert!(readout.text().contains("-30"));
+        assert!(readout.text().contains("-6"));
+        for offset in ["low", "high", "full"] {
+            assert!((0.0..=1.0).contains(&meter.offset_value(Some(offset)).unwrap()));
+        }
+    }
+
     fn assert_monitor_binding_contract() {
         let (monitor, events_tx) = AudioMonitor::contract_handle();
         let monitor = Rc::new(monitor);
@@ -275,9 +316,30 @@ mod tests {
         }
 
         assert!(spectrum.target_peak_for_contract() > 0.0);
+        events_tx
+            .try_send(Event::Recovering("test disconnection".into()))
+            .unwrap();
+        for _ in 0..20 {
+            while gtk::glib::MainContext::default().iteration(false) {}
+        }
+        assert!(!spectrum.meter_for_contract().0.is_sensitive());
+        assert_eq!(spectrum.target_peak_for_contract(), 0.0);
+        events_tx
+            .try_send(Event::Frame(SpectrumFrame {
+                bands_db: vec![-24.0; 30],
+                rms_db: -30.0,
+                peak_db: -12.0,
+                seq: 2,
+            }))
+            .unwrap();
+        for _ in 0..20 {
+            while gtk::glib::MainContext::default().iteration(false) {}
+        }
+        assert!(spectrum.meter_for_contract().0.is_sensitive());
+        assert_eq!(spectrum.meter_for_contract().0.value(), 0.5);
+        assert!(spectrum.target_peak_for_contract() > 0.0);
     }
 
-    #[cfg(not(miri))]
     fn assert_factory_reset_preserves_window_and_ui_preferences() {
         let state = AppState::new(AppSettings {
             gate: GateConfig {
@@ -307,7 +369,6 @@ mod tests {
         assert_eq!(settings.gate, GateConfig::default());
     }
 
-    #[cfg(not(miri))]
     fn assert_tuning_dropdown_and_banner_contract() {
         let picked_values = Rc::new(RefCell::new(Vec::new()));
         let picked_values_for_callback = Rc::clone(&picked_values);
@@ -339,14 +400,10 @@ mod tests {
                 ..UserTweaks::default()
             },
         );
-        assert_eq!(
-            banner.title().as_str(),
-            "Custom settings active. Click Apply to enable them."
-        );
+        assert_eq!(banner.title().as_str(), "Your audio settings are active.");
         assert!(banner.is_revealed());
     }
 
-    #[cfg(not(miri))]
     fn assert_tuning_page_populates_expected_sections() {
         let content = super::views::advanced::build_tuning_page_contract(UserTweaks {
             quantum: Some(512),
@@ -356,7 +413,6 @@ mod tests {
         assert!(child_count(&content) >= 13);
     }
 
-    #[cfg(not(miri))]
     fn assert_tuning_apply_button_contract() {
         let button = gtk::Button::with_label("Apply and restart audio");
         let banner = adw::Banner::new("");
@@ -367,7 +423,6 @@ mod tests {
         assert_eq!(button.label().as_deref(), Some("Restarting audio…"));
     }
 
-    #[cfg(not(miri))]
     fn child_count(container: &gtk::Box) -> usize {
         let mut count = 0;
         let mut child = container.first_child();
@@ -378,7 +433,6 @@ mod tests {
         count
     }
 
-    #[cfg(not(miri))]
     fn registered_test_application(application_id: &str) -> adw::Application {
         use relm4::adw::Application as RelmApplication;
 

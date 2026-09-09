@@ -114,7 +114,7 @@ fn animation_advance_reports_peak_tail_until_noise_threshold_only() {
 }
 
 #[test]
-fn peak_meter_advance_uses_strict_growth_comparison() {
+fn steady_input_never_decays_below_its_current_level() {
     let mut state = SpectrumState {
         target_peak: 0.5,
         peak_level: 0.5,
@@ -125,8 +125,11 @@ fn peak_meter_advance_uses_strict_growth_comparison() {
 
     assert!(state.advance_peak_meter());
 
-    assert_close_f32(state.peak_level, 0.5 - METER_PEAK_DECAY);
-    assert_close_f32(state.peak_hold, 0.5 - METER_HOLD_DECAY);
+    for _ in 0..100 {
+        state.advance_peak_meter();
+        assert_close_f32(state.peak_level, 0.5);
+        assert_close_f32(state.peak_hold, 0.5);
+    }
     assert_eq!(state.meter_hold_ticks, 0);
 }
 
@@ -261,13 +264,7 @@ fn draw_full_spectrum_paints_background_tracks_and_active_content() {
     state.peak_hold = 0.9;
 
     let pixels = render_to_pixels(300, WIDGET_HEIGHT, |cairo_context| {
-        draw(
-            cairo_context,
-            300,
-            WIDGET_HEIGHT,
-            &state,
-            PEAK_METER_CAPTION_MSGID,
-        );
+        draw(cairo_context, 300, WIDGET_HEIGHT, &state, (0.2, 0.2, 0.2));
     });
 
     assert!(non_zero_byte_count(&pixels) > 10_000);

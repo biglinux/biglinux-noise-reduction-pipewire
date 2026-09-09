@@ -7,7 +7,7 @@
 
 use std::rc::Rc;
 
-use gtk::prelude::*;
+use adw::prelude::*;
 use gtk::{Align, Box as GtkBox, Label, Orientation, ScrolledWindow};
 
 use crate::config::{GATE_INTENSITY_MAX, StereoMode};
@@ -39,12 +39,35 @@ pub fn build(state: &Rc<AppState>, input: &relm4::Sender<MicInput>) -> gtk::Widg
         .margin_end(24)
         .build();
 
+    let master = adw::SwitchRow::builder()
+        .title(i18n("Microphone effects"))
+        .subtitle(i18n(
+            "Pause or resume all microphone effects without changing your choices.",
+        ))
+        .active(crate::pipeline::mic_chain_wanted(&state.settings()))
+        .build();
+    let sender = input.clone();
+    master.connect_active_notify(move |row| {
+        let _ = sender.send(MicInput::NoiseFilterToggled(row.is_active()));
+    });
+    let group = adw::PreferencesGroup::new();
+    group.add(&master);
+    content.append(&group);
+    if state.settings().mic_bypass {
+        let paused = adw::Banner::new(&i18n(
+            "Microphone effects are paused. Your choices below are preserved.",
+        ));
+        paused.set_revealed(true);
+        content.append(&paused);
+    }
     content.append(&mic_combo_card(state, input));
     content.append(self_listen_delay_card(state, input).widget());
     content.append(echo_cancel_card(state, input).widget());
 
     content.append(&section_header(&i18n("Noise filter — fine-tune"), 16));
     content.append(quality_card(state, input).widget());
+    content.append(&resource_options(state, input));
+    content.append(&gain_safety_card(state, input));
     content.append(model_card(state, input).widget());
     content.append(voice_recovery_card(state, input).widget());
 
@@ -434,4 +457,53 @@ fn compressor_card(state: &Rc<AppState>, input: &relm4::Sender<MicInput>) -> Did
     });
     card.add_row(&row);
     card
+}
+
+fn resource_options(
+    state: &Rc<AppState>,
+    input: &relm4::Sender<MicInput>,
+) -> adw::PreferencesGroup {
+    let group = adw::PreferencesGroup::new();
+    let details = adw::ExpanderRow::builder()
+        .title(i18n("Performance options"))
+        .subtitle(i18n("Leave these off unless audio still stutters. Changing them briefly restarts the filters."))
+        .build();
+    let fast = adw::SwitchRow::builder()
+        .title(i18n("Prefer faster processor cores"))
+        .subtitle(i18n("May help on some computers, but can use more power. The automatic system choice is usually best."))
+        .active(state.settings().runtime.prefer_fast_cpus).build();
+    let sender = input.clone();
+    fast.connect_active_notify(move |row| {
+        let _ = sender.send(MicInput::PreferFastCpusChanged(row.is_active()));
+    });
+    let memory = adw::SwitchRow::builder()
+        .title(i18n("Keep loaded audio data in memory"))
+        .subtitle(i18n("May reduce pauses under memory pressure, but leaves less RAM for other applications. This is optional and limited by the system."))
+        .active(state.settings().runtime.reserve_memory).build();
+    let sender = input.clone();
+    memory.connect_active_notify(move |row| {
+        let _ = sender.send(MicInput::ReserveMemoryChanged(row.is_active()));
+    });
+    details.add_row(&fast);
+    details.add_row(&memory);
+    group.add(&details);
+    group
+}
+
+pub(super) fn gain_safety_card(
+    state: &Rc<AppState>,
+    input: &relm4::Sender<MicInput>,
+) -> adw::PreferencesGroup {
+    let group = adw::PreferencesGroup::new();
+    let row = adw::SwitchRow::builder()
+        .title(i18n("Protect against excessive peaks"))
+        .subtitle(i18n("Lowers large boosts and caps sample peaks for microphone and playback. This can reduce overall volume; it cannot repair distorted recordings. Leave on unless you manage gain in another audio tool."))
+        .active(state.settings().gain_safety == crate::config::GainSafety::Automatic)
+        .build();
+    let input = input.clone();
+    row.connect_active_notify(move |row| {
+        let _ = input.send(MicInput::GainSafetyChanged(row.is_active()));
+    });
+    group.add(&row);
+    group
 }

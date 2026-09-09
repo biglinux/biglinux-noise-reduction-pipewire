@@ -1,8 +1,7 @@
 //! Plain-data types surfaced by the spectrum analyser.
 
-/// Default number of frequency buckets emitted per frame. The 30-band layout
-/// places the calibrated labels (63 Hz, 180 Hz, 500 Hz, 1.5 kHz, 4 kHz,
-/// 9.5 kHz) on their designated columns.
+/// Default number of logarithmic frequency buckets. Display labels and
+/// FFT-bin assignment derive from the same AnalyzerConfig frequency edges.
 pub const DEFAULT_BAND_COUNT: usize = 30;
 
 /// Default FFT window size (samples). 2048 at 48 kHz ≈ 42 ms, a decent
@@ -38,8 +37,9 @@ pub struct SpectrumFrame {
 pub enum Event {
     /// New spectrum frame computed from the capture stream.
     Frame(SpectrumFrame),
-    /// The underlying `pw-cat` process or reader thread died. The service
-    /// is inoperative; the consumer should surface the error and stop
-    /// visualising.
+    /// Capture is temporarily unavailable. Keep receiving: the worker retries.
+    Recovering(String),
+    /// The monitor cannot continue (for example, its thread could not start).
+    /// Surface the error and stop visualising; this is not a reconnect event.
     Fatal(String),
 }

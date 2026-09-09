@@ -122,7 +122,7 @@ fn advanced_effects_note(state: &Rc<AppState>) -> Option<Label> {
 fn noise_filter_header(state: &Rc<AppState>, input: &relm4::Sender<MicInput>) -> GtkBox {
     let switch = gtk::Switch::builder()
         .valign(Align::Center)
-        .active(state.settings().noise_reduction.enabled)
+        .active(crate::pipeline::mic_chain_wanted(&state.settings()))
         .build();
     switch.update_property(&[gtk::accessible::Property::Label(&i18n("Noise filter"))]);
     {
@@ -162,8 +162,7 @@ fn noise_filter_header(state: &Rc<AppState>, input: &relm4::Sender<MicInput>) ->
 
     let desc = Label::builder()
         .label(i18n(
-            "Removes background noise from your voice using AI. Higher \
-             intensity = stronger cleanup.",
+            "Reduces background noise in your voice. Turning this off pauses microphone effects without forgetting your choices.",
         ))
         .wrap(true)
         .xalign(0.0)
