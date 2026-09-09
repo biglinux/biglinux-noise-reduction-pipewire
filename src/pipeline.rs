@@ -107,7 +107,16 @@ pub fn purge_legacy_files() {
 }
 
 fn purge_legacy_services() {
-    const LEGACY_USER_UNITS: &[&str] = &["biglinux-microphone-echocancel.service"];
+    // `-filters.service` hosted both chains in one pwloader and declares
+    // `Conflicts=` against the per-side units, so an enabled copy left by that
+    // release stops mic and output the moment it starts. Upgrading cannot
+    // remove the file — a machine that ran that build carries it unowned under
+    // /usr/lib/systemd/user, observed on the maintainer's workstation — but
+    // disabling it defuses the conflict.
+    const LEGACY_USER_UNITS: &[&str] = &[
+        "biglinux-microphone-echocancel.service",
+        "biglinux-microphone-filters.service",
+    ];
     for unit in LEGACY_USER_UNITS {
         let result = BigSubprocessSpec::builder()
             .program("/usr/bin/systemctl")
