@@ -41,11 +41,18 @@ fn settings_load_tracker_stops_at_generation_overflow() {
 }
 
 #[test]
-fn startup_pipeline_failure_title_exposes_cause() {
-    assert_eq!(
-        apply_failure_title("configuration write failed"),
-        "Could not apply the audio settings: configuration write failed"
+fn a_failed_apply_says_what_happened_without_the_diagnostic_chain() {
+    let title = apply_failure_title();
+
+    assert!(
+        title.starts_with("Could not apply the audio settings"),
+        "{title}"
     );
+    assert!(title.contains("choices are saved"), "{title}");
+    // Units, argv and exit codes belong in the journal, never in the banner.
+    for internal in ["systemctl", "subprocess", "Some(", "[\""] {
+        assert!(!title.contains(internal), "{internal} leaked into {title}");
+    }
 }
 
 #[test]

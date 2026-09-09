@@ -819,7 +819,9 @@ impl MicShell {
     }
 
     fn show_apply_failure(&mut self, widgets: &MicShellWidgets, cause: &str) {
-        widgets.banner.set_title(&apply_failure_title(cause));
+        // The chain names units, argv and exit codes: journal material.
+        log::warn!("applying the audio settings failed: {cause}");
+        widgets.banner.set_title(&apply_failure_title());
         widgets.banner.set_button_label(Some(&i18n("Try again")));
         self.banner_action = BannerAction::RetryApply;
         self.should_probe_after_apply = true;
@@ -999,8 +1001,19 @@ impl MicShell {
     }
 }
 
-fn apply_failure_title(cause: &str) -> String {
-    format!("{} {cause}", i18n("Could not apply the audio settings:"))
+/// What the banner says when applying the settings fails.
+///
+/// The reconciler's error chain is a diagnostic, not a message: it concatenates
+/// every clause it collected, including `Debug`-formatted argv and raw exit
+/// codes, and reached the banner verbatim — "systemctl [\"--user\", \"restart\",
+/// \"biglinux-microphone-aec.service\"] exited with Some(5)". What the person in
+/// front of the window needs is that their choices survived and that they can
+/// retry; the chain goes to the journal, and `doctor` reports the same state in
+/// detail for whoever is diagnosing it.
+fn apply_failure_title() -> String {
+    i18n(
+        "Could not apply the audio settings. Your choices are saved — the audio services have not accepted them yet.",
+    )
 }
 
 fn current_window_dimension(actual: i32, persisted: u32) -> u32 {

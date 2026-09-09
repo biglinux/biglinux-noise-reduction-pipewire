@@ -235,11 +235,11 @@ msgid ""
 "Changes have not been saved. You can keep editing or close without saving."
 msgstr ""
 
-#: src/ui/mic_shell.rs:993
+#: src/ui/mic_shell.rs:995
 msgid "Check again"
 msgstr ""
 
-#: src/ui/mic_shell.rs:889
+#: src/ui/mic_shell.rs:891
 msgid "Check again, or run biglinux-microphone-cli doctor in a terminal."
 msgstr ""
 
@@ -248,7 +248,7 @@ msgid ""
 "Check the audio connection, then check again. Your preferences are kept."
 msgstr ""
 
-#: src/ui/mic_shell.rs:282 src/ui/mic_shell.rs:833
+#: src/ui/mic_shell.rs:282 src/ui/mic_shell.rs:835
 msgid "Checking the audio system…"
 msgstr ""
 
@@ -286,12 +286,11 @@ msgstr ""
 msgid "Compressor"
 msgstr "Kompresör"
 
-# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/window.py,
-# line: 172
-#: src/ui/mic_shell.rs:1003
-#, fuzzy
-msgid "Could not apply the audio settings:"
-msgstr "Varsayılan ayarları geri yüklemek istiyor musunuz?"
+#: src/ui/mic_shell.rs:1015
+msgid ""
+"Could not apply the audio settings. Your choices are saved — the audio "
+"services have not accepted them yet."
+msgstr ""
 
 #: usr/share/plasma/plasmoids/br.com.biglinux.micnoise/contents/ui/main.qml:58
 #: usr/share/plasma/plasmoids/br.com.biglinux.micnoise/contents/ui/main.qml:75
@@ -302,7 +301,7 @@ msgstr ""
 msgid "Could not remove the override"
 msgstr ""
 
-#: src/ui/mic_shell.rs:964
+#: src/ui/mic_shell.rs:966
 msgid ""
 "Could not stop the audio monitor safely. Close the window again to retry."
 msgstr ""
@@ -899,7 +898,7 @@ msgstr ""
 
 # File: biglinux-noise-reduction-
 # pipewire/src/biglinux_microphone/ui/main_view.py, line: 227
-#: src/ui/mic_shell.rs:917
+#: src/ui/mic_shell.rs:919
 #, fuzzy
 msgid "Saving settings…"
 msgstr "Ayarlar uygulanıyor…"
@@ -1038,7 +1037,7 @@ msgstr ""
 msgid "The audio system (PipeWire) is not responding."
 msgstr ""
 
-#: src/ui/mic_shell.rs:887
+#: src/ui/mic_shell.rs:889
 msgid "The audio system check failed unexpectedly."
 msgstr ""
 
@@ -1080,7 +1079,7 @@ msgstr ""
 msgid "The standard audio settings are in use."
 msgstr ""
 
-#: src/ui/mic_shell.rs:759 src/ui/mic_shell.rs:823
+#: src/ui/mic_shell.rs:759 src/ui/mic_shell.rs:825
 msgid "Try again"
 msgstr ""
 
@@ -1165,6 +1164,12 @@ msgstr ""
 #: src/ui/widgets/model_picker.rs:128
 msgid "{model} - not installed"
 msgstr ""
+
+# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/window.py,
+# line: 172
+#, fuzzy
+#~ msgid "Could not apply the audio settings:"
+#~ msgstr "Varsayılan ayarları geri yüklemek istiyor musunuz?"
 
 #, fuzzy
 #~ msgid ""
