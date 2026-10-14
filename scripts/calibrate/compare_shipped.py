@@ -93,7 +93,7 @@ def main() -> int:
     if not DNSMOS_MODEL.exists():
         raise SystemExit(f"missing {DNSMOS_MODEL}; run ./setup.sh first")
 
-    models = [m for m in shipped.catalogue() if m.loadable and m.realtime]
+    models = [m for m in shipped.catalogue() if m.loadable]
     print(f"{len(takes)} takes, {len(models)} models, one run\n")
 
     rows: list[dict] = []
@@ -104,7 +104,11 @@ def main() -> int:
         name = "raw input" if entry is None else entry.name
         scores: list[dict[str, float]] = []
         seconds = 0.0
-        started = time.perf_counter()
+        # Time only the plugin's processing, not file reads or the (heavy, ONNX)
+        # metric scoring — otherwise PESQ/STOI/DNSMOS land in the RTF (review
+        # BENCH-02). Metric-model load and resampling still differ per backend;
+        # separating load / first-frame / warmed cost is a further refinement.
+        proc_seconds = 0.0
         failed = None
 
         for noisy_path, clean_path in takes:
@@ -112,7 +116,9 @@ def main() -> int:
             clean, _ = sf.read(clean_path, dtype="float32")
             seconds += noisy.size / sr
             try:
+                started = time.perf_counter()
                 processed = noisy if entry is None else shipped.process(noisy, sr, entry)
+                proc_seconds += time.perf_counter() - started
             except RuntimeError as error:
                 failed = str(error)
                 break
@@ -123,8 +129,9 @@ def main() -> int:
             continue
 
         mean = {k: float(np.nanmean([s[k] for s in scores])) for k in scores[0]}
-        # Wall clock over audio duration: what a real-time chain must beat.
-        mean["rtf"] = (time.perf_counter() - started) / seconds
+        # Wall clock of the processing alone over audio duration: what a
+        # real-time chain must beat.
+        mean["rtf"] = proc_seconds / seconds
         mean["model"] = name
         rows.append(mean)
         print(

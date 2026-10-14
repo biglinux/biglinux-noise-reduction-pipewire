@@ -36,6 +36,7 @@ pub use analyzer::{
     Analyzer, AnalyzerConfig, amplitude_to_db, band_range_hz, hann_window, peak_dbfs, rms_dbfs,
 };
 use capture::Capture;
+pub use capture::METER_NODE_NAME;
 pub use types::{
     DEFAULT_BAND_COUNT, DEFAULT_FFT_SIZE, DEFAULT_HOP_SIZE, DEFAULT_SAMPLE_RATE, Event,
     SpectrumFrame,
@@ -51,16 +52,19 @@ pub struct AudioMonitor {
     worker: Option<JoinHandle<()>>,
 }
 
-/// How long the worker sleeps between active checks while paused. Long
-/// enough that a paused monitor barely registers on top, short enough
-/// that resuming feels instant on the spectrum widget.
-const PAUSED_POLL: Duration = Duration::from_millis(100);
-
 /// Options controlling the monitor loop.
 #[derive(Debug, Clone)]
 pub struct MonitorConfig {
     pub analyzer: AnalyzerConfig,
     pub hop_size: usize,
+    /// Meter every newly captured sample, including samples before the FFT
+    /// window when hop_size > fft_size. The AGC must not miss a clipping spike.
+    pub hop_levels: bool,
+    /// Requested pw-cat stream latency, in milliseconds (not a global quantum).
+    pub latency_ms: u32,
+    /// pw-cat `--target`: a node name (e.g. the denoised virtual source) or the
+    /// default `@DEFAULT_SOURCE@`.
+    pub target: String,
 }
 
 impl Default for MonitorConfig {
@@ -68,6 +72,9 @@ impl Default for MonitorConfig {
         Self {
             analyzer: AnalyzerConfig::default(),
             hop_size: DEFAULT_HOP_SIZE,
+            hop_levels: false,
+            latency_ms: 100,
+            target: "@DEFAULT_SOURCE@".to_string(),
         }
     }
 }
@@ -126,28 +133,13 @@ impl AudioMonitor {
     /// the spectrum widget is hidden.
     pub fn set_active(&self, on: bool) {
         self.active.store(on, Ordering::Release);
+        if let Some(worker) = &self.worker {
+            worker.thread().unpark();
+        }
         if !on {
             let child = self.capture_child.lock().ok().and_then(|slot| slot.clone());
             stop_capture_child(child);
         }
-    }
-
-    #[cfg(test)]
-    pub(crate) fn contract_handle() -> (Self, AsyncSender<Event>) {
-        let (events_tx, events_rx) = async_channel::bounded::<Event>(1);
-        let monitor = Self {
-            events_rx,
-            stop: Arc::new(AtomicBool::new(false)),
-            active: Arc::new(AtomicBool::new(true)),
-            capture_child: Arc::new(Mutex::new(None)),
-            worker: None,
-        };
-        (monitor, events_tx)
-    }
-
-    #[cfg(test)]
-    pub(crate) fn is_active_for_contract(&self) -> bool {
-        self.active.load(Ordering::Acquire)
     }
 
     pub fn shutdown(mut self) {
@@ -161,10 +153,11 @@ impl AudioMonitor {
     }
 
     fn join_worker(&mut self) {
-        if let Some(handle) = self.worker.take()
-            && handle.join().is_err()
-        {
-            warn!("audio monitor worker panicked");
+        if let Some(handle) = self.worker.take() {
+            handle.thread().unpark();
+            if handle.join().is_err() {
+                warn!("audio monitor worker panicked");
+            }
         }
     }
 }
@@ -177,6 +170,7 @@ impl Drop for AudioMonitor {
             stop_capture_child(capture_child);
             return;
         };
+        worker.thread().unpark();
         // Interrupt the pipe read before allocating the reaper thread. If the
         // OS refuses that thread, the worker still observes EOF, drops its
         // capture, reaps the child itself, and exits detached.
@@ -210,26 +204,31 @@ fn run_worker(
     let mut analyzer = Analyzer::new(monitor_config.analyzer.clone());
     let mut window = Vec::with_capacity(monitor_config.analyzer.fft_size);
     let mut retry_at = std::time::Instant::now();
+    let mut capture_epoch = 0_u64;
     while !stop.load(Ordering::Acquire) {
         if !active.load(Ordering::Acquire) {
             drop(capture.take());
             if let Ok(mut slot) = capture_child.lock() {
                 slot.take();
             }
-            thread::sleep(PAUSED_POLL);
+            // unpark retains a token if activation/shutdown wins this race.
+            thread::park();
             continue;
         }
         if capture.is_none() {
             if std::time::Instant::now() < retry_at {
-                thread::sleep(PAUSED_POLL);
+                thread::park_timeout(retry_at.saturating_duration_since(std::time::Instant::now()));
                 continue;
             }
             match Capture::spawn(
                 monitor_config.analyzer.sample_rate,
                 monitor_config.analyzer.fft_size,
                 monitor_config.hop_size,
+                &monitor_config.target,
+                monitor_config.latency_ms,
             ) {
                 Ok(next) => {
+                    capture_epoch = capture_epoch.wrapping_add(1);
                     if let Ok(mut slot) = capture_child.lock() {
                         *slot = Some(next.cancellation_handle());
                     }
@@ -277,7 +276,13 @@ fn run_worker(
             continue;
         }
         current.copy_window_into(&mut window);
-        let frame = analyzer.analyze_samples(&window);
+        let mut frame = analyzer.analyze_samples(&window);
+        frame.captured_at = current.captured_at;
+        frame.capture_epoch = capture_epoch;
+        if monitor_config.hop_levels {
+            frame.rms_db = current.rms_db;
+            frame.peak_db = current.peak_db;
+        }
         // Latest-value delivery: after a slow UI frame, show the present,
         // not a queue of obsolete microphone levels.
         if tx.force_send(Event::Frame(frame)).is_err() {
@@ -293,6 +298,22 @@ fn run_worker(
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    #[cfg_attr(miri, ignore)]
+    fn paused_monitor_shutdown_wakes_worker() {
+        let (done_tx, done_rx) = std::sync::mpsc::channel();
+        let caller = thread::spawn(move || {
+            let monitor = AudioMonitor::start(MonitorConfig::default());
+            thread::sleep(Duration::from_millis(50));
+            monitor.shutdown();
+            done_tx.send(()).unwrap();
+        });
+        done_rx
+            .recv_timeout(Duration::from_secs(2))
+            .expect("shutdown must wake a paused worker without a capture child");
+        caller.join().unwrap();
+    }
 
     #[test]
     #[cfg_attr(miri, ignore)]

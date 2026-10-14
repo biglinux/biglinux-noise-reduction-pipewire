@@ -1,0 +1,51 @@
+[Unit]
+Description=Filter noise — follow output route changes for echo cancellation
+Documentation=https://github.com/biglinux/biglinux-noise-reduction-pipewire
+PartOf=pipewire.service
+After=pipewire.service wireplumber.service
+Wants=pipewire.service wireplumber.service
+StartLimitIntervalSec=30
+StartLimitBurst=5
+
+[Service]
+# Watching the route has to be a live process: the decision is "did the route
+# change", which only exists by comparison with the route seen a moment ago. A
+# short-lived run would have nothing to compare against.
+#
+# It is only worth running when echo cancellation can react to a route change at
+# all — in `off` mode the watcher would parse every graph event to reach a
+# decision that is always "do nothing". No [Install]: the reconciler owns it.
+Type=simple
+ExecStart=/usr/bin/biglinux-microphone-cli watch-route
+Restart=on-failure
+RestartSec=3s
+SuccessExitStatus=0
+TimeoutStartSec=15s
+StandardOutput=journal
+StandardError=journal
+
+# ── Hardening ────────────────────────────────────────────────────────
+# Reads the graph through `pw-dump --monitor` and reconciles through systemctl;
+# it writes nothing outside $HOME/.config.
+ProtectSystem=full
+ProtectKernelTunables=true
+ProtectKernelModules=true
+ProtectKernelLogs=true
+ProtectClock=true
+ProtectControlGroups=true
+ProtectHostname=true
+ProtectProc=invisible
+PrivateTmp=true
+PrivateDevices=true
+NoNewPrivileges=true
+LockPersonality=true
+RestrictNamespaces=true
+RestrictRealtime=true
+RestrictSUIDSGID=true
+RemoveIPC=true
+CapabilityBoundingSet=
+AmbientCapabilities=
+SystemCallArchitectures=native
+RestrictAddressFamilies=AF_UNIX AF_NETLINK
+SystemCallFilter=@system-service
+SystemCallErrorNumber=EPERM

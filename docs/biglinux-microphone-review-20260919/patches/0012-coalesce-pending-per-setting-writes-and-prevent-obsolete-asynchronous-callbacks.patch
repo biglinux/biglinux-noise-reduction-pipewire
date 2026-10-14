@@ -1,0 +1,104 @@
+From 9cb0d284a9bfe692226f06b1cb4ba2eda20fc93f Mon Sep 17 00:00:00 2001
+From: OpenAI Review <review@example.invalid>
+Date: Sat, 19 Sep 2026 05:31:44 +0000
+Subject: [PATCH] Coalesce pending per-setting writes and prevent obsolete
+ asynchronous callbacks
+
+---
+ app/biglinux_microphone/ui/state.py          | 25 +++++++++++++++++++-
+ app/biglinux_microphone/utils/async_utils.py | 15 ++++++++++--
+ 2 files changed, 37 insertions(+), 3 deletions(-)
+
+diff --git a/app/biglinux_microphone/ui/state.py b/app/biglinux_microphone/ui/state.py
+index 521845c..0538c9f 100644
+--- a/app/biglinux_microphone/ui/state.py
++++ b/app/biglinux_microphone/ui/state.py
+@@ -132,6 +132,8 @@ class AudioState:
+         self._reading = False
+         self._reload_again = False
+         self._closed = False
++        self._writing: set[str] = set()
++        self._queued_values: dict[str, str] = {}
+         #: Why the last action failed, kept until an action succeeds. A reading
+         #: must not clear it: the re-read that follows a failed write would
+         #: otherwise erase the only explanation the person was going to get
+@@ -222,7 +224,27 @@ class AudioState:
+ 
+     def set(self, key: str, value: str) -> None:
+         """Change one setting, then re-read. Never assume the write landed."""
+-        self._runner.call(lambda: cli.set_value(key, value), self._after_write, self._write_failed)
++        if self._closed:
++            return
++        if key in self._writing:
++            self._queued_values[key] = value
++            return
++        self._writing.add(key)
++        self._runner.call(lambda: cli.set_value(key, value),
++                          lambda result: self._finish_setting(key, result, None),
++                          lambda message: self._finish_setting(key, None, message))
++
++    def _finish_setting(self, key: str, result: object, error: str | None) -> None:
++        self._writing.discard(key)
++        pending = self._queued_values.pop(key, None)
++        if self._closed:
++            return
++        if error is None:
++            self._after_write(result)
++        else:
++            self._write_failed(error)
++        if pending is not None:
++            self.set(key, pending)
+ 
+     def set_debounced(self, key: str, value: str, ms: int = 250) -> None:
+         """For controls that produce a value per pixel of travel."""
+@@ -267,6 +289,7 @@ class AudioState:
+     def shutdown(self) -> None:
+         self._closed = True
+         self._reload_again = False
++        self._queued_values.clear()
+         for debouncer in self._debouncers.values():
+             debouncer.cancel()
+         self._subscribers.clear()
+diff --git a/app/biglinux_microphone/utils/async_utils.py b/app/biglinux_microphone/utils/async_utils.py
+index 0a07e78..b046382 100644
+--- a/app/biglinux_microphone/utils/async_utils.py
++++ b/app/biglinux_microphone/utils/async_utils.py
+@@ -24,6 +24,11 @@ T = TypeVar("T")
+ _executor = ThreadPoolExecutor(max_workers=4, thread_name_prefix="biglinux-mic-")
+ 
+ 
++def _deliver_once(callback: Callable, *args: object) -> bool:
++    callback(*args)
++    return False
++
++
+ def run_async(
+     func: Callable[P, T],
+     *args: P.args,
+@@ -48,11 +53,11 @@ def run_async(
+         try:
+             result = func(*args, **kwargs)
+             if callback:
+-                GLib.idle_add(callback, result)
++                GLib.idle_add(_deliver_once, callback, result)
+         except Exception as e:
+             logger.exception("Async task failed")
+             if error_callback:
+-                GLib.idle_add(error_callback, e)
++                GLib.idle_add(_deliver_once, error_callback, e)
+ 
+     _executor.submit(task)
+ 
+@@ -231,6 +236,12 @@ class Throttler:
+         elapsed = now - self._last_call
+ 
+         if elapsed >= self._interval_ms:
++            # A delayed main loop may leave an older timer queued. Its value
++            # must not run after this newer immediate one.
++            if self._timer_id is not None:
++                GLib.source_remove(self._timer_id)
++                self._timer_id = None
++            self._pending_call = None
+             # Execute immediately
+             self._last_call = now
+             func(*args, **kwargs)

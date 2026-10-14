@@ -1,29 +1,56 @@
-# Maintainer: Bruno Goncalves <bigbruno@gmail.com>
+# Maintainer: Bruno Gonçalves <https://www.biglinux.com.br>
 # shellcheck shell=bash disable=SC2034,SC2154
 
 pkgname=biglinux-noise-reduction-pipewire
-pkgdesc="AI-powered microphone noise reduction with GTK4/libadwaita interface for PipeWire"
-# BigLinux rolling-release convention; these are package build identifiers.
-pkgver=$(date +%y.%m.%d)
-pkgrel=$(date +%H%M)
+pkgdesc="Real-time microphone noise reduction for PipeWire with a GTK4/libadwaita interface"
+# Development keeps the historical rolling identifiers. Release mode must
+# supply a full source commit, explicit version and reproducible timestamp.
+# This pins inputs, not compiler/dependency/environment reproducibility.
+_release_commit="${BIGMIC_SOURCE_COMMIT:-}"
+if [ -n "${_release_commit}" ]; then
+	if [[ ! "${_release_commit}" =~ ^[[:xdigit:]]{40}$ ]] ||
+		[[ ! "${BIGMIC_RELEASE_VERSION:-}" =~ ^[0-9][0-9A-Za-z._+]*$ ]] ||
+		[[ ! "${BIGMIC_RELEASE_REL:-1}" =~ ^[1-9][0-9]*$ ]] ||
+		[[ ! "${SOURCE_DATE_EPOCH:-}" =~ ^[0-9]+$ ]]; then
+		printf 'Release mode requires BIGMIC_SOURCE_COMMIT (40 hex), BIGMIC_RELEASE_VERSION, positive BIGMIC_RELEASE_REL, and SOURCE_DATE_EPOCH.\n' >&2
+		return 1
+	fi
+	_release_commit="${_release_commit,,}"
+	pkgver="${BIGMIC_RELEASE_VERSION}"
+	pkgrel="${BIGMIC_RELEASE_REL:-1}"
+	export SOURCE_DATE_EPOCH
+else
+	pkgver=$(date +%y.%m.%d)
+	pkgrel=$(date +%H%M)
+fi
 arch=('x86_64')
 url="https://github.com/biglinux/${pkgname}"
-license=('GPL-3.0-or-later')
+license=('GPL-3.0-or-later' 'MIT')
 depends=(
 	# Keep the distribution's maintained allocator; do not replace it in CI.
-	'jemalloc-gtk-fixed'
 	'pipewire>=1.4'
 	'wireplumber>=0.5'
 	'systemd'
-	'gtcrn-ladspa'
 	'swh-plugins'
+	# GTK stack is now for the Python front-end (PyGObject), not a Rust GUI.
 	'gtk4>=4.22'
 	'libadwaita>=1.9'
+	'python'
+	'python-gobject'
+	'python-numpy'
+	'python-cairo'
+	# pactl (mic picker) and the pw-cat/pw-record/pw-play spectrum + voice test.
+	'libpulse'
 	'libpipewire'
 	'glib2'
 	'cairo'
 	'glibc'
 	'gcc-libs'
+	# speech-enhancement-native ships the three denoisers the interface offers
+	# and the AEC. The voice gate needs the plugins with port 19 (26.10.06).
+	'deepfilternet3-native>=26.10.06'
+	'dpdfnet-native'
+	'gtcrn-aec-native'
 )
 makedepends=(
 	# Unversioned on purpose: rustup declares `provides=(rust)` without a
@@ -37,14 +64,17 @@ makedepends=(
 	'appstream'
 	'pkgconf'
 	'clang'
-	'jemalloc-gtk-fixed'
 	# git is required by the remote source URL, rsync by local preparation.
 	'git'
 	'rsync'
 )
+checkdepends=(
+	'python-pytest'
+	'dbus'
+	'xorg-server-xvfb'
+)
 optdepends=(
-	'inotify-tools: instant Plasma applet sync with the GTK config window'
-	'deepfilternet-ladspa: full-band 48 kHz DeepFilterNet3 denoiser (UI exposes it when installed)'
+	'inotify-tools: instant Plasma applet sync with the config window'
 	'plasma-workspace: Plasma 6 system tray applet'
 	'qt6-declarative: QML runtime for the Plasma 6 system tray applet'
 	'kirigami: Plasma 6 system tray applet styling'
@@ -63,7 +93,7 @@ _has_workspace_files() {
 }
 
 _local_root=""
-if [ "${BIGMIC_FORCE_GIT:-0}" != "1" ] && [ -n "${BASH_SOURCE[0]:-}" ]; then
+if [ -z "${_release_commit}" ] && [ "${BIGMIC_FORCE_GIT:-0}" != "1" ] && [ -n "${BASH_SOURCE[0]:-}" ]; then
 	_pkg_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" 2>/dev/null && pwd -P)"
 	if [ -n "${_pkg_dir}" ]; then
 		_candidate="$(cd "${_pkg_dir}/../.." && pwd -P)"
@@ -80,12 +110,25 @@ if [ -n "${_local_root}" ]; then
 	b2sums=()
 else
 	echo "==> No local source found, will fetch from ${url}.git" >&2
-	source=("git+${url}.git")
+	if [ -n "${_release_commit}" ]; then
+		source=("git+${url}.git#commit=${_release_commit}")
+	else
+		# Kept literal: the GitLab builder appends #branch= to this line.
+		source=("git+${url}.git")
+	fi
 	b2sums=('SKIP')
 fi
 
 prepare() {
 	if [ -z "${_local_root}" ]; then
+		if [ -n "${_release_commit}" ]; then
+			local actual
+			actual=$(git -C "${srcdir}/${pkgname}" rev-parse HEAD) || return 1
+			[[ "${actual}" == "${_release_commit}" ]] || {
+				printf 'Release checkout does not match the requested commit.\n' >&2
+				return 1
+			}
+		fi
 		return 0
 	fi
 	# Never fall back to cp -a: the normal makepkg source directory lives
@@ -110,6 +153,11 @@ prepare() {
 	mkdir -p "$destination"
 	rsync -a --delete \
 		--exclude='/target' \
+		--exclude='/vendor-offline' \
+		--exclude='/.release-check*' \
+		--exclude='/.release-gate.lock' \
+		--exclude='__pycache__' \
+		--exclude='.pytest_cache' \
 		--exclude='/.git' \
 		--exclude='/.ci-results' \
 		--exclude='/build-locale' \
@@ -123,34 +171,70 @@ prepare() {
 
 build() {
 	cd "${srcdir}/${pkgname}" || exit 1
-	cargo build --release --locked
+	# Do not inherit nproc-based parallelism in memory-limited build workers.
+	export CARGO_BUILD_JOBS=${CARGO_BUILD_JOBS:-2}
+	cargo build --release --locked || return 1
 
 	# The catalog domain must match config::GETTEXT_PACKAGE. Remove only
 	# generated catalogs, otherwise a deleted language survives a rebuild.
-	local po lang
+	local lang
+	python tools/validate-translations.py || return 1
 	rm -rf -- build-locale
 	install -d build-locale
-	for po in po/*.po; do
-		[ -f "$po" ] || continue
-		lang=$(basename "$po" .po)
+	while IFS= read -r lang; do
+		# LINGUAS is an explicit release allowlist, validated above.
+		[[ -n "$lang" ]] || continue
 		install -d "build-locale/${lang}/LC_MESSAGES"
-		msgfmt --check "$po" -o "build-locale/${lang}/LC_MESSAGES/biglinux-microphone.mo"
-	done
+		msgfmt --check --check-format "po/${lang}.po" -o "build-locale/${lang}/LC_MESSAGES/biglinux-microphone.mo" || return 1
+	done < <(sed 's/#.*//' po/LINGUAS | tr ' \t' '\n' | sed '/^$/d')
 }
 
 check() {
 	cd "${srcdir}/${pkgname}" || exit 1
-	desktop-file-validate usr/share/applications/br.com.biglinux.microphone.desktop
-	appstreamcli validate --no-net usr/share/metainfo/br.com.biglinux.microphone.metainfo.xml
-	cargo test --release --locked
+	desktop-file-validate usr/share/applications/br.com.biglinux.microphone.desktop || return 1
+	appstreamcli validate --no-net usr/share/metainfo/br.com.biglinux.microphone.metainfo.xml || return 1
+	# build() already produced optimized binaries. Do not link every test
+	# harness again with release LTO: test targets run sequentially instead.
+	export CARGO_BUILD_JOBS=${CARGO_BUILD_JOBS:-2}
+	export CARGO_INCREMENTAL=0
+	cargo test --lib --locked || return 1
+	local target
+	for target in biglinux-microphone-cli biglinux-microphone-pwloader biglinux-microphone-probe; do
+		cargo test --bin "$target" --locked || return 1
+	done
+	for target in tests/*.rs; do
+		target=${target##*/}; target=${target%.rs}
+		cargo test --test "$target" --locked || return 1
+	done
+	cargo test --doc --locked || return 1
+	PYTHONPATH="app${PYTHONPATH:+:$PYTHONPATH}" GSK_RENDERER=cairo GSETTINGS_BACKEND=memory \
+		timeout --signal=TERM --kill-after=10s 90s \
+		dbus-run-session -- xvfb-run -a python -m pytest -q app/tests
 }
 
 package() {
 	cd "${srcdir}/${pkgname}" || exit 1
-	local binary mo
-	for binary in biglinux-microphone biglinux-microphone-cli biglinux-microphone-probe biglinux-microphone-pwloader; do
-		install -Dm755 "target/release/${binary}" "${pkgdir}/usr/bin/${binary}"
+	local binary mo target_dir="${CARGO_TARGET_DIR:-target}"
+	# The GTK GUI is now the Python front-end; only the backend bins are Rust.
+	for binary in biglinux-microphone-cli biglinux-microphone-probe biglinux-microphone-pwloader; do
+		install -Dm755 "${target_dir}/release/${binary}" "${pkgdir}/usr/bin/${binary}" || return 1
 	done
+
+	# The GUI is pure Python. Keep it outside Python's versioned site-packages
+	# so a rolling-release minor upgrade (for example 3.14 -> 3.15) does not
+	# strand the application sources in an old ABI directory. System Python
+	# dependencies such as PyGObject remain pacman-managed and must match the
+	# active interpreter. The launcher runs with -I and adds only this private
+	# root to sys.path.
+	local app_root="${pkgdir}/usr/lib/biglinux-microphone"
+	install -d "$app_root"
+	cp -a app/biglinux_microphone app/big_gtk_kit "$app_root/"
+	find "$app_root" -type d -name __pycache__ -prune -exec rm -rf '{}' +
+	find "$app_root" -type f \( -name '*.pyc' -o -name '*.pyo' \) -delete
+	find "$app_root/biglinux_microphone" -type f -name '*.py' -exec chmod 0644 '{}' +
+	install -Dm755 packaging/launcher.py "$app_root/launcher.py"
+	install -d "${pkgdir}/usr/bin"
+	ln -s ../lib/biglinux-microphone/launcher.py "${pkgdir}/usr/bin/biglinux-microphone"
 
 	# usr/ is the versioned package payload: units, WirePlumber policy,
 	# desktop metadata, icons, Plasma applet and didactic illustrations.
@@ -159,6 +243,11 @@ package() {
 	install -d "${pkgdir}/usr"
 	cp -a usr/. "${pkgdir}/usr/"
 
+	# Catalogs come from build-locale and nowhere else. A checkout that has
+	# been built in before carries a generated usr/share/locale, still holding
+	# the retired gettext domain; copying usr/ wholesale would ship it.
+	rm -rf -- "${pkgdir}/usr/share/locale"
+
 	for mo in build-locale/*/LC_MESSAGES/*.mo; do
 		[ -f "$mo" ] || continue
 		install -Dm644 "$mo" "${pkgdir}/usr/share/${mo#build-}"
@@ -166,6 +255,17 @@ package() {
 
 	install -Dm644 LICENSE-MIT "${pkgdir}/usr/share/licenses/${pkgname}/LICENSE-MIT"
 	install -Dm644 LICENSE "${pkgdir}/usr/share/licenses/${pkgname}/LICENSE"
-	install -Dm644 README.md "${pkgdir}/usr/share/doc/${pkgname}/README.md"
-	install -Dm644 docs/guia-rapido.pt_BR.md "${pkgdir}/usr/share/doc/${pkgname}/guia-rapido.pt_BR.md"
+	install -Dm644 app/big_gtk_kit/LICENSE "${pkgdir}/usr/share/licenses/${pkgname}/LICENSE.big-gtk-kit"
+	# Keep the README's relative documentation links and screenshot usable offline.
+	local doc_root="${pkgdir}/usr/share/doc/${pkgname}" document
+	install -d "$doc_root/docs"
+	for document in README.md AGENTS.md CONTRIBUTING.md SUPPORT.md SECURITY.md CODE_OF_CONDUCT.md LICENSE LICENSE-MIT; do
+		install -Dm644 "$document" "$doc_root/$document" || return 1
+	done
+	for document in docs/*; do
+		# Reviewer bundles carry patches and test scripts for developers, not
+		# documentation for users, and their scripts would need pytest.
+		[[ "$document" == docs/biglinux-microphone-* ]] && continue
+		cp -a "$document" "$doc_root/docs/" || return 1
+	done
 }

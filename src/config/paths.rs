@@ -7,7 +7,6 @@
 use std::path::PathBuf;
 
 pub const EQ_BANDS_HZ: [u32; 10] = [31, 63, 125, 250, 500, 1000, 2000, 4000, 8000, 16000];
-use crate::config::noise_model::GTCRN_LADSPA_PATH;
 
 /// D-Bus / desktop application identifier.
 pub const APP_ID: &str = "br.com.biglinux.microphone";
@@ -38,12 +37,6 @@ pub fn config_dir() -> PathBuf {
 #[must_use]
 pub fn settings_file() -> PathBuf {
     config_dir().join("settings.json")
-}
-
-/// Path to the GTCRN LADSPA plugin shared object.
-#[must_use]
-pub fn gtcrn_plugin() -> PathBuf {
-    PathBuf::from(GTCRN_LADSPA_PATH)
 }
 
 /// Package version read from `Cargo.toml`.

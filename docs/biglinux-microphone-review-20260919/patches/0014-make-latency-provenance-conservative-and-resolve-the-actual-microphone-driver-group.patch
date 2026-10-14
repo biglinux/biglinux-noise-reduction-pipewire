@@ -1,0 +1,246 @@
+From 499d68c43218fb87064540437719cdff367c1541 Mon Sep 17 00:00:00 2001
+From: OpenAI Review <review@example.invalid>
+Date: Sat, 19 Sep 2026 05:31:44 +0000
+Subject: [PATCH] Make latency provenance conservative and resolve the actual
+ microphone driver group
+
+---
+ app/biglinux_microphone/cli.py |   2 +-
+ src/services/latency.rs        | 116 +++++++++++++++++++++++----------
+ 2 files changed, 83 insertions(+), 35 deletions(-)
+
+diff --git a/app/biglinux_microphone/cli.py b/app/biglinux_microphone/cli.py
+index a3be430..96cf8de 100644
+--- a/app/biglinux_microphone/cli.py
++++ b/app/biglinux_microphone/cli.py
+@@ -304,7 +304,7 @@ def get_source_volume(name: str) -> int:
+ 
+ 
+ def set_source_volume(name: str, percent: int) -> None:
+-    if not name or not isinstance(percent, int) or not 0 <= percent <= MAX_CAPTURE_PERCENT:
++    if not name or type(percent) is not int or not 0 <= percent <= MAX_CAPTURE_PERCENT:
+         raise BackendError("Invalid capture volume")
+     _command([_pactl(), "set-source-volume", name, f"{percent}%"], timeout=10)
+ 
+diff --git a/src/services/latency.rs b/src/services/latency.rs
+index 97f8e16..43833dd 100644
+--- a/src/services/latency.rs
++++ b/src/services/latency.rs
+@@ -24,8 +24,8 @@ use crate::services::pipewire::graph_snapshot;
+ pub struct Stage {
+     pub stage: &'static str,
+     pub ms: f64,
+-    /// False when the figure is a stated default rather than a reading of this
+-    /// machine — a caller must be able to render that difference.
++    /// True only for an observed duration, never a requested buffer or model
++    /// estimate. Reading a setting is not measuring audio delay.
+     pub measured: bool,
+     pub source: &'static str,
+     #[serde(skip_serializing_if = "Option::is_none")]
+@@ -87,27 +87,39 @@ fn realized_quantum() -> Option<u32> {
+         .args(["-b", "-n", "2"])
+         .stderr(BigSubprocessOutputMode::Null)
+         .allow_list([PW_TOP])
++        .timeout(std::time::Duration::from_secs(4))
+         .build()
+         .run()
+         .ok()?;
++    if !output.status.success() { return None; }
+     quant_from_pw_top(&output.stdout_lossy())
+ }
+ 
+-/// The cycle in a `pw-top -b` dump: the largest non-zero QUANT of the last
+-/// batch, at this graph's rate.
++/// Resolve only the microphone's driver group in the last batch. A larger
++/// quantum in an unrelated playback group says nothing about this microphone.
++/// Unrecognized/ambiguous layouts fail closed to the labeled request estimate.
+ fn quant_from_pw_top(text: &str) -> Option<u32> {
+     let last_block = text.rsplit_once("S   ID").map_or(text, |(_, tail)| tail);
+-    last_block
+-        .lines()
+-        .filter_map(|line| {
+-            let mut columns = line.split_whitespace();
+-            // S, ID, QUANT, RATE, ...
+-            let (_state, _id, quant, rate) =
+-                (columns.next()?, columns.next()?, columns.next()?, columns.next()?);
+-            let frames: u32 = quant.parse().ok()?;
+-            (frames > 0 && rate.parse::<u32>().ok()? == RATE).then_some(frames)
+-        })
+-        .max()
++    let mut driver = None;
++    let mut found = None;
++    let mut matches = 0;
++    for line in last_block.lines() {
++        let columns: Vec<_> = line.split_whitespace().collect();
++        if columns.len() < 10 || columns[1].parse::<u32>().is_err() { continue; }
++        let name = *columns.last()?;
++        let follower = columns[9..].iter().any(|s| *s == "+" || *s == "=")
++            || name.starts_with('+') || name.starts_with('=');
++        let own_quantum = if matches!(columns[0], "R" | "t" | "T")
++            && columns[3].parse::<u32>().ok() == Some(RATE) {
++                columns[2].parse::<u32>().ok().filter(|q| *q > 0)
++            } else { None };
++        if !follower { driver = own_quantum; }
++        if name.trim_start_matches(['+', '=']) == MIC_NODE_NAME {
++            matches += 1;
++            found = if follower { driver } else { own_quantum };
++        }
++    }
++    if matches == 1 { found } else { None }
+ }
+ 
+ /// Frames in a `node.latency` / quantum property spelled `"960/48000"`.
+@@ -150,13 +162,15 @@ fn quantum() -> (u32, bool) {
+ /// Account for the stages of the microphone path under the current settings.
+ #[must_use]
+ pub fn report(settings: &AppSettings, model: Option<NoiseModel>) -> Report {
++    build_report(settings, model, quantum(), realized_quantum())
++}
++
++fn build_report(settings: &AppSettings, requested_model: Option<NoiseModel>,
++    observation: (u32, bool), realized: Option<u32>) -> Report {
+     let effective = settings.runtime_settings();
+-    let model = model.unwrap_or(effective.noise_reduction.model);
+-    // What the chain asks for, and what the graph is really running. They are
+-    // different numbers whenever anything else on the machine asks for more,
+-    // and the one that describes this person's delay is the second.
+-    let (requested_frames, running) = quantum();
+-    let realized = realized_quantum();
++    let include_ai = requested_model.is_some() || crate::pipeline::ai_node_in_mic_chain(&effective);
++    let model = requested_model.unwrap_or(effective.noise_reduction.model);
++    let (requested_frames, running) = observation;
+     let quantum_frames = realized.unwrap_or(requested_frames);
+     let quantum_ms = frames_to_ms(quantum_frames);
+     let (denoiser_ms, family) = model_delay_ms(model);
+@@ -165,16 +179,18 @@ pub fn report(settings: &AppSettings, model: Option<NoiseModel>) -> Report {
+     let mut stages = vec![Stage {
+         stage: "capture-buffer",
+         ms: quantum_ms,
+-        measured: realized.is_some() || running,
++        // One cycle is a planning assumption for a buffer contribution, even
++        // when that cycle's length was observed. pw-top is not a latency probe.
++        measured: false,
+         source: match (realized, running) {
+-            (Some(_), _) => "the cycle the graph is running, the QUANT column pw-top prints",
+-            (None, true) => "node.latency: the buffer this chain asks for; the graph is idle",
+-            (None, false) => "the latency this chain asks for; it is not running, so nothing was read",
++            (Some(_), _) => "one assumed capture period using the microphone driver's observed QUANT",
++            (None, true) => "one assumed period using node.latency; actual driver duration is unavailable",
++            (None, false) => "one assumed period using configured latency; no live duration was read",
+         },
+         frames: Some(quantum_frames),
+     }];
+ 
+-    if effective.echo_cancel.enabled {
++    if effective.echo_cancel.enabled && !effective.mic_bypass {
+         stages.push(Stage {
+             stage: "echo-cancel",
+             ms: 16.0,
+@@ -184,6 +200,7 @@ pub fn report(settings: &AppSettings, model: Option<NoiseModel>) -> Report {
+         });
+     }
+ 
++    if include_ai {
+     stages.push(Stage {
+         // Not a reading of this machine. It is the plugin's own algorithmic
+         // delay, which is a property of the network and not of the computer
+@@ -206,23 +223,26 @@ pub fn report(settings: &AppSettings, model: Option<NoiseModel>) -> Report {
+             ms: lookahead_ms,
+             // Exact rather than measured: it is the number this machine's own
+             // settings set, and the plugin adds it to its own delay.
+-            measured: true,
+-            source: "the lookahead set on this machine, which the plugin adds to its delay",
++            measured: false,
++            source: "configured lookahead; not a measurement of the live plugin",
+             frames: None,
+         });
+     }
+ 
++    }
++    if !effective.mic_bypass {
+     stages.push(Stage {
+         stage: "filter-output-buffer",
+         ms: quantum_ms,
+-        measured: realized.is_some() || running,
+-        source: "the same cycle again, on the chain's output node",
++        measured: false,
++        source: "one additional output period assumed by this estimate; not measured or inferred from QUANT",
+         frames: Some(quantum_frames),
+     });
+ 
++    }
+     Report {
+         total_ms: (stages.iter().map(|stage| stage.ms).sum::<f64>() * 10.0).round() / 10.0,
+-        total_is: "the sum of the stages below, not an end-to-end measurement",
++        total_is: "a planning estimate with assumed buffer periods, not an end-to-end measurement",
+         rate: RATE,
+         model: model.plugin_and_label().1,
+         model_id: model as u8,
+@@ -232,6 +252,7 @@ pub fn report(settings: &AppSettings, model: Option<NoiseModel>) -> Report {
+             "the sound card's own buffering",
+             "whatever the application receiving you holds before it plays",
+             "the network, when there is one",
++            "live plugin build/model delay validation and scheduling overlap between stages",
+         ],
+     }
+ }
+@@ -240,6 +261,11 @@ pub fn report(settings: &AppSettings, model: Option<NoiseModel>) -> Report {
+ mod tests {
+     use super::*;
+ 
++    fn report(settings: &AppSettings, model: Option<NoiseModel>) -> Report {
++        build_report(settings, model,
++            (frames_of(crate::pipeline::AEC_NODE_LATENCY).unwrap_or(DEFAULT_QUANTUM), false), None)
++    }
++
+     #[test]
+     fn every_stage_says_where_its_number_came_from() {
+         let accounted = report(&AppSettings::default(), Some(NoiseModel::Dfn3W8A16));
+@@ -268,8 +294,8 @@ mod tests {
+ 
+     #[test]
+     fn the_buffer_stages_quote_the_chains_own_frames_not_pipewires_default() {
+-        // What the chain asks for is what pw-top prints; a report that quoted
+-        // the daemon's default instead is the bug this guards.
++        // No live observation: the fallback must be the chain's requested
++        // period, explicitly not a measured buffer delay.
+         let requested = frames_of(crate::pipeline::AEC_NODE_LATENCY).expect("chain latency");
+         assert_ne!(requested, DEFAULT_QUANTUM);
+         let accounted = report(&AppSettings::default(), Some(NoiseModel::Dfn3W8A16));
+@@ -310,9 +336,13 @@ C   29      0      0    ---     ---   ---   ---     0                  Dummy-Dri
+ C   60      0      0    ---     ---   ---   ---     0                  alsa_output.analog-stereo
+ S   ID  QUANT   RATE    WAIT    BUSY   W/Q   B/Q  ERR FORMAT           NAME
+ R   60   1024  48000  60.2us  17.0us  0.00  0.00    6    S32LE 2 48000 alsa_output.analog-stereo
+-R  249      0      0   0.0us   0.0us  ???   ???     0     F32P 2 48000 mic-biglinux
++R  249      0      0   0.0us   0.0us  ???   ???     0     F32P 2 48000 + mic-biglinux
+ ";
+         assert_eq!(quant_from_pw_top(dump), Some(1024));
++        let unrelated = format!("{dump}R 99 4096 48000 0 0 0 0 0 S32LE 2 48000 other-driver\n");
++        assert_eq!(quant_from_pw_top(&unrelated), Some(1024));
++        assert_eq!(quant_from_pw_top(&dump.replace("+ mic-biglinux", "= mic-biglinux")), Some(1024));
++        assert_eq!(quant_from_pw_top(&dump.replace("+ mic-biglinux", "other-source")), None);
+ 
+         // A graph nobody is driving, and a rate that is not ours, are both "no
+         // answer" rather than a number to print.
+@@ -321,3 +351,21 @@ R  249      0      0   0.0us   0.0us  ???   ???     0     F32P 2 48000 mic-bigli
+         assert_eq!(quant_from_pw_top(""), None);
+     }
+ }
++
++#[cfg(test)]
++mod provenance_tests {
++    use super::*;
++    #[test]
++    fn bypassed_path_does_not_charge_for_inactive_filters() {
++        let mut settings = AppSettings::default(); settings.mic_bypass = true;
++        let report = build_report(&settings, None, (960, true), Some(512));
++        assert!(report.stages.iter().all(|s| s.stage == "capture-buffer" && !s.measured));
++    }
++    #[test]
++    fn requested_model_remains_available_as_a_comparison_estimate() {
++        let mut settings = AppSettings::default(); settings.mic_bypass = true;
++        let report = build_report(&settings, Some(NoiseModel::Dfn3W8A16), (960, false), None);
++        assert!(report.stages.iter().any(|s| s.stage == "denoiser"));
++        assert!(report.stages.iter().all(|s| !s.measured));
++    }
++}

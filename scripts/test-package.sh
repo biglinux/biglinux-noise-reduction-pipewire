@@ -59,13 +59,39 @@ package
 python3 "$root/scripts/verify-package.py" "$root" "$pkgdir" "$report"
 desktop-file-validate "$pkgdir/usr/share/applications/br.com.biglinux.microphone.desktop"
 appstreamcli validate --no-net "$pkgdir/usr/share/metainfo/br.com.biglinux.microphone.metainfo.xml"
+# usr/bin holds the three Rust CLIs (ELF) and the Python front-end entry point
+# (a symlink to the launcher in the private root). Validate each by what it is:
+# ELF binaries by linkage, the Python script by shebang and a real import.
+app_root="$pkgdir/usr/lib/biglinux-microphone"
+# The whole point of that root: a Python minor upgrade must not be able to
+# strand the front-end, which is what installing into site-packages does.
+if compgen -G "$pkgdir/usr/lib/python*" > /dev/null; then
+    printf 'The front-end was installed into a versioned Python directory\n' >&2
+    exit 1
+fi
+test -f "$app_root/biglinux_microphone/main.py"
 for binary in "$pkgdir"/usr/bin/*; do
-    readelf -h "$binary" >/dev/null
-    dependencies=$(ldd "$binary")
-    printf '\n%s\n%s\n' "${binary#"$pkgdir/"}" "$dependencies" >> "$report/linkage.txt"
-    if grep -q 'not found' <<< "$dependencies"; then
-        printf 'Missing runtime library: %s\n' "$binary" >&2
-        exit 1
+    name=${binary#"$pkgdir/"}
+    if readelf -h "$binary" >/dev/null 2>&1; then
+        dependencies=$(ldd "$binary")
+        printf '\n%s\n%s\n' "$name" "$dependencies" >> "$report/linkage.txt"
+        if grep -q 'not found' <<< "$dependencies"; then
+            printf 'Missing runtime library: %s\n' "$binary" >&2
+            exit 1
+        fi
+    else
+        read -r shebang < "$binary"
+        case "$shebang" in
+            '#!'*python*) ;;
+            *) printf 'Entry point %s is neither ELF nor a python script\n' "$name" >&2; exit 1 ;;
+        esac
+        # The staged module tree must import against the system gi/numpy, or the
+        # entry point would fail at launch even though its file was installed.
+        if ! PYTHONPATH="$app_root" python3 -c 'import biglinux_microphone.main'; then
+            printf 'Front-end module does not import from the staged root: %s\n' "$name" >&2
+            exit 1
+        fi
+        printf '\n%s\n%s\n' "$name" "$shebang" >> "$report/linkage.txt"
     fi
 done
 # CLI help is independent of the GUI allocator and the user's audio session.

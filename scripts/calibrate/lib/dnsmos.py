@@ -36,11 +36,14 @@ class DnsmosScores:
 
 
 def _polyfit(sig: float, bak: float, ovrl: float) -> DnsmosScores:
-    """Apply Microsoft's published linear correction. Numbers come from
-    the DNS Challenge `dnsmos_local.py` reference implementation."""
-    sig_p = max(1.0, min(5.0, 0.94888 * sig + 0.18217))
-    bak_p = max(1.0, min(5.0, 1.00075 * bak + 0.59693))
-    ovrl_p = max(1.0, min(5.0, 0.95293 * ovrl + 0.40593))
+    """Non-personalized P.835 quadratic calibration from Microsoft's reference.
+
+    Source: DNS-Challenge/DNSMOS/dnsmos_local.py, get_polyfit_val.
+    Do not clamp scores or use this calibration for the personalized model.
+    """
+    sig_p = (-0.08397278 * sig + 1.22083953) * sig + 0.0052439
+    bak_p = (-0.13166888 * bak + 1.60915514) * bak - 0.39604546
+    ovrl_p = (-0.06766283 * ovrl + 1.11546468) * ovrl + 0.04602535
     return DnsmosScores(sig_p, bak_p, ovrl_p)
 
 
@@ -69,6 +72,8 @@ NORMALIZE_DBFS = -26.0
 
 def normalize(audio: np.ndarray) -> np.ndarray:
     """Bring `audio` to `NORMALIZE_DBFS` RMS. Silence is left alone."""
+    if audio.ndim != 1 or not audio.size or not np.isfinite(audio).all():
+        raise ValueError("expected nonempty finite mono audio")
     rms = float(np.sqrt(np.mean(np.square(audio, dtype=np.float64))))
     if rms < 1e-9:
         return audio
@@ -80,6 +85,8 @@ def score(audio: np.ndarray, sr: int, model_path: Path) -> DnsmosScores:
     """Score one waveform. Resamples to 16 kHz; tiles short clips."""
     from scipy.signal import resample_poly
 
+    if sr <= 0 or audio.ndim != 1 or not audio.size or not np.isfinite(audio).all():
+        raise ValueError("expected positive sample rate and nonempty finite mono audio")
     if sr != _TARGET_SAMPLE_RATE_HZ:
         audio = resample_poly(audio, _TARGET_SAMPLE_RATE_HZ, sr).astype(np.float32)
     audio = audio.astype(np.float32)
@@ -96,14 +103,22 @@ def score(audio: np.ndarray, sr: int, model_path: Path) -> DnsmosScores:
     return _polyfit(float(raw[0]), float(raw[1]), float(raw[2]))
 
 
-def score_batch(audio: np.ndarray, sr: int, model_path: Path) -> DnsmosScores:
+def score_batch(
+    audio: np.ndarray, sr: int, model_path: Path, *, normalize_level: bool = True
+) -> DnsmosScores:
     """Score by averaging across overlapping 9-second windows.
 
     Normalizes once, for the whole signal, so every window of one take
     keeps its relative level; normalizing per window would erase exactly
     the loudness differences the model is meant to hear.
     """
-    audio = normalize(audio)
+    # Legacy custom evaluation: normalization and half-window hops differ
+    # from Microsoft's end-to-end protocol. Report this distinction.
+    # Set normalize_level=False to preserve absolute level for AGC evaluation.
+    if sr <= 0 or audio.ndim != 1 or not audio.size or not np.isfinite(audio).all():
+        raise ValueError("expected positive sample rate and nonempty finite mono audio")
+    if normalize_level:
+        audio = normalize(audio)
     target_len = int(_INPUT_WINDOW_SECONDS * sr)
     hop = target_len // 2
     if audio.size <= target_len:

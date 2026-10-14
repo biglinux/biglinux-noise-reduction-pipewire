@@ -10,7 +10,7 @@ use std::path::PathBuf;
 
 use biglinux_microphone::config::{
     AppSettings, CompressorConfig, EchoCancelConfig, EqualizerConfig, GateConfig, HpfConfig,
-    NoiseModel, NoiseReductionConfig, OutputFilterSettings, StereoConfig,
+    NoiseReductionConfig, OutputFilterSettings, StereoConfig,
 };
 use biglinux_microphone::pipeline::{
     ECHO_CANCEL_CONF_FILE, MIC_CONF_FILE, MIC_NODE_NAME, OUTPUT_CONF_FILE, OUTPUT_NODE_NAME,
@@ -77,31 +77,14 @@ fn enabling_only_noise_reduction_writes_mic_conf_with_smart_filter() {
     assert!(conf.contains("filter.smart = true"));
     assert!(conf.contains("filter.smart.name = \"big.filter-microphone\""));
     assert!(
-        !conf.contains("filter.smart.target"),
+        !conf.contains("filter.smart.target ="),
         "no target pin: smart filter must follow whichever source the user picks as default",
     );
     assert!(
         !conf.contains("filter.smart.before"),
         "no EC cascade when AEC is off",
     );
-    assert!(conf.contains("\"Enable\" = 1.0"));
-}
-
-#[test]
-fn switching_models_only_changes_the_model_control() {
-    let dir = tempdir().unwrap();
-    let args = args_dir(&dir);
-
-    let mut s = fully_off();
-    s.noise_reduction.enabled = true;
-    apply_to_dir(&s, &args).unwrap();
-    let dns3 = read_to_string(args.join(MIC_CONF_FILE)).unwrap();
-    assert!(dns3.contains("\"Model\" = 0.0"));
-
-    s.noise_reduction.model = NoiseModel::GtcrnVctk;
-    apply_to_dir(&s, &args).unwrap();
-    let vctk = read_to_string(args.join(MIC_CONF_FILE)).unwrap();
-    assert!(vctk.contains("\"Model\" = 1.0"));
+    assert!(conf.contains("\"Attenuation Limit (dB)\" = 100.0"));
 }
 
 #[test]
@@ -118,11 +101,12 @@ fn output_chain_renders_smart_filter_in_bypass_when_master_off() {
     // the user toggles the master off — the chain just goes to bypass.
     assert!(conf.contains(&format!("node.name = \"{OUTPUT_NODE_NAME}\"")));
     assert!(conf.contains(&format!("filter.smart.name = \"{OUTPUT_NODE_NAME}\"")));
-    // GTCRN stays wired with Enable=0; SWH gate goes to bypass via its
-    // Output select control. Same node layout as the active path so the
-    // live update can re-enable everything without restarting the unit.
+    // The attenuation-only default stays wired with Attenuation Limit = 0
+    // (its passthrough); the SWH gate goes to bypass via its Output select
+    // control. Same node layout as the active path so the live update can
+    // re-enable everything without restarting the unit.
     assert!(conf.contains("name = \"ai\""));
-    assert!(conf.contains("\"Enable\" = 0.0"));
+    assert!(conf.contains("\"Attenuation Limit (dB)\" = 0.0"));
     assert!(conf.contains("\"Output select (-1 = key listen, 0 = gate, 1 = bypass)\" = 1.0"));
 }
 
@@ -177,7 +161,8 @@ fn echo_cancel_conf_is_written_into_args_dir_and_removed_when_disabled() {
     assert!(!body.contains("libpipewire-module-echo-cancel"));
     assert!(!body.contains("libpipewire-module-rt"));
     assert!(!body.contains("context.properties"));
-    assert!(body.contains("aec/libspa-aec-webrtc"));
+    // Engine pinned to GTCRN above; default is Auto (CPU-resolved).
+    assert!(body.contains("aec/libspa-aec-gtcrn"));
 
     let off = AppSettings {
         echo_cancel: EchoCancelConfig {

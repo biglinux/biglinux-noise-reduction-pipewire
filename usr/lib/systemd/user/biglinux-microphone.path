@@ -1,0 +1,29 @@
+[Unit]
+Description=Filter noise — apply saved settings when they change
+Documentation=https://github.com/biglinux/biglinux-noise-reduction-pipewire
+# No ordering against pipewire here. Path units are pulled in by paths.target,
+# which runs before basic.target, so ordering this after a regular service makes
+# a cycle that systemd breaks by dropping paths.target — silently disarming the
+# watch. The unit this triggers carries the ordering instead.
+
+[Path]
+# The settings file is replaced atomically, so the target is never itself opened
+# for writing — but systemd also watches the containing directory in order to
+# notice the file appearing, and a rename into place is exactly that. Measured on
+# a live session: three consecutive atomic writes fired this unit three times,
+# and an unrelated file written into the same directory fired it zero times.
+#
+# This replaces an in-process GLib file monitor that had to keep a thread, a main
+# context and a second-resolution timer alive for the whole session. systemd is
+# already running and already holds inotify watches; adding one costs no process.
+PathChanged=%h/.config/biglinux-microphone/settings.json
+Unit=biglinux-microphone.service
+# Storm protection lives here rather than as a start limit on the service: this
+# bounds how often the file may re-trigger a reconcile, without ever counting a
+# settings change against the user. A slider being dragged coalesces into these
+# windows instead of queueing a run per write.
+TriggerLimitIntervalSec=2s
+TriggerLimitBurst=10
+
+[Install]
+WantedBy=default.target

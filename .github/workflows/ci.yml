@@ -131,7 +131,7 @@ jobs:
           if-no-files-found: error
 
   msrv:
-    name: MSRV 1.97.1
+    name: MSRV 1.98.1
     needs: plan
     # Adding the candidate label does not create a second workflow run.
     if: needs.plan.outputs.rust == 'true' && (github.event_name != 'pull_request' || github.event.pull_request.draft == false || contains(github.event.pull_request.labels.*.name, 'release-candidate'))
@@ -139,7 +139,7 @@ jobs:
     container: archlinux:latest
     timeout-minutes: 25
     env:
-      RUSTUP_TOOLCHAIN: "1.97.1"
+      RUSTUP_TOOLCHAIN: "1.98.1"
     steps:
       - run: pacman -Syu --noconfirm --needed git
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
@@ -148,7 +148,7 @@ jobs:
       - uses: ./.github/actions/install-system-deps
       - uses: dtolnay/rust-toolchain@6bed0761d98439e5a578e2877258200ad565ba87
         with:
-          toolchain: "1.97.1"
+          toolchain: "1.98.1"
       - uses: Swatinem/rust-cache@6323deb102c322ba6fcbdcafc7e3dddab59af2b6
       - run: cargo build --all-features --locked
 

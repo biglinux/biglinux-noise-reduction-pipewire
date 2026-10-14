@@ -1,18 +1,32 @@
 # shellcheck shell=bash
 
+# The path unit is what makes the reconciler event-driven: it wakes
+# biglinux-microphone.service when the settings file changes, so nothing of ours
+# has to stay resident watching it. The service itself still runs once at login.
+_units() {
+	systemctl --global "$1" biglinux-microphone.service 2>/dev/null || true
+	systemctl --global "$1" biglinux-microphone.path 2>/dev/null || true
+}
+
 post_install() {
-	systemctl --global enable biglinux-microphone.service 2>/dev/null || true
+	_units enable
 }
 
 post_upgrade() {
-	systemctl --global enable biglinux-microphone.service 2>/dev/null || true
+	_units enable
+	# Up to 5.0 this ran as a resident watcher and the AGC loop was enabled in
+	# some sessions. Both are now started on demand by the reconciler, so drop
+	# the autostart symlinks an older revision may have left behind.
+	systemctl --global disable biglinux-microphone-agc.service 2>/dev/null || true
 }
 
 pre_remove() {
-	systemctl --global disable biglinux-microphone.service 2>/dev/null || true
+	_units disable
 	systemctl --global disable biglinux-microphone-mic.service 2>/dev/null || true
 	systemctl --global disable biglinux-microphone-aec.service 2>/dev/null || true
 	systemctl --global disable biglinux-microphone-output.service 2>/dev/null || true
+	systemctl --global disable biglinux-microphone-agc.service 2>/dev/null || true
+	systemctl --global disable biglinux-microphone-route.service 2>/dev/null || true
 	# Older revisions shipped these as separate units; disable them
 	# too so leftover symlinks don't keep the names referenced.
 	systemctl --global disable biglinux-microphone-echocancel.service 2>/dev/null || true

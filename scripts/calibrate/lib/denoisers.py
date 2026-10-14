@@ -84,6 +84,24 @@ def _spec_for(name: str, onnx_path: Path) -> DenoiserSpec:
     return DenoiserSpec(name, onnx_path, sr, nfft, hop, _family_for(name))
 
 
+def _pad_to_full_frames(x: np.ndarray, nfft: int, hop: int) -> np.ndarray:
+    """Zero-pad `x` so every sample falls inside at least one full `nfft` frame.
+
+    The STFT loop slices `x[f*hop : f*hop+nfft]` and multiplies by an `nfft`
+    window, so a clip shorter than `nfft` raises a broadcast error, and any
+    tail shorter than `hop` past the last full frame is never written to the
+    OLA output. Padding up to the next full-frame boundary fixes both; callers
+    trim the padded tail back off with `enhanced[:len(x)]` (review MODEL-03).
+    """
+    if len(x) < nfft:
+        pad = nfft - len(x)
+    else:
+        pad = (hop - (len(x) - nfft) % hop) % hop
+    if pad:
+        x = np.concatenate([x, np.zeros(pad, dtype=x.dtype)])
+    return x
+
+
 class _OrtSession:
     """Wraps `onnxruntime.InferenceSession` with the run/get_inputs
     interface the OLA loop expects. Default backend."""
@@ -91,7 +109,17 @@ class _OrtSession:
     def __init__(self, path: Path):
         import onnxruntime as ort
 
-        self._sess = ort.InferenceSession(str(path), providers=["CPUExecutionProvider"])
+        # One thread: a per-frame streaming loop makes thousands of tiny
+        # runs, and ORT's default all-core intra-op pool spin-waits between
+        # them — oversubscription that made a 20-clip sweep take an hour.
+        # One thread also matches the single-threaded real-time deployment,
+        # so the measured RTF means what a live chain would pay.
+        opts = ort.SessionOptions()
+        opts.intra_op_num_threads = 1
+        opts.inter_op_num_threads = 1
+        self._sess = ort.InferenceSession(
+            str(path), sess_options=opts, providers=["CPUExecutionProvider"]
+        )
 
     def get_inputs(self):
         return self._sess.get_inputs()
@@ -179,9 +207,12 @@ class DenoiserRunner:
 
         nfft = self.spec.nfft
         hop = self.spec.hop
-        n_frames = 1 + max(0, (len(x_in) - nfft) // hop)
-        if n_frames <= 0:
-            return x.astype(np.float32), 0.0
+        # Zero-pad so every real sample lands in at least one full frame: a clip
+        # shorter than nfft crashed on the window multiply, and a tail shorter
+        # than hop was dropped from the OLA output (review MODEL-03). The extra
+        # tail is trimmed off again by the final `enhanced[:n]`.
+        x_in = _pad_to_full_frames(x_in, nfft, hop)
+        n_frames = 1 + (len(x_in) - nfft) // hop
 
         win = np.hanning(nfft).astype(np.float32)
         enhanced = np.zeros_like(x_in)

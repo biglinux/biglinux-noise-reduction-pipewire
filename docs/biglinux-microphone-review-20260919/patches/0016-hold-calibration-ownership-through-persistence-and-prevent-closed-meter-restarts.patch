@@ -1,0 +1,203 @@
+From d8086cc36807a91300314decc2546358d7e0dc2d Mon Sep 17 00:00:00 2001
+From: OpenAI Review <review@example.invalid>
+Date: Sat, 19 Sep 2026 05:31:44 +0000
+Subject: [PATCH] Hold calibration ownership through persistence and prevent
+ closed meter restarts
+
+---
+ app/biglinux_microphone/ui/audio_capture.py |  2 +-
+ src/agc.rs                                  |  2 +-
+ src/agc/calibration.rs                      | 19 +++++--
+ src/bin/cli.rs                              | 12 +++--
+ src/services/latency.rs                     | 60 ++++++++++-----------
+ 5 files changed, 54 insertions(+), 41 deletions(-)
+
+diff --git a/app/biglinux_microphone/ui/audio_capture.py b/app/biglinux_microphone/ui/audio_capture.py
+index d23506e..5abd37a 100644
+--- a/app/biglinux_microphone/ui/audio_capture.py
++++ b/app/biglinux_microphone/ui/audio_capture.py
+@@ -108,7 +108,7 @@ class SpectrumTap:
+     # ── lifetime ──────────────────────────────────────────────────────────
+ 
+     def start(self) -> None:
+-        if self._thread is not None or not available():
++        if self._closed or self._thread is not None or not available():
+             return
+         self._thread = threading.Thread(target=self._run, name="bigmic-spectrum", daemon=True)
+         self._thread.start()
+diff --git a/src/agc.rs b/src/agc.rs
+index dd6aacd..65f3510 100644
+--- a/src/agc.rs
++++ b/src/agc.rs
+@@ -15,7 +15,7 @@ mod control;
+ mod features;
+ mod calibration;
+ mod session;
+-pub use calibration::calibrate;
++pub use calibration::{calibrate, calibrate_held, CompletedCalibration};
+ 
+ use std::time::{Duration, Instant};
+ 
+diff --git a/src/agc/calibration.rs b/src/agc/calibration.rs
+index b5a4124..c613fb1 100644
+--- a/src/agc/calibration.rs
++++ b/src/agc/calibration.rs
+@@ -6,8 +6,20 @@ use crate::services::pipewire::SourceWatch;
+ 
+ const NO_AUDIO_TIMEOUT: Duration = Duration::from_secs(3);
+ 
+-/// Listen for a bounded duration, with a bounded grace period while converging.
++/// Retains exclusive actuator ownership until the caller has persisted the
++/// outcome. Dropping this value releases the lease; no audio worker remains.
++pub struct CompletedCalibration {
++    pub outcome: Outcome,
++    _owner: crate::config::storage::SettingsLock,
++}
++
++/// Compatibility API for callers that only need a measurement.
+ pub fn calibrate(seconds: f64) -> Result<Outcome, String> {
++    calibrate_held(seconds).map(|completed| completed.outcome)
++}
++
++/// Listen for a bounded duration and keep ownership through the caller's save.
++pub fn calibrate_held(seconds: f64) -> Result<CompletedCalibration, String> {
+     if !seconds.is_finite() || seconds <= 0.0 || seconds > 60.0 {
+         return Err("calibration duration must be finite and in (0, 60] seconds".into());
+     }
+@@ -120,9 +132,10 @@ pub fn calibrate(seconds: f64) -> Result<Outcome, String> {
+     let voice = (heard_speech && tilt_n > 0).then(|| speech_dbfs.map(|level| VoiceEvidence {
+         dbfs: (level - base_db) as f32, tilt_db: (tilt_sum / f64::from(tilt_n)) as f32, metered_filtered,
+     })).flatten();
+-    Ok(Outcome { device: source.node_name, description: source.description,
++    Ok(CompletedCalibration { outcome: Outcome {
++        device: source.node_name, description: source.description,
+         volume: if heard_speech { controller.applied_volume() } else { entry_volume },
+-        speech_dbfs, noise_dbfs, heard_speech, volume_restored, voice })
++        speech_dbfs, noise_dbfs, heard_speech, volume_restored, voice }, _owner })
+ }
+ 
+ fn restore(source: &Source, watch: &SourceWatch, entry: f32, expected: Option<f32>) -> Result<bool, String> {
+diff --git a/src/bin/cli.rs b/src/bin/cli.rs
+index 4a823e0..d330a7d 100644
+--- a/src/bin/cli.rs
++++ b/src/bin/cli.rs
+@@ -555,11 +555,12 @@ fn calibrate(pass: Option<String>) -> ExitCode {
+             "calibrate: unknown pass `{pass}`. Use quick or position"
+         ));
+     }
+-    let outcome = match biglinux_microphone::agc::calibrate(CALIBRATION_SECONDS) {
++    let completed = match biglinux_microphone::agc::calibrate_held(CALIBRATION_SECONDS) {
+         Ok(outcome) => outcome,
+         Err(error) => return exit_with_error(&error),
+     };
+-    let report = serde_json::to_string(&outcome).unwrap_or_default();
++    let outcome = &completed.outcome;
++    let report = serde_json::to_string(outcome).unwrap_or_default();
+     if !outcome.heard_speech {
+         println!("{report}");
+         // Saving this would record the room, not the person. The pass has already
+@@ -568,11 +569,11 @@ fn calibrate(pass: Option<String>) -> ExitCode {
+     }
+     let _lock = match biglinux_microphone::config::storage::SettingsLock::acquire() {
+         Ok(lock) => lock,
+-        Err(error) => return exit_with_error(&error.to_string()),
++        Err(error) => return exit_with_error(&format!("calibration settings were not saved: {error}; microphone volume may already have changed")),
+     };
+     let mut settings = match AppSettings::load_strict() {
+         Ok(settings) => settings,
+-        Err(error) => return exit_with_error(&error.to_string()),
++        Err(error) => return exit_with_error(&format!("calibration settings were not saved: {error}; microphone volume may already have changed")),
+     };
+     let device = settings.mic_calibration.devices.entry(outcome.device.clone()).or_default();
+     if pass == "position" {
+@@ -586,10 +587,11 @@ fn calibrate(pass: Option<String>) -> ExitCode {
+     // machine, every pass stopped the route watcher and restarted output units
+     // underneath whatever was playing.
+     if let Err(error) = settings.save() {
+-        return exit_with_error(&error.to_string());
++        return exit_with_error(&format!("calibration settings were not saved: {error}; microphone volume may already have changed"));
+     }
+     // Success becomes visible only after persistence completed.
+     println!("{report}");
++    drop(completed); // the daemon may resume only after the new range was saved
+     // The one thing that does depend on this file: the level daemon exists only
+     // while some device has a window for it to work inside.
+     let wanted = settings.mic_calibration.devices.values().any(|d| d.window().is_some());
+diff --git a/src/services/latency.rs b/src/services/latency.rs
+index 43833dd..2642e93 100644
+--- a/src/services/latency.rs
++++ b/src/services/latency.rs
+@@ -201,44 +201,42 @@ fn build_report(settings: &AppSettings, requested_model: Option<NoiseModel>,
+     }
+ 
+     if include_ai {
+-    stages.push(Stage {
+-        // Not a reading of this machine. It is the plugin's own algorithmic
+-        // delay, which is a property of the network and not of the computer
+-        // running it — but it was measured once, on this project's hardware,
+-        // and every figure here has to say which of those it is.
+-        stage: "denoiser",
+-        ms: denoiser_ms,
+-        measured: false,
+-        source: match family {
+-            "gtcrn" => "the shipped GTCRN plugin's own delay, 1344 samples, measured once",
+-            "dpdfnet2" => "the split-band build's published algorithmic delay",
+-            _ => "the shipped DeepFilterNet3 plugin's own delay at 0 ms lookahead, measured once",
+-        },
+-        frames: None,
+-    });
+-
+-    if lookahead_ms > 0.0 {
+         stages.push(Stage {
+-            stage: "lookahead",
+-            ms: lookahead_ms,
+-            // Exact rather than measured: it is the number this machine's own
+-            // settings set, and the plugin adds it to its own delay.
++            // Not a reading of this machine. It is the plugin's own algorithmic
++            // delay, which is a property of the network and not of the computer
++            // running it — but it was measured once, on this project's hardware,
++            // and every figure here has to say which of those it is.
++            stage: "denoiser",
++            ms: denoiser_ms,
+             measured: false,
+-            source: "configured lookahead; not a measurement of the live plugin",
++            source: match family {
++                "gtcrn" => "the shipped GTCRN plugin's own delay, 1344 samples, measured once",
++                "dpdfnet2" => "the split-band build's published algorithmic delay",
++                _ => "the shipped DeepFilterNet3 plugin's own delay at 0 ms lookahead, measured once",
++            },
+             frames: None,
+         });
+-    }
+ 
++        if lookahead_ms > 0.0 {
++            stages.push(Stage {
++                stage: "lookahead",
++                ms: lookahead_ms,
++                // Exact rather than measured: it is the number this machine's own
++                // settings set, and the plugin adds it to its own delay.
++                measured: false,
++                source: "configured lookahead; not a measurement of the live plugin",
++                frames: None,
++            });
++        }
+     }
+     if !effective.mic_bypass {
+-    stages.push(Stage {
+-        stage: "filter-output-buffer",
+-        ms: quantum_ms,
+-        measured: false,
+-        source: "one additional output period assumed by this estimate; not measured or inferred from QUANT",
+-        frames: Some(quantum_frames),
+-    });
+-
++        stages.push(Stage {
++            stage: "filter-output-buffer",
++            ms: quantum_ms,
++            measured: false,
++            source: "one additional output period assumed by this estimate; not measured or inferred from QUANT",
++            frames: Some(quantum_frames),
++        });
+     }
+     Report {
+         total_ms: (stages.iter().map(|stage| stage.ms).sum::<f64>() * 10.0).round() / 10.0,

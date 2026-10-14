@@ -17,6 +17,6 @@ pub mod echo;
 /// Shared verified apply path for all application surfaces.
 pub mod reconcile;
 
+pub mod latency;
 pub mod preview;
-
-pub mod settings_watch;
+pub mod profiles;

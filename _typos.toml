@@ -7,6 +7,8 @@ extend-ignore-identifiers-re = [
     "hpf",
     "DNS3",
     "VCTK",
+    # DFN plugin control ports, as named by dfn3-ladspa: PN_A0..PN_A9.
+    "PN_A\\d",
     # PipeWire CLI tools
     "wpctl",
     # KDE i18n function: typos splits "i18nd" into "i18" + "nd".
@@ -35,6 +37,14 @@ extend-exclude = [
     # Localized prose is not English; gettext catalogs have a separate gate.
     # Keep English docs, Rust code, protocol identifiers and fixtures checked.
     "docs/*.pt_BR.md",
+    # Portuguese working notes and external review bundles. The bundles carry
+    # their own .patch copies of code this gate already reads at its source.
+    "docs/biglinux-microphone-review-*/**",
+    "ANALISE-*.md",
+    "PLANO-*.md",
+    "DENOISE-*.md",
+    "DPDFNET-*.md",
+    "BIGLINUX-*.md",
     "target/**",
     "po/**/*.po",
     "po/*.pot",

@@ -39,4 +39,4 @@ StartupWMClass=br.com.biglinux.microphone
 Categories=AudioVideo;Audio;Mixer;
 Terminal=false
 StartupNotify=true
-Keywords=microphone;mic;noise;reduction;audio;pipewire;gtcrn;filter;
+Keywords=microphone;mic;noise;reduction;audio;pipewire;deepfilternet;filter;

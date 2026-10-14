@@ -1,0 +1,68 @@
+{
+  "revision": "2026-09-09",
+  "method": {
+    "runtime": "onnxruntime-cpu 1.29, CPU EP, intra=inter=1, sequential",
+    "cost_metric": "inference p99 latency / model hop (DPDFNet hop=10ms @480/48k, GTCRN hop=16ms @768/48k); inference-only, plugin adds ~10-20%",
+    "verdicts": "SHIPS p99<=50%, MARGINAL 50-80%, DEAD >80% or no-load",
+    "i3_env": "governor performance, no_turbo=1, freq stable 1497 MHz, 51C, windows >=60s",
+    "i5_env": "governor performance, windows >=30s"
+  },
+  "machines": {
+    "i5-13400": {"isa": ["avx2", "avx512"], "role": "modern"},
+    "i3-2375M": {"isa": ["avx"], "no_avx2": true, "ram_gb": 3.7, "clock_ghz": 1.5, "role": "legacy", "ssh": "192.168.1.62"}
+  },
+  "runtime_parity_ort_vs_openvino": {"model": "dpdfnet2.onnx", "frames": 400, "correlation": 1.000000, "sdr_db": 128.3, "note": "runtime does not change quality"},
+  "triage_ort": {
+    "i3-2375M": {
+      "gtcrn_dns3":        {"hop_ms": 16, "p50": 22, "p95": 24, "p99": 26, "max": 34, "rss_mb": 71, "verdict": "SHIPS"},
+      "dpdfnet_baseline_sb": {"hop_ms": 10, "p50": 29, "p95": 31, "p99": 34, "max": 52, "rss_mb": 84, "verdict": "SHIPS"},
+      "dpdfnet2_sb":       {"hop_ms": 10, "p50": 67, "p95": 73, "p99": 77, "max": 111, "rss_mb": 86, "verdict": "MARGINAL"},
+      "dpdfnet2_48khz_hr": {"hop_ms": 10, "p50": 96, "p95": 103, "p99": 107, "max": 124, "rss_mb": 87, "verdict": "DEAD"},
+      "dpdfnet8_48khz_hr": {"hop_ms": 10, "p50": 263, "p95": 278, "p99": 281, "max": 330, "rss_mb": 100, "verdict": "DEAD"}
+    },
+    "i5-13400": {
+      "gtcrn_dns3":        {"hop_ms": 16, "p50": 3, "p99": 6, "max": 29, "rss_mb": 71},
+      "dpdfnet_baseline_sb": {"hop_ms": 10, "p50": 4, "p99": 7, "max": 34, "rss_mb": 84},
+      "dpdfnet2_sb":       {"hop_ms": 10, "p50": 11, "p99": 20, "max": 81, "rss_mb": 85},
+      "dpdfnet2_48khz_hr": {"hop_ms": 10, "p50": 15, "p99": 21, "max": 96, "rss_mb": 86},
+      "dpdfnet8_48khz_hr": {"hop_ms": 10, "p50": 45, "p99": 60, "max": 131, "rss_mb": 98}
+    }
+  },
+  "runtime_ort_vs_openvino_i3_pct_of_10ms_hop": {
+    "baseline": {"ort": 29, "openvino": 194},
+    "dpdfnet2": {"ort": 68, "openvino": 229},
+    "dpdfnet2_48khz_hr": {"ort": 96, "openvino": 260},
+    "rss_mb": {"ort": 85, "openvino": 135},
+    "note": "OpenVINO dead on Sandy Bridge (no AVX2); SNIPPETS_MODE=DISABLE fallback 3-7x slower"
+  },
+  "dnsmos_p835_single_synthetic_sample_weak_evidence": {
+    "noisy_in": {"sig": 3.46, "bak": 3.17, "ovrl": 2.87},
+    "gtcrn_dns3": {"sig": 3.17, "bak": 4.29, "ovrl": 3.14},
+    "baseline_sb": {"sig": 2.86, "bak": 4.83, "ovrl": 2.97},
+    "dpdfnet2_sb": {"sig": 2.70, "bak": 4.67, "ovrl": 2.83},
+    "dpdfnet2_hr": {"sig": 2.57, "bak": 4.56, "ovrl": 2.72},
+    "fastenhancer_medium": {"sig": 3.32, "bak": 4.03, "ovrl": 3.16},
+    "caveat": "single synthetic mix, no clean reference; conflicts with maintainer PESQ ladder and user listening; not decision-grade"
+  },
+  "fastenhancer_medium_faster_enhancer_c": {
+    "runtime": "native C/SIMD (avxvnni tier on i5), MIT, weights 565108 bytes W8A8 int8, zero-heap after init",
+    "rtf_racing_i5": 0.089,
+    "hop_ms": 6.67,
+    "algorithmic_latency_ms": 14.67,
+    "isa_requirement": "AVX2+FMA3+F16C (no scalar/SSE fallback) -> does NOT run on i3 (AVX only)",
+    "verdict": "strong modern-CPU-tier candidate; needs LADSPA/PipeWire wrapper + full quality (VoiceBank+DEMAND) + ABX; auto-disable on non-AVX2 CPUs with fallback"
+  },
+  "ort_port": {
+    "status": "done",
+    "plugin_parity_ort_vs_openvino_sdr_db": 28.7,
+    "self_scheduling_jitter_sdr_db": 34,
+    "note": "difference is worker scheduling, not runtime; inference is 128 dB identical; fixes measure-model teardown crash; i5-built .so runs on i3 (no AVX2)"
+  },
+  "full_plugin_i3_measure_model_pct_of_20ms_deadline": {
+    "baseline_sb": {"idle": 38.7, "under_1core_load": 43, "verdict": "SHIPS under load"},
+    "dpdfnet2_sb": {"idle": 45.1, "under_1core_load": "unavailable", "verdict": "ships idle, DEAD under load (worker loses its core)"},
+    "dpdfnet2_48khz_hr": {"idle": "unavailable", "verdict": "DEAD"}
+  },
+  "decision": {"universal_floor": "gtcrn_dns3", "i3_default": "baseline_sb or gtcrn", "modern_tier": "dpdfnet2_sb/hr", "runtime": "onnxruntime", "openvino": "cut"},
+  "pending": ["voicebank_demand_pesq_stoi_sisdr", "blind_abx", "app_self_measure_and_xrun_stepdown", "prepare_model_py_drop_openvino_makedep", "aot_native_gated"]
+}

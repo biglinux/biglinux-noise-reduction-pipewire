@@ -53,8 +53,8 @@ fn conf_full_chain_is_linked() {
     let conf = build_output_conf(&enabled_settings());
     for link in [
         r#"{ output = "mixer:Out" input = "hpf:In" }"#,
-        r#"{ output = "hpf:Out" input = "ai:Input" }"#,
-        r#"{ output = "ai:Output" input = "gate:Input" }"#,
+        r#"{ output = "hpf:Out" input = "ai:Audio In" }"#,
+        r#"{ output = "ai:Audio Out" input = "gate:Input" }"#,
         r#"{ output = "gate:Output" input = "compressor:Input" }"#,
         r#"{ output = "compressor:Output" input = "eq:In 1" }"#,
         r#"{ output = "sample_ceiling:Out" input = "copy_l:In" }"#,
@@ -92,7 +92,7 @@ fn output_conf_is_a_bare_module_args_body() {
     assert!(!conf.contains("libpipewire-module-adapter"));
     assert!(!conf.contains("libpipewire-module-filter-chain"));
     // Filter graph itself is still rendered.
-    assert!(conf.contains("gtcrn_mono"));
+    assert!(conf.contains("deep_filter_net3_rs_mono"));
     assert!(conf.contains("filter.graph = {"));
 }
 
@@ -100,10 +100,9 @@ fn output_conf_is_a_bare_module_args_body() {
 fn master_off_forces_full_bypass_regardless_of_sub_flags() {
     // Sub-effects look enabled in the user's settings, but the
     // master switch is off — every control must render in
-    // pass-through. GTCRN stays in the topology with Enable=0 so
-    // the live update path can flip it back without restarting the
-    // unit (which would yank the smart-filter sink and pause
-    // browsers).
+    // pass-through. The denoiser stays in the topology with attenuation 0
+    // so the live update path can bring it back without restarting the
+    // unit (which would yank the smart-filter sink and pause browsers).
     let s = AppSettings {
         output_filter: crate::config::OutputFilterSettings {
             enabled: false,
@@ -136,12 +135,14 @@ fn master_off_forces_full_bypass_regardless_of_sub_flags() {
     };
     let conf = build_output_conf(&s);
 
-    // GTCRN node must remain so the live path can re-enable it.
+    // The neural node must remain so the live path can re-process without a
+    // restart. The default plugin has no `Enable` port, so master-off renders
+    // it as a passthrough with `Attenuation Limit = 0`.
     assert!(conf.contains("name = \"ai\""));
-    assert!(conf.contains(&format!("plugin = \"{LADSPA_GTCRN}\"")));
+    assert!(conf.contains("deep_filter_net3_rs_mono"));
     assert!(
-        conf.contains("\"Enable\" = 0.0"),
-        "GTCRN must render with Enable=0 while master is off"
+        conf.contains("\"Attenuation Limit (dB)\" = 0.0"),
+        "attenuation-only denoiser must pass through while master is off"
     );
     assert!(conf.contains("\"Freq\" = 5.0"), "HPF must pass through");
     assert!(
@@ -182,7 +183,6 @@ fn nr_off_with_master_on_uses_a_copy_without_neural_processing() {
     };
     let conf = build_output_conf(&s);
     assert!(conf.contains("name = \"ai\""));
-    assert!(!conf.contains("libgtcrn"));
     assert!(!conf.contains("\"Enable\""));
     assert!(conf.contains(r#"{ output = "hpf:Out" input = "ai:In" }"#));
     assert!(conf.contains(r#"{ output = "ai:Out" input = "gate:Input" }"#));
@@ -214,18 +214,12 @@ fn master_on_eq_off_renders_flat_regardless_of_preset() {
 }
 
 #[test]
-fn output_gtcrn_keeps_integrated_gate_parked_below_noise_floor() {
-    // GTCRN's `Threshold (dB)` port (default `-60`) drives an
-    // integrated noise gate. On the output chain the user-facing
-    // gate is a separate SWH node, so the integrated one must
-    // always render at the `-80 dB` sentinel — otherwise quiet
-    // playback gets cut even when the UI gate toggle is off.
-    let s = enabled_settings();
+fn the_output_chain_never_runs_the_voice_gate() {
+    // Playback carries notifications and music, not only voices.
+    let s = enabled_settings().runtime_settings();
+    assert!(!s.output_filter.noise_reduction.voice_gate);
     let conf = build_output_conf(&s);
-    assert!(
-        conf.contains(r#""Threshold (dB)" = -80.0"#),
-        "GTCRN integrated gate must be parked at -80 dB on the output chain"
-    );
+    assert!(conf.contains(r#""Voice gate depth (dB)" = 0.0"#), "{conf}");
 }
 
 #[test]
@@ -250,9 +244,10 @@ fn conf_graph_inputs_map_to_mixer() {
 }
 
 #[test]
-fn ai_processing_on_renders_gtcrn_enable_one() {
-    // Master + NR on → GTCRN actually processes (Enable=1.0). Pins
-    // output_ai_processing's true path (the off paths are covered above).
+fn ai_processing_on_renders_full_attenuation() {
+    // Master + NR on → the denoiser actually processes. For the
+    // attenuation-only default that means the full attenuation cap
+    // (strength 1.0 → 100 dB). Pins output_ai_processing's true path.
     let s = AppSettings {
         output_filter: crate::config::OutputFilterSettings {
             enabled: true,
@@ -267,24 +262,23 @@ fn ai_processing_on_renders_gtcrn_enable_one() {
     };
     let conf = build_output_conf(&s);
     assert!(
-        conf.contains("\"Enable\" = 1.0"),
-        "GTCRN must process (Enable=1) when master + NR are on: {conf}"
+        conf.contains("\"Attenuation Limit (dB)\" = 100.0"),
+        "denoiser must process at full attenuation when master + NR are on: {conf}"
     );
 }
 
 #[test]
-fn both_integrated_and_swh_gate_thresholds_park_at_floor() {
-    // GTCRN's integrated gate is always parked at -80 dB; with the SWH gate
-    // sub-toggle off its threshold parks at -80 too. Assert BOTH are present
-    // (a count) so a sign flip on either threshold is caught and not masked
-    // by the other -80 still being there.
+fn the_swh_gate_threshold_parks_at_floor_when_disabled() {
+    // The attenuation-only default has no integrated gate; only the separate
+    // SWH `gate_1410` node carries a threshold, and with the sub-toggle off it
+    // parks at -80 dB (bypass) so a sign flip on it is caught.
     let mut s = enabled_settings();
     s.output_filter.gate.enabled = false;
     let conf = build_output_conf(&s);
     assert_eq!(
         conf.matches(r#""Threshold (dB)" = -80.0"#).count(),
-        2,
-        "GTCRN integrated gate + disabled SWH gate must both park at -80 dB: {conf}",
+        1,
+        "disabled SWH gate must park at -80 dB: {conf}",
     );
 }
 
@@ -322,4 +316,36 @@ fn mono_settings() -> AppSettings {
     let mut settings = AppSettings::default();
     settings.output_filter.channel_mode = crate::config::OutputChannelMode::Mono;
     settings
+}
+
+#[test]
+fn native_dpdfnet_output_uses_its_own_ports_and_only_the_attenuation_control() {
+    // The native DPDFNet plugin keeps the LADSPA default "Input"/"Output" and
+    // has no DFN3 gate/expander ports: the DFN3 names would leave the chain
+    // unlinked and PipeWire would refuse to load it.
+    let mut settings = enabled_settings();
+    settings.output_filter.noise_reduction.enabled = true;
+    settings.output_filter.noise_reduction.model = crate::config::NoiseModel::Dpdfnet;
+    let conf = build_output_conf(&settings);
+    assert!(
+        conf.contains(r#"{ output = "hpf:Out" input = "ai:Input" }"#),
+        "{conf}"
+    );
+    assert!(
+        conf.contains(r#"{ output = "ai:Output" input = "gate:Input" }"#),
+        "{conf}"
+    );
+    assert!(conf.contains("\"Attenuation Limit (dB)\""));
+    assert!(
+        !conf.contains("Audio In") && !conf.contains("Min SNR gate"),
+        "{conf}"
+    );
+
+    let live = crate::services::pipewire::output_params(&settings);
+    assert!(live.iter().any(|(k, _)| k == "ai:Attenuation Limit (dB)"));
+    assert!(
+        !live
+            .iter()
+            .any(|(k, _)| k.starts_with("ai:Min SNR") || k.starts_with("ai:Silence"))
+    );
 }

@@ -1,0 +1,66 @@
+/* The BigLinux tooltip card. Shown by `tooltip.rs` in place of GTK's own
+   tooltip window, so every program draws the same card. */
+
+popover.big-tooltip {
+  background: transparent;
+  box-shadow: none;
+  padding: 16px;
+  opacity: 0;
+  transition: opacity 200ms cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+
+popover.big-tooltip.visible {
+  opacity: 1;
+}
+
+/* The pointer moved on from a card that was showing: the next one appears at
+   once where the eye already is, instead of fading up from nothing. */
+popover.big-tooltip.instant {
+  transition: none;
+}
+
+popover.big-tooltip > contents {
+  background-image: linear-gradient(145deg, alpha(#ffffff, 0.55), alpha(#ffffff, 0));
+  background-color: #e6e6e6;
+  color: #2e2e2e;
+  padding: 9px 14px;
+  border-radius: 14px;
+  border: 1px solid alpha(#000000, 0.12);
+  box-shadow: 0 1px 2px alpha(#000000, 0.20), 0 12px 32px alpha(#000000, 0.36);
+}
+
+popover.big-tooltip label {
+  color: inherit;
+}
+
+popover.big-tooltip b {
+  font-weight: 800;
+}
+
+popover.big-tooltip .big-tooltip-icon {
+  background-color: alpha(currentColor, 0.08);
+  border-radius: 11px;
+  padding: 8px;
+}
+
+@media (prefers-color-scheme: dark) {
+  popover.big-tooltip > contents {
+    background-image: linear-gradient(145deg, alpha(#ffffff, 0.08), alpha(#ffffff, 0));
+    background-color: #424242;
+    color: #ffffff;
+    border-color: alpha(#ffffff, 0.14);
+  }
+}
+
+@media (prefers-contrast: more) {
+  popover.big-tooltip > contents {
+    background-image: none;
+    border-color: currentColor;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  popover.big-tooltip {
+    transition: none;
+  }
+}

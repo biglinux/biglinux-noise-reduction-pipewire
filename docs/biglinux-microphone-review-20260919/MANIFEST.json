@@ -1,0 +1,367 @@
+{
+  "schema": 1,
+  "baseline_archive": "biglinux-microphone-source.tar.gz",
+  "baseline_sha256": "ceea62839287b3d845407f2eb3da4b21dca1d58dd4688fd673f8ee894b16f234",
+  "patch_count": 17,
+  "changed_files": 33,
+  "patches": [
+    {
+      "number": 1,
+      "file": "0001-fix-loudness-cache-and-integrate-exact-audio-durations.patch",
+      "subject": "Fix loudness cache and integrate exact audio durations",
+      "files": [
+        "app/biglinux_microphone/ui/loudness.py",
+        "app/tests/test_loudness.py"
+      ],
+      "sha256": "933683c5d26e408e72faf57adcd3fb2979a19ab2046f5a94ea1813c131294603"
+    },
+    {
+      "number": 2,
+      "file": "0002-analyze-agc-at-20-hz-with-full-hop-peak-safety-and-capture-generation-metadata.patch",
+      "subject": "Analyze AGC at 20 Hz with full-hop peak safety and capture generation metadata",
+      "files": [
+        "src/agc.rs",
+        "src/services/audio_monitor.rs",
+        "src/services/audio_monitor/analyzer.rs",
+        "src/services/audio_monitor/capture.rs",
+        "src/services/audio_monitor/types.rs"
+      ],
+      "sha256": "e22243c359556091bdf3176f651ead7384c5b7b5d7cf44efd12aa88d4c7ee17b"
+    },
+    {
+      "number": 3,
+      "file": "0003-bound-agc-integrator-reset-stale-evidence-and-preserve-all-gain-normalized-histories.patch",
+      "subject": "Bound AGC integrator, reset stale evidence and preserve all gain-normalized histories",
+      "files": [
+        "src/agc/control.rs",
+        "src/agc/control_tests.rs",
+        "src/agc/features.rs",
+        "src/agc/features_tests.rs",
+        "src/gain_policy.rs"
+      ],
+      "sha256": "11d8a954bf74fac0711e2b2cc2308390099c43428b618adfb408ada2ae3dfdd2"
+    },
+    {
+      "number": 4,
+      "file": "0004-resolve-source-identity-and-default-from-one-generation-aware-pipewire-snapshot.patch",
+      "subject": "Resolve source identity and default from one generation-aware PipeWire snapshot",
+      "files": [
+        "src/services/echo.rs",
+        "src/services/pipewire/sources.rs"
+      ],
+      "sha256": "e84ea41a6f274d4dd1a2e7d837bf9a1a434502b1608864deaeabb0a19faa508d"
+    },
+    {
+      "number": 5,
+      "file": "0005-observe-agc-source-identity-and-demand-through-a-bounded-native-pipewire-graph-cache.patch",
+      "subject": "Observe AGC source identity and demand through a bounded native PipeWire graph cache",
+      "files": [
+        "src/services/pipewire.rs",
+        "src/services/pipewire/source_watch.rs",
+        "src/services/pipewire/sources.rs"
+      ],
+      "sha256": "833dacd8523ab77b090e7b86a953848df6a581726fe843cd097ac0ec7f95f1da"
+    },
+    {
+      "number": 6,
+      "file": "0006-keep-speech-reachability-independent-from-a-narrowed-integrator-window.patch",
+      "subject": "Keep speech reachability independent from a narrowed integrator window",
+      "files": [
+        "src/agc/control.rs",
+        "src/gain_policy.rs"
+      ],
+      "sha256": "b920567c3c1c837988f19f00c17b25b761665e74f886d4d2cd089d1ee2ba0e8a"
+    },
+    {
+      "number": 7,
+      "file": "0007-make-calibration-bounded-serialized-readback-driven-and-ownership-safe-on-failures.patch",
+      "subject": "Make calibration bounded, serialized, readback-driven and ownership-safe on failures",
+      "files": [
+        "src/agc.rs",
+        "src/agc/calibration.rs",
+        "src/agc/session.rs"
+      ],
+      "sha256": "0b8ad90cb30f78b5cb76bede71811adb6b72e6183d1f817982db76f842670c19"
+    },
+    {
+      "number": 8,
+      "file": "0008-integrate-event-driven-agc-sessions-calibration-ownership-and-stale-frame-rejection.patch",
+      "subject": "Integrate event-driven AGC sessions, calibration ownership and stale-frame rejection",
+      "files": [
+        "src/agc.rs",
+        "src/agc/session.rs"
+      ],
+      "sha256": "04d3d5ddb82ec891b93187a76c5be57f221a86718e5d014ab6cb8134bac1e12c"
+    },
+    {
+      "number": 9,
+      "file": "0009-preserve-deletions-and-forward-compatible-fields-in-concurrent-settings-transactions.patch",
+      "subject": "Preserve deletions and forward-compatible fields in concurrent settings transactions",
+      "files": [
+        "src/config/storage.rs"
+      ],
+      "sha256": "f4aff5ee51272c8b165dcf445e5dec70973c8d2a91359b0be2f203f87d6129c3"
+    },
+    {
+      "number": 10,
+      "file": "0010-keep-spectrum-pcm-draining-during-graph-queries-and-coalesce-ui-state-reloads.patch",
+      "subject": "Keep spectrum PCM draining during graph queries and coalesce UI state reloads",
+      "files": [
+        "app/biglinux_microphone/ui/audio_capture.py",
+        "app/biglinux_microphone/ui/pcm_reader.py",
+        "app/biglinux_microphone/ui/state.py",
+        "app/tests/test_pcm_reader.py",
+        "app/tests/test_state_store.py"
+      ],
+      "sha256": "1af3aa7d49c157d8f36cd2c25202df6fca9164118cc48a53bc5a797f11d94b44"
+    },
+    {
+      "number": 11,
+      "file": "0011-harden-range-quantization-manual-ownership-and-raw-meter-noise-bounds.patch",
+      "subject": "Harden range quantization, manual ownership and raw-meter noise bounds",
+      "files": [
+        "src/agc.rs",
+        "src/agc/calibration.rs",
+        "src/agc/control.rs",
+        "src/agc/control_tests.rs",
+        "src/config/audio.rs"
+      ],
+      "sha256": "07472e19f263608bb3efc78f086b4efed3fb76565612749a256b69f10a68106f"
+    },
+    {
+      "number": 12,
+      "file": "0012-coalesce-pending-per-setting-writes-and-prevent-obsolete-asynchronous-callbacks.patch",
+      "subject": "Coalesce pending per-setting writes and prevent obsolete asynchronous callbacks",
+      "files": [
+        "app/biglinux_microphone/ui/state.py",
+        "app/biglinux_microphone/utils/async_utils.py"
+      ],
+      "sha256": "c55101a2600872aae978aee872e1c27b5bf6886d6d07c10954f20d01d62a326a"
+    },
+    {
+      "number": 13,
+      "file": "0013-confirm-calibration-persistence-and-microphone-selection-close-startup-and-retry-races.patch",
+      "subject": "Confirm calibration persistence and microphone selection; close startup and retry races",
+      "files": [
+        "app/biglinux_microphone/cli.py",
+        "app/biglinux_microphone/ui/audio_capture.py",
+        "app/tests/test_cli_calibration.py",
+        "src/agc.rs",
+        "src/bin/cli.rs",
+        "src/services/pipewire/source_watch.rs",
+        "src/services/profiles.rs"
+      ],
+      "sha256": "b765a419473efd17c2409ef8e8f1433c875536babe033d6dda39e24da085e1b6"
+    },
+    {
+      "number": 14,
+      "file": "0014-make-latency-provenance-conservative-and-resolve-the-actual-microphone-driver-group.patch",
+      "subject": "Make latency provenance conservative and resolve the actual microphone driver group",
+      "files": [
+        "app/biglinux_microphone/cli.py",
+        "src/services/latency.rs"
+      ],
+      "sha256": "a746f1bc88be8366b85eae494d1897ed890ea52c951a9d3e70eee6e8236c496c"
+    },
+    {
+      "number": 15,
+      "file": "0015-add-bounded-ui-queue-cancellation-and-callback-regression-contracts.patch",
+      "subject": "Add bounded UI queue, cancellation and callback regression contracts",
+      "files": [
+        "app/tests/test_async_contracts.py"
+      ],
+      "sha256": "3353a4903b2d98872796c7b0d9d10e99395dd289bf478a1ec379719401be6429"
+    },
+    {
+      "number": 16,
+      "file": "0016-hold-calibration-ownership-through-persistence-and-prevent-closed-meter-restarts.patch",
+      "subject": "Hold calibration ownership through persistence and prevent closed meter restarts",
+      "files": [
+        "app/biglinux_microphone/ui/audio_capture.py",
+        "src/agc.rs",
+        "src/agc/calibration.rs",
+        "src/bin/cli.rs",
+        "src/services/latency.rs"
+      ],
+      "sha256": "2a6ea685cabf5fea5ea8dea9ea5b99442792c9687895de8c5d643eadf618f747"
+    },
+    {
+      "number": 17,
+      "file": "0017-bound-the-entire-quantum-preview-handshake-including-partial-lines.patch",
+      "subject": "Bound the entire quantum preview handshake, including partial lines",
+      "files": [
+        "src/services/preview.rs"
+      ],
+      "sha256": "e4bcbf1d282bef7456648678b3742b2b12ab2eea6cf6156f29440b05ed5197a1"
+    }
+  ],
+  "files": [
+    {
+      "path": "app/biglinux_microphone/cli.py",
+      "before_sha256": "f7427bd44deffac8287a05fe5e2caa7141ebe2283c2158a938cc29b19847bea0",
+      "after_sha256": "9008bc0d893148b412a95d87480a3eca35c218a0dae0e4530980e576ab80c208"
+    },
+    {
+      "path": "app/biglinux_microphone/ui/audio_capture.py",
+      "before_sha256": "cafcb00e2936e187269cff41ab754c5da88dd67a78b8bcb94b51d67bf11b188a",
+      "after_sha256": "a5fbcf55204b56920593ea01799d848358c9be20e1b17dfe274382c19fdc3fb4"
+    },
+    {
+      "path": "app/biglinux_microphone/ui/loudness.py",
+      "before_sha256": "8544e351e802a008ddb6c3f1e7e03832e5b4cddd14d75cad830885988821c163",
+      "after_sha256": "ff41c97d3a2666e90a63e83d11fc8d6b289475c3d9971e9c5965682082ca8f22"
+    },
+    {
+      "path": "app/biglinux_microphone/ui/pcm_reader.py",
+      "before_sha256": null,
+      "after_sha256": "401caf42b9e3484df006c01c1cedfbef00e8b3eeb34e077e7582998870ac05bd"
+    },
+    {
+      "path": "app/biglinux_microphone/ui/state.py",
+      "before_sha256": "335e1096b557021e76f399cf339a8a46327c85522521c19518f51e31e2f42670",
+      "after_sha256": "42a7953607a6c7df740c0439535164b9c36ea549a8df21901ed8154e5b729461"
+    },
+    {
+      "path": "app/biglinux_microphone/utils/async_utils.py",
+      "before_sha256": "f7a4004928d1adb10b70d5bd229439ffd3edd090446d8583af1b83ef7a14b3f8",
+      "after_sha256": "dafc7eca3c5fb53860d597160e199fbd65c3ceef98a98bc9084f5987073660c0"
+    },
+    {
+      "path": "app/tests/test_async_contracts.py",
+      "before_sha256": null,
+      "after_sha256": "cb13fc1e382457175edf9fe3082f3348bec76ea6af8f576e114e1d4376fb646b"
+    },
+    {
+      "path": "app/tests/test_cli_calibration.py",
+      "before_sha256": null,
+      "after_sha256": "8aae3234a2fdbbee11baaf05525446d224a3c89a9266d6ade1b206df7479dac4"
+    },
+    {
+      "path": "app/tests/test_loudness.py",
+      "before_sha256": "d527e84aa7d21416b2ec9280909eea7a820a92ff80cf7347f643669afc4718d4",
+      "after_sha256": "cff2f26953a3ace47dc19e75ab0bff1d21378c26b529532ed68974a3cf2083a9"
+    },
+    {
+      "path": "app/tests/test_pcm_reader.py",
+      "before_sha256": null,
+      "after_sha256": "f864e7d415abb2abd6fa4d7f9f32de6bbd9a2d9db09a73a8d81341e9fb1c1fb4"
+    },
+    {
+      "path": "app/tests/test_state_store.py",
+      "before_sha256": "470f63d731301973d9dd2825f8d614adfbd7494053d7706b3dea1c295ac65cdb",
+      "after_sha256": "f9bb91bbe13dc5bcc71300b5af8d31e8852f484ff7eb825b0d5f7226968b75a9"
+    },
+    {
+      "path": "src/agc.rs",
+      "before_sha256": "c6a951756de83d7a8bc13a2b07dc1665a2d351097fcde1c1104c647e81459a12",
+      "after_sha256": "8d7c30c5917058f07d1f5e6067de01f202a3f676e1422954433f3a2d3dece360"
+    },
+    {
+      "path": "src/agc/calibration.rs",
+      "before_sha256": null,
+      "after_sha256": "43a203059d122f0d9b53c740c9ede8c30b7e859ac1d2394811bd98a94eeff73f"
+    },
+    {
+      "path": "src/agc/control.rs",
+      "before_sha256": "aacce0128eefc592faedbd4ed46da826cc6572f73a523d6d932e582a7602d57f",
+      "after_sha256": "93db7268773ee65c33cff66f0da27eb335c47bb5a6f75d83c506fdf7e397e5ea"
+    },
+    {
+      "path": "src/agc/control_tests.rs",
+      "before_sha256": "cfbf22ff1c359d7c01fc3027a52ea6db8cd88fc0d1d769d76f2712929c27a5d6",
+      "after_sha256": "5427c346fb75dd8c7c3f62e6fb653bebaa333a1b0108f4af2b9ae0f205c2d7ed"
+    },
+    {
+      "path": "src/agc/features.rs",
+      "before_sha256": "e6d0a534605781b6f8606d52ac1f6a9102f3aed7cc123ac4f2005d0916c3f0cc",
+      "after_sha256": "000954cd4c16a3389d17742298779a2c3f09df27f97081778a12d8ee780f8e8d"
+    },
+    {
+      "path": "src/agc/features_tests.rs",
+      "before_sha256": "678979886a57551afc76f95683d9844897d6386f6fcbff427ed9acc3c3fbe481",
+      "after_sha256": "265e3854aa21414ce27788b1947e474dc03b3a5e7ec15aa253740124f1e56cf1"
+    },
+    {
+      "path": "src/agc/session.rs",
+      "before_sha256": null,
+      "after_sha256": "e3600e7cefbcf56f91cc234f3ea9a6ce6579d02c5628a15888a56d14d20202f8"
+    },
+    {
+      "path": "src/bin/cli.rs",
+      "before_sha256": "eb06ba86c6a36f117c5032634f70af184d2c883c516257cfc75889cb0096b66f",
+      "after_sha256": "729d8c18782e0d1b6d36c4b7723ca471fb3e8a675335cd63db14ee2596c22ec9"
+    },
+    {
+      "path": "src/config/audio.rs",
+      "before_sha256": "706465ee7fd37eeacbad3030806cdb852c5abf298f91cc414e50d9e593c7a601",
+      "after_sha256": "131fbae4b534e143ffb003c4c96cd9010c44013d4ebf91329b9b04367d32e009"
+    },
+    {
+      "path": "src/config/storage.rs",
+      "before_sha256": "3b46e96a0b3904fc70120437347efd1e30dc8e494c39494b42c5e25d6370f88a",
+      "after_sha256": "0bf750dfb3d95027c82dac91cf7485d1a458168b4b5081561b461a21e2d5a1e2"
+    },
+    {
+      "path": "src/gain_policy.rs",
+      "before_sha256": "2fd601c1b33c475b95a28a6429d10ca4996360307165a6818658809578f76918",
+      "after_sha256": "b56ca594e6d03f77772a10eaad5d8830e8a250342081a4f23b4510b5bf11d6a4"
+    },
+    {
+      "path": "src/services/audio_monitor.rs",
+      "before_sha256": "f9c61e88ab4ddd21606eb93d208acb10b8b599af4c72884e805d6eeb38561ab1",
+      "after_sha256": "5a2679dcef0622a07871cfb83c5faef21ad5c11723ad0d99978765b5a94410c5"
+    },
+    {
+      "path": "src/services/audio_monitor/analyzer.rs",
+      "before_sha256": "aecc4e3a87ff0b7e136e3a8929a867a9f6745d1a2b6b3f3a33a16b315f850553",
+      "after_sha256": "4e4f3e9feac2f904e0243ae05bb2699de2d29f51c68697e7b60a6572bfedd38a"
+    },
+    {
+      "path": "src/services/audio_monitor/capture.rs",
+      "before_sha256": "d7be26297d5496f298c2e01d1c295728bc5e9d9b13bbb3e4693e2f1f2489283a",
+      "after_sha256": "fd227a72df98e7b7154a74e2b7729e9bf7e3c5ddb847b4eabc9891f24c19cdd6"
+    },
+    {
+      "path": "src/services/audio_monitor/types.rs",
+      "before_sha256": "585d04c3e1405f40decdf9eddab0962bf30daf11bad71d85c985ad2e77bb5f71",
+      "after_sha256": "f80169d4305336c09aa5b3d09da24f030f5774a3722a57d589065bcbd626b239"
+    },
+    {
+      "path": "src/services/echo.rs",
+      "before_sha256": "81d0e727ef4eaff5994903b07a15b8a6049a61dc616818b6ef15a4ae5b5e72bd",
+      "after_sha256": "626b366e00a8d8823f153548b57f0372b5ea892978ba4bc80b9aba980a4efbc6"
+    },
+    {
+      "path": "src/services/latency.rs",
+      "before_sha256": "8d8fcd7e54d4f307b0a91350d58ed7aacb3b808a4fc1f1c5c44f53e313308397",
+      "after_sha256": "b16471aaf7882e3938595d94e3b0599cd537176de2f8bad28f03fcdd2dc5a856"
+    },
+    {
+      "path": "src/services/pipewire.rs",
+      "before_sha256": "74fd18ad9833d38a6db16217f2f1e3f792006db0c12716f29f15a424d223bb10",
+      "after_sha256": "c2186be176f0cdf9a1dd025639ed99f76204fad241b3b722bfe4153a7bd313dc"
+    },
+    {
+      "path": "src/services/pipewire/source_watch.rs",
+      "before_sha256": null,
+      "after_sha256": "cf4c9d93c8e5703bc0e55d9571c7305e25d073cfd45d1a846de38cb00302e2d1"
+    },
+    {
+      "path": "src/services/pipewire/sources.rs",
+      "before_sha256": "b3f5e8c4f712bf511731cb294c0c72e9f32bb4d4d082b35b63e83cf36348cf18",
+      "after_sha256": "6405e9556b23f08722f1998b08f4487168c78cf8de28786740baae68451869f6"
+    },
+    {
+      "path": "src/services/preview.rs",
+      "before_sha256": "a6833163276d57a2225272cc5d765b9e692eade61135012c62cd5c2bb1f00f40",
+      "after_sha256": "68bd98fdf93c2cbfafa594639875f61ff005ae839f6b4b3619353f883f5f9d47"
+    },
+    {
+      "path": "src/services/profiles.rs",
+      "before_sha256": "8d3185b8950e9fd8721495a9e9a228bda149ef7f4cb5fcae3ed6ce7c60c1e197",
+      "after_sha256": "2673074100ce3ec2119b2984fe8ebcd76ecd144686b98ccd06fa8ae7db5d8434"
+    }
+  ],
+  "native_tests": "NOT_RUN",
+  "required_missing_vendor_commit": "47da8738fc9ca0ba1fb7820e417582883f81d16e"
+}

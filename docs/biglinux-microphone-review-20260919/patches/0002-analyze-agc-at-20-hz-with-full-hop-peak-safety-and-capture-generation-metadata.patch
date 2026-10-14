@@ -1,0 +1,312 @@
+From f935c9168744bd5a28ef434b5f3c99eaa4f3cf7d Mon Sep 17 00:00:00 2001
+From: OpenAI Review <review@example.invalid>
+Date: Sat, 19 Sep 2026 05:31:42 +0000
+Subject: [PATCH] Analyze AGC at 20 Hz with full-hop peak safety and capture
+ generation metadata
+
+---
+ src/agc.rs                             | 17 +++++-
+ src/services/audio_monitor.rs          | 18 +++++-
+ src/services/audio_monitor/analyzer.rs |  7 ++-
+ src/services/audio_monitor/capture.rs  | 80 ++++++++++++++++++++++----
+ src/services/audio_monitor/types.rs    |  5 ++
+ 5 files changed, 110 insertions(+), 17 deletions(-)
+
+diff --git a/src/agc.rs b/src/agc.rs
+index 7f6a355..75fd2c1 100644
+--- a/src/agc.rs
++++ b/src/agc.rs
+@@ -167,6 +167,19 @@ fn meter_target(source_name: &str) -> String {
+     }
+ }
+ 
++/// Analyze at the same 20 Hz cadence as the controller instead of computing
++/// 93.75 spectra/s and discarding most of them. All 2400 new samples still
++/// contribute to peak/RMS safety, even though the FFT window remains 2048.
++fn agc_monitor_config(target: String) -> MonitorConfig {
++    MonitorConfig {
++        hop_size: 2400,
++        hop_levels: true,
++        latency_ms: 50,
++        target,
++        ..MonitorConfig::default()
++    }
++}
++
+ /// The controller settings a pass runs with: a correction bound wide enough to
+ /// carry a weak microphone the whole way to 300%, and a boost extreme that gets
+ /// it there while somebody is still talking.
+@@ -222,7 +235,7 @@ pub fn calibrate(seconds: f64) -> Result<Outcome, String> {
+     let mut policy = GainPolicy::new(None, pass_config(base_db, noise_ceiling(&settings)))?;
+     let mut extractor = FeatureExtractor::new();
+     let config =
+-        MonitorConfig { target: meter_target(&source.node_name), ..MonitorConfig::default() };
++        agc_monitor_config(meter_target(&source.node_name));
+     let metered_filtered = config.target != source.node_name;
+     info!("level: metering {}", config.target);
+     let analyzer = config.analyzer.clone();
+@@ -441,7 +454,7 @@ fn drive(low: f32, high: f32) -> Result<(), String> {
+     )?;
+     controller.set_window(low, high);
+     let config =
+-        MonitorConfig { target: meter_target(&source.node_name), ..MonitorConfig::default() };
++        agc_monitor_config(meter_target(&source.node_name));
+     let metering_filtered = config.target != source.node_name;
+     let analyzer = config.analyzer.clone();
+     // What this person's voice measured, when the calibration measured it under
+diff --git a/src/services/audio_monitor.rs b/src/services/audio_monitor.rs
+index cf699f6..91ccd45 100644
+--- a/src/services/audio_monitor.rs
++++ b/src/services/audio_monitor.rs
+@@ -62,6 +62,11 @@ const PAUSED_POLL: Duration = Duration::from_millis(100);
+ pub struct MonitorConfig {
+     pub analyzer: AnalyzerConfig,
+     pub hop_size: usize,
++    /// Meter every newly captured sample, including samples before the FFT
++    /// window when hop_size > fft_size. The AGC must not miss a clipping spike.
++    pub hop_levels: bool,
++    /// Requested pw-cat stream latency, in milliseconds (not a global quantum).
++    pub latency_ms: u32,
+     /// pw-cat `--target`: a node name (e.g. the denoised virtual source) or the
+     /// default `@DEFAULT_SOURCE@`.
+     pub target: String,
+@@ -72,6 +77,8 @@ impl Default for MonitorConfig {
+         Self {
+             analyzer: AnalyzerConfig::default(),
+             hop_size: DEFAULT_HOP_SIZE,
++            hop_levels: false,
++            latency_ms: 100,
+             target: "@DEFAULT_SOURCE@".to_string(),
+         }
+     }
+@@ -215,6 +222,7 @@ fn run_worker(
+     let mut analyzer = Analyzer::new(monitor_config.analyzer.clone());
+     let mut window = Vec::with_capacity(monitor_config.analyzer.fft_size);
+     let mut retry_at = std::time::Instant::now();
++    let mut capture_epoch = 0_u64;
+     while !stop.load(Ordering::Acquire) {
+         if !active.load(Ordering::Acquire) {
+             drop(capture.take());
+@@ -234,8 +242,10 @@ fn run_worker(
+                 monitor_config.analyzer.fft_size,
+                 monitor_config.hop_size,
+                 &monitor_config.target,
++                monitor_config.latency_ms,
+             ) {
+                 Ok(next) => {
++                    capture_epoch = capture_epoch.wrapping_add(1);
+                     if let Ok(mut slot) = capture_child.lock() {
+                         *slot = Some(next.cancellation_handle());
+                     }
+@@ -283,7 +293,13 @@ fn run_worker(
+             continue;
+         }
+         current.copy_window_into(&mut window);
+-        let frame = analyzer.analyze_samples(&window);
++        let mut frame = analyzer.analyze_samples(&window);
++        frame.captured_at = current.captured_at;
++        frame.capture_epoch = capture_epoch;
++        if monitor_config.hop_levels {
++            frame.rms_db = current.rms_db;
++            frame.peak_db = current.peak_db;
++        }
+         // Latest-value delivery: after a slow UI frame, show the present,
+         // not a queue of obsolete microphone levels.
+         if tx.force_send(Event::Frame(frame)).is_err() {
+diff --git a/src/services/audio_monitor/analyzer.rs b/src/services/audio_monitor/analyzer.rs
+index 9cdf981..a3a2a68 100644
+--- a/src/services/audio_monitor/analyzer.rs
++++ b/src/services/audio_monitor/analyzer.rs
+@@ -138,6 +138,8 @@ impl Analyzer {
+             rms_db,
+             peak_db,
+             seq,
++            captured_at: std::time::Instant::now(),
++            capture_epoch: 0,
+         }
+     }
+ 
+@@ -179,8 +181,9 @@ pub fn rms_dbfs(samples: &[f32]) -> f32 {
+     if samples.is_empty() {
+         return -120.0;
+     }
+-    let sum_sq: f32 = samples.iter().map(|s| s * s).sum();
+-    let rms = (sum_sq / samples.len() as f32).sqrt();
++    // Accumulate in f64: a finite f32 sample can overflow when squared in f32.
++    let sum_sq: f64 = samples.iter().map(|&s| f64::from(s).powi(2)).sum();
++    let rms = (sum_sq / samples.len() as f64).sqrt() as f32;
+     amplitude_to_db(rms)
+ }
+ 
+diff --git a/src/services/audio_monitor/capture.rs b/src/services/audio_monitor/capture.rs
+index c54e5d3..3affcf1 100644
+--- a/src/services/audio_monitor/capture.rs
++++ b/src/services/audio_monitor/capture.rs
+@@ -56,7 +56,11 @@ fn meter_properties(target: &str) -> String {
+ 
+ /// The command that reads `target` (a node name or `@DEFAULT_SOURCE@`), marked as
+ /// the meter it is.
+-fn spec(sample_rate: u32, target: &str) -> BigSubprocessSpec {
++fn spec(sample_rate: u32, target: &str, latency_ms: u32) -> BigSubprocessSpec {
++    let target = match target {
++        "@DEFAULT_SOURCE@" | "@DEFAULT_AUDIO_SOURCE@" => "auto",
++        other => other,
++    };
+     BigSubprocessSpec::builder()
+         .program("/usr/bin/pw-cat")
+         .args([
+@@ -69,6 +73,8 @@ fn spec(sample_rate: u32, target: &str) -> BigSubprocessSpec {
+             "f32",
+             "--rate",
+             &sample_rate.to_string(),
++            "--latency",
++            &format!("{latency_ms}ms"),
+             "--channels",
+             "1",
+             "-P",
+@@ -93,6 +99,9 @@ pub(super) struct Capture {
+     /// [`Self::ready`] to decide whether the ring is
+     /// filled for the first time.
+     samples_read: usize,
++    pub(super) captured_at: std::time::Instant,
++    pub(super) rms_db: f32,
++    pub(super) peak_db: f32,
+ }
+ 
+ impl Capture {
+@@ -103,10 +112,15 @@ impl Capture {
+         fft_size: usize,
+         hop_size: usize,
+         target: &str,
++        latency_ms: u32,
+     ) -> io::Result<Self> {
+-        assert!(hop_size > 0 && hop_size <= fft_size);
++        if fft_size < 4 || hop_size == 0 || hop_size > sample_rate as usize
++            || !(1..=1000).contains(&latency_ms)
++        {
++            return Err(io::Error::new(io::ErrorKind::InvalidInput, "invalid capture dimensions"));
++        }
+ 
+-        let mut child = spec(sample_rate, target).spawn().map_err(io::Error::other)?;
++        let mut child = spec(sample_rate, target, latency_ms).spawn().map_err(io::Error::other)?;
+ 
+         let Some(stdout) = child.take_stdout() else {
+             let _ = child.kill();
+@@ -125,6 +139,9 @@ impl Capture {
+             fft_size,
+             hop_size,
+             samples_read: 0,
++            captured_at: std::time::Instant::now(),
++            rms_db: -120.0,
++            peak_db: -120.0,
+         })
+     }
+ 
+@@ -155,12 +172,11 @@ impl Capture {
+             }
+         })?;
+ 
+-        for chunk in self.read_buf.as_chunks::<4>().0 {
+-            let sample = f32::from_ne_bytes([chunk[0], chunk[1], chunk[2], chunk[3]]);
+-            self.ring[self.write_pos] = sample;
+-            self.write_pos = (self.write_pos + 1) % self.fft_size;
+-            self.samples_read = self.samples_read.saturating_add(1);
+-        }
++        self.captured_at = std::time::Instant::now();
++        let (rms_db, peak_db) = decode_hop(&self.read_buf, &mut self.ring, &mut self.write_pos)?;
++        self.rms_db = rms_db;
++        self.peak_db = peak_db;
++        self.samples_read = self.samples_read.saturating_add(self.hop_size);
+         Ok(self.hop_size)
+     }
+ 
+@@ -172,6 +188,27 @@ impl Capture {
+     }
+ }
+ 
++/// Decode without per-hop allocation. Levels cover the entire hop, while the
++/// ring retains only its latest FFT window. Reject invalid PCM rather than
++/// turning NaN into silence that might authorize an upward gain correction.
++fn decode_hop(bytes: &[u8], ring: &mut [f32], write_pos: &mut usize) -> io::Result<(f32, f32)> {
++    let mut square = 0.0_f64;
++    let mut peak = 0.0_f32;
++    for chunk in bytes.as_chunks::<4>().0 {
++        let sample = f32::from_ne_bytes(*chunk);
++        if !sample.is_finite() {
++            return Err(io::Error::new(io::ErrorKind::InvalidData, "non-finite microphone PCM"));
++        }
++        square += f64::from(sample).powi(2);
++        peak = peak.max(sample.abs());
++        ring[*write_pos] = sample;
++        *write_pos = (*write_pos + 1) % ring.len();
++    }
++    let count = bytes.len() / 4;
++    let rms = if count == 0 { 0.0 } else { (square / count as f64).sqrt() as f32 };
++    Ok((super::amplitude_to_db(rms), super::amplitude_to_db(peak)))
++}
++
+ impl Drop for Capture {
+     fn drop(&mut self) {
+         // Best-effort shutdown: try TERM via `kill`, ignore errors
+@@ -190,7 +227,7 @@ mod tests {
+ 
+     #[test]
+     fn explicit_meter_cannot_fall_back_or_move_to_a_different_microphone() {
+-        let argv = spec(48_000, "alsa_input.test").resolved().argv;
++        let argv = spec(48_000, "alsa_input.test", 50).resolved().argv;
+         let at = argv.iter().position(|arg| arg == "-P").unwrap();
+         for property in ["node.dont-fallback=true", "node.dont-reconnect=true", "node.dont-move=true"] {
+             assert!(argv[at + 1].contains(property));
+@@ -204,7 +241,7 @@ mod tests {
+     /// this window is open — which is what happened before the mark existed.
+     #[test]
+     fn the_spectrum_stream_says_it_is_only_a_meter() {
+-        let argv = spec(48_000, "@DEFAULT_SOURCE@").resolved().argv;
++        let argv = spec(48_000, "@DEFAULT_SOURCE@", 100).resolved().argv;
+         let marks = argv
+             .iter()
+             .position(|arg| arg == "-P")
+@@ -222,7 +259,26 @@ mod tests {
+         assert_eq!(marks, MARKED_AS_A_METER);
+         // Still reading the default input, and still raw floats: the mark must
+         // not have changed what the analyser is fed.
+-        assert!(argv.contains(&String::from("@DEFAULT_SOURCE@")));
++        assert!(argv.contains(&String::from("auto")));
+         assert!(argv.contains(&String::from("f32")));
+     }
++    #[test]
++    fn an_agc_hop_longer_than_the_fft_keeps_its_early_peak() {
++        let mut samples = vec![0.0_f32; 2400];
++        samples[0] = 1.0; // This impulse is outside the final 2048-sample FFT.
++        let bytes: Vec<u8> = samples.iter().flat_map(|s| s.to_ne_bytes()).collect();
++        let mut ring = vec![0.0; 2048];
++        let (rms, peak) = super::decode_hop(&bytes, &mut ring, &mut 0).unwrap();
++        assert_eq!(peak, 0.0);
++        assert!((rms - 10.0 * (1.0_f32 / 2400.0).log10()).abs() < 1e-4);
++        assert!(ring.iter().all(|v| *v == 0.0));
++    }
++
++    #[test]
++    fn nonfinite_pcm_is_not_interpreted_as_silence() {
++        for sample in [f32::NAN, f32::INFINITY, f32::NEG_INFINITY] {
++            assert!(super::decode_hop(&sample.to_ne_bytes(), &mut [0.0; 4], &mut 0).is_err());
++        }
++    }
++
+ }
+diff --git a/src/services/audio_monitor/types.rs b/src/services/audio_monitor/types.rs
+index 5e45af7..28268b4 100644
+--- a/src/services/audio_monitor/types.rs
++++ b/src/services/audio_monitor/types.rs
+@@ -30,6 +30,11 @@ pub struct SpectrumFrame {
+     pub peak_db: f32,
+     /// Monotonic frame counter since the capture started.
+     pub seq: u64,
++    /// Monotonic delivery time after reading this PCM block, not an ADC timestamp.
++    pub captured_at: std::time::Instant,
++    /// Changes after every capture restart, even when a Recovering event was
++    /// replaced in the latest-value mailbox before a consumer could see it.
++    pub capture_epoch: u64,
+ }
+ 
+ /// Events emitted by [`crate::services::audio_monitor::AudioMonitor`].

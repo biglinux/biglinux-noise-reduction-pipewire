@@ -37,7 +37,6 @@ class ShippedModel:
     label: str
     plugin: Path
     sample_rate: int
-    realtime: bool
     loadable: bool
     ffmpeg_filter: str
 
@@ -59,7 +58,6 @@ def catalogue(cli: str = CLI) -> tuple[ShippedModel, ...]:
             label=row["label"],
             plugin=Path(row["plugin"]),
             sample_rate=row["sample_rate"],
-            realtime=row["realtime"],
             loadable=row["loadable"],
             ffmpeg_filter=row["ffmpeg_filter"],
         )
@@ -81,8 +79,25 @@ def process(
     """
     if not model.ffmpeg_filter:
         raise RuntimeError(f"{model.name}: no ffmpeg filter; is the plugin installed?")
+    return process_filter(audio, sr, model.sample_rate, model.ffmpeg_filter, model.name, ffmpeg)
 
-    chain = f"aresample={model.sample_rate},{model.ffmpeg_filter},aresample={sr}"
+
+def process_filter(
+    audio: np.ndarray,
+    sr: int,
+    model_sample_rate: int,
+    ffmpeg_filter: str,
+    name: str = "filter",
+    ffmpeg: str = "ffmpeg",
+) -> np.ndarray:
+    """Drive an arbitrary LADSPA filter string through ffmpeg.
+
+    `ffmpeg_filter` is a complete ffmpeg `ladspa=...` expression. The same
+    resample-in/resample-out wrapping as `process`, so a 16 kHz plugin pays
+    its conversion cost. Used by the comparative benchmark to score any
+    installed `.so`, not only the app's own catalogue.
+    """
+    chain = f"aresample={model_sample_rate},{ffmpeg_filter},aresample={sr}"
     command = [
         ffmpeg,
         "-hide_banner",
@@ -106,14 +121,21 @@ def process(
         "1",
         "pipe:1",
     ]
-    done = subprocess.run(
-        command,
-        input=audio.astype(np.float32).tobytes(),
-        capture_output=True,
-        check=False,
-        timeout=600,
-    )
+    # A single clip is seconds of audio; 60 s is already 10–100x its worst
+    # honest processing time. A plugin that blocks past that is hung, and a
+    # TimeoutExpired here is not a RuntimeError, so without this it would
+    # crash the whole comparison instead of skipping one system.
+    try:
+        done = subprocess.run(
+            command,
+            input=audio.astype(np.float32).tobytes(),
+            capture_output=True,
+            check=False,
+            timeout=60,
+        )
+    except subprocess.TimeoutExpired as exc:
+        raise RuntimeError(f"{name}: ffmpeg timed out (>60 s on one clip)") from exc
     if done.returncode != 0:
         message = done.stderr.decode("utf-8", "replace").strip().splitlines()
-        raise RuntimeError(f"{model.name}: {message[-1] if message else 'ffmpeg failed'}")
+        raise RuntimeError(f"{name}: {message[-1] if message else 'ffmpeg failed'}")
     return np.frombuffer(done.stdout, dtype=np.float32)

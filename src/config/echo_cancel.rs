@@ -1,22 +1,13 @@
 //! Acoustic echo cancellation settings.
 //!
 //! When enabled, a separate PipeWire process loads
-//! `libpipewire-module-echo-cancel` with the WebRTC AEC backend and
-//! exposes a virtual source called `echo-cancel-source`. The mic
-//! filter-chain then pulls from that source instead of the default
-//! hardware mic, so speaker echo never reaches the GTCRN denoiser.
+//! `libpipewire-module-echo-cancel` with the GTCRN engine and exposes a virtual
+//! source called `echo-cancel-source`. The mic filter-chain then pulls from that
+//! source instead of the default hardware mic. Residual echo may still reach the
+//! downstream denoiser.
 //!
-//! Only `enabled` is user-facing — every WebRTC AEC tunable is fixed:
-//!
-//! - `noise_suppression = false` — GTCRN handles spectral denoising
-//!   later in the chain; running WebRTC's NS first would over-process.
-//! - `high_pass_filter = false` — our biquad HPF (40 Hz default) does
-//!   the same job in the mic chain.
-//! - `gain_control = false` — keep AEC as cancellation only; the mic
-//!   chain handles level/voice shaping downstream, and AGC can amplify
-//!   residual echo before GTCRN sees it.
-//! - `voice_detection = true`, `delay_agnostic = true`,
-//!   `extended_filter = true` — quality boosts with no toggle benefit.
+//! The mode is user-facing; the experimental GTCRN controls are explicit CLI
+//! options.
 //!
 //! Defaulting to `true` covers the most common scenario (laptop user on
 //! a call without headphones) without forcing the user to dig through
@@ -67,6 +58,15 @@ pub struct EchoCancelConfig {
     /// existed loads as automatic rather than failing and taking the rest with it.
     #[serde(default)]
     pub mode: EchoMode,
+    /// Experimental worker; disabled until callback/corpus acceptance.
+    pub gtcrn_async_delay: bool,
+    /// Experimental continuous tracking; implies the worker.
+    pub gtcrn_track_delay: bool,
+    /// Experimental aligned high-band adaptation controller.
+    pub gtcrn_hb_guard: bool,
+    /// Experimental, verified-reference routes only. Preserve delayed near-end
+    /// audio after two seconds of exact render silence. NOT double-talk logic.
+    pub gtcrn_reference_bypass: bool,
 }
 
 impl Default for EchoCancelConfig {
@@ -74,6 +74,10 @@ impl Default for EchoCancelConfig {
         Self {
             enabled: true,
             mode: EchoMode::default(),
+            gtcrn_async_delay: false,
+            gtcrn_track_delay: false,
+            gtcrn_hb_guard: false,
+            gtcrn_reference_bypass: false,
         }
     }
 }
@@ -86,5 +90,16 @@ mod tests {
     fn empty_json_configuration_falls_back_to_default() {
         let c: EchoCancelConfig = serde_json::from_str("{}").unwrap();
         assert_eq!(c, EchoCancelConfig::default());
+    }
+}
+
+#[cfg(test)]
+mod experimental_defaults {
+    use super::*;
+    #[test]
+    fn old_settings_do_not_enable_experiments() {
+        let config: EchoCancelConfig =
+            serde_json::from_str(r#"{"enabled":true,"backend":"gtcrn"}"#).unwrap();
+        assert!(!config.gtcrn_async_delay && !config.gtcrn_track_delay && !config.gtcrn_hb_guard);
     }
 }

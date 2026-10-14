@@ -28,6 +28,11 @@ use log::debug;
 /// one the shell's own level meters carry (`media.role=monitor`), which is what
 /// its classifier already excludes, plus the identity so a person reading
 /// `pw-top` or the sound centre sees whose stream it is instead of "pw-cat".
+/// Our own analyser. Named so the consumer test that decides whether anybody is
+/// recording can tell the meter apart from a real application — counting it
+/// would let the meter be its own reason to keep running.
+pub const METER_NODE_NAME: &str = "biglinux-microphone.meter.spectrum";
+
 const MARKED_AS_A_METER: &str = concat!(
     "{ media.role=monitor media.category=Monitor",
     " application.id=br.com.biglinux.microphone",
@@ -36,24 +41,47 @@ const MARKED_AS_A_METER: &str = concat!(
     " node.description=\"Filter noise — analisador de espectro\" }",
 );
 
-/// The command that reads the default input, marked as the meter it is.
-fn spec(sample_rate: u32) -> BigSubprocessSpec {
+/// An explicitly selected AGC meter must never silently move to another source.
+/// The default UI meter retains its existing automatic-routing behaviour.
+fn meter_properties(target: &str) -> String {
+    if matches!(
+        target,
+        "auto" | "@DEFAULT_SOURCE@" | "@DEFAULT_AUDIO_SOURCE@"
+    ) {
+        MARKED_AS_A_METER.to_string()
+    } else {
+        format!(
+            "{} node.dont-fallback=true node.dont-reconnect=true node.dont-move=true }}",
+            MARKED_AS_A_METER.trim_end_matches('}')
+        )
+    }
+}
+
+/// The command that reads `target` (a node name or `@DEFAULT_SOURCE@`), marked as
+/// the meter it is.
+fn spec(sample_rate: u32, target: &str, latency_ms: u32) -> BigSubprocessSpec {
+    let target = match target {
+        "@DEFAULT_SOURCE@" | "@DEFAULT_AUDIO_SOURCE@" => "auto",
+        other => other,
+    };
     BigSubprocessSpec::builder()
         .program("/usr/bin/pw-cat")
         .args([
             "--record",
             "-",
             "--target",
-            "@DEFAULT_SOURCE@",
+            target,
             "--raw",
             "--format",
             "f32",
             "--rate",
             &sample_rate.to_string(),
+            "--latency",
+            &format!("{latency_ms}ms"),
             "--channels",
             "1",
             "-P",
-            MARKED_AS_A_METER,
+            &meter_properties(target),
         ])
         .stdout(BigSubprocessOutputMode::Capture)
         .stderr(BigSubprocessOutputMode::Null)
@@ -74,15 +102,35 @@ pub(super) struct Capture {
     /// [`Self::ready`] to decide whether the ring is
     /// filled for the first time.
     samples_read: usize,
+    pub(super) captured_at: std::time::Instant,
+    pub(super) rms_db: f32,
+    pub(super) peak_db: f32,
 }
 
 impl Capture {
     /// Spawn `pw-cat` and return a handle that yields `hop_size`-sized
     /// sample slices sliding over a `fft_size` buffer.
-    pub(super) fn spawn(sample_rate: u32, fft_size: usize, hop_size: usize) -> io::Result<Self> {
-        assert!(hop_size > 0 && hop_size <= fft_size);
+    pub(super) fn spawn(
+        sample_rate: u32,
+        fft_size: usize,
+        hop_size: usize,
+        target: &str,
+        latency_ms: u32,
+    ) -> io::Result<Self> {
+        if fft_size < 4
+            || hop_size == 0
+            || hop_size > sample_rate as usize
+            || !(1..=1000).contains(&latency_ms)
+        {
+            return Err(io::Error::new(
+                io::ErrorKind::InvalidInput,
+                "invalid capture dimensions",
+            ));
+        }
 
-        let mut child = spec(sample_rate).spawn().map_err(io::Error::other)?;
+        let mut child = spec(sample_rate, target, latency_ms)
+            .spawn()
+            .map_err(io::Error::other)?;
 
         let Some(stdout) = child.take_stdout() else {
             let _ = child.kill();
@@ -90,9 +138,7 @@ impl Capture {
             return Err(io::Error::other("pw-cat: no stdout handle"));
         };
 
-        debug!(
-            "audio monitor: spawned pw-cat target=@DEFAULT_SOURCE@ rate={sample_rate} fft={fft_size}",
-        );
+        debug!("audio monitor: spawned pw-cat target={target} rate={sample_rate} fft={fft_size}");
 
         Ok(Self {
             child: std::sync::Arc::new(std::sync::Mutex::new(child)),
@@ -103,6 +149,9 @@ impl Capture {
             fft_size,
             hop_size,
             samples_read: 0,
+            captured_at: std::time::Instant::now(),
+            rms_db: -120.0,
+            peak_db: -120.0,
         })
     }
 
@@ -133,12 +182,11 @@ impl Capture {
             }
         })?;
 
-        for chunk in self.read_buf.as_chunks::<4>().0 {
-            let sample = f32::from_ne_bytes([chunk[0], chunk[1], chunk[2], chunk[3]]);
-            self.ring[self.write_pos] = sample;
-            self.write_pos = (self.write_pos + 1) % self.fft_size;
-            self.samples_read = self.samples_read.saturating_add(1);
-        }
+        self.captured_at = std::time::Instant::now();
+        let (rms_db, peak_db) = decode_hop(&self.read_buf, &mut self.ring, &mut self.write_pos)?;
+        self.rms_db = rms_db;
+        self.peak_db = peak_db;
+        self.samples_read = self.samples_read.saturating_add(self.hop_size);
         Ok(self.hop_size)
     }
 
@@ -148,6 +196,34 @@ impl Capture {
         out.extend_from_slice(&self.ring[self.write_pos..]);
         out.extend_from_slice(&self.ring[..self.write_pos]);
     }
+}
+
+/// Decode without per-hop allocation. Levels cover the entire hop, while the
+/// ring retains only its latest FFT window. Reject invalid PCM rather than
+/// turning NaN into silence that might authorize an upward gain correction.
+fn decode_hop(bytes: &[u8], ring: &mut [f32], write_pos: &mut usize) -> io::Result<(f32, f32)> {
+    let mut square = 0.0_f64;
+    let mut peak = 0.0_f32;
+    for chunk in bytes.as_chunks::<4>().0 {
+        let sample = f32::from_ne_bytes(*chunk);
+        if !sample.is_finite() {
+            return Err(io::Error::new(
+                io::ErrorKind::InvalidData,
+                "non-finite microphone PCM",
+            ));
+        }
+        square += f64::from(sample).powi(2);
+        peak = peak.max(sample.abs());
+        ring[*write_pos] = sample;
+        *write_pos = (*write_pos + 1) % ring.len();
+    }
+    let count = bytes.len() / 4;
+    let rms = if count == 0 {
+        0.0
+    } else {
+        (square / count as f64).sqrt() as f32
+    };
+    Ok((super::amplitude_to_db(rms), super::amplitude_to_db(peak)))
 }
 
 impl Drop for Capture {
@@ -166,13 +242,27 @@ impl Drop for Capture {
 mod tests {
     use super::{MARKED_AS_A_METER, spec};
 
+    #[test]
+    fn explicit_meter_cannot_fall_back_or_move_to_a_different_microphone() {
+        let argv = spec(48_000, "alsa_input.test", 50).resolved().argv;
+        let at = argv.iter().position(|arg| arg == "-P").unwrap();
+        for property in [
+            "node.dont-fallback=true",
+            "node.dont-reconnect=true",
+            "node.dont-move=true",
+        ] {
+            assert!(argv[at + 1].contains(property));
+        }
+        assert!(argv.contains(&String::from("alsa_input.test")));
+    }
+
     /// The mark travels with the command, and it has to be exactly the one the
     /// shell's classifier looks for. Checked here because the alternative is
     /// finding out from a desktop that says somebody is recording you whenever
     /// this window is open — which is what happened before the mark existed.
     #[test]
     fn the_spectrum_stream_says_it_is_only_a_meter() {
-        let argv = spec(48_000).resolved().argv;
+        let argv = spec(48_000, "@DEFAULT_SOURCE@", 100).resolved().argv;
         let marks = argv
             .iter()
             .position(|arg| arg == "-P")
@@ -190,7 +280,25 @@ mod tests {
         assert_eq!(marks, MARKED_AS_A_METER);
         // Still reading the default input, and still raw floats: the mark must
         // not have changed what the analyser is fed.
-        assert!(argv.contains(&String::from("@DEFAULT_SOURCE@")));
+        assert!(argv.contains(&String::from("auto")));
         assert!(argv.contains(&String::from("f32")));
+    }
+    #[test]
+    fn an_agc_hop_longer_than_the_fft_keeps_its_early_peak() {
+        let mut samples = vec![0.0_f32; 2400];
+        samples[0] = 1.0; // This impulse is outside the final 2048-sample FFT.
+        let bytes: Vec<u8> = samples.iter().flat_map(|s| s.to_ne_bytes()).collect();
+        let mut ring = vec![0.0; 2048];
+        let (rms, peak) = super::decode_hop(&bytes, &mut ring, &mut 0).unwrap();
+        assert_eq!(peak, 0.0);
+        assert!((rms - 10.0 * (1.0_f32 / 2400.0).log10()).abs() < 1e-4);
+        assert!(ring.iter().all(|v| *v == 0.0));
+    }
+
+    #[test]
+    fn nonfinite_pcm_is_not_interpreted_as_silence() {
+        for sample in [f32::NAN, f32::INFINITY, f32::NEG_INFINITY] {
+            assert!(super::decode_hop(&sample.to_ne_bytes(), &mut [0.0; 4], &mut 0).is_err());
+        }
     }
 }

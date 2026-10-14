@@ -17,6 +17,8 @@ local OUTPUT_FILTER_NODE_NAME = "output-biglinux"
 
 local VIRTUAL_SOURCE_NAMES = {
   ["mic-biglinux"] = true,
+  ["biglinux-call-source"] = true,
+  ["biglinux-call-source-capture"] = true,
   ["mic-biglinux-capture"] = true,
   ["echo-cancel-source"] = true,
   ["echo-cancel-capture"] = true,
@@ -25,7 +27,7 @@ local VIRTUAL_SOURCE_NAMES = {
 }
 
 local function starts_with (text, prefix)
-  return text ~= nil and text:sub (1, #prefix) == prefix
+  return type (text) == "string" and text:sub (1, #prefix) == prefix
 end
 
 local function json_name (metadata, key)
@@ -41,7 +43,8 @@ local function json_name (metadata, key)
   local ok, parsed = pcall (function ()
     return Json.Raw (value):parse ()
   end)
-  if ok and parsed then
+  if ok and type (parsed) == "table"
+      and type (parsed ["name"]) == "string" and parsed ["name"] ~= "" then
     return parsed ["name"]
   end
   return nil
@@ -156,14 +159,14 @@ local function is_real_capture_source (si)
   return true
 end
 
-local function lookup_sink_by_name (om, name)
+local function lookup_sink_by_name (om, name, skip_id)
   if name == nil then
     return nil
   end
 
   for si in om:iterate { type = "SiLinkable" } do
     local props = si.properties
-    if props ["node.name"] == name
+    if si.id ~= skip_id and props ["node.name"] == name
         and props ["media.class"] == "Audio/Sink" then
       return si
     end
@@ -171,13 +174,13 @@ local function lookup_sink_by_name (om, name)
   return nil
 end
 
-local function lookup_node_by_name (om, name)
+local function lookup_node_by_name (om, name, skip_id)
   if name == nil then
     return nil
   end
 
   for si in om:iterate { type = "SiLinkable" } do
-    if si.properties ["node.name"] == name then
+    if si.id ~= skip_id and si.properties ["node.name"] == name then
       return si
     end
   end
@@ -212,8 +215,8 @@ end
 --   2. The highest-priority `alsa_output.*` SiLinkable in the graph.
 -- Returning the physical sink (instead of `jamesdsp_sink`) means the
 -- AEC reference is captured from the post-effect monitor that matches
--- exactly what the speakers play, regardless of how many virtual
--- chains (JamesDSP, output-biglinux, future processors) sit upstream.
+-- the digital signal after upstream virtual processors. It cannot observe
+-- analog gain, post-DAC hardware DSP, acoustic distortion or device clock drift.
 local function lookup_physical_sink (source, om)
   local metadata = metadata_object (source, "default")
   local configured = json_name (metadata, "default.configured.audio.sink")
@@ -461,8 +464,8 @@ SimpleEventHook {
 -- the BigLinux EQ/HPF/gate entirely. We override the smart target via
 -- the public `filters` metadata so WirePlumber re-wraps apps that aim
 -- at `jamesdsp_sink`.
-local function maybe_retarget_output_smart_filter (source, om)
-  local filter_si = lookup_node_by_name (om, OUTPUT_FILTER_NODE_NAME)
+local function maybe_retarget_output_smart_filter (source, om, skip_id)
+  local filter_si = lookup_node_by_name (om, OUTPUT_FILTER_NODE_NAME, skip_id)
   if filter_si == nil then
     return
   end
@@ -480,12 +483,15 @@ local function maybe_retarget_output_smart_filter (source, om)
     return
   end
 
-  if lookup_sink_by_name (om, JAMESDSP_SINK_NAME) then
-    metadata:set (filter_id, "filter.smart.target", "Spa:String:JSON",
-      "{ \"node.name\": \"" .. JAMESDSP_SINK_NAME .. "\" }")
-  else
-    -- Clear the override so WirePlumber follows the default sink again.
-    metadata:set (filter_id, "filter.smart.target", nil, nil)
+  local target = nil
+  if lookup_sink_by_name (om, JAMESDSP_SINK_NAME, skip_id) then
+    target = "{ \"node.name\": \"" .. JAMESDSP_SINK_NAME .. "\" }"
+  end
+  -- Do not emit another metadata change when the desired override is already
+  -- installed. Session-item storms must not become relinking storms.
+  if metadata:find (filter_id, "filter.smart.target") ~= target then
+    metadata:set (filter_id, "filter.smart.target",
+      target and "Spa:String:JSON" or nil, target)
   end
 end
 
@@ -570,7 +576,7 @@ SimpleEventHook {
     end
     local source = event:get_source ()
     local om = source:call ("get-object-manager", "session-item")
-    maybe_retarget_output_smart_filter (source, om)
+    maybe_retarget_output_smart_filter (source, om, si.id)
   end
 }:register ()
 

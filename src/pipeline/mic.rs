@@ -6,8 +6,8 @@
 //! of the main PipeWire daemon and instantiates
 //! `libpipewire-module-filter-chain` with this args body inside its
 //! local context. The filter graph's audio nodes are exported to the
-//! daemon and driven by the daemon's data-loop — single clock, no
-//! cross-process drift. WirePlumber's smart-filter policy then attaches
+//! daemon and scheduled by PipeWire. Distinct devices can still have different
+//! hardware clocks; process boundaries alone neither cause nor prevent drift. WirePlumber's smart-filter policy then attaches
 //! `mic-biglinux` to the user's default audio source. Every application
 //! that records from the default microphone reads the processed signal
 //! transparently — the physical hardware node stays reachable but
@@ -16,30 +16,27 @@
 //! Pipeline order, mono:
 //!
 //! ```text
-//! [hpf_pre →] hpf [→ denoiser [→ gate]] [→ compressor] [→ param_eq]
+//! [hpf_pre →] hpf [→ denoiser] [→ gate] [→ compressor] [→ param_eq]
 //!     [→ pitch → pitch_gain]   ← only when voice changer is on
 //!     → copy_L, copy_R (fan-out for downstream stereo consumers)
 //! ```
 //!
 //! `hpf_pre` is the second stage of the HPF cascade and only exists
-//! while the high-pass is on; the standalone `gate` only exists when
-//! the selected denoiser has no integrated one. Whichever node comes
-//! first is the graph input — see [`build_mic_conf`].
+//! while the high-pass is on. Whichever node comes first is the graph
+//! input — see [`build_mic_conf`].
 //!
-//! Every bracketed node is conditional and skipped from the graph when
-//! its flag is off — the mic chain is read by recording apps via the
-//! WirePlumber smart-filter policy, so reloading the unit on topology
-//! changes does not cause the audible dropouts the output side has to
-//! avoid (different contract; see `output.rs`).
+//! Every bracketed node is conditional and skipped when its flag is off.
+//! Replacing this loader destroys its exported nodes: smart-filter relinking
+//! does NOT guarantee continuous audio or preserve an explicitly bound capture.
+//! The opt-in call-source loopback preserves a separate presentation object,
+//! not gapless samples; it must be selected before starting the call.
 //!
 //! Conditional nodes:
 //!
-//! - **`gtcrn`** — neural denoiser; the LADSPA wrapper runs the full
-//!   STFT → ONNX inference → iSTFT pipeline every block regardless of
-//!   the `Enable` control, and `LookaheadMs` adds latency
-//!   unconditionally. The integrated gate shares the GTCRN node, so
-//!   the node is kept in the chain whenever **either** noise reduction
-//!   or the gate is on.
+//! - **`ai`** — the selected native denoiser (DeepFilterNet3, -LL or DPDFNet);
+//!   present only while noise reduction is on, since none of them has an
+//!   `Enable` port.
+//! - **`gate`** (`gate_1410`) — the level gate, present while it is on.
 //! - **`compressor`** (`sc4m_1916`) — runs RMS detection + envelope per
 //!   block even at unity ratio. Skipped entirely when disabled.
 //! - **`param_eq`** — ten cascaded `bq_peaking` biquads run every
@@ -54,16 +51,12 @@
 
 use std::fmt::Write as _;
 
-use crate::config::{
-    AppSettings, EQ_BAND_COUNT, EQ_BANDS_HZ, EchoMode, StereoMode, deepfilter_attenuation_db,
-    eq_preset_bands, gtcrn_speech_strength,
-};
+use crate::config::{AppSettings, EQ_BANDS_HZ, EchoMode, StereoMode, deepfilter_attenuation_db};
 
 use super::graph::{Graph, Link};
 use super::nodes::{
-    LABEL_AMP, LABEL_BQ_HIGHPASS, LABEL_COPY, LABEL_GTCRN_MONO, LABEL_PARAM_EQ, LABEL_PITCH_SCALE,
-    LABEL_SC4_MONO, LABEL_SWH_GATE, LADSPA_AMP, LADSPA_GTCRN, LADSPA_PITCH_SCALE, LADSPA_SC4_MONO,
-    LADSPA_SWH_GATE, Node,
+    LABEL_AMP, LABEL_BQ_HIGHPASS, LABEL_COPY, LABEL_PARAM_EQ, LABEL_PITCH_SCALE, LABEL_SC4_MONO,
+    LABEL_SWH_GATE, LADSPA_AMP, LADSPA_PITCH_SCALE, LADSPA_SC4_MONO, LADSPA_SWH_GATE, Node,
 };
 
 /// Stem used for the smart filter name — the outward-facing
@@ -103,7 +96,7 @@ pub fn build_mic_conf(settings: &AppSettings) -> String {
         inputs,
         outputs: vec!["copy_l:Out".into(), "copy_r:Out".into()],
         capture_props: capture_props(settings),
-        playback_props: playback_props(),
+        playback_props: playback_props(settings),
     };
 
     graph.render()
@@ -146,22 +139,15 @@ pub fn mic_chain_wanted(settings: &AppSettings) -> bool {
             || settings.gate.enabled
             || settings.hpf.enabled
             || (settings.stereo.enabled && settings.stereo.mode == StereoMode::VoiceChanger)
-            || settings.equalizer.enabled
+            || settings.equalizer.shapes_anything()
             || settings.compressor.enabled
             || settings.echo_cancel.enabled)
 }
 
-/// True when the GTCRN node should be present in the mic graph.
-///
-/// The integrated gate shares the GTCRN LADSPA instance, so we keep
-/// the node alive when **either** noise reduction or the silence gate
-/// is wanted. Skipping it otherwise drops the STFT/iSTFT and ONNX
-/// pipeline entirely — both expensive and a transient-smearing source.
+/// True when the denoiser node is in the mic graph.
 #[must_use]
 pub fn ai_node_in_mic_chain(settings: &AppSettings) -> bool {
-    !settings.mic_bypass
-        && (settings.noise_reduction.enabled
-            || (settings.gate.enabled && !settings.noise_reduction.model.is_attenuation_only()))
+    !settings.mic_bypass && settings.noise_reduction.enabled
 }
 
 fn mic_nodes(settings: &AppSettings) -> Vec<Node> {
@@ -193,9 +179,7 @@ fn mic_nodes(settings: &AppSettings) -> Vec<Node> {
             nodes.push(super::gain_safety::neural_makeup());
         }
     }
-    // Attenuation-only backends have an independent gate. Keeping the gate
-    // enabled must not keep the neural network running after NR is disabled.
-    if settings.noise_reduction.model.is_attenuation_only() && settings.gate.enabled {
+    if settings.gate.enabled {
         nodes.push(standalone_gate_node(settings));
     }
 
@@ -203,7 +187,7 @@ fn mic_nodes(settings: &AppSettings) -> Vec<Node> {
         nodes.push(compressor_node(settings));
     }
 
-    if settings.equalizer.enabled {
+    if settings.equalizer.shapes_anything() {
         nodes.push(param_eq_node(settings));
     }
 
@@ -237,57 +221,38 @@ fn compressor_node(settings: &AppSettings) -> Node {
     ])
 }
 
-fn denoiser_node(settings: &AppSettings) -> Node {
-    if settings.noise_reduction.model.is_attenuation_only() {
-        attenuation_denoiser_node(settings)
+/// The mic denoiser's `Min SNR gate (dB)`, with a second preset for when the
+/// echo canceller runs upstream. Standalone, the gate is the "quiet pauses"
+/// value ([`crate::config::NoiseReductionConfig::min_snr_gate_db`], ~-5.5 dB by default) — it needs to
+/// gate hard to suppress noise. With the AEC active the echo is already removed,
+/// so that aggressive gate only over-suppresses voice during double-talk; cap it
+/// gentler (no more aggressive than -20 dB). AECMOS on the AEC+denoiser chain:
+/// the cap recovers +0.28 double-talk / +0.15 near-end DEG-MOS over the
+/// standalone gate, and echo does not regress (review AEC-01 / VOICE-01).
+pub(crate) fn mic_min_snr_gate_db(settings: &AppSettings) -> f64 {
+    let standalone = settings.noise_reduction.min_snr_gate_db();
+    if settings.echo_cancel.enabled {
+        standalone.min(-20.0)
     } else {
-        gtcrn_node(settings)
+        standalone
     }
 }
 
-fn gtcrn_node(settings: &AppSettings) -> Node {
-    let nr = &settings.noise_reduction;
-    let gate = &settings.gate;
-    let gate_derived = gate.ladspa_controls();
-    let threshold_db = if gate.enabled {
-        gate_derived.threshold_db
-    } else {
-        // Threshold below the noise floor disables the integrated gate
-        // while the GTCRN inference itself stays active for noise
-        // reduction.
-        -80.0
-    };
-    Node::ladspa("ai", LADSPA_GTCRN, LABEL_GTCRN_MONO).with_controls([
-        ("Enable", if nr.enabled { 1.0 } else { 0.0 }),
-        ("Strength", f64::from(nr.strength)),
-        ("Model", f64::from(nr.model.ladspa_control())),
-        ("SpeechStrength", gtcrn_speech_strength(nr.strength)),
-        ("LookaheadMs", f64::from(nr.lookahead_ms)),
-        ("ModelBlend", f64::from(nr.model_blending)),
-        ("VoiceRecovery", f64::from(nr.voice_recovery)),
-        ("Threshold (dB)", threshold_db),
-        ("Attack (ms)", gate_derived.attack_ms),
-        ("Hold (ms)", gate_derived.hold_ms),
-        ("Release (ms)", gate_derived.release_ms),
-        ("Range (dB)", gate_derived.range_db),
-        ("LF Key Filter (Hz)", 200.0),
-        ("HF Key Filter (Hz)", 5000.0),
-    ])
-}
-
-/// Attenuation-only denoiser node (DeepFilterNet / DPDFNet families).
-/// These plugins have no `Enable` port — toggling noise-reduction off
-/// while one is selected drops the node from the graph (a reload, not
-/// a live update). The strength→cap mapping lives in
-/// [`deepfilter_attenuation_db`] (quadratic curve aligned with the
-/// upstream cap-as-perceptual-knob guidance).
-fn attenuation_denoiser_node(settings: &AppSettings) -> Node {
+/// The denoiser node. These plugins have no `Enable` port: toggling noise
+/// reduction drops the node from the graph (a reload, not a live update). The
+/// strength→cap mapping lives in [`deepfilter_attenuation_db`].
+fn denoiser_node(settings: &AppSettings) -> Node {
     let nr = &settings.noise_reduction;
     let atten_db = deepfilter_attenuation_db(nr.strength);
     let (plugin, label) = nr.model.plugin_and_label();
+    let (input, output) = nr.model.attenuation_ports();
     Node::ladspa("ai", plugin, label)
-        .with_ports("Audio In", "Audio Out")
-        .with_controls([("Attenuation Limit (dB)", atten_db)])
+        .with_ports(input, output)
+        .with_controls(
+            nr.attenuation_controls(atten_db, mic_min_snr_gate_db(settings))
+                .into_iter()
+                .chain(nr.voice_gate_controls()),
+        )
 }
 
 fn standalone_gate_node(settings: &AppSettings) -> Node {
@@ -342,12 +307,7 @@ fn pitch_controls(settings: &AppSettings) -> Option<(f64, f64)> {
 /// dropped from the graph entirely so its 10 cascaded biquads stop
 /// running.
 fn param_eq_node(settings: &AppSettings) -> Node {
-    let eq = &settings.equalizer;
-    let bands: Vec<f32> = if eq.bands.len() == EQ_BAND_COUNT {
-        eq.bands.clone()
-    } else {
-        resolve_preset_or_flat(&eq.preset)
-    };
+    let bands = settings.equalizer.effective_bands();
 
     let mut filter_config = String::from("config = {\n    filters = [\n");
     for (i, gain) in bands.iter().enumerate() {
@@ -362,10 +322,6 @@ fn param_eq_node(settings: &AppSettings) -> Node {
     Node::builtin("eq", LABEL_PARAM_EQ)
         .with_ports("In 1", "Out 1")
         .with_config(filter_config)
-}
-
-fn resolve_preset_or_flat(preset: &str) -> Vec<f32> {
-    eq_preset_bands(preset).map_or_else(|| vec![0.0; EQ_BAND_COUNT], |a| a.to_vec())
 }
 
 fn mic_links(nodes: &[Node]) -> Vec<Link> {
@@ -421,8 +377,8 @@ fn capture_props(settings: &AppSettings) -> String {
     // unrelated to this chain stay on their negotiated defaults. The
     // existing `node.pause-on-idle = false` is enough to ride out
     // brief unlink/relink cycles during a call without falling back
-    // to `node.always-process` (which would burn CPU running GTCRN
-    // inference 24/7 even when no app is capturing).
+    // to `node.always-process` (which would burn CPU running the
+    // denoiser 24/7 even when no app is capturing).
     let mut props = vec![
         "node.name = \"mic-biglinux-capture\"".to_owned(),
         "node.passive = true".to_owned(),
@@ -440,11 +396,15 @@ fn capture_props(settings: &AppSettings) -> String {
             "target.object = \"{}\"",
             super::echo_cancel::EC_SOURCE_NAME
         ));
+        // Do not silently send raw capture while the explicitly selected AEC
+        // source is unavailable. Reconnect to the same named source on return.
+        props.push("node.dont-fallback = true".to_owned());
+        props.push("node.dont-reconnect = false".to_owned());
     }
     props.join("\n")
 }
 
-fn playback_props() -> String {
+fn playback_props(settings: &AppSettings) -> String {
     // Always declare `mic-biglinux` as a WirePlumber smart filter so it
     // inserts itself between every default-following recording app and
     // whichever source the user has picked in their audio manager. The
@@ -482,7 +442,10 @@ fn playback_props() -> String {
         "audio.rate = 48000".to_owned(),
         "audio.position = [ FL FR ]".to_owned(),
         "filter.smart = true".to_owned(),
+        "filter.smart.targetable = true".to_owned(),
         "filter.smart.name = \"big.filter-microphone\"".to_owned(),
+        format!("biglinux.model = {}", settings.noise_reduction.model as u8),
+        format!("biglinux.denoising = {}", settings.noise_reduction.enabled),
     ];
     props.join("\n")
 }

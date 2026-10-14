@@ -15,18 +15,115 @@ use std::io;
 use big_os_kit::subprocess::{BigSubprocessOutputMode, BigSubprocessSpec};
 use log::{debug, warn};
 
-use crate::pipeline::{EC_SOURCE_NAME, MIC_CAPTURE_NODE_NAME, MIC_NODE_NAME, OUTPUT_NODE_NAME};
+use crate::pipeline::{
+    EC_CAPTURE_NODE_NAME, EC_SOURCE_NAME, MIC_CAPTURE_NODE_NAME, MIC_NODE_NAME, OUTPUT_NODE_NAME,
+};
+use crate::services::audio_monitor::METER_NODE_NAME;
 
 /// One hardware capture source visible in the PipeWire graph.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Source {
     pub node_id: u32,
+    /// A global ID can be recycled. Serial + core cookie identify its generation.
+    pub object_serial: Option<String>,
+    pub core_cookie: Option<u32>,
     /// Stable internal identifier (`alsa_input.usb-…`). Used to match
     /// the value of `default.audio.source` returned by `pw-metadata`.
     pub node_name: String,
     /// Human-friendly name (`AKG C44-USB Microphone …`). Falls back to
     /// `node_name` when no description is published.
     pub description: String,
+}
+
+impl Source {
+    #[must_use]
+    pub fn same_generation(&self, other: &Self) -> bool {
+        self.node_id == other.node_id
+            && self.node_name == other.node_name
+            && self.object_serial.is_some()
+            && self.object_serial == other.object_serial
+            && self.core_cookie.is_some()
+            && self.core_cookie == other.core_cookie
+    }
+
+    /// Revalidate immediately before a write. This narrows the CLI TOCTOU
+    /// window; only a bound native proxy can eliminate that window entirely.
+    #[must_use]
+    pub fn is_current_default(&self) -> bool {
+        let (sources, default_id) = snapshot();
+        sources
+            .iter()
+            .any(|current| Some(current.node_id) == default_id && self.same_generation(current))
+    }
+
+    /// Read volume and mute together. A muted source must not be "rescued" by AGC.
+    /// Kept on Source so consumers of snapshot() need no new module re-export.
+    #[must_use]
+    pub fn volume_and_mute(&self) -> Option<(f32, bool)> {
+        read_volume_and_mute(self.node_id)
+    }
+}
+
+/// Our own nodes link to each other whether or not anybody is listening, so
+/// membership here is what separates "the chain is wired up" from "somebody is
+/// actually recording". The AGC's own analyser belongs in this list for a
+/// sharper reason: if it counted as a consumer it would be its own justification
+/// for staying open, and the microphone would never be released.
+pub(super) const CHAIN_NODES: [&str; 5] = [
+    MIC_CAPTURE_NODE_NAME,
+    MIC_NODE_NAME,
+    EC_CAPTURE_NODE_NAME,
+    EC_SOURCE_NAME,
+    METER_NODE_NAME,
+];
+
+/// Dump the graph's links (`pw-link -l`). Empty on failure — callers treat an
+/// unreadable graph as "no consumer", which only ever errs toward doing less.
+#[must_use]
+pub fn link_dump() -> String {
+    BigSubprocessSpec::builder()
+        .program("/usr/bin/pw-link")
+        .arg("-l")
+        .stderr(BigSubprocessOutputMode::Null)
+        .allow_list(["/usr/bin/pw-link"])
+        .timeout(std::time::Duration::from_secs(1))
+        .build()
+        .run()
+        .ok()
+        .filter(|o| o.status.success())
+        .map(|o| o.stdout_lossy())
+        .unwrap_or_default()
+}
+
+/// Is an application reading the microphone chain?
+///
+/// A consumer is a link *out* of the chain's source ports into a node that is
+/// not itself part of the chain. Decided from a `pw-link -l` dump alone, so the
+/// rule can be tested without a graph.
+#[must_use]
+pub fn has_capture_consumer(lines: &[&str]) -> bool {
+    lines.iter().enumerate().any(|(index, line)| {
+        let source = line.starts_with(&format!("{MIC_NODE_NAME}:"))
+            || line.starts_with(&format!("{EC_SOURCE_NAME}:"));
+        source
+            && lines
+                .iter()
+                .skip(index + 1)
+                .take_while(|next| next.starts_with(' '))
+                .any(|next| {
+                    next.contains("|->")
+                        && !CHAIN_NODES
+                            .iter()
+                            .any(|node| next.contains(&format!("{node}:")))
+                })
+    })
+}
+
+/// Same question, against the live graph.
+#[must_use]
+pub fn chain_has_consumer() -> bool {
+    let dump = link_dump();
+    has_capture_consumer(&dump.lines().collect::<Vec<_>>())
 }
 
 /// Enumerate every real `Audio/Source` node — i.e. hardware mics,
@@ -63,6 +160,7 @@ pub fn set_default_source(node_id: u32) -> io::Result<()> {
         .args(["set-default", &node_id.to_string()])
         .stdout(BigSubprocessOutputMode::Null)
         .allow_list(["/usr/bin/wpctl"])
+        .timeout(std::time::Duration::from_secs(1))
         .build()
         .run()
         .map_err(io::Error::other)?;
@@ -76,34 +174,54 @@ pub fn set_default_source(node_id: u32) -> io::Result<()> {
     Ok(())
 }
 
-/// Read the current volume of `node_id` as a 0.0..=1.5 fraction.
+/// Read the current nonnegative volume fraction (1.0 = 100%, 3.0 = 300%).
 /// Returns `None` when `wpctl` fails (node gone, no audio session).
 #[must_use]
 pub fn source_volume(node_id: u32) -> Option<f32> {
+    read_volume_and_mute(node_id).map(|(volume, _muted)| volume)
+}
+
+fn read_volume_and_mute(node_id: u32) -> Option<(f32, bool)> {
     let output = BigSubprocessSpec::builder()
         .program("/usr/bin/wpctl")
         .args(["get-volume", &node_id.to_string()])
         .stderr(BigSubprocessOutputMode::Null)
         .allow_list(["/usr/bin/wpctl"])
+        .timeout(std::time::Duration::from_secs(1))
         .build()
         .run()
         .ok()?;
     if !output.status.success() {
         return None;
     }
-    parse_volume(&output.stdout_lossy())
+    parse_volume_and_mute(&output.stdout_lossy())
 }
 
-/// Set `node_id`'s volume to `volume` (0.0..=1.5). `wpctl` clamps to
-/// its own configured ceiling, so values above the system maximum are
-/// silently capped — no error returned.
+/// Set `node_id`'s volume to `volume` (0.0..=3.0). The manual GUI slider only
+/// reaches 1.5 (150%); the extra headroom above that is for the AGC to software-
+/// boost a naturally weak mic. This function enforces the 3.0 product ceiling;
+/// wpctl has an optional --limit, not a guaranteed global 100% ceiling. A successful
+/// command is not an acoustic measurement; controllers must read the result back.
 pub fn set_source_volume(node_id: u32, volume: f32) -> io::Result<()> {
-    let clamped = volume.clamp(0.0, 1.5);
+    if !volume.is_finite() {
+        return Err(io::Error::new(
+            io::ErrorKind::InvalidInput,
+            "volume must be finite",
+        ));
+    }
+    let clamped = volume.clamp(0.0, 3.0);
     let output = BigSubprocessSpec::builder()
         .program("/usr/bin/wpctl")
-        .args(["set-volume", &node_id.to_string(), &format!("{clamped:.2}")])
+        .args([
+            "set-volume",
+            &node_id.to_string(),
+            &format!("{clamped:.2}"),
+            "--limit",
+            "3.0",
+        ])
         .stdout(BigSubprocessOutputMode::Null)
         .allow_list(["/usr/bin/wpctl"])
+        .timeout(std::time::Duration::from_secs(1))
         .build()
         .run()
         .map_err(io::Error::other)?;
@@ -177,6 +295,8 @@ fn parse_sources(stdout: &str) -> Vec<Source> {
             .unwrap_or_else(|| node_name.clone());
         out.push(Source {
             node_id,
+            object_serial: None,
+            core_cookie: None,
             node_name,
             description,
         });
@@ -216,7 +336,7 @@ fn parse_sources(stdout: &str) -> Vec<Source> {
 
 /// Identify nodes the picker must hide: our two virtual filter-chain
 /// endpoints and any pw-loopback monitor port.
-fn is_virtual_source(node_name: &str) -> bool {
+pub(super) fn is_virtual_source(node_name: &str) -> bool {
     node_name == MIC_NODE_NAME
         || node_name == MIC_CAPTURE_NODE_NAME
         || node_name == EC_SOURCE_NAME
@@ -248,22 +368,100 @@ fn parse_default_source(stdout: &str) -> Option<String> {
 /// `wpctl get-volume <id>` prints `Volume: 1.00` (optionally followed
 /// by ` [MUTED]`). Extract the floating-point value.
 fn parse_volume(stdout: &str) -> Option<f32> {
-    let after = stdout.split_whitespace().nth(1)?;
-    after.parse().ok()
+    let after = stdout
+        .trim()
+        .strip_prefix("Volume:")?
+        .split_whitespace()
+        .next()?;
+    let volume: f32 = after.parse().ok()?;
+    (volume.is_finite() && volume >= 0.0).then_some(volume)
+}
+
+fn parse_volume_and_mute(stdout: &str) -> Option<(f32, bool)> {
+    let volume = parse_volume(stdout)?;
+    let mut words = stdout.trim().strip_prefix("Volume:")?.split_whitespace();
+    words.next()?;
+    let muted = match words.next() {
+        None => false,
+        Some("[MUTED]") => true,
+        Some(_) => return None, // An unknown status is not proof of "unmuted".
+    };
+    words.next().is_none().then_some((volume, muted))
 }
 
 /// Convenience wrapper for the UI: read sources + the current default
 /// id in one pass, logging any errors instead of bubbling them up.
 #[must_use]
 pub fn snapshot() -> (Vec<Source>, Option<u32>) {
-    let sources = list_sources().unwrap_or_else(|e| {
-        warn!("sources: enumeration failed: {e}");
-        Vec::new()
-    });
-    let default_name = default_source_name();
-    let default_id = default_name
-        .as_deref()
-        .and_then(|n| sources.iter().find(|s| s.node_name == n).map(|s| s.node_id));
+    match super::live::graph_snapshot() {
+        Ok(graph) => sources_from_graph(&graph),
+        Err(error) => {
+            warn!("sources: graph snapshot failed: {error}");
+            (Vec::new(), None)
+        }
+    }
+}
+
+/// One coherent JSON snapshot replaces two unrelated process snapshots. The
+/// metadata selector rejects ambiguous defaults; a node without generation
+/// information can be displayed but cannot authorize an AGC write.
+fn sources_from_graph(graph: &[serde_json::Value]) -> (Vec<Source>, Option<u32>) {
+    let mut cores = graph
+        .iter()
+        .filter(|o| o["type"] == "PipeWire:Interface:Core");
+    let cookie = cores
+        .next()
+        .and_then(|o| o["info"]["cookie"].as_u64())
+        .and_then(|n| u32::try_from(n).ok());
+    let cookie = if cores.next().is_none() { cookie } else { None };
+    let refs: Vec<_> = graph.iter().collect();
+    let default = crate::services::echo::default_name(&refs, "default.audio.source");
+    let mut sources = Vec::new();
+    for node in graph
+        .iter()
+        .filter(|o| o["type"] == "PipeWire:Interface:Node")
+    {
+        let props = &node["info"]["props"];
+        let Some(name) = props["node.name"].as_str().filter(|n| !n.is_empty()) else {
+            continue;
+        };
+        if props["media.class"] != "Audio/Source" || is_virtual_source(name) {
+            continue;
+        }
+        let Some(id) = node["id"].as_u64().and_then(|n| u32::try_from(n).ok()) else {
+            continue;
+        };
+        let serial = props["object.serial"]
+            .as_u64()
+            .map(|n| n.to_string())
+            .or_else(|| {
+                props["object.serial"]
+                    .as_str()
+                    .and_then(|s| s.parse::<u64>().ok())
+                    .map(|n| n.to_string())
+            });
+        let description = props["node.description"]
+            .as_str()
+            .filter(|s| !s.is_empty())
+            .or_else(|| props["node.nick"].as_str().filter(|s| !s.is_empty()))
+            .unwrap_or(name);
+        sources.push(Source {
+            node_id: id,
+            node_name: name.to_owned(),
+            description: description.to_owned(),
+            object_serial: serial,
+            core_cookie: cookie,
+        });
+    }
+    let mut matches = sources
+        .iter()
+        .filter(|s| Some(s.node_name.as_str()) == default.as_deref());
+    let first = matches.next().map(|s| s.node_id);
+    let default_id = if matches.next().is_none() {
+        first
+    } else {
+        None
+    };
     (sources, default_id)
 }
 
@@ -387,8 +585,115 @@ mod tests {
     }
 
     #[test]
+    fn capture_readback_preserves_mute_and_rejects_unknown_status() {
+        assert_eq!(parse_volume_and_mute("Volume: 3.00\n"), Some((3.0, false)));
+        assert_eq!(parse_volume_and_mute("Volume: 0.00\n"), Some((0.0, false)));
+        assert_eq!(
+            parse_volume_and_mute("Volume: 1.00 [MUTED]\n"),
+            Some((1.0, true))
+        );
+        for text in [
+            "Volume: 1.00 unknown",
+            "Volume: 1.00 [MUTED] extra",
+            "Volume: NaN",
+        ] {
+            assert_eq!(parse_volume_and_mute(text), None);
+        }
+    }
+
+    #[test]
+    fn volume_rejects_non_finite_values_before_spawning() {
+        for volume in [f32::NAN, f32::INFINITY, f32::NEG_INFINITY] {
+            assert_eq!(
+                set_source_volume(0, volume).unwrap_err().kind(),
+                io::ErrorKind::InvalidInput
+            );
+        }
+        for text in ["Volume: NaN", "Volume: inf", "Volume: -0.1", "Error: 1.0"] {
+            assert_eq!(parse_volume(text), None);
+        }
+    }
+
+    #[test]
     fn parse_volume_returns_none_on_garbage() {
         assert_eq!(parse_volume(""), None);
         assert_eq!(parse_volume("Volume:"), None);
+    }
+
+    /// Captured from `pw-link -l` on a live session with the chain loaded and
+    /// nothing recording: the hardware feeds the chain's capture side, and the
+    /// chain's source has no outgoing link at all.
+    const IDLE_GRAPH: &str = "\
+alsa_input.usb-AKG_C44-USB_Microphone-00.analog-stereo:capture_FL
+  |-> mic-biglinux-capture:input_FL
+mic-biglinux-capture:input_FL
+  |<- alsa_input.usb-AKG_C44-USB_Microphone-00.analog-stereo:capture_FL";
+
+    fn consumer(dump: &str) -> bool {
+        has_capture_consumer(&dump.lines().collect::<Vec<_>>())
+    }
+
+    #[test]
+    fn a_wired_chain_with_nobody_recording_is_not_a_consumer() {
+        assert!(!consumer(IDLE_GRAPH));
+        assert!(!consumer(""));
+    }
+
+    #[test]
+    fn an_application_reading_the_chain_is_a_consumer() {
+        let dump = format!("{IDLE_GRAPH}\nmic-biglinux:capture_FL\n  |-> Firefox:input_FL");
+        assert!(consumer(&dump));
+    }
+
+    #[test]
+    fn our_own_analyser_is_never_its_own_reason_to_keep_capturing() {
+        // The AGC releases the microphone when nothing reads the chain. If its
+        // meter counted as a reader, enabling it once would pin the mic awake
+        // for the rest of the session.
+        let dump =
+            format!("{IDLE_GRAPH}\nmic-biglinux:capture_FL\n  |-> {METER_NODE_NAME}:input_FL");
+        assert!(!consumer(&dump));
+    }
+
+    #[test]
+    fn the_chain_feeding_itself_is_not_a_consumer() {
+        let dump = format!(
+            "{IDLE_GRAPH}\n{EC_SOURCE_NAME}:capture_FL\n  |-> {MIC_CAPTURE_NODE_NAME}:input_FL"
+        );
+        assert!(!consumer(&dump));
+    }
+    fn graph_fixture() -> Vec<serde_json::Value> {
+        serde_json::from_value(serde_json::json!([
+            {"id":0,"type":"PipeWire:Interface:Core","info":{"cookie":123}},
+            {"id":1,"type":"PipeWire:Interface:Metadata","props":{"metadata.name":"default"},
+             "metadata":[{"subject":0,"key":"default.audio.source","value":{"name":"alsa_input.test"}}]},
+            {"id":7,"type":"PipeWire:Interface:Node","info":{"props":{
+                "node.name":"alsa_input.test","media.class":"Audio/Source","object.serial":91}}}
+        ])).unwrap()
+    }
+
+    #[test]
+    fn source_snapshot_carries_generation_and_rejects_duplicate_names() {
+        let mut graph = graph_fixture();
+        let (sources, default) = sources_from_graph(&graph);
+        assert_eq!(default, Some(7));
+        assert_eq!(sources[0].object_serial.as_deref(), Some("91"));
+        assert_eq!(sources[0].core_cookie, Some(123));
+        let mut replacement = sources[0].clone();
+        replacement.object_serial = Some("92".into());
+        assert!(!sources[0].same_generation(&replacement));
+        replacement = sources[0].clone();
+        replacement.core_cookie = Some(124);
+        assert!(!sources[0].same_generation(&replacement));
+        graph.push(graph[2].clone());
+        assert_eq!(sources_from_graph(&graph).1, None);
+    }
+
+    #[test]
+    fn absent_generation_never_compares_as_the_same_source() {
+        let mut graph = graph_fixture();
+        graph[2]["info"]["props"]["object.serial"] = serde_json::Value::Null;
+        let source = sources_from_graph(&graph).0.remove(0);
+        assert!(!source.same_generation(&source));
     }
 }

@@ -34,3 +34,16 @@ description = "VoiceBank+DEMAND — noisy test WAVs (~150 MB)"
 url = "https://datashare.ed.ac.uk/bitstream/handle/10283/2791/noisy_testset_wav.zip"
 target = "datasets/voicebank_demand/noisy_testset_wav.zip"
 extract = "datasets/voicebank_demand/"
+
+# Noisy *reverberant* test set (Edinburgh DataShare 10283/2826, DOI 10.7488/ds/1424).
+# Same VCTK test speakers and filenames as VoiceBank+DEMAND, so the clean
+# reference is that corpus's clean_testset_wav — no separate clean download.
+# ~169 MB. Run with: compare_systems.py --dataset voicebank_demand_reverb
+#   --noisy-dir <cache>/datasets/voicebank_demand_reverb/noisyreverb_testset_wav
+#   --clean-dir <cache>/datasets/voicebank_demand/clean_testset_wav
+[[dataset]]
+id = "voicebank_demand_reverb_noisy"
+description = "Noisy reverberant test WAVs (48 kHz, noise + reverb)"
+url = "https://datashare.ed.ac.uk/bitstreams/56b70bb6-a6c7-4302-8875-6be66314fd58/download"
+target = "datasets/voicebank_demand_reverb/noisyreverb_testset_wav.zip"
+extract = "datasets/voicebank_demand_reverb/"

@@ -1,0 +1,38 @@
+[build-system]
+requires = ["setuptools>=61.0"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "biglinux-microphone"
+version = "5.0.0"
+description = "GTK4/libadwaita UI for the BigLinux microphone noise-reduction pipeline"
+requires-python = ">=3.10"
+# PyGObject (gi) and numpy are provided as system packages, not from PyPI.
+dependencies = []
+
+[project.gui-scripts]
+biglinux-microphone = "biglinux_microphone.main:main"
+
+# Discovered rather than listed. The hand-written list stopped at
+# `biglinux_microphone.ui` and silently left `ui.pages` and `ui.widgets` out of
+# every wheel: the window imports them at start-up, so the installed package
+# only ran because an older manual copy had left those files behind, unowned by
+# any package. A new subpackage must not be able to repeat that.
+[tool.setuptools.packages.find]
+include = ["biglinux_microphone*"]
+
+
+[tool.pytest.ini_options]
+# PyGObject's own deprecations under Python 3.14: its asyncio loop policy and
+# its signal helper. A deprecated GTK call of ours still shows.
+filterwarnings = [
+    "ignore::DeprecationWarning:gi\\.events",
+    "ignore:GLib.unix_signal_add_full is deprecated:DeprecationWarning",
+]
+
+[tool.ruff.lint]
+extend-select = ["TID251"]
+
+[tool.ruff.lint.flake8-tidy-imports.banned-api]
+"gi.repository.Adw.ViewStack" = { msg = "Use Gtk.Stack: libadwaita 1.9.3 retains its animation after disposal." }
+"gi.repository.Adw.AboutDialog" = { msg = "Use Gtk.AboutDialog: libadwaita 1.9.3 retains the dialog content after close." }

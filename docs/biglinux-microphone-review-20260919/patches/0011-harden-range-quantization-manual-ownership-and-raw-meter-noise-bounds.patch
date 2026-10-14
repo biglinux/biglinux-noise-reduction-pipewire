@@ -1,0 +1,161 @@
+From b9b3e63b6a5eedfc9178ce4c8d628dc973ff49e0 Mon Sep 17 00:00:00 2001
+From: OpenAI Review <review@example.invalid>
+Date: Sat, 19 Sep 2026 05:31:44 +0000
+Subject: [PATCH] Harden range quantization, manual ownership and raw-meter
+ noise bounds
+
+---
+ src/agc.rs               |  8 ++++----
+ src/agc/calibration.rs   |  4 ++--
+ src/agc/control.rs       |  6 +++---
+ src/agc/control_tests.rs | 21 +++++++++++++++++++++
+ src/config/audio.rs      | 13 +++++++------
+ 5 files changed, 37 insertions(+), 15 deletions(-)
+
+diff --git a/src/agc.rs b/src/agc.rs
+index 82a4ca1..b80622d 100644
+--- a/src/agc.rs
++++ b/src/agc.rs
+@@ -123,9 +123,9 @@ fn tilt_db(frame: &SpectrumFrame, config: &AnalyzerConfig) -> Option<f64> {
+ /// produces, not what the chain delivers: with noise reduction on, that hiss is
+ /// gone by the time anybody hears it. Vetoing a boost over it blocks every mic
+ /// whose converter is noisy — most built-in and webcam microphones.
+-fn noise_ceiling(settings: &AppSettings) -> Option<f64> {
++fn noise_ceiling(settings: &AppSettings, metered_filtered: bool) -> Option<f64> {
+     // A margin under the level we are aiming for, not a fixed dBFS.
+-    (!settings.noise_reduction.enabled)
++    (!metered_filtered || settings.mic_bypass || !settings.noise_reduction.enabled)
+         .then(|| f64::from(CALIBRATION_TARGET_DBFS) - NOISE_MARGIN_DB)
+ }
+ 
+@@ -190,7 +190,7 @@ fn drive() -> Result<(), String> {
+     let meter = watch.meter_source(&source).ok_or("no unambiguous microphone meter")?;
+     let metering_filtered = meter.node_name != source.node_name;
+     let (volume, mut muted) = read_owned(&source, &watch)?;
+-    let mut controller = SourceController::new(volume, f64::from(CALIBRATION_TARGET_DBFS), noise_ceiling(&settings))?;
++    let mut controller = SourceController::new(volume, f64::from(CALIBRATION_TARGET_DBFS), noise_ceiling(&settings, metering_filtered))?;
+     if !controller.set_window(low, high) { return Err("range contains no writable nonzero volume".into()); }
+     let config = agc_monitor_config(meter.object_serial.clone().ok_or("meter serial unavailable")?);
+     let analyzer = config.analyzer.clone();
+@@ -233,7 +233,7 @@ fn drive() -> Result<(), String> {
+                 if !controller.set_window(low, high) { return Err("invalid live gain window".into()); }
+                 enforce_range |= controller.window() != old;
+                 voice_profile = calibration_for(&settings, &source.node_name).and_then(|d| d.voice_profile(metering_filtered));
+-                controller.set_noise_ceiling(noise_ceiling(&settings));
++                controller.set_noise_ceiling(noise_ceiling(&settings, metering_filtered));
+             }
+             if paused_for_calibration {
+                 let (actual, is_muted) = read_owned(&source, &watch)?;
+diff --git a/src/agc/calibration.rs b/src/agc/calibration.rs
+index a26792c..b5a4124 100644
+--- a/src/agc/calibration.rs
++++ b/src/agc/calibration.rs
+@@ -18,10 +18,10 @@ pub fn calibrate(seconds: f64) -> Result<Outcome, String> {
+     let (entry_volume, muted) = read_owned(&source, &watch)?;
+     if muted || entry_volume == 0.0 { return Err("the microphone is muted or at zero volume".into()); }
+     let settings = AppSettings::load_strict().map_err(|e| e.to_string())?;
++    let metered_filtered = meter.node_name != source.node_name;
+     let mut controller = SourceController::for_calibration(entry_volume,
+-        f64::from(CALIBRATION_TARGET_DBFS), noise_ceiling(&settings))?;
++        f64::from(CALIBRATION_TARGET_DBFS), noise_ceiling(&settings, metered_filtered))?;
+     let base_db = controller.applied_db();
+-    let metered_filtered = meter.node_name != source.node_name;
+     let config = agc_monitor_config(meter.object_serial.clone().ok_or("meter serial unavailable")?);
+     let analyzer = config.analyzer.clone();
+     let hop_s = config.hop_size as f64 / f64::from(config.analyzer.sample_rate);
+diff --git a/src/agc/control.rs b/src/agc/control.rs
+index e448be8..6d8b0b0 100644
+--- a/src/agc/control.rs
++++ b/src/agc/control.rs
+@@ -122,8 +122,8 @@ impl SourceController {
+             self.actuator_fault();
+             return false;
+         }
+-        let low = (low * 100.0).ceil().max(1.0) / 100.0;
+-        let high = (high * 100.0).floor() / 100.0;
++        let low = ((f64::from(low) * 100.0 - 1e-4).ceil().max(1.0) / 100.0) as f32;
++        let high = ((f64::from(high) * 100.0 + 1e-4).floor() / 100.0) as f32;
+         if !valid_volume(low) || !valid_volume(high) || low > high || high == 0.0 {
+             self.actuator_fault();
+             return false;
+@@ -277,7 +277,7 @@ impl SourceController {
+         let cut_ceiling = PEAK_CEILING_DBFS;
+         // Peak safety refers to the actual volume, not an as-yet-unrealized boost
+         // waiting for a coarse hardware step. Preserve pending downward steps.
+-        if !features.muted && !features.discontinuity
++        if !features.muted && !features.discontinuity && !self.faulted && !self.volume_outside_window()
+             && peak_dbfs > cut_ceiling && self.policy.current_gain_db() > applied_gain
+         {
+             self.policy.synchronize_external_gain(applied_gain)?;
+diff --git a/src/agc/control_tests.rs b/src/agc/control_tests.rs
+index 526a049..c2034e5 100644
+--- a/src/agc/control_tests.rs
++++ b/src/agc/control_tests.rs
+@@ -363,3 +363,24 @@ fn opposite_direction_ack_is_not_our_write() {
+     assert!(c.acknowledge_volume(1.1, 0.9).is_err());
+     assert!(c.faulted);
+ }
++
++#[test]
++fn integer_percent_windows_do_not_shrink_from_binary_float_roundoff() {
++    for percent in 1..=300 {
++        let volume = percent as f32 / 100.0;
++        let mut controller = SourceController::new(volume, -12.0, None).unwrap();
++        assert!(controller.set_window(volume, volume), "{percent}% became empty");
++        assert_eq!(controller.window(), Some((volume, volume)));
++    }
++}
++
++#[test]
++fn loud_audio_cannot_turn_an_external_below_window_change_into_an_error() {
++    let mut controller = SourceController::new(1.5, -12.0, None).unwrap();
++    assert!(controller.set_window(1.0, 2.0));
++    assert!(controller.external_volume_change(0.5).unwrap());
++    for _ in 0..100 {
++        let step = controller.observe(0.0, 0.05, false, true).unwrap();
++        assert!(step.requested_volume.is_none());
++    }
++}
+diff --git a/src/config/audio.rs b/src/config/audio.rs
+index 4394982..24e3abf 100644
+--- a/src/config/audio.rs
++++ b/src/config/audio.rs
+@@ -121,15 +121,15 @@ pub struct DeviceCalibration {
+     pub min_volume: Option<f32>,
+     pub max_volume: Option<f32>,
+     /// What this person's voice looked like while it was being measured, so a
+-    /// daemon can tell it from everything else the microphone hears.
++    /// daemon can apply a conservative heuristic, not identify a speaker.
+     ///
+     /// Two numbers per axis, the quietest and the loudest across every situation
+     /// measured in the round. `voice_dbfs` is the level referred to unity gain,
+     /// so it says what reaches the capsule rather than where the knob happened
+     /// to be. `voice_tilt_db` is the energy above 2 kHz minus the energy below
+-    /// it: distance, a wall and a head turned away all take the treble off a
+-    /// voice, so this separates the owner from a talker in the next room, which
+-    /// no level or rhythm test can do.
++    /// it (legacy mean-log-band index, not integrated energy). Microphone
++    /// response, EQ, distance and room acoustics can all change this index; it
++    /// does not reliably distinguish an owner from television or other voices.
+     ///
+     /// `voice_metered_filtered` says which signal was measured — the filter
+     /// chain's output or the raw device — because the two are different signals
+@@ -147,7 +147,8 @@ pub struct DeviceCalibration {
+ pub struct VoiceEvidence {
+     /// Speaking level referred to unity gain, in dBFS.
+     pub dbfs: f32,
+-    /// Energy above 2 kHz minus energy below it, in dB.
++    /// Legacy difference of mean log-band magnitudes above/below 2 kHz;
++    /// not integrated energy, distance or speaker identity.
+     pub tilt_db: f32,
+     /// True when the filter chain's output was the signal measured.
+     pub metered_filtered: bool,
+@@ -290,7 +291,7 @@ impl VoiceProfile {
+     /// Could this frame be the voice the calibration measured?
+     #[must_use]
+     pub fn admits(&self, dbfs: f32, tilt_db: f32) -> bool {
+-        dbfs >= self.floor_dbfs && (self.tilt_low_db..=self.tilt_high_db).contains(&tilt_db)
++        dbfs.is_finite() && tilt_db.is_finite() && dbfs >= self.floor_dbfs && (self.tilt_low_db..=self.tilt_high_db).contains(&tilt_db)
+     }
+ }
+ 

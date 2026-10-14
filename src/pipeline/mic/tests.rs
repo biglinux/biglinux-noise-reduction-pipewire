@@ -4,10 +4,28 @@
 //! builders via `super::*`.
 
 use super::*;
-use crate::config::{AppSettings, GateConfig};
+use crate::config::{AppSettings, EQ_BAND_COUNT, GateConfig};
 
 fn default_settings() -> AppSettings {
     AppSettings::default()
+}
+
+#[test]
+fn mic_snr_gate_is_gentler_when_the_aec_is_active() {
+    let mut s = AppSettings::default();
+    // Standalone: the quiet-pauses gate value is used as-is.
+    s.echo_cancel.enabled = false;
+    let standalone = mic_min_snr_gate_db(&s);
+    assert_eq!(standalone, s.noise_reduction.min_snr_gate_db());
+    // With the AEC upstream, the gate is capped gentler (never more aggressive
+    // than -20 dB) so the denoiser stops over-suppressing double-talk voice.
+    s.echo_cancel.enabled = true;
+    let with_aec = mic_min_snr_gate_db(&s);
+    assert!(with_aec <= -20.0, "gate not capped with AEC: {with_aec}");
+    assert!(
+        with_aec <= standalone,
+        "AEC gate must not be more aggressive"
+    );
 }
 
 #[test]
@@ -71,7 +89,7 @@ fn conf_declares_smart_filter_when_aec_disabled() {
     assert!(conf.contains("filter.smart = true"));
     assert!(conf.contains("filter.smart.name = \"big.filter-microphone\""));
     assert!(
-        !conf.contains("filter.smart.target"),
+        !conf.contains("filter.smart.target ="),
         "smart filter must follow the default source, never pin to one node",
     );
     assert!(
@@ -107,7 +125,7 @@ fn conf_pins_capture_to_aec_source_when_enabled() {
     );
     assert!(
         conf.contains("node.latency = \"960/48000\""),
-        "when AEC is upstream, the mic chain must follow AEC's 20 ms (2x WebRTC frame) quantum",
+        "the mic chain requests a 20 ms latency; the LADSPA filters are block-agnostic",
     );
 }
 
@@ -233,26 +251,21 @@ fn graph_input_is_never_a_link_destination() {
 }
 
 #[test]
-fn conf_disabled_gate_pushes_threshold_below_floor() {
-    // GTCRN stays in the chain (noise reduction is still on by
-    // default) so the integrated gate's threshold control is what
-    // we verify here.
+fn conf_disabled_gate_drops_the_standalone_gate_node() {
+    // The default plugin is attenuation-only: its gate is a separate SWH
+    // node added only when the gate is enabled, so disabled means the node
+    // is absent from the graph entirely.
     let mut s = default_settings();
     s.gate = GateConfig {
         enabled: false,
         intensity: 30,
     };
     let conf = build_mic_conf(&s);
-    assert!(conf.contains("\"Threshold (dB)\" = -80.0"));
+    assert!(!conf.contains("name = \"gate\""));
 }
 
 #[test]
-fn conf_omits_gtcrn_when_nr_and_gate_both_off() {
-    // GTCRN is a phase-vocoder + ONNX inference: the LADSPA wrapper
-    // runs STFT/iSTFT every block regardless of `Enable`, so we
-    // skip the node entirely when nothing actually needs it. The
-    // integrated gate shares the same instance, hence the
-    // double-condition.
+fn conf_omits_the_denoiser_when_nr_and_gate_both_off() {
     let mut s = default_settings();
     s.noise_reduction.enabled = false;
     s.gate.enabled = false;
@@ -260,7 +273,6 @@ fn conf_omits_gtcrn_when_nr_and_gate_both_off() {
     // the missing AI node into the next live link.
     s.compressor.enabled = true;
     let conf = build_mic_conf(&s);
-    assert!(!conf.contains("plugin = \"/usr/lib/ladspa/libgtcrn_ladspa.so\""));
     assert!(!conf.contains("name = \"ai\""));
     // Chain must skip the node and link hpf straight into the
     // compressor — otherwise the graph would have a dangling edge.
@@ -293,8 +305,10 @@ fn conf_omits_param_eq_when_disabled() {
 }
 
 #[test]
-fn conf_minimal_chain_links_hpf_directly_to_copies() {
-    // Only NR on — the linear chain reduces to hpf → ai → copies.
+fn conf_minimal_chain_wires_denoiser_to_copies() {
+    // Only NR on — the linear chain reduces to
+    // hpf → ai → headroom → sample_ceiling → copies. The input pad is gone: it
+    // cost ~25 dB of denoise and the output clamp already contains the overshoot.
     let mut s = default_settings();
     s.compressor.enabled = false;
     s.equalizer.enabled = false;
@@ -302,22 +316,24 @@ fn conf_minimal_chain_links_hpf_directly_to_copies() {
     s.hpf.enabled = false;
     s.stereo.enabled = false;
     let conf = build_mic_conf(&s);
-    assert!(conf.contains("{ output = \"hpf:Out\" input = \"ai:Input\" }"));
+    assert!(!conf.contains("neural_pad"));
+    assert!(!conf.contains("neural_makeup"));
+    assert!(conf.contains("{ output = \"hpf:Out\" input = \"ai:Audio In\" }"));
+    assert!(conf.contains("{ output = \"ai:Audio Out\" input = \"headroom:In\" }"));
     assert!(conf.contains("{ output = \"sample_ceiling:Out\" input = \"copy_l:In\" }"));
     assert!(conf.contains("{ output = \"sample_ceiling:Out\" input = \"copy_r:In\" }"));
 }
 
 #[test]
-fn conf_keeps_gtcrn_when_only_gate_is_on() {
-    // Gate alone still requires the integrated GTCRN-side gate, so
-    // the node must stay even with NR off.
+fn conf_gate_only_uses_standalone_gate_without_the_neural_net() {
+    // Attenuation-only default: the gate is a separate SWH node, so gate-on
+    // with NR off drops the neural node entirely and keeps just the gate.
     let mut s = default_settings();
     s.noise_reduction.enabled = false;
     s.gate.enabled = true;
     let conf = build_mic_conf(&s);
-    assert!(conf.contains("plugin = \"/usr/lib/ladspa/libgtcrn_ladspa.so\""));
-    assert!(conf.contains("\"Enable\" = 0.0"));
-    assert!(conf.contains("{ output = \"hpf:Out\" input = \"ai:Input\" }"));
+    assert!(!conf.contains("name = \"ai\""));
+    assert!(conf.contains("name = \"gate\""));
 }
 
 #[test]
@@ -337,21 +353,42 @@ fn conf_enabled_compressor_uses_derived_ratio_and_makeup() {
 }
 
 #[test]
-fn conf_gtcrn_model_control_matches_variant() {
-    let s = default_settings();
-    let conf = build_mic_conf(&s);
-    assert!(conf.contains("\"Model\" = 0.0"));
-
-    let mut s = default_settings();
-    s.noise_reduction.model = crate::config::NoiseModel::GtcrnVctk;
-    let conf = build_mic_conf(&s);
-    assert!(conf.contains("\"Model\" = 1.0"));
+fn conf_runs_the_chosen_model_and_its_voice_gate() {
+    use crate::config::NoiseModel;
+    let depth =
+        |conf: &str, db: f64| conf.contains(&format!("\"Voice gate depth (dB)\" = {db:.1}"));
+    let sensitivity = |conf: &str, level: f64| {
+        conf.contains(&format!(
+            "\"Voice sensitivity (1 sensitive, 3 normal, 5 strict)\" = {level:.1}"
+        ))
+    };
+    for model in NoiseModel::ALL {
+        let mut s = default_settings();
+        s.noise_reduction.model = model;
+        let conf = build_mic_conf(&s);
+        let (plugin, label) = model.plugin_and_label();
+        assert!(conf.contains(&format!("plugin = \"{plugin}\"")), "{conf}");
+        assert!(conf.contains(&format!("label = \"{label}\"")), "{conf}");
+        // On for DFN3, off on DPDFNet until asked for.
+        let default_db = if model.is_dfn3() { 40.0 } else { 0.0 };
+        assert!(depth(&conf, default_db), "{model:?}: {conf}");
+        assert!(sensitivity(&conf, 3.0), "{model:?}: {conf}");
+        s.noise_reduction.voice_sensitivity = 5;
+        s.noise_reduction.voice_gate = false;
+        s.noise_reduction.dpdfnet_voice_gate = true;
+        let conf = build_mic_conf(&s);
+        let switched_db = if model.is_dfn3() { 0.0 } else { 40.0 };
+        assert!(depth(&conf, switched_db), "{model:?}: {conf}");
+        assert!(sensitivity(&conf, 5.0), "{model:?}: {conf}");
+    }
 }
 
 #[test]
 fn conf_param_eq_emits_ten_bq_peaking_filters() {
     let mut s = default_settings();
     s.equalizer.enabled = true;
+    // One moved band: a flat equalizer is not rendered at all.
+    s.equalizer.bands[6] = 3.0;
     let conf = build_mic_conf(&s);
     let count = conf.matches("type = bq_peaking").count();
     assert_eq!(count, EQ_BAND_COUNT);
@@ -374,16 +411,18 @@ fn conf_wires_full_chain_links_without_pitch() {
     let mut s = default_settings();
     s.compressor.enabled = true;
     s.equalizer.enabled = true;
+    s.equalizer.bands[6] = 3.0;
     let conf = build_mic_conf(&s);
     for link in [
-        "{ output = \"hpf:Out\" input = \"ai:Input\" }",
-        "{ output = \"ai:Output\" input = \"compressor:Input\" }",
+        "{ output = \"hpf:Out\" input = \"ai:Audio In\" }",
+        "{ output = \"ai:Audio Out\" input = \"compressor:Input\" }",
         "{ output = \"compressor:Output\" input = \"eq:In 1\" }",
         "{ output = \"sample_ceiling:Out\" input = \"copy_l:In\" }",
         "{ output = \"sample_ceiling:Out\" input = \"copy_r:In\" }",
     ] {
         assert!(conf.contains(link), "missing link: {link}\n{conf}");
     }
+    assert!(!conf.contains("neural_pad") && !conf.contains("neural_makeup"));
     assert!(!conf.contains("name = \"pitch\""));
     assert!(!conf.contains("name = \"pitch_gain\""));
 }
@@ -482,7 +521,12 @@ fn each_filter_flag_alone_keeps_chain_wanted() {
             s.stereo.enabled = true;
             s.stereo.mode = crate::config::StereoMode::VoiceChanger;
         }),
-        ("equalizer", |s| s.equalizer.enabled = true),
+        // The flag alone is deliberately not enough: see
+        // `an_equalizer_that_shapes_nothing_does_not_keep_the_chain_alive`.
+        ("equalizer", |s| {
+            s.equalizer.enabled = true;
+            s.equalizer.bands[6] = 3.0;
+        }),
         ("compressor", |s| s.compressor.enabled = true),
         ("echo_cancel", |s| s.echo_cancel.enabled = true),
     ];
@@ -496,12 +540,8 @@ fn each_filter_flag_alone_keeps_chain_wanted() {
 }
 
 #[test]
-fn deepfilter_drops_standalone_gate_unless_gate_enabled() {
-    // DFN3 has no integrated gate, so a standalone SWH gate node is wired in
-    // ONLY when the model is DeepFilterNet3 AND the silence gate is on (the
-    // `&&` in mic_nodes).
+fn the_standalone_gate_follows_the_gate_switch() {
     let mut s = AppSettings::default();
-    s.noise_reduction.model = crate::config::NoiseModel::DeepFilterNet3;
     s.noise_reduction.enabled = true;
     s.gate.enabled = false;
     let conf = build_mic_conf(&s);
@@ -581,4 +621,37 @@ fn voice_changer_unity_width_has_zero_gain_compensation() {
     let conf = build_mic_conf(&s);
     assert!(conf.contains("\"Pitch co-efficient\" = 1.0"));
     assert!(conf.contains("\"Amps gain (dB)\" = 0.0"));
+}
+
+#[test]
+fn pinned_aec_capture_must_not_fall_back_to_raw_audio() {
+    let mut s = AppSettings::default();
+    s.echo_cancel.enabled = true;
+    let conf = build_mic_conf(&s);
+    assert!(conf.contains("node.dont-fallback = true"));
+    assert!(conf.contains("node.dont-reconnect = false"));
+    assert!(conf.contains("filter.smart.targetable = true"));
+    s.echo_cancel.enabled = false;
+    assert!(!build_mic_conf(&s).contains("node.dont-fallback"));
+}
+
+#[test]
+fn an_equalizer_that_shapes_nothing_does_not_keep_the_chain_alive() {
+    // Reported from a live session: the noise filter was switched off and a
+    // filter device stayed in the audio settings, with a loader process behind
+    // it. The cause was an equalizer marked enabled with every band at 0 dB —
+    // "flat" is one of the offered presets — so the chain was materialised to
+    // run ten biquads computing the identity, with nothing on screen saying so.
+    let mut s = AppSettings::default();
+    cascade_mic_off(&mut s);
+    assert!(!mic_chain_wanted(&s));
+
+    s.equalizer.enabled = true;
+    s.equalizer.bands = vec![0.0; EQ_BAND_COUNT];
+    assert!(!mic_chain_wanted(&s), "a flat equalizer shapes nothing");
+    assert!(!build_mic_conf(&s).contains("param_eq"));
+
+    s.equalizer.bands[4] = 3.0;
+    assert!(mic_chain_wanted(&s), "one moved band is a real equalizer");
+    assert!(build_mic_conf(&s).contains("param_eq"));
 }

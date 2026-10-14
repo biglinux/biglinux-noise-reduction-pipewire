@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: biglinux-noise-reduction-pipewire\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-09-08 05:53+0000\n"
+"POT-Creation-Date: 2026-10-12 19:46-0300\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: tr\n"
@@ -16,578 +16,67 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "X-Generator: attranslate\n"
 
-#: src/ui/views/output.rs:86
-msgid ""
-"10-band parametric EQ on what you hear. Pick a preset or drag each band "
-"between -40 dB and +40 dB."
+#: app/biglinux_microphone/main.py:22
+msgid "BigLinux Microphone - real-time microphone noise reduction"
 msgstr ""
-"Duyduklarınız üzerinde 10 bantlı parametrik EQ. Bir ön ayar seçin veya her "
-"bandı -40 dB ile +40 dB arasında sürükleyin."
 
-#: src/ui/views/advanced.rs:568
-msgid ""
-"A small extra reserve for USB headsets, microphones and external audio "
-"interfaces. Increase only if you hear tiny cuts or pops on a USB device when "
-"the computer is busy."
+#: app/biglinux_microphone/main.py:24
+msgid "Enable debug logging"
+msgstr ""
+
+#: app/biglinux_microphone/main.py:26
+msgid "Show version and exit"
 msgstr ""
 
 # File: biglinux-noise-reduction-
-# pipewire/src/biglinux_microphone/ui/main_view.py, line: 310
-#: src/ui/views/output.rs:65
-msgid "AI noise reduction"
-msgstr "Yapay zeka gürültü azaltma"
+# pipewire/src/biglinux_microphone/audio/filter_chain.py
+#: app/biglinux_microphone/application.py:35
+#: app/biglinux_microphone/application.py:64
+#: app/biglinux_microphone/window.py:30
+msgid "BigLinux Microphone"
+msgstr "BigLinux Microphone"
 
-#: src/ui/window.rs:262 src/ui/window.rs:435
-msgid "About Filter noise"
-msgstr "Gürültüyü filtrele Hakkında"
-
-#: src/ui/widgets/source_picker.rs:98
-msgid ""
-"Above 100% may distort your voice. Lower the volume if the level meter "
-"reaches the top."
-msgstr ""
-
-#: src/ui/views/advanced.rs:164
-msgid ""
-"Adjust how the system drives your audio hardware. Each card starts on the "
-"default we tested across a wide range of machines — change a value only if "
-"you have a specific reason to."
-msgstr ""
-
-#: src/ui/window.rs:230 src/ui/window.rs:236
-msgid "Advanced"
-msgstr "Gelişmiş"
-
-#: src/ui/window.rs:296
-msgid ""
-"All audio processing settings will return to their factory values. Your "
-"window size and view preferences are kept."
-msgstr ""
-"Tüm ses işleme ayarları fabrika ayarlarına dönecek. Pencere boyutunuz ve "
-"görünüm tercihleriniz korunur."
-
-#: src/ui/views/advanced.rs:656
-msgid ""
-"All audio runs at studio quality (48 kHz) by default. Hi-res music players "
-"and high-end USB DACs can play higher quality if you allow it here, but "
-"every change between qualities causes a brief audio reload. Keep the default "
-"unless you actually own hi-res equipment."
-msgstr ""
-
-#: src/ui/views/advanced/apply.rs:169
-msgid ""
-"All your custom audio settings will be removed and the audio service will "
-"restart with the defaults."
-msgstr ""
-
-#: src/ui/views/advanced.rs:675
-msgid "Allow hi-res audio (44.1 / 48 / 88.2 / 96 / 176.4 / 192 kHz)"
-msgstr ""
-
-#: src/ui/views/advanced.rs:688
-msgid "Allowed quality"
-msgstr ""
-
-#: src/ui/views/mic.rs:129
-msgid "Always"
-msgstr ""
-
-#: src/ui/views/advanced.rs:631
-msgid "Always keep the speakers ready (recommended on desktops)"
-msgstr ""
-
-#: src/ui/mic_shell.rs:755
-msgid ""
-"Another application may be changing the settings, or the settings file is "
-"not writable. Try again, keep this window open, or close without saving your "
-"latest changes."
-msgstr ""
-
-#: usr/share/plasma/plasmoids/br.com.biglinux.micnoise/contents/ui/main.qml:166
-msgid "Applies your selected effects to the sound you hear."
-msgstr ""
-
-#: src/ui/views/advanced.rs:263
-msgid "Apply and restart audio"
-msgstr ""
-
-# File: biglinux-noise-reduction-
-# pipewire/src/biglinux_microphone/ui/main_view.py, line: 227
-#: src/ui/views/advanced.rs:279
-#, fuzzy
-msgid "Applying audio settings…"
-msgstr "Ayarlar uygulanıyor…"
-
-#: src/ui/views/output.rs:69
-msgid "Audio enhancements"
-msgstr "Ses geliştirmeleri"
-
-#: usr/share/plasma/plasmoids/br.com.biglinux.micnoise/contents/ui/main.qml:122
-msgid "Audio needs attention. Open the controls for details."
-msgstr ""
-
-#: src/ui/views/advanced.rs:422
-msgid "Audio responsiveness"
-msgstr ""
-
-#: src/ui/views/advanced/apply.rs:152
-msgid "Audio service restart failed"
-msgstr ""
-
-#: src/ui/views/advanced.rs:137
-msgid ""
-"Audio settings could not be read. Check file permissions and reopen this "
-"window."
-msgstr ""
-
-#: src/ui/views/mic.rs:129 src/ui/views/mic.rs:164
-msgid "Automatic"
-msgstr ""
-
-#: src/ui/views/mic.rs:149
-msgid ""
-"Automatic cancels speaker echo and turns off cancellation when headphones "
-"are in use."
-msgstr ""
-
-#: src/ui/views/mic.rs:190
-msgid ""
-"Automatic chooses a model for this computer. Choose lower CPU use if sound "
-"stutters, or select a model in Advanced."
-msgstr ""
-
-#: src/ui/views/advanced.rs:617
-msgid "Avoid the click at the start of sounds"
-msgstr ""
-
-#: src/ui/views/advanced.rs:437
-msgid "Balanced (upstream PipeWire default, ~21 ms)"
-msgstr ""
-
-#: src/ui/widgets/eq_card.rs:182
-msgid "Bass cut"
-msgstr "Bas kesimi"
-
-#: src/ui/views/advanced.rs:344
-msgid "Behaviour"
-msgstr ""
-
-#: src/ui/views/mic.rs:165
-msgid "Best quality"
-msgstr ""
-
-#. ── Bluetooth ────────────────────────────────────────────────────
-#: src/ui/views/advanced.rs:184
-msgid "Bluetooth"
-msgstr ""
-
-#: src/ui/views/advanced.rs:351
-msgid "Bluetooth audio buffer"
-msgstr ""
-
-# File: biglinux-noise-reduction-
-# pipewire/src/biglinux_microphone/ui/main_view.py, line: 533
-#: src/ui/views/advanced.rs:318
-#, fuzzy
-msgid "Bluetooth call mode"
-msgstr "Bluetooth Kulaklık Modu"
-
-#: src/ui/views/advanced.rs:353
-msgid ""
-"Bluetooth needs a small audio reserve so the sound plays smoothly even when "
-"the wireless connection has tiny stutters. A bigger reserve hides hiccups "
-"but adds delay between picture and sound — keep the default unless your "
-"headset stutters or you need quicker audio."
-msgstr ""
-
-#: src/ui/widgets/eq_card.rs:180
-msgid "Bright"
-msgstr "Parlak"
-
-#: src/ui/views/advanced.rs:380
-msgid "Buffer size"
-msgstr ""
-
-#: src/ui/window.rs:336
-msgid "Built on"
-msgstr "Şunun üzerine inşa edildi"
-
-#: src/ui/views/advanced.rs:591
-msgid "Built-in audio safety margin"
-msgstr ""
-
-#: src/ui/views/advanced.rs:671
-msgid "CD and standard quality (44.1 + 48 kHz)"
-msgstr ""
-
-# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/window.py,
-# line: 175
-#: src/ui/window.rs:299 src/ui/views/advanced/apply.rs:172
-msgid "Cancel"
-msgstr "İptal et"
-
-#: src/ui/views/advanced.rs:283
-msgid "Changes are not applied yet. Apply them when you are ready."
-msgstr ""
-
-#: src/ui/mic_shell.rs:387
-msgid ""
-"Changes have not been saved. You can keep editing or close without saving."
-msgstr ""
-
-#: src/ui/mic_shell.rs:995
-msgid "Check again"
-msgstr ""
-
-#: src/ui/mic_shell.rs:891
-msgid "Check again, or run biglinux-microphone-cli doctor in a terminal."
-msgstr ""
-
-#: src/ui/health.rs:34
-msgid ""
-"Check the audio connection, then check again. Your preferences are kept."
-msgstr ""
-
-#: src/ui/mic_shell.rs:282 src/ui/mic_shell.rs:835
-msgid "Checking the audio system…"
-msgstr ""
-
-#: src/ui/views/mic.rs:399
-msgid "Chipmunk"
-msgstr "Sincap sesi"
-
-#: src/ui/health.rs:50
-msgid ""
-"Choose another installed model, or install this model and its required "
-"runtime, then check again."
-msgstr ""
-
-#: src/ui/views/simple.rs:209
-msgid ""
-"Cleans background noise from everything you hear before it reaches your "
-"speakers."
+#: app/biglinux_microphone/cli.py:233
+msgid "This noise-reduction mode cannot preview a recording."
 msgstr ""
-"Hoparlörlerinize ulaşmadan önce duyduğunuz her şeyin arka plan gürültüsünü "
-"temizler."
 
-#: usr/share/plasma/plasmoids/br.com.biglinux.micnoise/contents/ui/main.qml:153
-msgid "Cleans your voice for calls and recordings"
-msgstr "Aramalar ve kayıtlar için sesinizi temizler"
-
-#: src/ui/mic_shell.rs:758
-msgid "Close without saving"
-msgstr ""
-
-#: src/ui/views/output.rs:45
-msgid "Combine to mono (lower CPU use)"
-msgstr ""
-
-#: src/ui/views/mic.rs:447 src/ui/views/output.rs:197
-msgid "Compressor"
-msgstr "Kompresör"
-
-#: src/ui/mic_shell.rs:1015
-msgid ""
-"Could not apply the audio settings. Your choices are saved — the audio "
-"services have not accepted them yet."
-msgstr ""
-
-#: usr/share/plasma/plasmoids/br.com.biglinux.micnoise/contents/ui/main.qml:58
-#: usr/share/plasma/plasmoids/br.com.biglinux.micnoise/contents/ui/main.qml:75
-msgid "Could not read the audio status. Open settings to check the connection."
-msgstr ""
-
-#: src/ui/widgets/wp_override_warning.rs:172
-msgid "Could not remove the override"
-msgstr ""
-
-#: src/ui/mic_shell.rs:966
-msgid ""
-"Could not stop the audio monitor safely. Close the window again to retry."
-msgstr ""
-
-#: src/ui/widgets/source_picker.rs:258
-msgid ""
-"Could not update the microphone. Check the audio connection and try again."
-msgstr ""
-
-# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/config.py,
-# line: 607
-#: src/ui/widgets/eq_card.rs:184
-msgid "Custom"
-msgstr "Özel"
-
-#: src/ui/views/output.rs:153
-msgid "Cuts low-frequency rumble from playback — wind, AC noise."
-msgstr "Oynatmadaki düşük frekanslı uğultuyu keser — rüzgar, klima gürültüsü."
-
-#: src/ui/views/mic.rs:307
-msgid "Cuts low-frequency rumble — AC, wind, mic-stand bumps."
-msgstr ""
-"Düşük frekanslı uğultuyu keser — AC, rüzgar, mikrofon standı darbeleri."
-
-#: src/ui/widgets/model_picker.rs:113
-#, fuzzy
-msgid ""
-"DNS3 removes more noise but can smudge consonants. VCTK is gentler and "
-"lighter on CPU. Full-band models can sound cleaner when their LADSPA "
-"packages are installed, with higher CPU cost."
-msgstr ""
-"DNS3 daha fazla gürültüyü kaldırır ancak ünsüzleri bulanıklaştırabilir. VCTK "
-"daha nazik ve CPU üzerinde hafiftir — podcastler için uygundur."
-
-#: src/ui/widgets/eq_card.rs:181
-msgid "De-esser"
-msgstr "De-esser"
-
-# File: biglinux-noise-reduction-
-# pipewire/src/biglinux_microphone/ui/main_view.py, line: 1147
-#: src/ui/views/mic.rs:395
-msgid "Deep"
-msgstr "Derin"
-
-# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/config.py,
-# line: 711
-#: src/ui/views/advanced.rs:704
-#, fuzzy
-msgid "Default"
-msgstr "Varsayılan ses"
-
-# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/config.py,
-# line: 711
-#: src/ui/widgets/eq_card.rs:175
-msgid "Default voice"
-msgstr "Varsayılan ses"
-
-#: src/ui/views/mic.rs:425
-msgid "Delay (ms)"
-msgstr "Gecikme (ms)"
-
-#: src/ui/widgets/wp_override_warning.rs:90
-msgid "Don't warn again"
-msgstr ""
-
-# File: biglinux-noise-reduction-
-# pipewire/src/biglinux_microphone/ui/main_view.py, line: 687
-#: src/ui/views/mic.rs:138 src/ui/views/mic.rs:147
-msgid "Echo cancellation"
-msgstr "Yankı iptali"
-
-# File: biglinux-noise-reduction-
-# pipewire/src/biglinux_microphone/ui/main_view.py, line: 477
-#: src/ui/views/mic.rs:347 src/ui/views/output.rs:84
-msgid "Equalizer"
-msgstr "Ekolayzır"
-
-# File: biglinux-noise-reduction-
-# pipewire/src/biglinux_microphone/ui/main_view.py, line: 477
-#: src/ui/widgets/eq_card.rs:244
-#, fuzzy
-msgid "Equalizer band"
-msgstr "Ekolayzır"
-
-# File: biglinux-noise-reduction-
-# pipewire/src/biglinux_microphone/ui/main_view.py, line: 477
-#: src/ui/widgets/eq_card.rs:60
-#, fuzzy
-msgid "Equalizer enabled"
-msgstr "Ekolayzır"
-
-#: src/ui/views/mic.rs:448
-msgid ""
-"Evens out loud peaks and quiet parts so your voice stays at a steady volume."
-msgstr ""
-"Sesinizin sabit bir ses seviyesinde kalması için yüksek ve düşük sesleri "
-"dengeler."
-
-#: src/ui/views/output.rs:199
-msgid ""
-"Evens out volume across loud and quiet speakers — useful for meetings with "
-"mixed mic levels."
-msgstr ""
-"Yüksek ve düşük sesli hoparlörler arasında ses seviyesini dengeler — karışık "
-"mikrofon seviyeleri olan toplantılar için faydalı."
-
-#: src/ui/views/advanced/apply.rs:145
-msgid "Failed to write configuration"
-msgstr ""
-
-#: src/ui/mic_shell.rs:235 src/ui/window.rs:320
-msgid "Filter noise"
-msgstr "Gürültüyü filtrele"
-
-#: src/ui/views/mic.rs:349
-#, fuzzy
-msgid ""
-"Fine-tune your voice tone across 10 frequency bands. Pick a preset or drag "
-"each band between -40 dB and +40 dB."
-msgstr ""
-"10 bantlı parametrik EQ. Bir ön ayar seçin veya her bandı -40 dB ile +40 dB "
-"arasında sürükleyin."
-
-#: src/ui/widgets/eq_card.rs:176
-msgid "Flat"
-msgstr "Düz"
-
-#: src/ui/views/advanced.rs:399
-msgid "Force off (maximum compatibility)"
-msgstr ""
-
-#: src/ui/views/advanced.rs:398
-msgid "Force on (high quality)"
-msgstr ""
-
-#: src/ui/views/simple.rs:186
-msgid "Headphones only — speakers cause feedback."
-msgstr "Sadece kulaklık — hoparlörler geri bildirime neden olur."
-
-# File: biglinux-noise-reduction-
-# pipewire/src/biglinux_microphone/ui/main_view.py, line: 550
-#: src/ui/views/simple.rs:193
-msgid "Hear my voice"
-msgstr "Sesimi duy"
-
-# File: biglinux-noise-reduction-
-# pipewire/src/biglinux_microphone/ui/main_view.py, line: 477
-#: src/ui/views/mic.rs:306 src/ui/views/output.rs:152
-msgid "High-pass filter"
-msgstr "Yüksek geçiren filtre"
-
-#: src/ui/views/advanced.rs:387
-msgid "High-quality Bluetooth audio (SBC-XQ)"
-msgstr ""
-
-#: src/ui/views/mic.rs:398
-msgid "Higher"
-msgstr "Yüksek"
-
-#: src/ui/views/advanced.rs:411
-msgid "Higher Bluetooth audio quality (SBC-XQ)"
-msgstr ""
-
-#: src/ui/views/advanced.rs:424
-msgid ""
-"How fast the system reacts to sound changes. Faster reaction is great for "
-"music production but uses more CPU; slower reaction makes playback steadier "
-"on weaker machines. The default works well for video calls, music and games "
-"on most computers."
-msgstr ""
-
-#: src/ui/widgets/spectrum.rs:70
-msgid "Input level in decibels. Reduce microphone volume if it reaches zero."
-msgstr ""
-
-# File: biglinux-noise-reduction-
-# pipewire/src/biglinux_microphone/ui/main_view.py, line: 434
-# File: biglinux-noise-reduction-
-# pipewire/src/biglinux_microphone/ui/main_view.py, line: 472
-#: src/ui/views/mic.rs:111 src/ui/views/mic.rs:332 src/ui/views/mic.rs:452
-#: src/ui/views/output.rs:175 src/ui/views/output.rs:205
-#: src/ui/views/simple.rs:78 src/ui/views/simple.rs:214
-msgid "Intensity"
-msgstr "Yoğunluk"
-
-#: src/ui/widgets/wp_override_warning.rs:75
-msgid "Keep"
-msgstr ""
-
-#: src/ui/views/mic.rs:480
-msgid "Keep loaded audio data in memory"
-msgstr ""
-
-#: src/ui/views/output.rs:45
-msgid "Keep stereo (recommended)"
-msgstr ""
-
-#: src/ui/mic_shell.rs:757
-msgid "Keep window open"
-msgstr ""
-
-#: src/ui/views/advanced.rs:369
-msgid "Large (steadiest, ~85 ms)"
-msgstr ""
-
-#: src/ui/views/advanced.rs:724
-msgid "Large (virtual machines, ~42 ms)"
-msgstr ""
-
-#: src/ui/views/mic.rs:469
-msgid ""
-"Leave these off unless audio still stutters. Changing them briefly restarts "
-"the filters."
-msgstr ""
-
-#: src/ui/views/advanced.rs:634
-msgid "Let the speakers sleep when idle (default)"
-msgstr ""
-
-#: src/ui/widgets/spectrum.rs:148
-msgid "Level: {level} dB · Peak: {peak} dB"
+#: app/biglinux_microphone/cli.py:237
+msgid "Install ffmpeg to compare recordings."
 msgstr ""
 
-#: src/ui/views/advanced.rs:435
-#, fuzzy
-msgid "Low delay (~11 ms)"
-msgstr "Gecikme (ms)"
-
-#: src/ui/views/mic.rs:396
-msgid "Lower"
-msgstr "Düşük"
-
-#: src/ui/views/mic.rs:166
-msgid "Lower CPU use"
-msgstr ""
-
-#: src/ui/views/advanced.rs:364
-msgid "Lower delay (needs a stable headset, ~11 ms)"
+#: app/biglinux_microphone/cli.py:256 app/biglinux_microphone/cli.py:335
+msgid "Comparison cancelled"
 msgstr ""
 
-#: src/ui/views/mic.rs:500
-msgid ""
-"Lowers large boosts and caps sample peaks for microphone and playback. This "
-"can reduce overall volume; it cannot repair distorted recordings. Leave on "
-"unless you manage gain in another audio tool."
+#: app/biglinux_microphone/cli.py:289
+msgid "Processing the recording took too long."
 msgstr ""
-
-# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/window.py,
-# line: 202
-#: src/ui/window.rs:257
-msgid "Main menu"
-msgstr "Ana menü"
-
-# File: biglinux-noise-reduction-
-# pipewire/src/biglinux_microphone/ui/main_view.py, line: 326
-#: src/ui/views/mic.rs:167
-#, fuzzy
-msgid "Manual model"
-msgstr "Sinir ağı modeli"
 
-#: src/ui/views/advanced.rs:584 src/ui/views/advanced.rs:610
-msgid "Margin"
+#: app/biglinux_microphone/cli.py:293
+msgid "Could not process the recording."
 msgstr ""
 
-#: src/ui/views/advanced.rs:725
-msgid "Maximum (last resort, ~85 ms)"
+#: app/biglinux_microphone/cli.py:314 app/biglinux_microphone/cli.py:317
+msgid "The comparison recording is incomplete."
 msgstr ""
 
-#: src/ui/views/mic.rs:473
-msgid ""
-"May help on some computers, but can use more power. The automatic system "
-"choice is usually best."
+#: app/biglinux_microphone/cli.py:325
+msgid "The recording is too quiet to compare. Speak closer to the microphone."
 msgstr ""
 
-#: src/ui/views/mic.rs:481
-msgid ""
-"May reduce pauses under memory pressure, but leaves less RAM for other "
-"applications. This is optional and limited by the system."
+#: app/biglinux_microphone/ui/view.py:105
+#: app/biglinux_microphone/ui/pages/home.py:29
+msgid "Home"
 msgstr ""
 
-#: src/ui/views/advanced.rs:722
-msgid "Medium (~11 ms)"
+#: app/biglinux_microphone/ui/view.py:108
+#: app/biglinux_microphone/ui/view.py:109
+msgid "Back"
 msgstr ""
 
-#: src/ui/views/advanced.rs:367
-msgid "Medium (~21 ms)"
+#: app/biglinux_microphone/ui/view.py:117
+#: app/biglinux_microphone/ui/view.py:119
+msgid "Pages"
 msgstr ""
 
 # #-#-#-#-#  biglinux-noise-reduction-pipewire.pot (biglinux-noise-reduction-
@@ -597,452 +86,998 @@ msgstr ""
 # pipewire/src/biglinux_microphone/ui/main_view.py, line: 88
 # File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/config.py,
 # line: 27
-#. No `bindtextdomain` was called in this test process, so
-#. `gettext` falls back to the input string verbatim. That is
-#. exactly the contract callers rely on at runtime when running
-#. outside an installed locale.
-#: src/ui/window.rs:86 src/ui/widgets/source_picker.rs:90 src/ui/i18n.rs:109
+#: app/biglinux_microphone/ui/view.py:132
+#: app/biglinux_microphone/ui/view.py:154
+#: app/biglinux_microphone/ui/pages/diagnostics.py:40
+#: app/biglinux_microphone/ui/pages/calibrate.py:82
 msgid "Microphone"
 msgstr "Mikrofon"
 
-#: usr/share/plasma/plasmoids/br.com.biglinux.micnoise/contents/ui/main.qml:121
-#, fuzzy
-msgid "Microphone and system sound filters"
-msgstr "Sistem sesi filtresi"
+# File: biglinux-noise-reduction-
+# pipewire/usr/share/bigbashview/apps/microphone/noise_reducer.py, line: 276
+#: app/biglinux_microphone/ui/view.py:156
+msgid "About"
+msgstr "Hakkında"
 
-#: src/ui/views/mic.rs:43
-#, fuzzy
-msgid "Microphone effects"
-msgstr "Mikrofon filtresi"
+# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/window.py,
+# line: 196
+#: app/biglinux_microphone/ui/view.py:157
+msgid "Quit"
+msgstr "Çıkış yap"
 
-#: src/ui/views/mic.rs:58
-msgid "Microphone effects are paused. Your choices below are preserved."
+#: app/biglinux_microphone/ui/view.py:159
+#: app/biglinux_microphone/ui/view.py:160
+msgid "Main menu"
 msgstr ""
 
-#: usr/share/plasma/plasmoids/br.com.biglinux.micnoise/contents/ui/main.qml:144
-#, fuzzy
-msgid "Microphone filter"
-msgstr "Mikrofon filtresi"
-
-#: src/ui/widgets/spectrum.rs:51 src/ui/widgets/spectrum.rs:68
-#, fuzzy
-msgid "Microphone level meter"
-msgstr "Mikrofon filtresi"
-
-#: src/ui/widgets/spectrum.rs:125
-msgid "Microphone monitoring is unavailable."
+#: app/biglinux_microphone/ui/view.py:178
+msgid "Listen back"
 msgstr ""
 
-#: src/ui/widgets/spectrum.rs:123
-msgid "Microphone unavailable. Reconnecting…"
+#: app/biglinux_microphone/ui/view.py:179
+msgid "2 s later — use headphones"
 msgstr ""
+
+#: app/biglinux_microphone/ui/view.py:458
+msgid "Live monitoring stopped unexpectedly"
+msgstr ""
+
+#: app/biglinux_microphone/ui/pages/home.py:45
+#: app/biglinux_microphone/ui/pages/home.py:55
+#: app/biglinux_microphone/ui/pages/home.py:242
+#: app/biglinux_microphone/ui/pages/microphone_test.py:198
+#: app/biglinux_microphone/ui/pages/calibrate.py:254
+msgid "Try again"
+msgstr ""
+
+#: app/biglinux_microphone/ui/pages/home.py:54
+#: app/biglinux_microphone/ui/pages/home.py:241
+#: app/biglinux_microphone/ui/pages/home.py:330
+#: app/biglinux_microphone/ui/pages/voice_volume.py:130
+#: app/biglinux_microphone/ui/pages/diagnostics.py:73
+#: app/biglinux_microphone/ui/pages/calibrate.py:284
+#, fuzzy
+msgid "No microphone available"
+msgstr "Mikrofon filtresi"
+
+# #-#-#-#-#  biglinux-noise-reduction-pipewire.pot (biglinux-noise-reduction-
+# pipewire)  #-#-#-#-#
+#
+# File: biglinux-noise-reduction-
+# pipewire/src/biglinux_microphone/ui/main_view.py, line: 88
+# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/config.py,
+# line: 27
+#: app/biglinux_microphone/ui/pages/home.py:64
+#: app/biglinux_microphone/ui/pages/home.py:288
+#, fuzzy
+msgid "Restore microphone"
+msgstr "Mikrofon"
 
 # File: biglinux-noise-reduction-
-# pipewire/src/biglinux_microphone/ui/main_view.py, line: 323
-#: src/ui/views/mic.rs:269 src/ui/views/output.rs:111
-msgid "Model"
-msgstr "Model"
-
-#: src/ui/views/advanced.rs:442
-msgid "Most stable (older or busy machines, ~85 ms)"
-msgstr ""
-
-#: src/ui/views/output.rs:171
-msgid ""
-"Mutes playback during silent moments so you don't hear hiss between words."
-msgstr ""
-"Sessiz anlarda oynatmayı sessize alır, böylece kelimeler arasındaki "
-"tıslamayı duymazsınız."
-
-#: src/ui/views/mic.rs:326
-msgid ""
-"Mutes the mic during pauses so listeners hear silence instead of hiss. "
-"Higher = more aggressive."
-msgstr ""
-"Duraklamalarda mikrofonu sessize alır, böylece dinleyiciler tıslama yerine "
-"sessizlik duyar. Yüksek değer = daha agresif."
-
-#: src/ui/views/mic.rs:397
-msgid "Natural"
-msgstr "Doğal"
+# pipewire/src/biglinux_microphone/ui/main_view.py, line: 550
+#: app/biglinux_microphone/ui/pages/home.py:74
+#: app/biglinux_microphone/ui/pages/home.py:222
+#: app/biglinux_microphone/ui/pages/home.py:318
+#, fuzzy
+msgid "Speak to check your microphone"
+msgstr "Sesimi duy"
 
 # File: biglinux-noise-reduction-
-# pipewire/src/biglinux_microphone/ui/main_view.py, line: 326
-#: src/ui/views/mic.rs:258 src/ui/views/output.rs:100
-msgid "Neural model"
-msgstr "Sinir ağı modeli"
+# pipewire/src/biglinux_microphone/ui/main_view.py, line: 310
+#: app/biglinux_microphone/ui/pages/home.py:83
+#: app/biglinux_microphone/ui/pages/noise_reduction.py:56
+#: app/biglinux_microphone/ui/pages/noise_reduction.py:66
+#, fuzzy
+msgid "Noise reduction"
+msgstr "Yapay zeka gürültü azaltma"
 
-#: src/ui/views/mic.rs:129
-msgid "Never"
+#: app/biglinux_microphone/ui/pages/home.py:83
+msgid "Checking status…"
 msgstr ""
-
-#: src/ui/views/mic.rs:203 src/ui/views/mic.rs:232 src/ui/views/simple.rs:127
-#: src/ui/views/simple.rs:156
-msgid "Noise filter"
-msgstr "Gürültü filtresi"
-
-#: src/ui/views/mic.rs:67
-msgid "Noise filter — fine-tune"
-msgstr "Gürültü filtresi — ince ayar"
 
 # File: biglinux-noise-reduction-
 # pipewire/src/biglinux_microphone/ui/main_view.py, line: 930
-#: src/ui/views/mic.rs:178 src/ui/views/mic.rs:188
+#: app/biglinux_microphone/ui/pages/home.py:92
+#: app/biglinux_microphone/ui/pages/noise_reduction.py:80
 #, fuzzy
-msgid "Noise reduction quality"
+msgid "Noise-reduction model"
 msgstr "Gürültü azaltma devre dışı bırakıldı."
 
-#: src/ui/views/advanced.rs:720
-msgid "None"
+#: app/biglinux_microphone/ui/pages/home.py:94
+msgid "DFN3 (recommended)"
 msgstr ""
 
-#: src/ui/views/advanced/apply.rs:147 src/ui/views/advanced/apply.rs:152
-#: src/ui/widgets/wp_override_warning.rs:165
-#: src/ui/widgets/wp_override_warning.rs:177
-msgid "OK"
-msgstr ""
+#: app/biglinux_microphone/ui/pages/home.py:103
+#: app/biglinux_microphone/ui/pages/source_picker.py:100
+#, fuzzy
+msgid "Microphone in use"
+msgstr "Mikrofon filtresi"
 
-#: src/ui/views/advanced.rs:333
-msgid "Off — always keep stereo sound (default)"
-msgstr ""
+# File: biglinux-noise-reduction-
+# pipewire/src/biglinux_microphone/ui/main_view.py, line: 550
+#: app/biglinux_microphone/ui/pages/home.py:104
+#, fuzzy
+msgid "Looking for microphones…"
+msgstr "Sesimi duy"
 
-#: src/ui/views/advanced.rs:332
-msgid "On — switch to call mode automatically"
-msgstr ""
+#: app/biglinux_microphone/ui/pages/home.py:120
+#: app/biglinux_microphone/ui/pages/voice_volume.py:18
+#, fuzzy
+msgid "Voice volume"
+msgstr "Mikrofon filtresi"
 
-#: usr/share/plasma/plasmoids/br.com.biglinux.micnoise/contents/ui/main.qml:122
-msgid "Open audio filter controls"
-msgstr ""
+# File: biglinux-noise-reduction-
+# pipewire/src/biglinux_microphone/ui/main_view.py, line: 550
+#: app/biglinux_microphone/ui/pages/home.py:120
+#: app/biglinux_microphone/ui/pages/voice_volume.py:28
+#, fuzzy
+msgid "Checking your microphone…"
+msgstr "Sesimi duy"
 
-#: usr/share/plasma/plasmoids/br.com.biglinux.micnoise/contents/ui/main.qml:172
-msgid "Open settings…"
-msgstr "Ayarları aç…"
-
-#: src/ui/views/simple.rs:107
-msgid "Other microphone effects are still active — see the Advanced view."
-msgstr ""
-
-#: src/ui/window.rs:92
-msgid "Output filter"
-msgstr "Çıkış filtresi"
-
-#: src/ui/widgets/wp_override_warning.rs:159
-msgid "Override removed"
-msgstr ""
-
-#: src/ui/views/mic.rs:45
-msgid "Pause or resume all microphone effects without changing your choices."
-msgstr ""
-
-#: src/ui/views/mic.rs:468
-msgid "Performance options"
-msgstr ""
-
-#: src/ui/views/mic.rs:410
-msgid "Pitch"
-msgstr "Perde"
-
-#: src/ui/widgets/eq_card.rs:178
-msgid "Podcast"
-msgstr "Podcast"
-
-#: src/ui/views/mic.rs:472
-msgid "Prefer faster processor cores"
-msgstr ""
-
+# #-#-#-#-#  biglinux-noise-reduction-pipewire.pot (biglinux-noise-reduction-
+# pipewire)  #-#-#-#-#
+#
+# File: biglinux-noise-reduction-
+# pipewire/src/biglinux_microphone/ui/main_view.py, line: 88
 # File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/config.py,
-# line: 602
-#: src/ui/widgets/eq_card.rs:183
-msgid "Presence"
-msgstr "Varlık"
+# line: 27
+#: app/biglinux_microphone/ui/pages/home.py:127
+#: app/biglinux_microphone/ui/pages/voice_volume.py:33
+#: app/biglinux_microphone/ui/pages/calibrate.py:32
+#, fuzzy
+msgid "Adjust volume"
+msgstr "Mikrofon"
+
+#: app/biglinux_microphone/ui/pages/home.py:144
+#, fuzzy
+msgid "Microphone volume"
+msgstr "Mikrofon filtresi"
+
+#: app/biglinux_microphone/ui/pages/home.py:148
+#: app/biglinux_microphone/ui/pages/voice_volume.py:44
+#, fuzzy
+msgid "Automatic volume"
+msgstr "Mikrofon filtresi"
+
+#: app/biglinux_microphone/ui/pages/home.py:149
+msgid "Follows your voice. Open to change its limits."
+msgstr ""
+
+# #-#-#-#-#  biglinux-noise-reduction-pipewire.pot (biglinux-noise-reduction-
+# pipewire)  #-#-#-#-#
+#
+# File: biglinux-noise-reduction-
+# pipewire/src/biglinux_microphone/ui/main_view.py, line: 88
+# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/config.py,
+# line: 27
+#: app/biglinux_microphone/ui/pages/home.py:161
+#: app/biglinux_microphone/ui/pages/microphone_test.py:32
+#: app/biglinux_microphone/ui/pages/calibrate.py:206
+#, fuzzy
+msgid "Test microphone"
+msgstr "Mikrofon"
 
 # File: biglinux-noise-reduction-
-# pipewire/src/biglinux_microphone/ui/main_view.py, line: 489
-#: src/ui/widgets/eq_card.rs:168 src/ui/widgets/eq_card.rs:218
-msgid "Preset"
-msgstr "Ön ayar"
+# pipewire/src/biglinux_microphone/ui/main_view.py, line: 443
+#: app/biglinux_microphone/ui/pages/home.py:238
+#: app/biglinux_microphone/ui/pages/voice_volume.py:131
+#, fuzzy
+msgid "Choose a microphone to continue"
+msgstr "Sesinizin başkalarına nasıl geldiğini seçin."
 
-#: src/ui/views/advanced.rs:496
-msgid "Preview active. The previous buffer will be restored automatically."
-msgstr ""
+# #-#-#-#-#  biglinux-noise-reduction-pipewire.pot (biglinux-noise-reduction-
+# pipewire)  #-#-#-#-#
+#
+# File: biglinux-noise-reduction-
+# pipewire/src/biglinux_microphone/ui/main_view.py, line: 88
+# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/config.py,
+# line: 27
+#: app/biglinux_microphone/ui/pages/home.py:239
+#, fuzzy
+msgid "Choose microphone"
+msgstr "Mikrofon"
 
-#: src/ui/views/advanced/apply.rs:113 src/ui/views/advanced.rs:497
-#: src/ui/views/advanced.rs:532
-msgid "Preview finished."
+#: app/biglinux_microphone/ui/pages/home.py:288
+msgid "Unmute"
 msgstr ""
-
-#: src/ui/views/mic.rs:499
-msgid "Protect against excessive peaks"
-msgstr ""
-
-#: src/ui/views/advanced.rs:455
-msgid "Reaction speed"
-msgstr ""
-
-#: src/ui/window.rs:329
-msgid ""
-"Real-time noise filter for microphone capture and system audio playback. "
-"Powered by the GTCRN neural network running as a LADSPA plugin on top of "
-"PipeWire — every filter is driven by a WirePlumber smart-filter so the "
-"default source and sink stay clean even after device changes."
-msgstr ""
-"Mikrofon yakalama ve sistem ses çalma için gerçek zamanlı gürültü filtresi. "
-"PipeWire üzerinde LADSPA eklentisi olarak çalışan GTCRN sinir ağıyla "
-"güçlendirilmiştir — her filtre WirePlumber smart-filter tarafından "
-"yönetilir, böylece cihaz değişikliklerinden sonra bile öntanımlı kaynak ve "
-"hedef temiz kalır."
 
 # File: biglinux-noise-reduction-
-# pipewire/src/biglinux_microphone/ui/main_view.py, line: 392
-#: src/ui/views/mic.rs:284 src/ui/views/output.rs:130
-msgid "Recovery"
-msgstr "Kurtarma"
-
-#: src/ui/views/simple.rs:165
-msgid ""
-"Reduces background noise in your voice. Turning this off pauses microphone "
-"effects without forgetting your choices."
-msgstr ""
-
-#: src/ui/health.rs:65
-msgid "Reinstall Filter noise, then log out and back in."
-msgstr ""
-
-#: src/ui/widgets/wp_override_warning.rs:77
-msgid "Remove override"
-msgstr ""
-
-#: src/ui/widgets/wp_override_warning.rs:175
-msgid "Remove the file manually, then restart WirePlumber."
-msgstr ""
-
-#: src/ui/views/mic.rs:241
+# pipewire/src/biglinux_microphone/ui/main_view.py, line: 550
+#: app/biglinux_microphone/ui/pages/home.py:291
 #, fuzzy
-msgid ""
-"Removes background noise from your voice using AI. Higher intensity = "
-"stronger cleanup."
-msgstr ""
-"GTCRN sinir ağı ile sesinizden arka plan gürültüsünü kaldırır. Yüksek "
-"yoğunluk = daha güçlü temizlik."
+msgid "Updating microphone…"
+msgstr "Sesimi duy"
 
-#: src/ui/views/advanced/apply.rs:53
-msgid "Restarting audio…"
-msgstr ""
-
-# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/window.py,
-# line: 176
-#: src/ui/views/advanced/apply.rs:174
-msgid "Restore"
-msgstr "Geri Yükle"
-
-# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/window.py,
-# line: 172
-#: src/ui/views/advanced/apply.rs:167
+#: app/biglinux_microphone/ui/pages/home.py:295
 #, fuzzy
-msgid "Restore default audio settings?"
-msgstr "Varsayılan ayarları geri yüklemek istiyor musunuz?"
+msgid "Audio service unavailable"
+msgstr "Mikrofon filtresi"
 
-# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/window.py,
-# line: 172
-#: src/ui/window.rs:261 src/ui/window.rs:434
-msgid "Restore default settings"
-msgstr "Varsayılan ayarları geri yükle"
-
-# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/window.py,
-# line: 172
-#: src/ui/window.rs:294
-msgid "Restore default settings?"
-msgstr "Varsayılan ayarları geri yüklemek istiyor musunuz?"
-
-# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/window.py,
-# line: 193
-#: src/ui/window.rs:301 src/ui/views/advanced.rs:258
-msgid "Restore defaults"
-msgstr "Varsayılanları geri yükle"
-
-#: src/ui/views/mic.rs:278
-msgid ""
-"Restores high-frequency clarity (sibilants like \"s\", \"sh\") after "
-"suppression. Lower only if your voice already sounds harsh."
-msgstr ""
-"Bastırmadan sonra yüksek frekans netliğini (s, ş gibi sibilantlar) geri "
-"kazandırır. Sesiniz zaten sertse sadece düşürün."
-
-#: src/ui/views/output.rs:120
-msgid ""
-"Restores high-frequency clarity after suppression. Lower only if the source "
-"already sounds harsh."
-msgstr ""
-"Bastırmadan sonra yüksek frekans netliğini geri kazandırır. Kaynak zaten "
-"sert geliyorsa sadece düşürün."
-
-#: src/ui/views/advanced/apply.rs:45 src/ui/views/advanced.rs:476
-msgid "Restoring the previous audio buffer…"
-msgstr ""
-
-#: src/ui/views/mic.rs:419
+#: app/biglinux_microphone/ui/pages/home.py:297
 #, fuzzy
-msgid ""
-"Round-trip latency for the \"Hear my voice\" monitor. Raise only if the "
-"loopback sounds rushed or chops on your hardware."
-msgstr ""
-"Round-trip latency for the \"Hear my voice\" monitor. Raise only if the "
-"loopback sounds rushed or chops on your hardware."
+msgid "Your microphone is muted"
+msgstr "Mikrofon filtresi"
 
-#: src/ui/views/advanced.rs:593
-msgid ""
-"Same idea as the USB margin, but for the speakers and microphone built into "
-"your laptop or motherboard. Most people never need to change this — try it "
-"only if the internal speaker glitches when the computer is under load."
+#: app/biglinux_microphone/ui/pages/home.py:299
+#, fuzzy
+msgid "The microphone filter is not ready"
+msgstr "Mikrofon filtresi"
+
+#: app/biglinux_microphone/ui/pages/home.py:302
+msgid "Ready — starts when an application uses the microphone"
+msgstr ""
+
+#: app/biglinux_microphone/ui/pages/home.py:304
+msgid "On — reducing background noise"
+msgstr ""
+
+#: app/biglinux_microphone/ui/pages/home.py:307
+msgid "Off — background noise is not reduced"
+msgstr ""
+
+#: app/biglinux_microphone/ui/pages/home.py:313
+#, fuzzy
+msgid "Microphone unavailable"
+msgstr "Mikrofon filtresi"
+
+#: app/biglinux_microphone/ui/pages/home.py:315
+#, fuzzy
+msgid "Microphone muted"
+msgstr "Mikrofon filtresi"
+
+# File: biglinux-noise-reduction-
+# pipewire/src/biglinux_microphone/ui/main_view.py, line: 550
+#: app/biglinux_microphone/ui/pages/home.py:334
+#: app/biglinux_microphone/ui/pages/voice_volume.py:139
+#, fuzzy
+msgid "Adjusted for your voice"
+msgstr "Sesimi duy"
+
+#: app/biglinux_microphone/ui/pages/home.py:336
+msgid "Not adjusted yet — measure once for this microphone"
 msgstr ""
 
 # File: biglinux-noise-reduction-
 # pipewire/src/biglinux_microphone/ui/main_view.py, line: 227
-#: src/ui/mic_shell.rs:919
+#: app/biglinux_microphone/ui/pages/home.py:339
 #, fuzzy
-msgid "Saving settings…"
+msgid "Loading…"
 msgstr "Ayarlar uygulanıyor…"
 
-#: src/ui/views/mic.rs:417
+#: app/biglinux_microphone/ui/pages/home.py:360
 #, fuzzy
-msgid "Self-listen delay"
-msgstr "Self-listen delay"
+msgid "No sound"
+msgstr "Sistem sesi"
 
-#: src/ui/mic_shell.rs:754
-msgid "Settings could not be saved"
+#: app/biglinux_microphone/ui/pages/home.py:362
+msgid "Sound detected — speak normally"
 msgstr ""
 
-#: src/ui/views/advanced.rs:281
+#: app/biglinux_microphone/ui/pages/home.py:364
+msgid "Good level"
+msgstr ""
+
+#: app/biglinux_microphone/ui/pages/home.py:366
+msgid "Near the limit — lower the microphone volume"
+msgstr ""
+
+# #-#-#-#-#  biglinux-noise-reduction-pipewire.pot (biglinux-noise-reduction-
+# pipewire)  #-#-#-#-#
+#
+# File: biglinux-noise-reduction-
+# pipewire/src/biglinux_microphone/ui/main_view.py, line: 88
+# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/config.py,
+# line: 27
+#: app/biglinux_microphone/ui/pages/home.py:368
+#, fuzzy
+msgid "Too loud — lower the microphone volume"
+msgstr "Mikrofon"
+
+# #-#-#-#-#  biglinux-noise-reduction-pipewire.pot (biglinux-noise-reduction-
+# pipewire)  #-#-#-#-#
+#
+# File: biglinux-noise-reduction-
+# pipewire/src/biglinux_microphone/ui/main_view.py, line: 88
+# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/config.py,
+# line: 27
+#: app/biglinux_microphone/ui/pages/source_picker.py:22
+#, fuzzy
+msgid "Select microphone"
+msgstr "Mikrofon"
+
+#: app/biglinux_microphone/ui/pages/source_picker.py:26
+#, fuzzy
+msgid "No microphones available"
+msgstr "Mikrofon filtresi"
+
+#: app/biglinux_microphone/ui/pages/source_picker.py:28
 msgid ""
-"Settings were saved, but audio still needs to restart. Apply to try again."
+"Connect a microphone. For Bluetooth, enable the headset microphone in your "
+"system sound settings."
 msgstr ""
 
-#: src/ui/views/mic.rs:377
+#: app/biglinux_microphone/ui/pages/source_picker.py:101
+msgid "Other microphones available"
+msgstr ""
+
+#: app/biglinux_microphone/ui/pages/source_picker.py:103
+msgid "Microphones from other applications"
+msgstr ""
+
+#: app/biglinux_microphone/ui/pages/source_picker.py:104
+msgid "These inputs may already apply sound effects."
+msgstr ""
+
+#: app/biglinux_microphone/ui/pages/source_picker.py:117
+msgid "In use"
+msgstr ""
+
+#: app/biglinux_microphone/ui/pages/source_picker.py:125
+msgid "Input disconnected"
+msgstr ""
+
+# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/window.py,
+# line: 193
+#: app/biglinux_microphone/ui/pages/noise_reduction.py:27
+#, fuzzy
+msgid "DFN3 — recommended"
+msgstr "Varsayılanları geri yükle"
+
+#: app/biglinux_microphone/ui/pages/noise_reduction.py:27
+msgid "The lightest. Works well on older computers."
+msgstr ""
+
+#: app/biglinux_microphone/ui/pages/noise_reduction.py:32
 msgid ""
-"Shifts the pitch of your voice without retiming. Left = deeper, right = "
-"higher. Center keeps your natural voice."
+"A larger network that leaves less noise between words. Uses about twice the "
+"processing of DFN3, and has the shortest delay while “Silence when nobody "
+"speaks” is off."
 msgstr ""
-"Sesinizin perdesini zamanlamayı değiştirmeden kaydırır. Sol = daha derin, "
-"sağ = daha yüksek. Ortada doğal sesiniz kalır."
 
-#: src/ui/window.rs:235
-msgid "Show every control individually"
-msgstr "Her kontrolü ayrı ayrı göster"
+#: app/biglinux_microphone/ui/pages/noise_reduction.py:41
+msgid ""
+"The strongest cleanup, with a steady quiet background. Uses about four times "
+"the processing of DFN3."
+msgstr ""
 
-#: src/ui/widgets/spectrum.rs:53
-msgid "Shows the live microphone input level and peak."
+#: app/biglinux_microphone/ui/pages/noise_reduction.py:67
+msgid "Applications hear your voice with less background noise."
+msgstr ""
+
+#: app/biglinux_microphone/ui/pages/noise_reduction.py:81
+msgid "Heavier models clean more and use more processing."
+msgstr ""
+
+#: app/biglinux_microphone/ui/pages/noise_reduction.py:111
+msgid "Silence when nobody speaks"
+msgstr ""
+
+#: app/biglinux_microphone/ui/pages/noise_reduction.py:113
+msgid ""
+"Mutes leftover noise while you are not talking. Your voice then arrives "
+"about 0.07 s later."
+msgstr ""
+
+#: app/biglinux_microphone/ui/pages/noise_reduction.py:124
+msgid "Voice detection"
+msgstr "Konuşma algılama"
+
+#: app/biglinux_microphone/ui/pages/noise_reduction.py:126
+msgid ""
+"Sensitive keeps quiet voices and lets more noise through; strict mutes more "
+"noise and may cut faint words."
+msgstr ""
+"Hassas ayar kısık sesleri korur ve daha fazla gürültünün geçmesine izin "
+"verir; sıkı ayar daha fazla gürültüyü susturur ve alçak sesle söylenen "
+"sözcükleri kesebilir."
+
+#: app/biglinux_microphone/ui/pages/noise_reduction.py:134
+msgid "Very sensitive"
+msgstr "Çok hassas"
+
+#: app/biglinux_microphone/ui/pages/noise_reduction.py:135
+msgid "Sensitive"
+msgstr "Hassas"
+
+#: app/biglinux_microphone/ui/pages/noise_reduction.py:136
+msgid "Normal"
+msgstr "Normal"
+
+#: app/biglinux_microphone/ui/pages/noise_reduction.py:137
+msgid "Strict"
+msgstr "Sıkı"
+
+#: app/biglinux_microphone/ui/pages/noise_reduction.py:138
+msgid "Very strict"
+msgstr "Çok sıkı"
+
+# File: biglinux-noise-reduction-
+# pipewire/src/biglinux_microphone/ui/main_view.py, line: 434
+# File: biglinux-noise-reduction-
+# pipewire/src/biglinux_microphone/ui/main_view.py, line: 472
+#: app/biglinux_microphone/ui/pages/noise_reduction.py:155
+msgid "Intensity"
+msgstr "Yoğunluk"
+
+#: app/biglinux_microphone/ui/pages/noise_reduction.py:163
+msgid "How much noise to remove"
+msgstr ""
+
+#: app/biglinux_microphone/ui/pages/noise_reduction.py:166
+msgid "Lower values preserve more of the original sound."
+msgstr ""
+
+#: app/biglinux_microphone/ui/pages/noise_reduction.py:173
+msgid "The current model already handles residual noise internally."
+msgstr ""
+
+#: app/biglinux_microphone/ui/pages/noise_reduction.py:179
+msgid "Noise that still gets through"
+msgstr ""
+
+#: app/biglinux_microphone/ui/pages/noise_reduction.py:180
+msgid "DFN3 can silence very quiet residual sounds between words."
+msgstr ""
+
+#: app/biglinux_microphone/ui/pages/noise_reduction.py:183
+msgid "Silence residual noise by frequency"
+msgstr ""
+
+#: app/biglinux_microphone/ui/pages/noise_reduction.py:184
+msgid "Sounds below the line will be silenced."
+msgstr ""
+
+#: app/biglinux_microphone/ui/pages/noise_reduction.py:201
+msgid "Manual adjustments active"
+msgstr ""
+
+#: app/biglinux_microphone/ui/pages/noise_reduction.py:203
+msgid "Values set on the command line replace the recommended ones for DFN3."
+msgstr ""
+
+#: app/biglinux_microphone/ui/pages/noise_reduction.py:206
+msgid "Restore"
+msgstr ""
+
+#: app/biglinux_microphone/ui/pages/noise_reduction.py:225
+msgid ""
+"Move the line above residual noise, but keep it below the quiet parts of "
+"your voice."
+msgstr ""
+
+#: app/biglinux_microphone/ui/pages/noise_reduction.py:235
+msgid "Restore recommended"
+msgstr ""
+
+#: app/biglinux_microphone/ui/pages/noise_reduction.py:348
+#, fuzzy, python-format
+msgid "Model in use: %s"
+msgstr "Mikrofon filtresi"
+
+#: app/biglinux_microphone/ui/pages/voice_volume.py:45
+msgid "Adjusts microphone volume within your chosen limits."
 msgstr ""
 
 # File: biglinux-noise-reduction-
-# pipewire/src/biglinux_microphone/ui/main_view.py, line: 308
-#: src/ui/views/mic.rs:324 src/ui/views/output.rs:170
-msgid "Silence gate"
-msgstr "Sessizlik kapısı"
+# pipewire/src/biglinux_microphone/ui/main_view.py, line: 550
+#: app/biglinux_microphone/ui/pages/voice_volume.py:47
+#, fuzzy
+msgid "Follow my voice"
+msgstr "Sesimi duy"
 
-#: src/ui/views/advanced.rs:721
-msgid "Small (~5 ms)"
+#: app/biglinux_microphone/ui/pages/voice_volume.py:53
+msgid "Minimum volume (%)"
 msgstr ""
 
-#: usr/share/plasma/plasmoids/br.com.biglinux.micnoise/contents/ui/main.qml:138
-msgid "Some audio filters are not ready. Open settings to check them."
+#: app/biglinux_microphone/ui/pages/voice_volume.py:55
+msgid "Maximum volume (%)"
 msgstr ""
 
-#: src/ui/views/advanced.rs:619
+#: app/biglinux_microphone/ui/pages/voice_volume.py:62
+msgid "Apply volume limits"
+msgstr ""
+
+#: app/biglinux_microphone/ui/pages/voice_volume.py:133
+msgid "Automatic volume is on"
+msgstr ""
+
+#: app/biglinux_microphone/ui/pages/voice_volume.py:135
+#, python-format
+msgid "Follows your voice between %d%% and %d%%"
+msgstr ""
+
+# #-#-#-#-#  biglinux-noise-reduction-pipewire.pot (biglinux-noise-reduction-
+# pipewire)  #-#-#-#-#
+#
+# File: biglinux-noise-reduction-
+# pipewire/src/biglinux_microphone/ui/main_view.py, line: 88
+# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/config.py,
+# line: 27
+#: app/biglinux_microphone/ui/pages/voice_volume.py:140
+#, fuzzy
+msgid "The volume was set for this microphone."
+msgstr "Mikrofon"
+
+#: app/biglinux_microphone/ui/pages/voice_volume.py:142
+msgid "Not adjusted yet"
+msgstr ""
+
+#: app/biglinux_microphone/ui/pages/voice_volume.py:144
+msgid "Measure your voice once to set the ideal volume."
+msgstr ""
+
+#: app/biglinux_microphone/ui/pages/voice_sound.py:16
+msgid "Natural"
+msgstr "Doğal"
+
+#: app/biglinux_microphone/ui/pages/voice_sound.py:17
+msgid "More clarity"
+msgstr ""
+
+# File: biglinux-noise-reduction-
+# pipewire/src/biglinux_microphone/ui/main_view.py, line: 550
+#: app/biglinux_microphone/ui/pages/voice_sound.py:18
+#, fuzzy
+msgid "Fuller voice"
+msgstr "Sesimi duy"
+
+#: app/biglinux_microphone/ui/pages/voice_sound.py:19
+msgid "Podcast"
+msgstr "Podcast"
+
+# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/config.py,
+# line: 607
+#: app/biglinux_microphone/ui/pages/voice_sound.py:20
+msgid "Custom"
+msgstr "Özel"
+
+# File: biglinux-noise-reduction-
+# pipewire/src/biglinux_microphone/ui/main_view.py, line: 392
+#: app/biglinux_microphone/ui/pages/voice_sound.py:25
+#, fuzzy
+msgid "Voice sound"
+msgstr "Ses varlığı"
+
+# File: biglinux-noise-reduction-
+# pipewire/src/biglinux_microphone/ui/main_view.py, line: 392
+#: app/biglinux_microphone/ui/pages/voice_sound.py:35
+#, fuzzy
+msgid "Voice profile"
+msgstr "Ses varlığı"
+
+#: app/biglinux_microphone/ui/pages/voice_sound.py:36
+msgid "Choose a ready-made sound, or customise your voice."
+msgstr ""
+
+# File: biglinux-noise-reduction-
+# pipewire/src/biglinux_microphone/ui/main_view.py, line: 477
+#: app/biglinux_microphone/ui/pages/voice_sound.py:88
+msgid "Equalizer"
+msgstr "Ekolayzır"
+
+#: app/biglinux_microphone/ui/pages/voice_sound.py:90
+msgid "Up boosts a band, down reduces it. 0 dB leaves it unchanged."
+msgstr ""
+
+#: app/biglinux_microphone/ui/pages/voice_sound.py:126
+#, python-format
+msgid "%s Hz gain"
+msgstr ""
+
+# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/window.py,
+# line: 193
+#: app/biglinux_microphone/ui/pages/voice_sound.py:142
+#, fuzzy
+msgid "Restore custom equalizer"
+msgstr "Varsayılanları geri yükle"
+
+# File: biglinux-noise-reduction-
+# pipewire/src/biglinux_microphone/ui/main_view.py, line: 687
+#: app/biglinux_microphone/ui/pages/echo_routing.py:16
+#, fuzzy
+msgid "Echo and routing"
+msgstr "Yankı iptali"
+
+# File: biglinux-noise-reduction-
+# pipewire/src/biglinux_microphone/ui/main_view.py, line: 687
+#: app/biglinux_microphone/ui/pages/echo_routing.py:24
+msgid "Echo cancellation"
+msgstr "Yankı iptali"
+
+#: app/biglinux_microphone/ui/pages/echo_routing.py:26
+msgid "Prevents sound from your speakers returning through the microphone."
+msgstr ""
+
+#: app/biglinux_microphone/ui/pages/echo_routing.py:29
+msgid "Speaker echo"
+msgstr ""
+
+#: app/biglinux_microphone/ui/pages/echo_routing.py:31
+msgid "Automatic"
+msgstr ""
+
+#: app/biglinux_microphone/ui/pages/echo_routing.py:31
+msgid "Always on"
+msgstr ""
+
+# File: biglinux-noise-reduction-
+# pipewire/src/biglinux_microphone/ui/main_view.py, line: 363
+# File: biglinux-noise-reduction-
+# pipewire/src/biglinux_microphone/ui/main_view.py, line: 381
+# File: biglinux-noise-reduction-
+# pipewire/src/biglinux_microphone/ui/main_view.py, line: 400
+#: app/biglinux_microphone/ui/pages/echo_routing.py:31
+msgid "Off"
+msgstr "Kapalı"
+
+#: app/biglinux_microphone/ui/pages/diagnostics.py:19
+msgid "Diagnostics"
+msgstr ""
+
+#: app/biglinux_microphone/ui/pages/diagnostics.py:26
+#: app/biglinux_microphone/ui/pages/diagnostics.py:63
+msgid "Checking the audio system…"
+msgstr ""
+
+#: app/biglinux_microphone/ui/pages/diagnostics.py:30
+msgid "Audio system details"
+msgstr ""
+
+#: app/biglinux_microphone/ui/pages/diagnostics.py:33
 msgid ""
-"Some laptops and motherboards put the speakers to sleep after a few seconds "
-"of silence to save power. When the next sound arrives — a notification, a "
-"video starting — you may hear a small click or miss the very first part of "
-"the audio. Turn this on to keep the speakers always ready. The extra battery "
-"use is tiny."
+"Latency is an estimate of processing only; it excludes your device and "
+"applications."
 msgstr ""
 
-#. ── Qualidade de som ─────────────────────────────────────────────
-#: src/ui/views/advanced.rs:197
-msgid "Sound quality"
+#: app/biglinux_microphone/ui/pages/diagnostics.py:38
+#, fuzzy
+msgid "Model selected"
+msgstr "Mikrofon filtresi"
+
+#: app/biglinux_microphone/ui/pages/diagnostics.py:39
+#, fuzzy
+msgid "Model in use"
+msgstr "Mikrofon filtresi"
+
+#: app/biglinux_microphone/ui/pages/diagnostics.py:41
+msgid "Estimated latency"
 msgstr ""
 
-#: src/ui/views/advanced.rs:654
-msgid "Sound quality range"
+#: app/biglinux_microphone/ui/pages/diagnostics.py:43
+#: app/biglinux_microphone/ui/pages/diagnostics.py:65
+#: app/biglinux_microphone/ui/pages/diagnostics.py:84
+#: app/biglinux_microphone/ui/pages/diagnostics.py:88
+#: app/biglinux_microphone/ui/pages/diagnostics.py:108
+msgid "Unknown"
 msgstr ""
 
-#: src/ui/widgets/spectrum.rs:59
-msgid "Speak normally to check your microphone level."
+#: app/biglinux_microphone/ui/pages/diagnostics.py:71
+msgid "Settings loaded — test your microphone to check the sound."
 msgstr ""
 
-#: src/ui/views/advanced.rs:645
-msgid "Speaker sleep"
+#: app/biglinux_microphone/ui/pages/diagnostics.py:95
+msgid "None"
 msgstr ""
 
-#. ── Estabilidade e desempenho ────────────────────────────────────
-#: src/ui/views/advanced.rs:190
-msgid "Stability and performance"
+#: app/biglinux_microphone/ui/pages/diagnostics.py:130
+#, python-format
+msgid "%.1f ms"
 msgstr ""
 
-#: src/ui/views/advanced.rs:368
-msgid "Standard (default, ~42 ms)"
+#: app/biglinux_microphone/ui/pages/microphone_test.py:73
+#: app/biglinux_microphone/ui/pages/compare.py:56
+msgid "Record a short sample"
 msgstr ""
 
-#: src/ui/views/advanced.rs:723
-msgid "Standard (~21 ms)"
-msgstr ""
-
-#: src/ui/views/advanced.rs:667
-msgid "Standard quality only (default, 48 kHz)"
-msgstr ""
-
-#: src/ui/views/advanced.rs:477
-msgid "Starting the audio preview…"
-msgstr ""
-
-#: src/ui/views/advanced.rs:440
-msgid "Steady (default, ~42 ms)"
-msgstr ""
-
-#: src/ui/views/output.rs:43
+#: app/biglinux_microphone/ui/pages/microphone_test.py:75
+#: app/biglinux_microphone/ui/pages/compare.py:59
 msgid ""
-"Stereo keeps left and right separate for music and video. Mono uses fewer "
-"resources but combines both sides; use it mainly for speech."
+"Speak normally for five seconds. Then you can hear exactly what applications "
+"receive."
 msgstr ""
 
-#: src/ui/views/output.rs:42
-msgid "Stereo or lower CPU use"
+#: app/biglinux_microphone/ui/pages/microphone_test.py:81
+msgid "Use headphones before playing the sample to avoid echo."
 msgstr ""
 
-#: src/ui/views/advanced.rs:545
-msgid "Stop preview"
+#: app/biglinux_microphone/ui/pages/microphone_test.py:93
+msgid "Record sample"
 msgstr ""
 
-#: src/ui/views/simple.rs:208
-msgid "System sound"
-msgstr "Sistem sesi"
+#: app/biglinux_microphone/ui/pages/microphone_test.py:113
+#: app/biglinux_microphone/ui/pages/calibrate.py:117
+msgid "Speak normally"
+msgstr ""
 
-#: usr/share/plasma/plasmoids/br.com.biglinux.micnoise/contents/ui/main.qml:158
-msgid "System sound filter"
-msgstr "Sistem sesi filtresi"
+#: app/biglinux_microphone/ui/pages/microphone_test.py:120
+#: app/biglinux_microphone/ui/pages/compare.py:63
+msgid "Recording what applications hear from your microphone."
+msgstr ""
 
-#: src/ui/views/advanced.rs:460
+#: app/biglinux_microphone/ui/pages/microphone_test.py:134
+#: app/biglinux_microphone/ui/pages/microphone_test.py:272
+#: app/biglinux_microphone/ui/pages/microphone_test.py:301
+#: app/biglinux_microphone/ui/pages/calibrate.py:145
+#: app/biglinux_microphone/ui/pages/calibrate.py:318
+#: app/biglinux_microphone/ui/pages/calibrate.py:346
+#, python-format
+msgid "%(elapsed)d of %(total)d seconds"
+msgstr ""
+
+# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/window.py,
+# line: 175
+#: app/biglinux_microphone/ui/pages/microphone_test.py:139
+#: app/biglinux_microphone/ui/pages/calibrate.py:156
+#, fuzzy
+msgid "Cancel"
+msgstr "İptal et"
+
+#: app/biglinux_microphone/ui/pages/microphone_test.py:160
+msgid "Your sample is ready"
+msgstr ""
+
+#: app/biglinux_microphone/ui/pages/microphone_test.py:162
+#: app/biglinux_microphone/ui/pages/compare.py:67
 msgid ""
-"Temporarily changes the audio buffer for all applications. Stop the preview "
-"to return to the previous value."
+"Listen to the short recording and check whether your voice sounds clear and "
+"natural."
 msgstr ""
 
-#: src/ui/views/advanced/apply.rs:116 src/ui/views/advanced.rs:503
-#: src/ui/views/advanced.rs:536
+#: app/biglinux_microphone/ui/pages/microphone_test.py:167
+#: app/biglinux_microphone/ui/pages/microphone_test.py:371
+msgid "Play sample"
+msgstr ""
+
+#: app/biglinux_microphone/ui/pages/microphone_test.py:173
+msgid "Record again"
+msgstr ""
+
+#: app/biglinux_microphone/ui/pages/microphone_test.py:175
+#: app/biglinux_microphone/ui/pages/calibrate.py:202
+msgid "Done"
+msgstr ""
+
+# #-#-#-#-#  biglinux-noise-reduction-pipewire.pot (biglinux-noise-reduction-
+# pipewire)  #-#-#-#-#
+#
+# File: biglinux-noise-reduction-
+# pipewire/src/biglinux_microphone/ui/main_view.py, line: 88
+# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/config.py,
+# line: 27
+#: app/biglinux_microphone/ui/pages/microphone_test.py:195
+#, fuzzy
+msgid "I could not record the microphone"
+msgstr "Mikrofon"
+
+#: app/biglinux_microphone/ui/pages/microphone_test.py:196
+#: app/biglinux_microphone/ui/pages/microphone_test.py:401
+msgid "Check that the microphone is available and try again."
+msgstr ""
+
+#: app/biglinux_microphone/ui/pages/microphone_test.py:217
+msgid "The microphone changed or became unavailable. Record a new sample."
+msgstr ""
+
+#: app/biglinux_microphone/ui/pages/microphone_test.py:236
+msgid "The microphone is not ready. Return to Home to check its status."
+msgstr ""
+
+#: app/biglinux_microphone/ui/pages/microphone_test.py:240
+msgid "The sample includes the current noise reduction and voice settings."
+msgstr ""
+
+#: app/biglinux_microphone/ui/pages/microphone_test.py:244
+msgid "Noise reduction is off, so the sample uses the microphone directly."
+msgstr ""
+
+#: app/biglinux_microphone/ui/pages/microphone_test.py:264
+#: app/biglinux_microphone/ui/pages/calibrate.py:312
+#, fuzzy
+msgid "No microphone is selected"
+msgstr "Mikrofon filtresi"
+
+#: app/biglinux_microphone/ui/pages/microphone_test.py:371
+msgid "Stop playback"
+msgstr ""
+
+#: app/biglinux_microphone/ui/pages/compare.py:27
+msgid "Original"
+msgstr ""
+
+# File: biglinux-noise-reduction-
+# pipewire/src/biglinux_microphone/ui/main_view.py, line: 310
+#: app/biglinux_microphone/ui/pages/compare.py:29
+#, fuzzy
+msgid "With noise reduction"
+msgstr "Yapay zeka gürültü azaltma"
+
+#: app/biglinux_microphone/ui/pages/compare.py:41
+msgid "Compare the same recording"
+msgstr ""
+
+#: app/biglinux_microphone/ui/pages/compare.py:44
 msgid ""
-"The audio preview could not be started or restored. Check the audio "
-"connection and try again."
+"Speak normally for five seconds. Then listen to the same words with and "
+"without noise reduction."
 msgstr ""
 
-#: src/ui/health.rs:33
-msgid "The audio system (PipeWire) is not responding."
+#: app/biglinux_microphone/ui/pages/compare.py:48
+msgid "Recording your microphone, then preparing both versions…"
 msgstr ""
 
-#: src/ui/mic_shell.rs:889
-msgid "The audio system check failed unexpectedly."
+#: app/biglinux_microphone/ui/pages/compare.py:52
+msgid ""
+"Choose a version and play it. Playback volumes are balanced for comparison."
 msgstr ""
 
-#: src/ui/health.rs:64
-msgid "The background audio services are not installed."
+#: app/biglinux_microphone/ui/pages/compare.py:83
+msgid ""
+"This comparison includes noise reduction only. Equalizer, echo cancellation "
+"and other voice effects are not included."
+msgstr ""
+
+#: app/biglinux_microphone/ui/pages/compare.py:127
+msgid "Play original"
+msgstr ""
+
+# File: biglinux-noise-reduction-
+# pipewire/src/biglinux_microphone/ui/main_view.py, line: 310
+#: app/biglinux_microphone/ui/pages/compare.py:129
+#, fuzzy
+msgid "Play with noise reduction"
+msgstr "Yapay zeka gürültü azaltma"
+
+#: app/biglinux_microphone/ui/pages/calibrate.py:66
+msgid "Adjust the volume for your voice"
+msgstr ""
+
+#: app/biglinux_microphone/ui/pages/calibrate.py:75
+msgid ""
+"Speak normally for a few seconds. The program will set the volume for this "
+"microphone."
+msgstr ""
+
+#: app/biglinux_microphone/ui/pages/calibrate.py:84
+msgid "Checking…"
+msgstr ""
+
+#: app/biglinux_microphone/ui/pages/calibrate.py:93
+msgid ""
+"Speak at the volume and distance you normally use in calls and recordings."
+msgstr ""
+
+#: app/biglinux_microphone/ui/pages/calibrate.py:98
+msgid "Start"
+msgstr ""
+
+#: app/biglinux_microphone/ui/pages/calibrate.py:126
+msgid ""
+"The program is listening to your voice to set the ideal volume for this "
+"microphone."
+msgstr ""
+
+#: app/biglinux_microphone/ui/pages/calibrate.py:139
+#: app/biglinux_microphone/ui/pages/calibrate.py:321
+#, fuzzy
+msgid "Listening to your voice"
+msgstr "Gürültü gücü (ses yok)"
+
+#: app/biglinux_microphone/ui/pages/calibrate.py:152
+msgid "Speak at the volume and distance you normally use."
+msgstr ""
+
+#: app/biglinux_microphone/ui/pages/calibrate.py:179
+#, fuzzy
+msgid "Your microphone is adjusted"
+msgstr "Mikrofon filtresi"
+
+# #-#-#-#-#  biglinux-noise-reduction-pipewire.pot (biglinux-noise-reduction-
+# pipewire)  #-#-#-#-#
+#
+# File: biglinux-noise-reduction-
+# pipewire/src/biglinux_microphone/ui/main_view.py, line: 88
+# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/config.py,
+# line: 27
+#: app/biglinux_microphone/ui/pages/calibrate.py:187
+#, fuzzy
+msgid "The volume was set for your voice and this microphone."
+msgstr "Mikrofon"
+
+#: app/biglinux_microphone/ui/pages/calibrate.py:196
+msgid "Ready to use"
+msgstr ""
+
+#: app/biglinux_microphone/ui/pages/calibrate.py:197
+msgid "You can test your voice or finish now."
+msgstr ""
+
+# #-#-#-#-#  biglinux-noise-reduction-pipewire.pot (biglinux-noise-reduction-
+# pipewire)  #-#-#-#-#
+#
+# File: biglinux-noise-reduction-
+# pipewire/src/biglinux_microphone/ui/main_view.py, line: 88
+# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/config.py,
+# line: 27
+#: app/biglinux_microphone/ui/pages/calibrate.py:211
+#, fuzzy
+msgid "Adjust again"
+msgstr "Mikrofon"
+
+#: app/biglinux_microphone/ui/pages/calibrate.py:218
+#, fuzzy
+msgid "For live streams and long recordings"
+msgstr "Aramalar ve kayıtlar için sesinizi temizler"
+
+#: app/biglinux_microphone/ui/pages/calibrate.py:221
+msgid "Keep voice volume uniform"
+msgstr ""
+
+#: app/biglinux_microphone/ui/pages/calibrate.py:222
+msgid "Compensates when you move farther from the microphone."
+msgstr ""
+
+# #-#-#-#-#  biglinux-noise-reduction-pipewire.pot (biglinux-noise-reduction-
+# pipewire)  #-#-#-#-#
+#
+# File: biglinux-noise-reduction-
+# pipewire/src/biglinux_microphone/ui/main_view.py, line: 88
+# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/config.py,
+# line: 27
+#: app/biglinux_microphone/ui/pages/calibrate.py:240
+#, fuzzy
+msgid "I could not adjust the microphone"
+msgstr "Mikrofon"
+
+#: app/biglinux_microphone/ui/pages/calibrate.py:242
+msgid ""
+"Check that the right microphone is selected and try again while speaking "
+"normally."
+msgstr ""
+
+#: app/biglinux_microphone/ui/pages/calibrate.py:287
+#, fuzzy
+msgid "Microphone currently selected"
+msgstr "Mikrofon filtresi"
+
+#: app/biglinux_microphone/ui/pages/calibrate.py:350
+msgid "Almost done — keep talking"
+msgstr ""
+
+# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/window.py,
+# line: 175
+#: app/biglinux_microphone/ui/pages/calibrate.py:392
+#, fuzzy
+msgid "Cancelling…"
+msgstr "İptal et"
+
+#: app/biglinux_microphone/ui/pages/calibrate.py:417
+#, python-format
+msgid "Could not fully restore the previous microphone level: %s"
+msgstr ""
+
+#: app/biglinux_microphone/ui/widgets/threshold_editor.py:218
+#, python-format
+msgid "%s Hz threshold (dB)"
+msgstr ""
+
+#: app/biglinux_microphone/ui/widgets/activity_meter.py:55
+#, fuzzy
+msgid "Microphone level"
+msgstr "Mikrofon filtresi"
+
+#: app/biglinux_microphone/ui/widgets/activity_meter.py:127
+#, python-format
+msgid "Level: %s dBFS"
+msgstr ""
+
+#: app/biglinux_microphone/ui/widgets/activity_meter.py:128
+#, python-format
+msgid "Peak: %s dBFS"
+msgstr ""
+
+#: usr/share/plasma/plasmoids/br.com.biglinux.micnoise/contents/ui/main.qml:58
+#: usr/share/plasma/plasmoids/br.com.biglinux.micnoise/contents/ui/main.qml:75
+msgid "Could not read the audio status. Open settings to check the connection."
 msgstr ""
 
 #: usr/share/plasma/plasmoids/br.com.biglinux.micnoise/contents/ui/main.qml:79
@@ -1051,1236 +1086,48 @@ msgid ""
 "possible. Open settings for details."
 msgstr ""
 
-#: src/ui/widgets/wp_override_warning.rs:184
+#: usr/share/plasma/plasmoids/br.com.biglinux.micnoise/contents/ui/main.qml:121
 #, fuzzy
-msgid ""
-"The file <tt>{path}</tt> is masking the packaged AEC routing script. Package "
-"updates won't take effect while this local copy exists.\n"
-"\n"
-"Recommended: remove the override and restart WirePlumber."
-msgstr ""
-"The file <tt>{path}</tt> is masking the packaged AEC routing script. Package "
-"updates won't take effect while this local copy exists.\n"
-"\n"
-"Recommended: remove the override and restart WirePlumber."
+msgid "Microphone and system sound filters"
+msgstr "Sistem sesi filtresi"
 
-#: src/ui/widgets/wp_override_warning.rs:161
-msgid ""
-"The packaged audio routing will be used after WirePlumber restarts. Log out "
-"and back in, or run “systemctl --user restart wireplumber”. Audio keeps "
-"working in the meantime with the old routing."
+#: usr/share/plasma/plasmoids/br.com.biglinux.micnoise/contents/ui/main.qml:122
+msgid "Audio needs attention. Open the controls for details."
 msgstr ""
 
-#: src/ui/health.rs:47
-msgid "The selected noise model is unavailable: {model}."
+#: usr/share/plasma/plasmoids/br.com.biglinux.micnoise/contents/ui/main.qml:122
+msgid "Open audio filter controls"
 msgstr ""
 
-#: src/ui/views/advanced.rs:157 src/ui/views/advanced.rs:287
-msgid "The standard audio settings are in use."
+#: usr/share/plasma/plasmoids/br.com.biglinux.micnoise/contents/ui/main.qml:131
+msgid "Filter noise"
+msgstr "Gürültüyü filtrele"
+
+#: usr/share/plasma/plasmoids/br.com.biglinux.micnoise/contents/ui/main.qml:138
+msgid "Some audio filters are not ready. Open settings to check them."
 msgstr ""
 
-#: src/ui/mic_shell.rs:759 src/ui/mic_shell.rs:825
-msgid "Try again"
-msgstr ""
-
-#: src/ui/views/advanced.rs:457 src/ui/views/advanced.rs:547
-msgid "Try for 15 seconds"
-msgstr ""
-
-#: src/ui/window.rs:98
-msgid "Tuning"
-msgstr ""
+#: usr/share/plasma/plasmoids/br.com.biglinux.micnoise/contents/ui/main.qml:144
+#, fuzzy
+msgid "Microphone filter"
+msgstr "Mikrofon filtresi"
 
 #: usr/share/plasma/plasmoids/br.com.biglinux.micnoise/contents/ui/main.qml:146
 msgid "Turning this off pauses the effects without erasing your preferences."
 msgstr ""
 
-#: src/ui/views/advanced.rs:566
-msgid "USB audio safety margin"
+#: usr/share/plasma/plasmoids/br.com.biglinux.micnoise/contents/ui/main.qml:153
+msgid "Cleans your voice for calls and recordings"
+msgstr "Aramalar ve kayıtlar için sesinizi temizler"
+
+#: usr/share/plasma/plasmoids/br.com.biglinux.micnoise/contents/ui/main.qml:158
+msgid "System sound filter"
+msgstr "Sistem sesi filtresi"
+
+#: usr/share/plasma/plasmoids/br.com.biglinux.micnoise/contents/ui/main.qml:166
+msgid "Applies your selected effects to the sound you hear."
 msgstr ""
 
-#: src/ui/views/advanced.rs:434
-msgid "Very fast (music production, ~5 ms)"
-msgstr ""
-
-# File: biglinux-noise-reduction-
-# pipewire/src/biglinux_microphone/ui/main_view.py, line: 442
-#: src/ui/widgets/eq_card.rs:177
-msgid "Voice boost"
-msgstr "Ses yükseltme"
-
-# File: biglinux-noise-reduction-
-# pipewire/src/biglinux_microphone/ui/main_view.py, line: 438
-#: src/ui/views/mic.rs:80 src/ui/views/mic.rs:375
-msgid "Voice changer"
-msgstr "Ses değiştirici"
-
-# File: biglinux-noise-reduction-
-# pipewire/src/biglinux_microphone/ui/main_view.py, line: 581
-#: src/ui/views/mic.rs:74
-msgid "Voice enhancements"
-msgstr "Ses geliştirmeleri"
-
-# File: biglinux-noise-reduction-
-# pipewire/src/biglinux_microphone/ui/main_view.py, line: 392
-#: src/ui/views/mic.rs:276 src/ui/views/output.rs:118
-msgid "Voice presence"
-msgstr "Ses varlığı"
-
-# File: biglinux-noise-reduction-
-# pipewire/src/biglinux_microphone/ui/main_view.py, line: 753
-#: src/ui/widgets/source_picker.rs:95
-msgid "Volume"
-msgstr "Ses seviyesi"
-
-#: src/ui/widgets/eq_card.rs:179
-msgid "Warm"
-msgstr "Sıcak"
-
-#: src/ui/views/advanced.rs:320
-msgid ""
-"When you start a video or voice call, your Bluetooth headset can switch to a "
-"special call mode that turns on the microphone — but the sound becomes mono "
-"and lower quality, like an old phone. This is off by default so music and "
-"movies stay in full quality even when an app asks for the microphone. Turn "
-"it on if you rely on the headset's microphone for calls."
-msgstr ""
-
-#: src/ui/widgets/wp_override_warning.rs:74
-msgid "WirePlumber configuration overridden"
-msgstr ""
-
-#: src/ui/views/advanced.rs:389
-msgid ""
-"Your Bluetooth devices already use the best sound mode they support. Force "
-"this on if a headset stubbornly chooses lower quality, or off if you have a "
-"very old device that breaks with the high-quality mode."
-msgstr ""
-
-#: src/ui/views/advanced.rs:285
-msgid "Your audio settings are active."
-msgstr ""
-
-#: src/ui/widgets/model_picker.rs:128
-msgid "{model} - not installed"
-msgstr ""
-
-# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/window.py,
-# line: 172
-#, fuzzy
-#~ msgid "Could not apply the audio settings:"
-#~ msgstr "Varsayılan ayarları geri yüklemek istiyor musunuz?"
-
-#, fuzzy
-#~ msgid ""
-#~ "Removes speaker bleed from your microphone using the WebRTC AEC. Turn off "
-#~ "when wearing headphones or when troubleshooting microphone routing."
-#~ msgstr ""
-#~ "Removes speaker bleed from your microphone using the WebRTC AEC. Turn off "
-#~ "when wearing headphones or when troubleshooting microphone routing."
-
-#, fuzzy
-#~ msgid "DeepFilterNet3 (48 kHz)"
-#~ msgstr "DeepFilterNet3 (48 kHz)"
-
-#, fuzzy
-#~ msgid "DeepFilterNet3 (48 kHz) — not installed"
-#~ msgstr "DeepFilterNet3 (48 kHz) — not installed"
-
-#, fuzzy
-#~ msgid "GTCRN – DNS3 (16 kHz, strong)"
-#~ msgstr "GTCRN – DNS3 (güçlü)"
-
-#, fuzzy
-#~ msgid "GTCRN – VCTK (16 kHz, gentle)"
-#~ msgstr "GTCRN – VCTK (nazik)"
-
-#~ msgid ""
-#~ "DNS3 removes more noise but can smudge consonants. VCTK is gentler and "
-#~ "lighter on CPU — good for podcasts."
-#~ msgstr ""
-#~ "DNS3 daha fazla gürültüyü kaldırır ancak ünsüzleri bulanıklaştırabilir. "
-#~ "VCTK daha nazik ve CPU üzerinde hafiftir — podcastler için uygundur."
-
-# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/window.py,
-# line: 193
-#, fuzzy
-#~ msgid "Distro default"
-#~ msgstr "Varsayılanları geri yükle"
-
-# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/window.py,
-# line: 193
-#, fuzzy
-#~ msgid "Restore distro defaults?"
-#~ msgstr "Varsayılanları geri yükle"
-
-#, fuzzy
-#~ msgid "Configuração do WirePlumber sobreposta"
-#~ msgstr "Configuração do WirePlumber sobreposta"
-
-#, fuzzy
-#~ msgid "Manter"
-#~ msgstr "Manter"
-
-#, fuzzy
-#~ msgid "Remover sobreposição"
-#~ msgstr "Remover sobreposição"
-
-#, fuzzy
-#~ msgid "Não avisar de novo"
-#~ msgstr "Não avisar de novo"
-
-# File: biglinux-noise-reduction-
-# pipewire/src/biglinux_microphone/audio/filter_chain.py
-#~ msgid "BigLinux Microphone"
-#~ msgstr "BigLinux Microphone"
-
-#~ msgid "About BigLinux Microphone"
-#~ msgstr "BigLinux Microphone hakkında"
-
-#~ msgid ""
-#~ "AI-powered microphone noise reduction with GTK4/libadwaita interface for "
-#~ "PipeWire."
-#~ msgstr ""
-#~ "PipeWire için GTK4/libadwaita arayüzlü yapay zeka destekli mikrofon "
-#~ "gürültü azaltma."
-
-#~ msgid ""
-#~ "Removes the speaker's echo from your microphone — useful on calls without "
-#~ "headphones."
-#~ msgstr ""
-#~ "Mikrofonunuzdaki hoparlör yankısını kaldırır — kulaklıksız görüşmelerde "
-#~ "faydalıdır."
-
-# File: biglinux-noise-reduction-
-# pipewire/src/biglinux_microphone/ui/main_view.py, line: 709
-#~ msgid "AI noise filter"
-#~ msgstr "Yapay zeka gürültü filtresi"
-
-#~ msgid ""
-#~ "GTCRN neural filter on your microphone. Off bypasses every fine-tune "
-#~ "control below."
-#~ msgstr ""
-#~ "Mikrofonunuzda GTCRN sinirsel filtresi. Kapalı konumda aşağıdaki tüm ince "
-#~ "ayar kontrolleri devre dışı kalır."
-
-#~ msgid "Noise strength (no voice)"
-#~ msgstr "Gürültü gücü (ses yok)"
-
-#~ msgid ""
-#~ "How hard the filter works in the gaps between words. 100% mutes anything "
-#~ "that isn't voice."
-#~ msgstr ""
-#~ "Kelimeler arasındaki boşluklarda filtrenin ne kadar güçlü çalıştığı. "
-#~ "%100, ses olmayan her şeyi sessize alır."
-
-#~ msgid "Strength"
-#~ msgstr "Güç"
-
-#~ msgid "Voice strength (while speaking)"
-#~ msgstr "Konuşma sırasında ses gücü"
-
-#~ msgid ""
-#~ "How hard the filter works while you talk. Lower if your voice sounds "
-#~ "robotic; raise if noise still bleeds through."
-#~ msgstr ""
-#~ "Konuşurken filtrenin ne kadar yoğun çalıştığı. Sesiniz robotik geliyorsa "
-#~ "düşürün; gürültü hala geçiyorsa artırın."
-
-#~ msgid "Enable output filter"
-#~ msgstr "Çıkış filtresini etkinleştir"
-
-#~ msgid ""
-#~ "Filters audio reaching your speakers in real time. Stays attached after "
-#~ "toggling, so playback and calls keep running."
-#~ msgstr ""
-#~ "Hoparlörlerinize ulaşan sesi gerçek zamanlı filtreler. Açma/kapama "
-#~ "sonrası bağlı kalır, böylece oynatma ve aramalar devam eder."
-
-#~ msgid ""
-#~ "DNS3 strips more noise (good for harsh streams); VCTK is gentler (good "
-#~ "for music or clean voice)."
-#~ msgstr ""
-#~ "DNS3 daha fazla gürültü giderir (sert yayınlar için iyi); VCTK daha "
-#~ "naziktir (müzik veya temiz ses için uygun)."
-
-#~ msgid ""
-#~ "How hard the filter works during silent moments in playback. Higher = "
-#~ "quieter background between sentences."
-#~ msgstr ""
-#~ "Oynatma sırasında sessiz anlarda filtrenin ne kadar çalıştığı. Yüksek = "
-#~ "cümleler arasındaki arka plan daha sessiz."
-
-#~ msgid ""
-#~ "How hard the filter works while voices play. Lower if they sound robotic; "
-#~ "raise if noise still bleeds through."
-#~ msgstr ""
-#~ "Sesler çalarken filtrenin ne kadar çalıştığı. Sesler robotik geliyorsa "
-#~ "düşürün; gürültü hala geçiyorsa artırın."
-
-#~ msgid "Configure..."
-#~ msgstr "Yapılandır..."
-
-# File: biglinux-noise-reduction-
-# pipewire/src/biglinux_microphone/ui/main_view.py, line: 258
-#~ msgid "Loading, please wait"
-#~ msgstr "Yükleniyor, lütfen bekleyin"
-
-# File: biglinux-noise-reduction-
-# pipewire/src/biglinux_microphone/ui/main_view.py, line: 312
-#~ msgid "Removes background noise like fan, keyboard, and air conditioning."
-#~ msgstr "Fan, klavye ve klima gibi arka plan gürültülerini kaldırır."
-
-# File: biglinux-noise-reduction-
-# pipewire/src/biglinux_microphone/ui/main_view.py, line: 325
-#~ msgid "Maximum Cleaning"
-#~ msgstr "Maksimum Temizlik"
-
-# File: biglinux-noise-reduction-
-# pipewire/src/biglinux_microphone/ui/main_view.py, line: 327
-#~ msgid "Smart (both combined)"
-#~ msgstr "Akıllı (her ikisi bir arada)"
-
-# File: biglinux-noise-reduction-
-# pipewire/src/biglinux_microphone/ui/main_view.py, line: 336
-#~ msgid "Noise Removal Intensity"
-#~ msgstr "Gürültü Giderme Yoğunluğu"
-
-# File: biglinux-noise-reduction-
-# pipewire/src/biglinux_microphone/ui/main_view.py, line: 355
-#~ msgid "Filter During Speech"
-#~ msgstr "Konuşma Sırasında Filtreleme"
-
-# File: biglinux-noise-reduction-
-# pipewire/src/biglinux_microphone/ui/main_view.py, line: 363
-# File: biglinux-noise-reduction-
-# pipewire/src/biglinux_microphone/ui/main_view.py, line: 381
-# File: biglinux-noise-reduction-
-# pipewire/src/biglinux_microphone/ui/main_view.py, line: 400
-#~ msgid "Off"
-#~ msgstr "Kapalı"
-
-# File: biglinux-noise-reduction-
-# pipewire/src/biglinux_microphone/ui/main_view.py, line: 373
-#~ msgid "Syllable Protection"
-#~ msgstr "Hece Koruma"
-
-# File: biglinux-noise-reduction-
-# pipewire/src/biglinux_microphone/ui/main_view.py, line: 420
-#~ msgid "Volume Normalizer"
-#~ msgstr "Ses Seviyesini Normalleştirici"
-
-# File: biglinux-noise-reduction-
-# pipewire/src/biglinux_microphone/ui/main_view.py, line: 422
-#~ msgid "Evens out volume — loud sounds get softer, quiet sounds get louder."
-#~ msgstr ""
-#~ "Ses seviyesini dengeleyin — yüksek sesler kısılır, düşük sesler yükselir."
-
-# File: biglinux-noise-reduction-
-# pipewire/src/biglinux_microphone/ui/main_view.py, line: 478
-#~ msgid "Removes low-frequency rumble"
-#~ msgstr "Düşük frekanslı gürültüyü kaldırır."
-
-# File: biglinux-noise-reduction-
-# pipewire/src/biglinux_microphone/ui/main_view.py, line: 487
-#~ msgid "Frequency (Hz)"
-#~ msgstr "Frekans (Hz)"
-
-# File: biglinux-noise-reduction-
-# pipewire/src/biglinux_microphone/ui/main_view.py, line: 310
-#~ msgid "Automatically silences the microphone when you are not talking."
-#~ msgstr "Konuşmadığınızda mikrofonu otomatik olarak sessize alır."
-
-# File: biglinux-noise-reduction-
-# pipewire/src/biglinux_microphone/ui/main_view.py, line: 425
-#~ msgid "Voice Effects"
-#~ msgstr "Ses Efektleri"
-
-# File: biglinux-noise-reduction-
-# pipewire/src/biglinux_microphone/ui/main_view.py, line: 436
-#~ msgid "Dual Mono"
-#~ msgstr "Çift Mono"
-
-# File: biglinux-noise-reduction-
-# pipewire/src/biglinux_microphone/ui/main_view.py, line: 443
-#~ msgid "Choose how your voice sounds to others."
-#~ msgstr "Sesinizin başkalarına nasıl geldiğini seçin."
-
-# File: biglinux-noise-reduction-
-# pipewire/src/biglinux_microphone/ui/main_view.py, line: 452
-# File: biglinux-noise-reduction-
-# pipewire/src/biglinux_microphone/ui/main_view.py, line: 1156
-#~ msgid "Stereo Expansion"
-#~ msgstr "Stereo Genişletme"
-
-# File: biglinux-noise-reduction-
-# pipewire/src/biglinux_microphone/ui/main_view.py, line: 453
-#~ msgid "Soundstage width. Higher = more immersive."
-#~ msgstr "Ses sahnesi genişliği. Daha yüksek = daha sürükleyici."
-
-# File: biglinux-noise-reduction-
-# pipewire/src/biglinux_microphone/ui/main_view.py, line: 461
-# File: biglinux-noise-reduction-
-# pipewire/src/biglinux_microphone/ui/main_view.py, line: 1158
-#~ msgid "Focus"
-#~ msgstr "Odaklanın"
-
-# File: biglinux-noise-reduction-
-# pipewire/src/biglinux_microphone/ui/main_view.py, line: 462
-# File: biglinux-noise-reduction-
-# pipewire/src/biglinux_microphone/ui/main_view.py, line: 1159
-#~ msgid "Wide"
-#~ msgstr "Geniş"
-
-# File: biglinux-noise-reduction-
-# pipewire/src/biglinux_microphone/ui/main_view.py, line: 478
-#~ msgid "Fine-tuning of bass, mids, and treble."
-#~ msgstr "Bas, orta ve tiz ayarları."
-
-# File: biglinux-noise-reduction-
-# pipewire/src/biglinux_microphone/ui/main_view.py, line: 490
-#~ msgid "Ready-made adjustments for different situations."
-#~ msgstr "Farklı durumlar için hazır ayarlamalar."
-
-# File: biglinux-noise-reduction-
-# pipewire/src/biglinux_microphone/ui/main_view.py, line: 499
-#~ msgid "Bands"
-#~ msgstr "Bantlar"
-
-# File: biglinux-noise-reduction-
-# pipewire/src/biglinux_microphone/ui/main_view.py, line: 500
-#~ msgid "Adjust each frequency"
-#~ msgstr "Her frekansı ayarlayın."
-
-# File: biglinux-noise-reduction-
-# pipewire/src/biglinux_microphone/ui/main_view.py, line: 689
-#~ msgid "Reduces echo and feedback when using speakers"
-#~ msgstr "Hoparlör kullanırken yankı ve geri beslemeyi azaltır."
-
-# File: biglinux-noise-reduction-
-# pipewire/src/biglinux_microphone/ui/main_view.py, line: 700
-#~ msgid "Automatic Gain Control"
-#~ msgstr "Otomatik Kazanç Kontrolü"
-
-# File: biglinux-noise-reduction-
-# pipewire/src/biglinux_microphone/ui/main_view.py, line: 701
-#~ msgid "Normalizes volume automatically"
-#~ msgstr "Ses seviyesini otomatik olarak normalize eder."
-
-# File: biglinux-noise-reduction-
-# pipewire/src/biglinux_microphone/ui/main_view.py, line: 708
-#~ msgid "Noise Suppression"
-#~ msgstr "Gürültü Bastırma"
-
-# File: biglinux-noise-reduction-
-# pipewire/src/biglinux_microphone/ui/main_view.py, line: 716
-#~ msgid "Voice Detection"
-#~ msgstr "Ses Tanıma"
-
-# File: biglinux-noise-reduction-
-# pipewire/src/biglinux_microphone/ui/main_view.py, line: 717
-#~ msgid "Applies processing only when speech is detected"
-#~ msgstr "Ses algılandığında yalnızca işleme uygular."
-
-# File: biglinux-noise-reduction-
-# pipewire/src/biglinux_microphone/ui/main_view.py, line: 726
-#~ msgid "Automatic Volume Control"
-#~ msgstr "Otomatik Ses Kontrolü"
-
-# File: biglinux-noise-reduction-
-# pipewire/src/biglinux_microphone/ui/main_view.py, line: 728
-#~ msgid "Keeps your microphone volume at a consistent level"
-#~ msgstr "Mikrofon ses seviyenizi sabit bir seviyede tutar."
-
-# File: biglinux-noise-reduction-
-# pipewire/src/biglinux_microphone/ui/main_view.py, line: 738
-#~ msgid "Signal Level"
-#~ msgstr "Sinyal Seviyesi"
-
-# File: biglinux-noise-reduction-
-# pipewire/src/biglinux_microphone/ui/main_view.py, line: 747
-#~ msgid "Target signal peak the microphone should reach"
-#~ msgstr "Mikrofonun ulaşması gereken hedef sinyal zirvesi"
-
-# File: biglinux-noise-reduction-
-# pipewire/src/biglinux_microphone/ui/main_view.py, line: 762
-#~ msgid "AGC will not reduce volume below this level"
-#~ msgstr "AGC, bu seviyenin altına ses seviyesini düşürmeyecek."
-
-# File: biglinux-noise-reduction-
-# pipewire/src/biglinux_microphone/ui/main_view.py, line: 768
-#~ msgid "Maximum Volume"
-#~ msgstr "Maksimum Ses Seviyesi"
-
-# File: biglinux-noise-reduction-
-# pipewire/src/biglinux_microphone/ui/main_view.py, line: 777
-#~ msgid "AGC will not raise volume above this level"
-#~ msgstr "AGC bu seviyenin üzerine ses seviyesini artırmayacaktır."
-
-# File: biglinux-noise-reduction-
-# pipewire/src/biglinux_microphone/ui/main_view.py, line: 783
-#~ msgid "Reactivity"
-#~ msgstr "Reaktivite"
-
-# File: biglinux-noise-reduction-
-# pipewire/src/biglinux_microphone/ui/main_view.py, line: 792
-#~ msgid "How fast the volume adjusts — higher is faster"
-#~ msgstr ""
-#~ "Ses seviyesi ne kadar hızlı ayarlanıyor — daha yüksek, daha hızlıdır."
-
-# File: biglinux-noise-reduction-
-# pipewire/src/biglinux_microphone/ui/main_view.py, line: 540
-#~ msgid "Automatically switch between headset listening and call modes."
-#~ msgstr "Kafa üstü dinleme ve arama modları arasında otomatik geçiş yapın."
-
-# File: biglinux-noise-reduction-
-# pipewire/src/biglinux_microphone/ui/main_view.py, line: 549
-#~ msgid "Monitor Feedback"
-#~ msgstr "Geri Bildirim İzleme"
-
-# File: biglinux-noise-reduction-
-# pipewire/src/biglinux_microphone/ui/main_view.py, line: 561
-#~ msgid "Monitor Delay"
-#~ msgstr "Gecikme İzleme"
-
-# File: biglinux-noise-reduction-
-# pipewire/src/biglinux_microphone/ui/main_view.py, line: 562
-#~ msgid "Monitor feedback delay. Useful for checking sync."
-#~ msgstr ""
-#~ "Geri bildirim gecikmesini izleyin. Senkronizasyonu kontrol etmek için "
-#~ "faydalıdır."
-
-# File: biglinux-noise-reduction-
-# pipewire/src/biglinux_microphone/ui/main_view.py, line: 569
-#~ msgid "0s"
-#~ msgstr "0s"
-
-# File: biglinux-noise-reduction-
-# pipewire/src/biglinux_microphone/ui/main_view.py, line: 569
-#~ msgid "1s"
-#~ msgstr "1s"
-
-# File: biglinux-noise-reduction-
-# pipewire/src/biglinux_microphone/ui/main_view.py, line: 771
-#~ msgid "2s"
-#~ msgstr "2s"
-
-# File: biglinux-noise-reduction-
-# pipewire/src/biglinux_microphone/ui/main_view.py, line: 569
-#~ msgid "3s"
-#~ msgstr "3s"
-
-# File: biglinux-noise-reduction-
-# pipewire/src/biglinux_microphone/ui/main_view.py, line: 569
-#~ msgid "5s"
-#~ msgstr "5s"
-
-# File: biglinux-noise-reduction-
-# pipewire/src/biglinux_microphone/ui/main_view.py, line: 903
-# File: biglinux-noise-reduction-
-# pipewire/src/biglinux_microphone/ui/main_view.py, line: 1794
-#, python-brace-format
-#~ msgid "Target signal peak: {db:.0f} dBFS"
-#~ msgstr "Hedef sinyal zirvesi: {db:.0f} dBFS"
-
-# File: biglinux-noise-reduction-
-# pipewire/src/biglinux_microphone/ui/main_view.py, line: 907
-# File: biglinux-noise-reduction-
-# pipewire/src/biglinux_microphone/ui/main_view.py, line: 1810
-#, python-brace-format
-#~ msgid "AGC will not reduce volume below {v}%"
-#~ msgstr "AGC, ses seviyesini {v}%'nin altına düşürmeyecek."
-
-# File: biglinux-noise-reduction-
-# pipewire/src/biglinux_microphone/ui/main_view.py, line: 913
-# File: biglinux-noise-reduction-
-# pipewire/src/biglinux_microphone/ui/main_view.py, line: 1825
-#, python-brace-format
-#~ msgid "AGC will not raise volume above {v}%"
-#~ msgstr "AGC, ses seviyesini {v}%'nin üzerine çıkarmayacaktır."
-
-# File: biglinux-noise-reduction-
-# pipewire/src/biglinux_microphone/ui/main_view.py, line: 785
-# File: biglinux-noise-reduction-
-# pipewire/src/biglinux_microphone/ui/main_view.py, line: 1321
-#, python-brace-format
-#~ msgid "Silence threshold: {percent}%"
-#~ msgstr "Sessizlik eşiği: {percent}%"
-
-# File: biglinux-noise-reduction-
-# pipewire/src/biglinux_microphone/ui/main_view.py, line: 804
-# File: biglinux-noise-reduction-
-# pipewire/src/biglinux_microphone/ui/main_view.py, line: 1269
-#, python-brace-format
-#~ msgid "Volume correction: {percent}%"
-#~ msgstr "Ses düzeltmesi: {percent}%"
-
-# File: biglinux-noise-reduction-
-# pipewire/src/biglinux_microphone/ui/main_view.py, line: 813
-# File: biglinux-noise-reduction-
-# pipewire/src/biglinux_microphone/ui/main_view.py, line: 1290
-#, python-brace-format
-#~ msgid "Cutoff: {hz} Hz"
-#~ msgstr "Kesim: {hz} Hz"
-
-# File: biglinux-noise-reduction-
-# pipewire/src/biglinux_microphone/ui/main_view.py, line: 722
-# File: biglinux-noise-reduction-
-# pipewire/src/biglinux_microphone/ui/main_view.py, line: 1038
-#, python-brace-format
-#~ msgid "Removal aggressiveness. ({percent}%)"
-#~ msgstr "Kaldırma agresifliği. ({percent}%)"
-
-# File: biglinux-noise-reduction-
-# pipewire/src/biglinux_microphone/ui/main_view.py, line: 701
-# File: biglinux-noise-reduction-
-# pipewire/src/biglinux_microphone/ui/main_view.py, line: 1408
-#, python-brace-format
-#~ msgid "Monitor feedback delay. Useful for checking sync. ({delay} ms)"
-#~ msgstr ""
-#~ "Geri bildirim gecikmesini izleyin. Senkronizasyonu kontrol etmek için "
-#~ "faydalıdır. ({delay} ms)"
-
-# File: biglinux-noise-reduction-
-# pipewire/src/biglinux_microphone/ui/main_view.py, line: 1249
-#~ msgid "Failed to apply settings. Please try again."
-#~ msgstr "Ayarlar uygulanamadı. Lütfen tekrar deneyin."
-
-# File: biglinux-noise-reduction-
-# pipewire/src/biglinux_microphone/ui/main_view.py, line: 1051
-#, python-brace-format
-#~ msgid "Filter intensity during speech ({percent}%)"
-#~ msgstr "Konuşma sırasında filtre yoğunluğu ({percent}%)"
-
-# File: biglinux-noise-reduction-
-# pipewire/src/biglinux_microphone/ui/main_view.py, line: 1062
-#, python-brace-format
-#~ msgid "Pre-buffer: {ms} ms"
-#~ msgstr "Ön bellek: {ms} ms"
-
-# File: biglinux-noise-reduction-
-# pipewire/src/biglinux_microphone/ui/main_view.py, line: 1207
-#, python-brace-format
-#~ msgid "Voice recovery: {percent}%"
-#~ msgstr "Ses kurtarma: {percent}%"
-
-# File: biglinux-noise-reduction-
-# pipewire/src/biglinux_microphone/ui/main_view.py, line: 1145
-#~ msgid "Voice Tonality (Pitch)"
-#~ msgstr "Ses Tonu (Frekans)"
-
-# File: biglinux-noise-reduction-
-# pipewire/src/biglinux_microphone/ui/main_view.py, line: 1148
-#~ msgid "Normal"
-#~ msgstr "Normal"
-
-# File: biglinux-noise-reduction-
-# pipewire/src/biglinux_microphone/ui/main_view.py, line: 1149
-#~ msgid "Sharp"
-#~ msgstr "Keskin"
-
-# File: biglinux-noise-reduction-
-# pipewire/src/biglinux_microphone/ui/main_view.py, line: 1152
-#, python-brace-format
-#~ msgid "Adjust voice pitch. 0%=Deep, 50%=Normal, 100%=Sharp. ({percent}%)"
-#~ msgstr "Ses tonunu ayarla. %0=Derin, %50=Normal, %100=Keskin. ({percent}%)"
-
-# File: biglinux-noise-reduction-
-# pipewire/src/biglinux_microphone/ui/main_view.py, line: 1161
-# File: biglinux-noise-reduction-
-# pipewire/src/biglinux_microphone/ui/main_view.py, line: 1213
-#, python-brace-format
-#~ msgid "Soundstage width. Higher = more immersive. ({percent}%)"
-#~ msgstr "Ses sahnesi genişliği. Daha yüksek = daha sürükleyici. ({yüzde}%)"
-
-# File: biglinux-noise-reduction-
-# pipewire/src/biglinux_microphone/ui/main_view.py, line: 1345
-#~ msgid "Settings successfully restored"
-#~ msgstr "Ayarlar başarıyla geri yüklendi."
-
-# File: biglinux-noise-reduction-
-# pipewire/src/biglinux_microphone/ui/main_view.py, line: 1361
-#~ msgid "All settings have been restored!"
-#~ msgstr "Tüm ayarlar geri yüklendi!"
-
-# File: biglinux-noise-reduction-
-# pipewire/src/biglinux_microphone/utils/tooltip_helper.py, line: 41
-#~ msgid ""
-#~ "Reduces unwanted background noise from your microphone\n"
-#~ "using the GTCRN neural network.\n"
-#~ "\n"
-#~ "Removes sounds like fans, air conditioning, keyboard typing,\n"
-#~ "and other ambient noise, keeping only your voice clear."
-#~ msgstr ""
-#~ "Mikrofonunuzdan istenmeyen arka plan gürültüsünü azaltır.\n"
-#~ "\n"
-#~ "Fanlar, klima, klavye sesi ve diğer ortam gürültüleri gibi sesleri "
-#~ "kaldırarak yalnızca sesinizi net bir şekilde tutar."
-
-# File: biglinux-noise-reduction-
-# pipewire/src/biglinux_microphone/utils/tooltip_helper.py, line: 47
-#~ msgid ""
-#~ "Choose how noise is cleaned:\n"
-#~ "\n"
-#~ "• Maximum Cleaning (DNS3): Removes the most noise possible.\n"
-#~ "  Best for noisy environments. May slightly change the voice.\n"
-#~ "• Natural Voice (VCTK): Gentler cleaning that keeps the voice\n"
-#~ "  more natural. Ideal for quiet environments.\n"
-#~ "• Smart (both combined): Uses DNS3 during\n"
-#~ "  silence and VCTK while you speak.\n"
-#~ "  Best result, but uses more processing power."
-#~ msgstr ""
-#~ "Gürültünün nasıl temizleneceğini seçin:\n"
-#~ "\n"
-#~ "• Maksimum Temizlik (DNS3): Mümkün olan en fazla gürültüyü kaldırır. "
-#~ "Gürültülü ortamlar için en iyisi. Sesi biraz değiştirebilir.\n"
-#~ "• Doğal Ses (VCTK): Sesi daha doğal tutan daha nazik bir temizlik. Sessiz "
-#~ "ortamlar için idealdir.\n"
-#~ "• Akıllı (her ikisi birden): Sessizlikte DNS3, konuşurken VCTK kullanır. "
-#~ "En iyi sonuç, ancak daha fazla işlem gücü kullanır."
-
-# File: biglinux-noise-reduction-
-# pipewire/src/biglinux_microphone/utils/tooltip_helper.py, line: 58
-#~ msgid ""
-#~ "How much noise to remove.\n"
-#~ "\n"
-#~ "• 1: Removes only the most obvious noises\n"
-#~ "• 3: Good for most situations\n"
-#~ "• 5: Removes as much noise as possible\n"
-#~ "\n"
-#~ "If the voice sounds distorted, reduce this slider."
-#~ msgstr ""
-#~ "Ne kadar gürültü kaldırılacak.\n"
-#~ "\n"
-#~ "• 1: Sadece en belirgin gürültüleri kaldırır\n"
-#~ "• 3: Çoğu durum için iyi\n"
-#~ "• 5: Mümkün olan en fazla gürültüyü kaldırır\n"
-#~ "\n"
-#~ "Eğer ses bozuk geliyorsa, bu kaydırıcıyı azaltın."
-
-# File: biglinux-noise-reduction-
-# pipewire/src/biglinux_microphone/utils/tooltip_helper.py, line: 65
-#~ msgid ""
-#~ "Whether to keep filtering active while you are speaking.\n"
-#~ "\n"
-#~ "• Off: Filter pauses during speech — voice sounds\n"
-#~ "  completely natural, but noise may leak through\n"
-#~ "• 3: Applies partial filtering during speech\n"
-#~ "• 5: Full filtering at all times, cleanest result\n"
-#~ "\n"
-#~ "Default: 5. Reduce if your voice sounds thin or robotic."
-#~ msgstr ""
-#~ "Konuşurken filtrelemenin aktif kalıp kalmayacağı.\n"
-#~ "\n"
-#~ "• Kapalı: Konuşma sırasında filtre duraklar — ses tamamen doğal gelir, "
-#~ "ancak gürültü sızabilir\n"
-#~ "• 3: Konuşma sırasında kısmi filtreleme uygular\n"
-#~ "• 5: Her zaman tam filtreleme, en temiz sonuç\n"
-#~ "\n"
-#~ "Varsayılan: 5. Sesiniz ince veya robotik geliyorsa azaltın."
-
-# File: biglinux-noise-reduction-
-# pipewire/src/biglinux_microphone/utils/tooltip_helper.py, line: 73
-#~ msgid ""
-#~ "Prevents the beginning of words from being cut off.\n"
-#~ "\n"
-#~ "Keeps a small audio buffer so the filter can react\n"
-#~ "before you start speaking.\n"
-#~ "• Off: No delay, but may clip the first syllable\n"
-#~ "• 50ms: Recommended for most people\n"
-#~ "• 200ms: Safest for fast speakers\n"
-#~ "\n"
-#~ "Higher values add a small delay to the audio."
-#~ msgstr ""
-#~ "Kelimelerin başlangıçlarının kesilmesini önler.\n"
-#~ "\n"
-#~ "Filtrenin konuşmaya başlamadan önce tepki verebilmesi için küçük bir ses "
-#~ "tamponu tutar.\n"
-#~ "• Kapalı: Gecikme yok, ancak ilk heceyi kesebilir\n"
-#~ "• 50ms: Çoğu insan için önerilir\n"
-#~ "• 200ms: Hızlı konuşanlar için en güvenli\n"
-#~ "\n"
-#~ "Daha yüksek değerler sesin üzerine küçük bir gecikme ekler."
-
-# File: biglinux-noise-reduction-
-# pipewire/src/biglinux_microphone/utils/tooltip_helper.py, line: 82
-#~ msgid ""
-#~ "Restores high-frequency detail lost during filtering.\n"
-#~ "\n"
-#~ "Noise removal can make voices sound muffled or thin.\n"
-#~ "This control reconstructs the treble frequencies\n"
-#~ "to bring back clarity and presence.\n"
-#~ "\n"
-#~ "• Off: No HF reconstruction\n"
-#~ "• 3: Good balance for most voices\n"
-#~ "• 5: Maximum clarity restoration\n"
-#~ "\n"
-#~ "Recommended: keep between 3 and 5."
-#~ msgstr ""
-#~ "Filtreleme sırasında kaybolan yüksek frekans detaylarını geri "
-#~ "kazandırır.\n"
-#~ "\n"
-#~ "Gürültü giderme, seslerin boğuk veya ince çıkmasına neden olabilir.\n"
-#~ "Bu kontrol, netlik ve varlık kazandırmak için tiz frekansları yeniden "
-#~ "yapılandırır.\n"
-#~ "\n"
-#~ "• Kapalı: HF yeniden yapılandırması yok\n"
-#~ "• 3: Çoğu ses için iyi denge\n"
-#~ "• 5: Maksimum netlik restorasyonu\n"
-#~ "\n"
-#~ "Tavsiye edilen: 3 ile 5 arasında tutun."
-
-# File: biglinux-noise-reduction-
-# pipewire/src/biglinux_microphone/utils/tooltip_helper.py, line: 91
-#~ msgid ""
-#~ "Evens out the volume of your voice.\n"
-#~ "\n"
-#~ "If you speak too loud, it lowers the volume.\n"
-#~ "If you speak too softly, it raises the volume.\n"
-#~ "\n"
-#~ "Ideal for meetings, streams, and recordings\n"
-#~ "where consistent volume matters."
-#~ msgstr ""
-#~ "Sesinizin hacmini dengeleyin.\n"
-#~ "\n"
-#~ "Eğer çok yüksek sesle konuşursanız, hacmi düşürür.\n"
-#~ "Eğer çok yumuşak konuşursanız, hacmi artırır.\n"
-#~ "\n"
-#~ "Tutarlı hacmin önemli olduğu toplantılar, yayınlar ve kayıtlar için "
-#~ "idealdir."
-
-# File: biglinux-noise-reduction-
-# pipewire/src/biglinux_microphone/utils/tooltip_helper.py, line: 109
-#~ msgid ""
-#~ "How much volume correction to apply.\n"
-#~ "\n"
-#~ "• 1: Gentle correction, very natural sound\n"
-#~ "• 3: Good for most people\n"
-#~ "• 5: Strong leveling — whisper and shout\n"
-#~ "  come out at similar volume\n"
-#~ "\n"
-#~ "Start with 3 and adjust to taste."
-#~ msgstr ""
-#~ "Ne kadar ses düzeltmesi uygulanmalı.\n"
-#~ "\n"
-#~ "• 1: Nazik düzeltme, çok doğal ses\n"
-#~ "• 3: Çoğu insan için iyi\n"
-#~ "• 5: Güçlü dengeleme — fısıldama ve bağırma\n"
-#~ "  benzer ses seviyesinde çıkar\n"
-#~ "\n"
-#~ "3 ile başlayın ve damak tadınıza göre ayarlayın."
-
-# File: biglinux-noise-reduction-
-# pipewire/src/biglinux_microphone/utils/tooltip_helper.py, line: 107
-#~ msgid ""
-#~ "Silence filter that mutes the mic when you're not speaking.\n"
-#~ "\n"
-#~ "Works after noise reduction. Eliminates any residual\n"
-#~ "sound that the filter didn't fully remove.\n"
-#~ "\n"
-#~ "When you stop talking, there is complete silence."
-#~ msgstr ""
-#~ "Sadece konuşmadığınızda mikrofonu susturan sessizlik filtresi.\n"
-#~ "\n"
-#~ "Gürültü azaltmadan sonra çalışır. Filtrenin tamamen temizlemediği "
-#~ "herhangi bir kalıntı sesi ortadan kaldırır.\n"
-#~ "\n"
-#~ "Konuşmayı durdurduğunuzda, tamamen sessizlik vardır."
-
-# File: biglinux-noise-reduction-
-# pipewire/src/biglinux_microphone/utils/tooltip_helper.py, line: 124
-#~ msgid ""
-#~ "Controls how aggressively the gate removes residual noise.\n"
-#~ "\n"
-#~ "• 1: Only mutes during long silences\n"
-#~ "• 3: Good for most voices\n"
-#~ "• 5: Complete silence between words\n"
-#~ "\n"
-#~ "Start at 3 and adjust to taste."
-#~ msgstr ""
-#~ "Kapının ne kadar agresif bir şekilde kalıntı gürültüyü kaldıracağını "
-#~ "kontrol eder.\n"
-#~ "\n"
-#~ "• 1: Sadece uzun sessizliklerde susturur\n"
-#~ "• 3: Çoğu ses için iyi\n"
-#~ "• 5: Kelimeler arasında tamamen sessizlik\n"
-#~ "\n"
-#~ "3 ile başlayın ve zevkinize göre ayarlayın."
-
-# File: biglinux-noise-reduction-
-# pipewire/src/biglinux_microphone/utils/tooltip_helper.py, line: 121
-#~ msgid ""
-#~ "Voice effects and stereo processing.\n"
-#~ "\n"
-#~ "Converts your mono microphone to stereo or applies\n"
-#~ "professional effects for streaming and podcasting."
-#~ msgstr ""
-#~ "Ses efektleri ve stereo işleme.\n"
-#~ "\n"
-#~ "Mono mikrofonunuzu stereo'ya dönüştürür veya yayıncılık ve podcasting "
-#~ "için profesyonel efektler uygular."
-
-# File: biglinux-noise-reduction-
-# pipewire/src/biglinux_microphone/utils/tooltip_helper.py, line: 137
-#~ msgid ""
-#~ "Choose the voice effect:\n"
-#~ "\n"
-#~ "• Dual Mono: Duplicates signal to both channels (stereo)\n"
-#~ "• Voice Changer: Changes voice pitch (deeper or higher)"
-#~ msgstr ""
-#~ "Ses efektini seçin:\n"
-#~ "\n"
-#~ "• İkili Mono: Sinyali her iki kanala (stereo) kopyalar\n"
-#~ "• Ses Değiştirici: Ses tonunu değiştirir (daha derin veya daha yüksek)"
-
-# File: biglinux-noise-reduction-
-# pipewire/src/biglinux_microphone/utils/tooltip_helper.py, line: 142
-#~ msgid ""
-#~ "Intensity of the selected effect.\n"
-#~ "\n"
-#~ "• Voice Changer: Pitch (low to high)"
-#~ msgstr ""
-#~ "Seçilen efektin yoğunluğu.\n"
-#~ "\n"
-#~ "• Ses Değiştirici: Ton (düşükten yükseğe)"
-
-# File: biglinux-noise-reduction-
-# pipewire/src/biglinux_microphone/utils/tooltip_helper.py, line: 147
-#~ msgid ""
-#~ "High-pass filter that removes low frequencies.\n"
-#~ "\n"
-#~ "Cuts rumble, hum, and other low-frequency noise\n"
-#~ "below the chosen frequency. Keeps your voice clear\n"
-#~ "without affecting speech quality."
-#~ msgstr ""
-#~ "Düşük frekansları kaldıran yüksek geçiren filtre.\n"
-#~ "\n"
-#~ "Seçilen frekansın altındaki gürültü, hum ve diğer düşük frekanslı "
-#~ "gürültüleri keser. Sesinizi net tutar, konuşma kalitesini etkilemez."
-
-# File: biglinux-noise-reduction-
-# pipewire/src/biglinux_microphone/utils/tooltip_helper.py, line: 153
-#~ msgid ""
-#~ "Cut-off frequency for the high-pass filter.\n"
-#~ "\n"
-#~ "Frequencies below this value are removed.\n"
-#~ "• 80 Hz: Removes deep rumble only\n"
-#~ "• 120 Hz: Good for most voices\n"
-#~ "• 200 Hz: Aggressive cut, may thin the voice\n"
-#~ "\n"
-#~ "Default: 80 Hz."
-#~ msgstr ""
-#~ "Yüksek geçiren filtre için kesim frekansı.\n"
-#~ "\n"
-#~ "Bu değerin altındaki frekanslar kaldırılır.\n"
-#~ "• 80 Hz: Sadece derin gürültüyü kaldırır\n"
-#~ "• 120 Hz: Çoğu ses için iyi\n"
-#~ "• 200 Hz: Agresif kesim, sesi inceltebilir\n"
-#~ "\n"
-#~ "Varsayılan: 80 Hz."
-
-# File: biglinux-noise-reduction-
-# pipewire/src/biglinux_microphone/utils/tooltip_helper.py, line: 138
-#~ msgid ""
-#~ "Equalizer to adjust the tone of your voice.\n"
-#~ "\n"
-#~ "Increase or decrease specific frequencies\n"
-#~ "to make speech clearer or warmer."
-#~ msgstr ""
-#~ "Ses tonunu ayarlamak için Eşitleyici.\n"
-#~ "\n"
-#~ "Konuşmayı daha net veya daha sıcak hale getirmek için belirli frekansları "
-#~ "artırın veya azaltın."
-
-# File: biglinux-noise-reduction-
-# pipewire/src/biglinux_microphone/utils/tooltip_helper.py, line: 115
-#~ msgid ""
-#~ "Quick presets for common use cases:\n"
-#~ "\n"
-#~ "• Flat: No changes\n"
-#~ "• Voice Boost: Enhance vocal clarity\n"
-#~ "• Podcast: Professional broadcast sound\n"
-#~ "• Warm: Rich, full tone\n"
-#~ "• Bright: Clear, crisp sound"
-#~ msgstr ""
-#~ "Hızlı ön ayarlar yaygın kullanım senaryoları için:\n"
-#~ "\n"
-#~ "• Düz: Değişiklik yok\n"
-#~ "• Ses Artışı: Ses netliğini artır\n"
-#~ "• Podcast: Profesyonel yayın sesi\n"
-#~ "• Sıcak: Zengin, dolgun ton\n"
-#~ "• Parlak: Net, keskin ses"
-
-# File: biglinux-noise-reduction-
-# pipewire/src/biglinux_microphone/utils/tooltip_helper.py, line: 123
-#~ msgid ""
-#~ "Adjust individual frequency bands:\n"
-#~ "\n"
-#~ "• Left bands (31-250 Hz): Bass and low frequencies\n"
-#~ "• Middle bands (500-2000 Hz): Voice fundamentals\n"
-#~ "• Right bands (4000-16000 Hz): Brightness and clarity\n"
-#~ "\n"
-#~ "Drag sliders up to boost, down to cut."
-#~ msgstr ""
-#~ "Bireysel frekans bantlarını ayarlayın:\n"
-#~ "\n"
-#~ "• Sol bantlar (31-250 Hz): Bas ve düşük frekanslar\n"
-#~ "• Orta bantlar (500-2000 Hz): Ses temelleri\n"
-#~ "• Sağ bantlar (4000-16000 Hz): Parlaklık ve netlik\n"
-#~ "\n"
-#~ "Kaydırıcıları yukarı çekerek artırın, aşağı çekerek azaltın."
-
-# File: biglinux-noise-reduction-
-# pipewire/src/biglinux_microphone/utils/tooltip_helper.py, line: 136
-#~ msgid ""
-#~ "Activate audio loopback (Monitor).\n"
-#~ "\n"
-#~ "Allows hearing your own processed voice to test adjustments.\n"
-#~ "Note: There will always be a small delay (latency) in the return."
-#~ msgstr ""
-#~ "Ses geri beslemesini etkinleştir (İzleme).\n"
-#~ "\n"
-#~ "Ayarları test etmek için işlenmiş sesinizi duymanıza olanak tanır.\n"
-#~ "Not: Dönüşte her zaman küçük bir gecikme (laten) olacaktır."
-
-# File: biglinux-noise-reduction-
-# pipewire/src/biglinux_microphone/utils/tooltip_helper.py, line: 141
-#~ msgid ""
-#~ "Add an extra delay to the monitor return.\n"
-#~ "\n"
-#~ "Useful for checking audio/video sync in recordings or to avoid mental "
-#~ "confusion when speaking and hearing yourself immediately."
-#~ msgstr ""
-#~ "Monitör geri dönüşüne ekstra bir gecikme ekleyin.\n"
-#~ "\n"
-#~ "Kayıtlardaki ses/görüntü senkronizasyonunu kontrol etmek veya konuşurken "
-#~ "kendinizi hemen duymaktan kaynaklanan zihinsel karışıklığı önlemek için "
-#~ "faydalıdır."
-
-# File: biglinux-noise-reduction-
-# pipewire/src/biglinux_microphone/utils/tooltip_helper.py, line: 147
-#~ msgid ""
-#~ "Automatically switches your headset between listening mode and call mode "
-#~ "when you use the microphone. Note: Using the headset microphone generally "
-#~ "reduces both headphone and microphone quality."
-#~ msgstr ""
-#~ "Mikrofonu kullandığınızda kulaklığınızı dinleme modu ve arama modu "
-#~ "arasında otomatik olarak değiştirir. Not: Kulaklık mikrofonunu kullanmak "
-#~ "genellikle hem kulaklık hem de mikrofon kalitesini düşürür."
-
-# File: biglinux-noise-reduction-
-# pipewire/src/biglinux_microphone/utils/tooltip_helper.py, line: 199
-#~ msgid ""
-#~ "Enables acoustic echo cancellation using WebRTC AEC.\n"
-#~ "\n"
-#~ "Reduces echo and feedback when using speakers instead of headphones. "
-#~ "Captures the speaker output and removes it from the microphone signal."
-#~ msgstr ""
-#~ "WebRTC AEC kullanarak akustik yankı iptali sağlar.\n"
-#~ "\n"
-#~ "Kulaklık yerine hoparlör kullanıldığında yankı ve geri bildirimleri "
-#~ "azaltır. Hoparlör çıkışını yakalar ve mikrofon sinyalinden çıkarır."
-
-# File: biglinux-noise-reduction-
-# pipewire/src/biglinux_microphone/utils/tooltip_helper.py, line: 204
-#~ msgid ""
-#~ "Automatic gain control for the echo canceller.\n"
-#~ "\n"
-#~ "Adjusts the microphone volume automatically to keep\n"
-#~ "the signal level consistent. Disable if your voice\n"
-#~ "sounds unnaturally amplified or compressed."
-#~ msgstr ""
-#~ "Eko iptal cihazı için otomatik kazanç kontrolü.\n"
-#~ "\n"
-#~ "Mikrofon ses seviyesini otomatik olarak ayarlar\n"
-#~ "sinyal seviyesini tutmak için. Sesiniz\n"
-#~ "doğal olmayan şekilde artırılmış veya sıkıştırılmışsa devre dışı bırakın."
-
-# File: biglinux-noise-reduction-
-# pipewire/src/biglinux_microphone/utils/tooltip_helper.py, line: 210
-#~ msgid ""
-#~ "Additional noise suppression inside the echo canceller.\n"
-#~ "\n"
-#~ "Provides extra noise removal on top of the main GTCRN filter.\n"
-#~ "May reduce audio quality — only enable in very noisy environments."
-#~ msgstr ""
-#~ "Eko iptal cihazı içinde ek gürültü bastırma.\n"
-#~ "\n"
-#~ "Ana GTCRN filtresinin üzerine ek gürültü giderimi sağlar.\n"
-#~ "Ses kalitesini azaltabilir — yalnızca çok gürültülü ortamlarda "
-#~ "etkinleştirin."
-
-# File: biglinux-noise-reduction-
-# pipewire/src/biglinux_microphone/utils/tooltip_helper.py, line: 215
-#~ msgid ""
-#~ "Voice activity detection for the echo canceller.\n"
-#~ "\n"
-#~ "Helps the AEC distinguish speech from noise.\n"
-#~ "Can improve echo removal accuracy but may interfere\n"
-#~ "with the main noise reduction. Disabled by default."
-#~ msgstr ""
-#~ "Yankı iptali için ses etkinliği tespiti.\n"
-#~ "\n"
-#~ "AEC'nin konuşmayı gürültüden ayırt etmesine yardımcı olur.\n"
-#~ "Yankı kaldırma doğruluğunu artırabilir ancak ana gürültü azaltma ile "
-#~ "çelişebilir. Varsayılan olarak devre dışı."
-
-# File: biglinux-noise-reduction-
-# pipewire/src/biglinux_microphone/utils/tooltip_helper.py, line: 213
-#~ msgid ""
-#~ "Automatic Volume Control.\n"
-#~ "\n"
-#~ "Uses a compressor in the PipeWire filter chain to\n"
-#~ "automatically normalize your microphone level.\n"
-#~ "Keeps your voice at a consistent volume regardless\n"
-#~ "of how close or far you are from the microphone."
-#~ msgstr ""
-#~ "Otomatik Ses Kontrolü.\n"
-#~ "\n"
-#~ "Mikrofon seviyenizi otomatik olarak normalleştirmek için PipeWire filtre "
-#~ "zincirinde bir kompresör kullanır.\n"
-#~ "Sesinizi, mikrofonunuza ne kadar yakın veya uzak olursanız olun, tutarlı "
-#~ "bir ses seviyesinde tutar."
-
-# File: biglinux-noise-reduction-
-# pipewire/src/biglinux_microphone/utils/tooltip_helper.py, line: 220
-#~ msgid ""
-#~ "Target signal level for the microphone.\n"
-#~ "\n"
-#~ "Controls the output level of the automatic\n"
-#~ "volume normalizer.\n"
-#~ "100% = close to 0 dBFS (loudest).\n"
-#~ "70% ≈ −7 dBFS (comfortable). Default: 70%."
-#~ msgstr ""
-#~ "Mikrofon için hedef sinyal seviyesi.\n"
-#~ "\n"
-#~ "Otomatik ses normalleştiricinin çıkış seviyesini kontrol eder.\n"
-#~ "%100 = 0 dBFS'e (en yüksek) yakın.\n"
-#~ "%70 ≈ −7 dBFS (rahat). Varsayılan: %70."
-
-# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/config.py,
-# line: 712
-#~ msgid "Subtle presence boost for clear speech."
-#~ msgstr "Açık konuşma için ince varlık artırımı."
-
-# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/config.py,
-# line: 567
-#~ msgid "Natural (No Effects)"
-#~ msgstr "Doğal (Efekt Yok)"
-
-# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/config.py,
-# line: 568
-#~ msgid "Original sound without changes."
-#~ msgstr "Değişiklik olmadan orijinal ses."
-
-# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/config.py,
-# line: 572
-#~ msgid "Crystal Voice"
-#~ msgstr "Kristal Ses"
-
-# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/config.py,
-# line: 573
-#~ msgid "Focuses on clarity and intelligibility."
-#~ msgstr "Açıklık ve anlaşılabilirliğe odaklanır."
-
-# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/config.py,
-# line: 577
-#~ msgid "Radio Host"
-#~ msgstr "Radyo Sunucusu"
-
-# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/config.py,
-# line: 578
-#~ msgid "Full and deep voice (Broadcast)."
-#~ msgstr "Tam ve derin ses (Yayın)."
-
-# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/config.py,
-# line: 582
-#~ msgid "Velvet Voice"
-#~ msgstr "Kadife Ses"
-
-# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/config.py,
-# line: 583
-#~ msgid "Warm and pleasant tone."
-#~ msgstr "Sıcak ve hoş bir ton."
-
-# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/config.py,
-# line: 587
-#~ msgid "Extra Brightness"
-#~ msgstr "Ekstra Parlaklık"
-
-# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/config.py,
-# line: 588
-#~ msgid "Enhance treble and details."
-#~ msgstr "Tiz ve detayları artır."
-
-# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/config.py,
-# line: 592
-#~ msgid "Soften 'S' (De-esser)"
-#~ msgstr "'S' Yumuşatma (De-esser)"
-
-# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/config.py,
-# line: 593
-#~ msgid "Reduces sibilance and annoying high-pitched sounds."
-#~ msgstr "Sibilansı ve rahatsız edici yüksek frekanslı sesleri azaltır."
-
-# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/config.py,
-# line: 597
-#~ msgid "Remove Rumble"
-#~ msgstr "Rumble'ı kaldırın"
-
-# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/config.py,
-# line: 598
-#~ msgid "Eliminates low-frequency noise (trucks, bumps)."
-#~ msgstr "Düşük frekanslı gürültüyü (kamyonlar, çukurlar) ortadan kaldırır."
-
-# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/config.py,
-# line: 603
-#~ msgid "Brings the voice to the 'front' of the mix."
-#~ msgstr "Sesi ön plana ses getirir."
-
-# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/config.py,
-# line: 608
-#~ msgid "Manual adjustment."
-#~ msgstr "Manuel ayarlama."
-
-# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/window.py,
-# line: 173
-#~ msgid "This will return all adjustments to their original defaults."
-#~ msgstr "Bu, tüm ayarlamaları orijinal varsayılanlarına döndürecektir."
-
-# File: biglinux-noise-reduction-
-# pipewire/usr/share/bigbashview/apps/microphone/noise_reducer.py, line: 276
-#~ msgid "About"
-#~ msgstr "Hakkında"
-
-# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/window.py,
-# line: 196
-#~ msgid "Quit"
-#~ msgstr "Çıkış yap"
-
-# File: biglinux-noise-reduction-
-# pipewire/src/biglinux_microphone/application.py, line: 217
-#~ msgid "Legal"
-#~ msgstr "Hukuki"
-
-# File: biglinux-noise-reduction-
-# pipewire/src/biglinux_microphone/application.py, line: 220
-#~ msgid ""
-#~ "The GPL-3.0 license applies to this configuration interface. The projects "
-#~ "used to apply the filters have their own licenses."
-#~ msgstr ""
-#~ "Bu yapılandırma arayüzüne GPL-3.0 lisansı uygulanır. Filtreleri uygulamak "
-#~ "için kullanılan projelerin kendi lisansları vardır."
-
-# File: biglinux-noise-reduction-
-# pipewire/src/biglinux_microphone/application.py, line: 227
-#~ msgid "Technologies used"
-#~ msgstr "Kullanılan teknolojiler"
-
-# File: biglinux-noise-reduction-
-# pipewire/src/biglinux_microphone/application.py, line: 251
-#~ msgid "Use expanders to access settings"
-#~ msgstr "Ayarları erişmek için genişleticileri kullanın."
-
-#~ msgid "Cleans every sound the system plays before it reaches your speakers"
-#~ msgstr "Hoparlörlerinize ulaşmadan önce her sesi temizler"
+#: usr/share/plasma/plasmoids/br.com.biglinux.micnoise/contents/ui/main.qml:172
+msgid "Open settings…"
+msgstr "Ayarları aç…"

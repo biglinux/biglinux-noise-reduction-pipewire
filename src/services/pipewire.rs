@@ -1,23 +1,32 @@
 //! PipeWire graph queries and controls used by the app and CLI.
 
+mod cards;
 mod live;
 mod module;
+mod native;
+mod source_watch;
 mod sources;
+pub(crate) use source_watch::SourceWatch;
 mod types;
 pub mod user_tweaks;
 
 use std::io;
 
+pub use cards::recover_capture;
 pub use live::{LiveOutcome, apply_live};
-pub(crate) use live::{UpdateTargets, apply_live_to_graph, graph_snapshot};
+pub(crate) use live::{
+    UpdateTargets, apply_live_to_graph, graph_snapshot, mic_params, node_transport, output_params,
+    unknown_controls_for,
+};
 pub use module::{
-    AEC_UNIT, MIC_UNIT, OUTPUT_UNIT, restart_aec_service, restart_mic_service,
-    restart_output_service, start_aec_service, start_mic_service, start_output_service,
-    stop_aec_service, stop_mic_service, stop_output_service,
+    AEC_UNIT, AGC_UNIT, MIC_UNIT, OUTPUT_UNIT, ROUTE_UNIT, restart_aec_service,
+    restart_mic_service, restart_output_service, set_unit_running, start_aec_service,
+    start_mic_service, start_output_service, stop_aec_service, stop_mic_service,
+    stop_output_service,
 };
 pub use sources::{
-    Source, preview_quantum, set_default_source, set_source_volume, snapshot as snapshot_sources,
-    source_volume,
+    Source, chain_has_consumer, has_capture_consumer, link_dump, preview_quantum,
+    set_default_source, set_source_volume, snapshot as snapshot_sources, source_volume,
 };
 pub use types::{AppStream, StreamDirection};
 

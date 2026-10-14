@@ -18,7 +18,7 @@ from __future__ import annotations
 from pathlib import Path
 
 import numpy as np
-from scipy.signal import resample_poly
+from scipy.signal import correlate, resample_poly
 
 
 #: Widest delay searched for, in seconds. Comfortably past the ~50 ms the
@@ -32,7 +32,17 @@ def estimate_delay(reference: np.ndarray, processed: np.ndarray, sr: int) -> int
     Positive means the processed signal is late, which is the only
     direction a causal filter can produce. Returns 0 when neither signal
     carries enough energy to correlate.
+
+    The plain argmax is the right choice: it lands on the lag that best
+    aligns the two waveforms sample-for-sample, which is exactly what the
+    sample-wise metrics need. A "prefer the earliest near-peak lag" variant
+    was tried and reverted — it shaved a few samples off the optimum and
+    collapsed SI-SDR for the systems that actually denoise well, while
+    frame-based PESQ/DNSMOS stayed high, so the numbers disagreed with the
+    ears. Occasional per-clip misestimates wash out across a full set.
     """
+    if sr <= 0 or not np.isfinite(reference).all() or not np.isfinite(processed).all():
+        raise ValueError("expected positive sample rate and finite audio")
     max_lag = int(MAX_DELAY_S * sr)
     n = min(reference.size, processed.size)
     if n <= max_lag * 2:
@@ -47,7 +57,7 @@ def estimate_delay(reference: np.ndarray, processed: np.ndarray, sr: int) -> int
     # first frames of any overlap-add produce.
     lo = min(n // 4, max_lag * 2)
     seg = slice(lo, min(n, lo + 10 * sr))
-    corr = np.correlate(b[seg], a[seg], mode="full")
+    corr = correlate(b[seg], a[seg], mode="full", method="fft")
     centre = corr.size // 2
     window = corr[centre : centre + max_lag + 1]
     return int(np.argmax(window))
@@ -153,6 +163,61 @@ def si_sdr_db(reference: np.ndarray, processed: np.ndarray) -> float:
     return 10.0 * float(np.log10((np.sum(target**2) + 1e-12) / (np.sum(noise**2) + 1e-12)))
 
 
+def sdr_db(reference: np.ndarray, processed: np.ndarray) -> float:
+    """Gain-sensitive SDR. Unlike :func:`si_sdr_db` it does not rescale the
+    reference, so a quieter output counts as error — reported alongside SI-SDR
+    so a level drop cannot hide behind scale invariance (review METRIC-02)."""
+    r, p = _align(reference, processed)
+    r = r - r.mean()
+    p = p - p.mean()
+    noise = p - r
+    return 10.0 * float(np.log10((np.sum(r**2) + 1e-12) / (np.sum(noise**2) + 1e-12)))
+
+
+def clip_fraction(x: np.ndarray, threshold: float = 0.999) -> float:
+    """Fraction of samples at or beyond full scale (final clipping)."""
+    return float(np.mean(np.abs(x.astype(np.float64)) >= threshold))
+
+
+def speech_pause_levels(
+    reference: np.ndarray,
+    processed: np.ndarray,
+    sr: int,
+    *,
+    frame_ms: float = 20.0,
+    gate_db: float = 30.0,
+) -> tuple[float, float]:
+    """Split the pair on reference energy and measure what the processing did
+    to each part (review METRIC-02):
+
+    * ``active_speech_gain_db`` — RMS change on reference-active frames.
+      Negative means the output is quieter than the input on speech, the level
+      drop SI-SDR hides.
+    * ``pause_residual_db`` — processed level (dBFS) left in reference pauses.
+
+    A pair with no detectable pause (or no speech) reports NaN for that half.
+    """
+    r, p = _align(reference, processed)
+    frame = max(1, int(sr * frame_ms / 1000.0))
+    n = r.size // frame
+    if n == 0:
+        return float("nan"), float("nan")
+    r = r[: n * frame]
+    p = p[: n * frame]
+    frame_rms = np.sqrt(np.mean(r.reshape(n, frame).astype(np.float64) ** 2, axis=1) + 1e-20)
+    speech_frames = frame_rms >= frame_rms.max() * 10.0 ** (-gate_db / 20.0)
+    speech = np.repeat(speech_frames, frame)
+
+    def rms_db_sel(x: np.ndarray, mask: np.ndarray) -> float:
+        if not mask.any():
+            return float("nan")
+        return 20.0 * float(np.log10(np.sqrt(np.mean(x[mask].astype(np.float64) ** 2)) + 1e-12))
+
+    speech_gain = rms_db_sel(p, speech) - rms_db_sel(r, speech)
+    pause_residual = rms_db_sel(p, ~speech)
+    return speech_gain, pause_residual
+
+
 # ── DNSMOS hook ─────────────────────────────────────────────────────
 
 
@@ -193,6 +258,9 @@ def score_pair(
         "energy_2k_4k_db": spectrum_band_energy_db(processed, sr, 2000.0, 4000.0),
         "energy_4k_8k_db": spectrum_band_energy_db(processed, sr, 4000.0, 8000.0),
         "energy_8k_plus_db": spectrum_band_energy_db(processed, sr, 8000.0, sr / 2),
+        # Final clipping is level-sensitive and needs no reference, so report it
+        # unconditionally (review METRIC-02).
+        "clip_pct": 100.0 * clip_fraction(processed),
     }
     if reference is not None:
         # Align once, here, so every intrusive metric below sees the same
@@ -203,6 +271,13 @@ def score_pair(
         out["stoi"] = stoi(aligned_ref, aligned_proc, sr, extended=False)
         out["estoi"] = stoi(aligned_ref, aligned_proc, sr, extended=True)
         out["si_sdr_db"] = si_sdr_db(aligned_ref, aligned_proc)
+        # Gain-sensitive companions to SI-SDR: level drop and residual noise in
+        # pauses that scale-invariant SDR cannot see (review METRIC-02).
+        out["sdr_db"] = sdr_db(aligned_ref, aligned_proc)
+        out["level_delta_db"] = rms_db(aligned_proc) - rms_db(aligned_ref)
+        speech_gain, pause_residual = speech_pause_levels(aligned_ref, aligned_proc, sr)
+        out["active_speech_gain_db"] = speech_gain
+        out["pause_residual_db"] = pause_residual
     if dnsmos_model is not None and Path(dnsmos_model).exists():
         out.update(dnsmos_scores(processed, sr, Path(dnsmos_model)))
     return out

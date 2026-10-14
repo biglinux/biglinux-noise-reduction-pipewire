@@ -1,0 +1,20 @@
+{
+  "python_files_ast_passed": 37,
+  "shell_files_syntax_passed": 8,
+  "cargo_lock_versions": {
+    "async-channel": "2.5.0",
+    "gio": "0.22.8",
+    "glib": "0.22.8",
+    "libc": "0.2.186",
+    "libspa": "0.10.0",
+    "pipewire": "0.10.0",
+    "rustfft": "6.4.1",
+    "serde": "1.0.228",
+    "serde_json": "1.0.150"
+  },
+  "vendor_present": false,
+  "rust_compilation": "NOT_RUN",
+  "gtk_runtime": "NOT_RUN",
+  "hardware": "NOT_RUN",
+  "original_sha256": "ceea62839287b3d845407f2eb3da4b21dca1d58dd4688fd673f8ee894b16f234"
+}

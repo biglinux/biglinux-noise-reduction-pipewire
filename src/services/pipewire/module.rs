@@ -128,6 +128,31 @@ pub fn stop_output_service() -> io::Result<()> {
     Ok(())
 }
 
+/// Units that follow a single setting rather than the shape of the graph.
+///
+/// The loader units above are reconciled against what is actually present in the
+/// PipeWire graph, and other steps wait on them. These two are not observed and
+/// nothing waits on them: they run exactly while their feature is on, which is
+/// what keeps them out of a session where the user never enabled it.
+pub const AGC_UNIT: &str = "biglinux-microphone-agc.service";
+pub const ROUTE_UNIT: &str = "biglinux-microphone-route.service";
+
+/// Bring `unit` to `running`. Idempotent — systemd treats a `start` on a running
+/// unit and a `stop` on a stopped one as no-ops.
+pub fn set_unit_running(unit: &str, running: bool) -> io::Result<()> {
+    if running {
+        let _ = run_systemctl(["--user", "reset-failed", unit]);
+        run_systemctl(["--user", "start", unit])?;
+    } else {
+        run_systemctl(["--user", "stop", unit])?;
+    }
+    debug!(
+        "pipewire: {unit} {}",
+        if running { "started" } else { "stopped" }
+    );
+    Ok(())
+}
+
 fn run_systemctl<const N: usize>(args: [&str; N]) -> io::Result<()> {
     let output = BigSubprocessSpec::builder()
         .program("/usr/bin/systemctl")

@@ -1,0 +1,22 @@
+TAP version 13
+# Subtest: a successful status read clears an obsolete query error
+ok 1 - a successful status read clears an obsolete query error
+  ---
+  duration_ms: 4.665177
+  type: 'test'
+  ...
+# Subtest: a status refresh does not erase a distinct failed-action message
+ok 2 - a status refresh does not erase a distinct failed-action message
+  ---
+  duration_ms: 2.00659
+  type: 'test'
+  ...
+1..2
+# tests 2
+# suites 0
+# pass 2
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 208.857234

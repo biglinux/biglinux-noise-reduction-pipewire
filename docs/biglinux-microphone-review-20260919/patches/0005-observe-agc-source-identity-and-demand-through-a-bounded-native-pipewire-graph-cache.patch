@@ -1,0 +1,274 @@
+From de66b45fb3f3cdffa26dd1fa85939c19eb807d38 Mon Sep 17 00:00:00 2001
+From: OpenAI Review <review@example.invalid>
+Date: Sat, 19 Sep 2026 05:31:43 +0000
+Subject: [PATCH] Observe AGC source identity and demand through a bounded
+ native PipeWire graph cache
+
+---
+ src/services/pipewire.rs              |   2 +
+ src/services/pipewire/source_watch.rs | 220 ++++++++++++++++++++++++++
+ src/services/pipewire/sources.rs      |   4 +-
+ 3 files changed, 224 insertions(+), 2 deletions(-)
+ create mode 100644 src/services/pipewire/source_watch.rs
+
+diff --git a/src/services/pipewire.rs b/src/services/pipewire.rs
+index f97b345..cd2e56e 100644
+--- a/src/services/pipewire.rs
++++ b/src/services/pipewire.rs
+@@ -5,6 +5,8 @@ mod live;
+ mod native;
+ mod module;
+ mod sources;
++mod source_watch;
++pub(crate) use source_watch::SourceWatch;
+ mod types;
+ pub mod user_tweaks;
+ 
+diff --git a/src/services/pipewire/source_watch.rs b/src/services/pipewire/source_watch.rs
+new file mode 100644
+index 0000000..214dcfa
+--- /dev/null
++++ b/src/services/pipewire/source_watch.rs
+@@ -0,0 +1,220 @@
++//! Read-only, event-driven graph cache for the AGC control thread.
++//! No capture, timer, subprocess or volume write occurs on this PipeWire loop.
++//! Volume remains with WirePlumber (wpctl), preserving ALSA route/mixer policy.
++use std::{cell::RefCell, collections::BTreeMap, rc::Rc, sync::{Arc, Mutex},
++    thread::{self, JoinHandle}, time::{Duration, Instant}};
++use pipewire as pw;
++use super::sources::{Source, CHAIN_NODES, is_virtual_source};
++use crate::pipeline::{MIC_NODE_NAME, EC_SOURCE_NAME};
++
++#[derive(Default)]
++struct State {
++    ready: bool,
++    cookie: Option<u32>,
++    nodes: BTreeMap<u32, (Source, bool)>,
++    links: BTreeMap<u32, (u32, u32)>,
++    defaults: BTreeMap<u32, Option<String>>,
++}
++impl State {
++    fn named(&self, name: &str) -> Option<Source> {
++        if !self.ready { return None; }
++        let mut matches = self.nodes.values().filter(|(s, _)| s.node_name == name);
++        let (source, _) = matches.next()?;
++        if matches.next().is_some() || source.object_serial.is_none() { return None; }
++        let mut source = source.clone();
++        source.core_cookie = Some(self.cookie?);
++        Some(source)
++    }
++    fn default_source(&self) -> Option<Source> {
++        if self.defaults.len() != 1 { return None; }
++        let name = self.defaults.values().next()?.as_deref()?;
++        let source = self.named(name)?;
++        self.nodes.get(&source.node_id).filter(|(_, hardware)| *hardware)?;
++        Some(source)
++    }
++    fn has_consumer(&self) -> bool {
++        self.ready && self.links.values().any(|(output, input)| {
++            let Some((source, _)) = self.nodes.get(output) else { return false };
++            let Some((consumer, _)) = self.nodes.get(input) else { return false };
++            [MIC_NODE_NAME, EC_SOURCE_NAME].contains(&source.node_name.as_str())
++                && !CHAIN_NODES.contains(&consumer.node_name.as_str())
++        })
++    }
++}
++
++pub(crate) struct SourceWatch {
++    state: Arc<Mutex<State>>,
++    stop: pw::channel::Sender<()>,
++    worker: Option<JoinHandle<()>>,
++}
++impl SourceWatch {
++    pub(crate) fn start() -> Result<Self, String> {
++        let state = Arc::new(Mutex::new(State::default()));
++        let (stop, receiver) = pw::channel::channel();
++        let shared = state.clone();
++        let worker = thread::Builder::new().name("agc-source-watch".into()).spawn(move || {
++            // Also invalidates the cache on panic while unwinding this worker.
++            struct Invalidate(Arc<Mutex<State>>);
++            impl Drop for Invalidate {
++                fn drop(&mut self) { if let Ok(mut s) = self.0.lock() { s.ready = false; } }
++            }
++            let _guard = Invalidate(shared.clone());
++            if let Err(error) = serve(shared, receiver) { log::debug!("AGC graph watch: {error}"); }
++        }).map_err(|e| e.to_string())?;
++        let watch = Self { state, stop, worker: Some(worker) };
++        let deadline = Instant::now() + Duration::from_secs(2);
++        while Instant::now() < deadline {
++            if watch.state.lock().is_ok_and(|s| s.ready) { return Ok(watch); }
++            if watch.worker.as_ref().is_some_and(|w| w.is_finished()) { break; }
++            thread::sleep(Duration::from_millis(10));
++        }
++        Err("PipeWire graph initialization timed out or failed".into())
++    }
++    pub(crate) fn default_source(&self) -> Option<Source> {
++        self.state.lock().ok()?.default_source()
++    }
++    pub(crate) fn is_current(&self, source: &Source) -> bool {
++        self.default_source().is_some_and(|s| source.same_generation(&s))
++    }
++    /// Require both hardware and meter generations; a rebuilt filter invalidates
++    /// learned normalization even if it kept the same node.name.
++    pub(crate) fn meter_source(&self, hardware: &Source) -> Option<Source> {
++        let state = self.state.lock().ok()?;
++        if !hardware.same_generation(&state.default_source()?) { return None; }
++        if state.nodes.values().any(|(s, _)| s.node_name == MIC_NODE_NAME) {
++            state.named(MIC_NODE_NAME) // ambiguity is failure, not a raw fallback
++        } else { state.named(&hardware.node_name) }
++    }
++    pub(crate) fn has_consumer(&self) -> bool {
++        self.state.lock().is_ok_and(|s| s.has_consumer())
++    }
++}
++impl Drop for SourceWatch {
++    fn drop(&mut self) {
++        let _ = self.stop.send(()); // one shutdown message; no periodic wake-up
++        if let Some(worker) = self.worker.take() { let _ = worker.join(); }
++    }
++}
++
++fn serve(shared: Arc<Mutex<State>>, stop: pw::channel::Receiver<()>) -> Result<(), String> {
++    pw::init();
++    let main_loop = pw::main_loop::MainLoopRc::new(None).map_err(|e| e.to_string())?;
++    let _stop = stop.attach(main_loop.loop_(), {
++        let quit = main_loop.downgrade();
++        move |_| { if let Some(main_loop) = quit.upgrade() { main_loop.quit(); } }
++    });
++    let context = pw::context::ContextRc::new(&main_loop, None).map_err(|e| e.to_string())?;
++    let core = context.connect_rc(None).map_err(|e| e.to_string())?;
++    let registry = core.get_registry_rc().map_err(|e| e.to_string())?;
++    let boot = Rc::new(RefCell::new(None));
++    let done_boot = boot.clone();
++    let info_state = shared.clone(); let done_state = shared.clone(); let error_state = shared.clone();
++    let quit = main_loop.downgrade();
++    let _core = core.add_listener_local().info(move |info| {
++        if let Ok(mut s) = info_state.lock() { s.cookie = Some(info.cookie()); }
++    }).done(move |id, seq| {
++        if id == pw::core::PW_ID_CORE && *done_boot.borrow() == Some(seq)
++            && let Ok(mut s) = done_state.lock() { s.ready = true; }
++    }).error(move |_, _, _, _| {
++        // Any failed subscription makes our view incomplete: fail closed.
++        if let Ok(mut s) = error_state.lock() { s.ready = false; }
++        if let Some(main_loop) = quit.upgrade() { main_loop.quit(); }
++    }).register();
++    // Keep listeners/proxies on their owning thread. Drop listeners first.
++    type Metadata = (pw::metadata::MetadataListener, pw::metadata::Metadata);
++    let metadata: Rc<RefCell<BTreeMap<u32, Metadata>>> = Rc::new(RefCell::new(BTreeMap::new()));
++    let global_meta = metadata.clone(); let removed_meta = metadata.clone();
++    let added = shared.clone(); let removed = shared.clone(); let binder = registry.clone();
++    let quit = main_loop.downgrade();
++    let _registry = registry.add_listener_local().global(move |global| {
++        let Some(props) = global.props else { return };
++        let Ok(mut s) = added.lock() else { return };
++        if global.type_ == pw::types::ObjectType::Node {
++            if s.nodes.len() >= 4096 {
++                s.ready = false; if let Some(m) = quit.upgrade() { m.quit(); } return;
++            }
++            let Some(name) = props.get("node.name").filter(|n| !n.is_empty() && n.len() <= 4096) else { return };
++            let hardware = props.get("media.class") == Some("Audio/Source") && !is_virtual_source(name);
++            s.nodes.insert(global.id, (Source {
++                node_id: global.id, node_name: name.into(),
++                description: props.get("node.description").unwrap_or(name).chars().take(4096).collect(),
++                object_serial: props.get("object.serial").and_then(|v| v.parse::<u64>().ok()).map(|n| n.to_string()),
++                core_cookie: None,
++            }, hardware));
++        } else if global.type_ == pw::types::ObjectType::Link {
++            if s.links.len() >= 16384 {
++                s.ready = false; if let Some(m) = quit.upgrade() { m.quit(); } return;
++            }
++            let output = props.get("link.output.node").and_then(|n| n.parse().ok());
++            let input = props.get("link.input.node").and_then(|n| n.parse().ok());
++            if let (Some(output), Some(input)) = (output, input) { s.links.insert(global.id, (output, input)); }
++        } else if global.type_ == pw::types::ObjectType::Metadata && props.get("metadata.name") == Some("default") {
++            if s.defaults.len() >= 8 {
++                s.ready = false; if let Some(m) = quit.upgrade() { m.quit(); } return;
++            }
++            s.defaults.insert(global.id, None);
++            drop(s); // never hold a cache mutex while binding a native proxy
++            let Ok(proxy) = binder.bind::<pw::metadata::Metadata, _>(global) else {
++                if let Ok(mut s) = added.lock() { s.ready = false; }
++                if let Some(m) = quit.upgrade() { m.quit(); } return;
++            };
++            let state = added.clone(); let id = global.id;
++            let listener = proxy.add_listener_local().property(move |subject, key, _, value| {
++                if subject == 0 && (key.is_none() || key == Some("default.audio.source"))
++                    && let Ok(mut s) = state.lock() {
++                        let name = if key.is_none() { None } else { value.and_then(metadata_name) };
++                        s.defaults.insert(id, name);
++                    }
++                0
++            }).register();
++            global_meta.borrow_mut().insert(global.id, (listener, proxy));
++        }
++    }).global_remove(move |id| {
++        if let Ok(mut s) = removed.lock() {
++            s.nodes.remove(&id); s.links.remove(&id); s.defaults.remove(&id);
++        }
++        removed_meta.borrow_mut().remove(&id);
++    }).register();
++    *boot.borrow_mut() = Some(core.sync(0).map_err(|e| e.to_string())?);
++    main_loop.run();
++    Ok(())
++}
++fn metadata_name(text: &str) -> Option<String> {
++    if text.len() > 8192 { return None; }
++    let value: serde_json::Value = serde_json::from_str(text).ok()?;
++    value.get("name")?.as_str().filter(|s| !s.is_empty() && s.len() <= 4096).map(str::to_owned)
++}
++
++#[cfg(test)]
++mod tests {
++    use super::*;
++    fn source(id: u32, name: &str) -> Source {
++        Source { node_id: id, node_name: name.into(), description: name.into(),
++            object_serial: Some(id.to_string()), core_cookie: None }
++    }
++    #[test]
++    fn graph_cache_rejects_ambiguous_defaults_and_recycled_generations() {
++        let mut s = State { ready: true, cookie: Some(10), ..State::default() };
++        s.nodes.insert(1, (source(1, "mic"), true)); s.defaults.insert(2, Some("mic".into()));
++        let before = s.default_source().unwrap();
++        s.cookie = Some(11);
++        assert!(!before.same_generation(&s.default_source().unwrap()));
++        s.defaults.insert(3, Some("mic".into())); assert!(s.default_source().is_none());
++        s.defaults.remove(&3); s.nodes.insert(4, (source(4, "mic"), true));
++        assert!(s.default_source().is_none());
++    }
++    #[test]
++    fn graph_cache_does_not_count_its_own_meter_as_demand() {
++        let mut s = State { ready: true, ..State::default() };
++        s.nodes.insert(1, (source(1, MIC_NODE_NAME), false));
++        s.nodes.insert(2, (source(2, crate::services::audio_monitor::METER_NODE_NAME), false));
++        s.links.insert(3, (1, 2)); assert!(!s.has_consumer());
++        s.nodes.insert(4, (source(4, "Firefox"), false)); s.links.insert(5, (1, 4));
++        assert!(s.has_consumer()); s.ready = false; assert!(!s.has_consumer());
++    }
++    #[test]
++    fn malformed_or_removed_metadata_never_selects_a_microphone() {
++        assert_eq!(metadata_name(r#"{"name":"mic"}"#), Some("mic".into()));
++        for text in ["null", "[]", "{", r#"{"name":""}"#] { assert!(metadata_name(text).is_none()); }
++    }
++}
+diff --git a/src/services/pipewire/sources.rs b/src/services/pipewire/sources.rs
+index 15193a9..d1e3529 100644
+--- a/src/services/pipewire/sources.rs
++++ b/src/services/pipewire/sources.rs
+@@ -64,7 +64,7 @@ impl Source {
+ /// actually recording". The AGC's own analyser belongs in this list for a
+ /// sharper reason: if it counted as a consumer it would be its own justification
+ /// for staying open, and the microphone would never be released.
+-const CHAIN_NODES: [&str; 5] = [
++pub(super) const CHAIN_NODES: [&str; 5] = [
+     MIC_CAPTURE_NODE_NAME,
+     MIC_NODE_NAME,
+     EC_CAPTURE_NODE_NAME,
+@@ -321,7 +321,7 @@ fn parse_sources(stdout: &str) -> Vec<Source> {
+ 
+ /// Identify nodes the picker must hide: our two virtual filter-chain
+ /// endpoints and any pw-loopback monitor port.
+-fn is_virtual_source(node_name: &str) -> bool {
++pub(super) fn is_virtual_source(node_name: &str) -> bool {
+     node_name == MIC_NODE_NAME
+         || node_name == MIC_CAPTURE_NODE_NAME
+         || node_name == EC_SOURCE_NAME

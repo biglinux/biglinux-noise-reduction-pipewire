@@ -5,7 +5,7 @@
 //! restores the previous value even if the window stops responding. Restoration
 //! checks that another application has not replaced our temporary value.
 
-use std::io::{self, BufRead, Write};
+use std::io::{self, Read, Write};
 use std::os::fd::AsRawFd;
 use std::process::{ChildStdin, ExitCode};
 use std::time::{Duration, Instant};
@@ -55,20 +55,11 @@ impl QuantumPreview {
             cancellation: child.take_stdin(),
             child: Some(child),
         };
-        if !poll_readable(stdout.as_raw_fd(), Duration::from_secs(6))? {
+        if let Err(error) = read_ready(stdout, Duration::from_secs(6)) {
+            // Restoring the override takes priority; preserve a cleanup failure
+            // instead of claiming the preview was safely canceled.
             preview.stop()?;
-            return Err(io::Error::new(
-                io::ErrorKind::TimedOut,
-                "preview did not start",
-            ));
-        }
-        let mut ready = String::new();
-        io::BufReader::new(stdout).read_line(&mut ready)?;
-        if ready.trim() != "READY" {
-            preview.stop()?;
-            return Err(io::Error::other(
-                "the audio system could not start a preview",
-            ));
+            return Err(error);
         }
         Ok(preview)
     }
@@ -107,6 +98,38 @@ impl Drop for QuantumPreview {
             }));
         }
     }
+}
+
+/// Read the complete bounded handshake, not just its first readable byte.
+/// poll()+read_line() lets a partial READY line block beyond the startup timeout.
+fn read_ready(mut stream: impl Read + AsRawFd, timeout: Duration) -> io::Result<()> {
+    let deadline = Instant::now() + timeout;
+    let expected = b"READY\n";
+    for expected_byte in expected {
+        loop {
+            let remaining = deadline.saturating_duration_since(Instant::now());
+            if remaining.is_zero() || !poll_readable(stream.as_raw_fd(), remaining)? {
+                return Err(io::Error::new(
+                    io::ErrorKind::TimedOut,
+                    "preview handshake timed out",
+                ));
+            }
+            let mut byte = [0_u8];
+            match stream.read(&mut byte) {
+                Ok(1) if byte[0] == *expected_byte => break,
+                // A signal interrupted the read; the deadline above still bounds the retry.
+                Err(error) if error.kind() == io::ErrorKind::Interrupted => {}
+                Err(error) => return Err(error),
+                _ => {
+                    return Err(io::Error::new(
+                        io::ErrorKind::InvalidData,
+                        "invalid preview handshake",
+                    ));
+                }
+            }
+        }
+    }
+    Ok(())
 }
 
 fn finish_child(mut child: BigSubprocessChild) -> io::Result<()> {
@@ -407,5 +430,38 @@ mod restoration_tests {
         assert_eq!(reads.get(), RESTORE_ATTEMPTS);
         assert!(completion_status(false).is_err());
         assert!(completion_status(true).is_ok());
+    }
+}
+
+#[cfg(test)]
+mod handshake_tests {
+    use super::*;
+    #[test]
+    fn complete_handshake_is_accepted() {
+        let (reader, mut writer) = std::os::unix::net::UnixStream::pair().unwrap();
+        writer.write_all(b"READY\n").unwrap();
+        read_ready(reader, Duration::from_secs(1)).unwrap();
+    }
+    #[test]
+    fn partial_handshake_cannot_hold_the_worker_forever() {
+        let (reader, mut writer) = std::os::unix::net::UnixStream::pair().unwrap();
+        writer.write_all(b"REA").unwrap();
+        assert_eq!(
+            read_ready(reader, Duration::from_millis(10))
+                .unwrap_err()
+                .kind(),
+            io::ErrorKind::TimedOut
+        );
+    }
+    #[test]
+    fn unexpected_handshake_is_rejected() {
+        let (reader, mut writer) = std::os::unix::net::UnixStream::pair().unwrap();
+        writer.write_all(b"NOT_READY\n").unwrap();
+        assert_eq!(
+            read_ready(reader, Duration::from_secs(1))
+                .unwrap_err()
+                .kind(),
+            io::ErrorKind::InvalidData
+        );
     }
 }

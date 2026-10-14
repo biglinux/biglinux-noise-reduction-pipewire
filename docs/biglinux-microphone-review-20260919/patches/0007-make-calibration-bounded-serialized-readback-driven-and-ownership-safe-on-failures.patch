@@ -1,0 +1,511 @@
+From 619f374151c074adf361253e0cb3900824eed6a2 Mon Sep 17 00:00:00 2001
+From: OpenAI Review <review@example.invalid>
+Date: Sat, 19 Sep 2026 05:31:43 +0000
+Subject: [PATCH] Make calibration bounded, serialized, readback-driven and
+ ownership-safe on failures
+
+---
+ src/agc.rs             | 190 ++---------------------------------------
+ src/agc/calibration.rs | 147 +++++++++++++++++++++++++++++++
+ src/agc/session.rs     | 102 ++++++++++++++++++++++
+ 3 files changed, 255 insertions(+), 184 deletions(-)
+ create mode 100644 src/agc/calibration.rs
+ create mode 100644 src/agc/session.rs
+
+diff --git a/src/agc.rs b/src/agc.rs
+index 75fd2c1..681c266 100644
+--- a/src/agc.rs
++++ b/src/agc.rs
+@@ -13,6 +13,9 @@
+ 
+ mod control;
+ mod features;
++mod calibration;
++mod session;
++pub use calibration::calibrate;
+ 
+ use std::time::{Duration, Instant};
+ 
+@@ -22,6 +25,7 @@ use crate::config::{
+     AppSettings, CALIBRATION_TARGET_DBFS, DeviceCalibration, VoiceEvidence, VoiceProfile,
+ };
+ use crate::gain_policy::NOISE_MARGIN_DB;
++#[cfg(test)]
+ use crate::gain_policy::GainPolicy;
+ use crate::services::audio_monitor::{
+     AnalyzerConfig, AudioMonitor, Event, MonitorConfig, SpectrumFrame, band_range_hz,
+@@ -31,6 +35,7 @@ use crate::services::pipewire::{
+ };
+ 
+ use control::{SourceController, volume_changed};
++#[cfg(test)]
+ use features::FeatureExtractor;
+ 
+ const TICK: Duration = Duration::from_millis(50);
+@@ -71,14 +76,6 @@ const MIN_LISTEN: Duration = Duration::from_secs(5);
+ /// second of real speech; a door closing is shorter, and a whole pass of nothing
+ /// never reaches it.
+ const HEARD_SPEECH_S: f64 = 0.5;
+-/// A microphone left below 50% can be too quiet for its own speech to clear the
+-/// detection floor, so nothing would ever authorize the boost that would fix it.
+-/// Lift it to 100% first and converge from there.
+-const START_FLOOR_DB: f64 = -18.0;
+-const START_TARGET_DB: f64 = 0.0;
+-/// Below this the write is not worth the round trip; `wpctl` prints two decimals.
+-const WRITE_THRESHOLD_DB: f64 = 0.4;
+-
+ /// A pass that is still climbing when its time runs out gets this much longer.
+ /// A microphone that has to travel from 30% to 300% is doing exactly what it was
+ /// asked to do, and cutting it off there is how a working pass came back as
+@@ -183,6 +180,7 @@ fn agc_monitor_config(target: String) -> MonitorConfig {
+ /// The controller settings a pass runs with: a correction bound wide enough to
+ /// carry a weak microphone the whole way to 300%, and a boost extreme that gets
+ /// it there while somebody is still talking.
++#[cfg(test)]
+ fn pass_config(base_db: f64, noise_ceiling_dbfs: Option<f64>) -> crate::gain_policy::Config {
+     crate::gain_policy::Config {
+         target_speech_dbfs: f64::from(CALIBRATION_TARGET_DBFS),
+@@ -194,182 +192,6 @@ fn pass_config(base_db: f64, noise_ceiling_dbfs: Option<f64>) -> crate::gain_pol
+     }
+ }
+ 
+-/// Run one calibration pass against the current default microphone.
+-///
+-/// This is deliberately the loop that worked, restored: measure, decide, write,
+-/// repeat. Everything the all-day controller wraps around that — a readback ACK
+-/// for every write, manual ownership that latches on any volume it did not
+-/// expect, a peak guard that discards the accumulated boost on each vocal crest
+-/// — exists because that controller acts while nobody asked it to. A pass was
+-/// asked for, lasts seconds, and is watched by the person who asked: those
+-/// guards only ever stopped it from arriving, and on a webcam that has to travel
+-/// from 30% to 300% they stopped it completely.
+-///
+-/// Blocks for at most `seconds`, plus grace while it is still climbing. Nothing
+-/// here is written to the settings file; the caller decides.
+-pub fn calibrate(seconds: f64) -> Result<Outcome, String> {
+-    let (sources, default_id) = snapshot_sources();
+-    let source = sources
+-        .into_iter()
+-        .find(|s| Some(s.node_id) == default_id && !s.node_name.is_empty())
+-        .ok_or("no unambiguous real default microphone")?;
+-    let (entry_volume, muted) = source
+-        .volume_and_mute()
+-        .ok_or("initial volume/mute readback failed")?;
+-    if muted {
+-        return Err("the microphone is muted".into());
+-    }
+-    let settings = AppSettings::load();
+-
+-    // Break the chicken-and-egg of a microphone left too low to be heard at all:
+-    // lift it to a usable baseline so speech clears the detection floor, then
+-    // converge from there. Restored with the rest of the loop.
+-    let mut base_db = control::wpctl_to_db(entry_volume);
+-    if base_db < START_FLOOR_DB {
+-        base_db = START_TARGET_DB;
+-        set_source_volume(source.node_id, control::db_to_wpctl(START_TARGET_DB))
+-            .map_err(|error| error.to_string())?;
+-    }
+-    let mut applied_db = base_db;
+-
+-    let mut policy = GainPolicy::new(None, pass_config(base_db, noise_ceiling(&settings)))?;
+-    let mut extractor = FeatureExtractor::new();
+-    let config =
+-        agc_monitor_config(meter_target(&source.node_name));
+-    let metered_filtered = config.target != source.node_name;
+-    info!("level: metering {}", config.target);
+-    let analyzer = config.analyzer.clone();
+-    let monitor = AudioMonitor::start(config);
+-    monitor.set_active(true);
+-    let events = monitor.events();
+-
+-    let floor = Instant::now() + MIN_LISTEN;
+-    let deadline = Instant::now() + Duration::from_secs_f64(seconds.clamp(1.0, 60.0));
+-    let hard_deadline = deadline + PASS_GRACE;
+-    let mut last_tick = Instant::now();
+-    let mut settled_since: Option<Instant> = None;
+-    let mut voiced_s = 0.0_f64;
+-    let mut latest: Option<crate::gain_policy::Features>;
+-    let mut speech_dbfs = None;
+-    let mut noise_dbfs;
+-    // What the voice looked like while it was being measured: the tilt averaged
+-    // over the frames the pass counted as speech, and the level it settled on.
+-    let (mut tilt_sum, mut tilt_n) = (0.0_f64, 0_u32);
+-    let mut frame_tilt;
+-
+-    info!(
+-        "level: pass on {} from {base_db:.1} dB",
+-        source.node_name
+-    );
+-
+-    loop {
+-        match events.recv_blocking() {
+-            Ok(Event::Frame(frame)) => {
+-                let dt = last_tick.elapsed().as_secs_f64();
+-                if dt < TICK.as_secs_f64() {
+-                    continue;
+-                }
+-                last_tick = Instant::now();
+-                frame_tilt = tilt_db(&frame, &analyzer);
+-                latest = Some(extractor.observe(
+-                    f64::from(frame.peak_db),
+-                    applied_db - base_db,
+-                    dt.min(0.1),
+-                    // A pass is the person deliberately talking into their own
+-                    // microphone for a few seconds, with somebody watching. It
+-                    // has nothing to recognise them by yet, and needs none.
+-                    true,
+-                ));
+-            }
+-            Ok(Event::Recovering(message)) => {
+-                debug!("level: monitor recovering: {message}");
+-                continue;
+-            }
+-            Ok(Event::Fatal(message)) => return Err(format!("monitor failed: {message}")),
+-            Err(_) => return Err("the level monitor stopped".into()),
+-        }
+-        let Some(features) = latest else { continue };
+-        noise_dbfs = features.noise_dbfs;
+-        let dt = TICK.as_secs_f64();
+-        let decision = match policy.update(&features, dt) {
+-            Ok(decision) => decision,
+-            Err(error) => {
+-                debug!("level: {error}");
+-                continue;
+-            }
+-        };
+-        if features.speech_probability > 0.0 {
+-            voiced_s += dt;
+-            speech_dbfs = Some(features.speech_dbfs);
+-            if let Some(tilt) = frame_tilt {
+-                tilt_sum += tilt;
+-                tilt_n += 1;
+-            }
+-        }
+-
+-        let target_db =
+-            (base_db + decision.digital_gain_db).clamp(control::MIN_VOL_DB, control::MAX_VOL_DB);
+-        let mut wrote = false;
+-        if (target_db - applied_db).abs() >= WRITE_THRESHOLD_DB {
+-            let volume = control::db_to_wpctl(target_db);
+-            if set_source_volume(source.node_id, volume).is_ok() {
+-                applied_db = target_db;
+-                wrote = true;
+-            }
+-        }
+-        // Arriving means the level stopped moving WHILE somebody was talking. A
+-        // pause is not arrival: measured here, a pass that treated one ended at
+-        // 207% with the voice still 50 dB under the target it was walking to.
+-        if wrote || features.speech_probability == 0.0 {
+-            settled_since = None;
+-        } else if settled_since.is_none() {
+-            settled_since = Some(Instant::now());
+-        }
+-        debug!(
+-            "level: peak={:.1} speech@base={:.1} noise={:.1} p={:.2} gain={:+.1} vol {:.1}→{:.1} voiced={:.1}s state={}",
+-            features.speech_dbfs + (applied_db - base_db),
+-            features.speech_dbfs, features.noise_dbfs, features.speech_probability,
+-            decision.digital_gain_db, applied_db, target_db, voiced_s, decision.state,
+-        );
+-
+-        let heard_speech = voiced_s >= HEARD_SPEECH_S;
+-        let now = Instant::now();
+-        let settled = heard_speech
+-            && now >= floor
+-            && settled_since.is_some_and(|at| at.elapsed() >= SETTLED_FOR);
+-        if settled || now >= hard_deadline || (now >= deadline && !heard_speech) {
+-            let volume = control::db_to_wpctl(applied_db);
+-            if !heard_speech {
+-                // Nobody spoke, so nothing here learned anything about this
+-                // microphone: put it back rather than keep a change made on no
+-                // evidence at all.
+-                let _ = set_source_volume(source.node_id, entry_volume);
+-            }
+-            monitor.shutdown();
+-            // The level is stated at unity gain — what reaches the capsule,
+-            // rather than where this pass happened to leave the knob — so a
+-            // daemon can compare a frame against it whatever the volume is then.
+-            let voice = (heard_speech && tilt_n > 0)
+-                .then(|| speech_dbfs.map(|level| VoiceEvidence {
+-                    dbfs: (level - base_db) as f32,
+-                    tilt_db: (tilt_sum / f64::from(tilt_n)) as f32,
+-                    metered_filtered,
+-                }))
+-                .flatten();
+-            return Ok(Outcome {
+-                device: source.node_name,
+-                description: source.description,
+-                volume: if heard_speech { volume } else { entry_volume },
+-                speech_dbfs,
+-                noise_dbfs,
+-                volume_restored: !heard_speech,
+-                heard_speech,
+-                voice,
+-            });
+-        }
+-    }
+-}
+-
+ /// The bounded daemon.
+ ///
+ /// It idles — no capture, no meter, no volume writes — until the default
+diff --git a/src/agc/calibration.rs b/src/agc/calibration.rs
+new file mode 100644
+index 0000000..a26792c
+--- /dev/null
++++ b/src/agc/calibration.rs
+@@ -0,0 +1,147 @@
++//! A calibration owns the actuator for the whole pass, not the settings lock.
++//! It shares the daemon's controller/ACK path; silence never causes a blind lift.
++use super::*;
++use super::session::{actuator_lock, FrameClock, read_owned, same_meter, write_owned, WriteResult};
++use crate::services::pipewire::SourceWatch;
++
++const NO_AUDIO_TIMEOUT: Duration = Duration::from_secs(3);
++
++/// Listen for a bounded duration, with a bounded grace period while converging.
++pub fn calibrate(seconds: f64) -> Result<Outcome, String> {
++    if !seconds.is_finite() || seconds <= 0.0 || seconds > 60.0 {
++        return Err("calibration duration must be finite and in (0, 60] seconds".into());
++    }
++    let _owner = actuator_lock(Duration::from_secs(4)).map_err(|e| e.to_string())?;
++    let watch = SourceWatch::start()?;
++    let source = watch.default_source().ok_or("no unambiguous real default microphone")?;
++    let meter = watch.meter_source(&source).ok_or("no unambiguous microphone meter")?;
++    let (entry_volume, muted) = read_owned(&source, &watch)?;
++    if muted || entry_volume == 0.0 { return Err("the microphone is muted or at zero volume".into()); }
++    let settings = AppSettings::load_strict().map_err(|e| e.to_string())?;
++    let mut controller = SourceController::for_calibration(entry_volume,
++        f64::from(CALIBRATION_TARGET_DBFS), noise_ceiling(&settings))?;
++    let base_db = controller.applied_db();
++    let metered_filtered = meter.node_name != source.node_name;
++    let config = agc_monitor_config(meter.object_serial.clone().ok_or("meter serial unavailable")?);
++    let analyzer = config.analyzer.clone();
++    let hop_s = config.hop_size as f64 / f64::from(config.analyzer.sample_rate);
++    let monitor = AudioMonitor::start(config);
++    let events = monitor.events();
++    let started = Instant::now();
++    let deadline = started + Duration::from_secs_f64(seconds);
++    let hard_deadline = deadline + PASS_GRACE;
++    let mut expected = Some(entry_volume);
++    let mut attempted_write = false;
++    let mut clock = FrameClock::default();
++    let mut voiced_s = 0.0;
++    let mut speech_dbfs = None;
++    let mut noise_dbfs = -120.0;
++    let (mut tilt_sum, mut tilt_n) = (0.0, 0_u32);
++    let mut last_audio = started;
++    let mut last_poll = started;
++    let mut last_write: Option<Instant> = None;
++    let mut settled_since: Option<Instant> = None;
++    monitor.set_active(true);
++    let result = (|| -> Result<(), String> {
++        loop {
++            let tick = Instant::now();
++            // Deadlines run on *all* paths, including Empty/Recovering events.
++            if tick >= hard_deadline || (tick >= deadline && voiced_s < HEARD_SPEECH_S) { break; }
++            if last_audio.elapsed() >= NO_AUDIO_TIMEOUT { return Err("microphone audio stalled for 3 seconds".into()); }
++            if !same_meter(&watch, &source, &meter) { return Err("microphone or meter changed during calibration".into()); }
++            if last_poll.elapsed() >= SOURCE_POLL {
++                last_poll = Instant::now();
++                let (actual, muted) = read_owned(&source, &watch)?;
++                if muted || expected.is_none_or(|volume| volume_changed(actual, volume)) {
++                    expected = None; return Err("microphone volume or mute changed outside calibration".into());
++                }
++            }
++            match events.try_recv() {
++                Ok(Event::Frame(frame)) => {
++                    if let Some((dt, discontinuity)) = clock.take(&frame, hop_s, Instant::now()) {
++                        last_audio = Instant::now();
++                        if discontinuity { controller.interrupt(); settled_since = None; }
++                        let step = controller.observe(f64::from(frame.peak_db), dt, false, true)?;
++                        noise_dbfs = step.features.noise_dbfs;
++                        let trusted = step.features.speech_probability >= 0.8 && step.features.snr_db >= 10.0
++                            && matches!(step.decision.state, "tracking_speech" | "peak_safety");
++                        if trusted {
++                            // Never count missing audio as additional observed speech.
++                            voiced_s += hop_s;
++                            speech_dbfs = Some(step.features.speech_dbfs);
++                            if let Some(tilt) = tilt_db(&frame, &analyzer) { tilt_sum += tilt; tilt_n += 1; }
++                        }
++                        let mut wrote = false;
++                        if let Some(requested) = step.requested_volume
++                            && last_write.is_none_or(|at| at.elapsed() >= WRITE_INTERVAL) {
++                                // An error/unknown ACK makes restoration unsafe; never
++                                // guess that a command which timed out did not execute.
++                                attempted_write = true; expected = None;
++                                let status = write_owned(&source, &meter, &watch, &mut controller, requested)?;
++                                if status != WriteResult::Applied { return Err("external volume/mute change interrupted calibration".into()); }
++                                expected = Some(controller.applied_volume());
++                                wrote = true; last_write = Some(Instant::now()); clock.after_write();
++                            }
++                        if wrote || !trusted || step.requested_volume.is_some() { settled_since = None; }
++                        else { settled_since.get_or_insert_with(Instant::now); }
++                        if voiced_s >= HEARD_SPEECH_S && started.elapsed() >= MIN_LISTEN
++                            && settled_since.is_some_and(|at| at.elapsed() >= SETTLED_FOR) { break; }
++                    }
++                }
++                Ok(Event::Recovering(message)) => { controller.interrupt(); clock.reset(); debug!("level: {message}"); }
++                Ok(Event::Fatal(message)) => return Err(format!("monitor failed: {message}")),
++                Err(async_channel::TryRecvError::Closed) => return Err("the level monitor stopped".into()),
++                Err(async_channel::TryRecvError::Empty) => {}
++            }
++            std::thread::sleep(TICK.saturating_sub(tick.elapsed()));
++        }
++        // Final readback too: a late external change is not a calibration result.
++        let (actual, muted) = read_owned(&source, &watch)?;
++        if muted || expected.is_none_or(|volume| volume_changed(actual, volume)) {
++            expected = None; return Err("microphone changed before calibration completed".into());
++        }
++        Ok(())
++    })();
++    // Synchronous teardown on success AND every error path.
++    monitor.shutdown();
++    let heard_speech = voiced_s >= HEARD_SPEECH_S;
++    let needs_restore = result.is_err() || !heard_speech;
++    let restored = if needs_restore && attempted_write {
++        restore(&source, &watch, entry_volume, expected)
++    } else { Ok(false) };
++    if let Err(error) = result {
++        return Err(match restored {
++            Ok(true) => format!("{error}; initial volume restored and verified"),
++            Ok(false) => error,
++            Err(restore_error) => format!("{error}; initial volume NOT restored: {restore_error}"),
++        });
++    }
++    let volume_restored = restored?;
++    let voice = (heard_speech && tilt_n > 0).then(|| speech_dbfs.map(|level| VoiceEvidence {
++        dbfs: (level - base_db) as f32, tilt_db: (tilt_sum / f64::from(tilt_n)) as f32, metered_filtered,
++    })).flatten();
++    Ok(Outcome { device: source.node_name, description: source.description,
++        volume: if heard_speech { controller.applied_volume() } else { entry_volume },
++        speech_dbfs, noise_dbfs, heard_speech, volume_restored, voice })
++}
++
++fn restore(source: &Source, watch: &SourceWatch, entry: f32, expected: Option<f32>) -> Result<bool, String> {
++    let expected = expected.ok_or("last applied volume is unknown; preserving external ownership")?;
++    let (actual, muted) = read_owned(source, watch)?;
++    if muted || volume_changed(actual, expected) { return Err("volume/mute changed outside calibration".into()); }
++    if !volume_changed(actual, entry) { return Ok(false); }
++    set_source_volume(source.node_id, entry).map_err(|e| e.to_string())?;
++    let (actual, muted) = read_owned(source, watch)?;
++    if muted || volume_changed(actual, entry) { return Err("restoration readback did not confirm initial volume".into()); }
++    Ok(true)
++}
++
++#[cfg(test)]
++mod tests {
++    #[test]
++    fn invalid_duration_is_rejected_before_any_io() {
++        for seconds in [f64::NAN, f64::INFINITY, 0.0, -1.0, 61.0] {
++            assert!(super::calibrate(seconds).unwrap_err().contains("duration"));
++        }
++    }
++}
+diff --git a/src/agc/session.rs b/src/agc/session.rs
+new file mode 100644
+index 0000000..47a9222
+--- /dev/null
++++ b/src/agc/session.rs
+@@ -0,0 +1,102 @@
++//! Shared control-plane safety. No audio callback acquires these locks.
++use std::time::{Duration, Instant};
++use crate::{config, services::{audio_monitor::SpectrumFrame, pipewire::{Source, SourceWatch}}};
++use super::{STALE_AUDIO, control::{SourceController, volume_changed}};
++
++pub(super) fn actuator_lock(timeout: Duration) -> Result<config::storage::SettingsLock, std::io::Error> {
++    // Separate inode from the settings transaction: never hold settings.lock
++    // while listening. All cooperating calibrations/AGC writes serialize here.
++    config::storage::SettingsLock::at(&config::settings_file().with_extension("agc.lock"), timeout)
++}
++
++pub(super) fn same_meter(watch: &SourceWatch, source: &Source, meter: &Source) -> bool {
++    watch.meter_source(source).is_some_and(|now| meter.same_generation(&now))
++}
++
++#[derive(Default)]
++pub(super) struct FrameClock {
++    last: Option<(u64, u64, Instant)>,
++    discard_before: Option<Instant>,
++}
++impl FrameClock {
++    pub(super) fn reset(&mut self) { self.last = None; self.discard_before = Some(Instant::now()); }
++    /// Discard a frame already queued before an ACK. Delivery time does NOT
++    /// measure ADC/filter latency: step-response tests must assess that delay.
++    pub(super) fn after_write(&mut self) { self.discard_before = Some(Instant::now()); }
++    pub(super) fn take(&mut self, frame: &SpectrumFrame, hop_s: f64, now: Instant) -> Option<(f64, bool)> {
++        if frame.captured_at > now || now.duration_since(frame.captured_at) >= STALE_AUDIO
++            || self.discard_before.is_some_and(|at| frame.captured_at <= at) { return None; }
++        let mut discontinuity = true;
++        let mut dt = hop_s;
++        if let Some((epoch, seq, at)) = self.last {
++            if frame.capture_epoch == epoch && frame.seq <= seq { return None; }
++            if frame.capture_epoch == epoch && frame.captured_at > at {
++                let audio_dt = frame.seq.saturating_sub(seq) as f64 * hop_s;
++                if audio_dt <= STALE_AUDIO.as_secs_f64()
++                    && frame.captured_at.duration_since(at) < STALE_AUDIO {
++                    discontinuity = false; dt = audio_dt.min(0.1);
++                }
++            }
++        }
++        self.last = Some((frame.capture_epoch, frame.seq, frame.captured_at));
++        Some((dt.min(0.1), discontinuity))
++    }
++    pub(super) fn stale(&self) -> bool { self.last.is_some_and(|(_, _, at)| at.elapsed() >= STALE_AUDIO) }
++}
++
++/// The source must still be ours on both sides of each CLI transaction. This
++/// does not turn wpctl's numeric-ID write into an atomic generation-aware CAS.
++pub(super) fn read_owned(source: &Source, watch: &SourceWatch) -> Result<(f32, bool), String> {
++    if !watch.is_current(source) { return Err("default microphone generation changed".into()); }
++    let state = source.volume_and_mute().ok_or("volume/mute readback failed")?;
++    if !watch.is_current(source) { return Err("microphone changed during readback".into()); }
++    Ok(state)
++}
++
++#[derive(Debug, PartialEq, Eq)]
++pub(super) enum WriteResult { Applied, External, Muted }
++
++pub(super) fn write_owned(source: &Source, meter: &Source, watch: &SourceWatch,
++    controller: &mut SourceController, requested: f32) -> Result<WriteResult, String> {
++    let (actual, muted) = read_owned(source, watch)?;
++    if muted || actual == 0.0 { controller.interrupt(); return Ok(WriteResult::Muted); }
++    if volume_changed(actual, controller.applied_volume()) {
++        controller.external_volume_change(actual)?;
++        return Ok(WriteResult::External);
++    }
++    if !same_meter(watch, source, meter) { return Err("meter generation changed before write".into()); }
++    crate::services::pipewire::set_source_volume(source.node_id, requested).map_err(|e| e.to_string())?;
++    let (actual, muted) = read_owned(source, watch)?;
++    if muted || !same_meter(watch, source, meter) { return Err("source muted or meter changed during write".into()); }
++    controller.acknowledge_volume(requested, actual)?;
++    Ok(WriteResult::Applied)
++}
++
++#[cfg(test)]
++mod tests {
++    use super::*;
++    use crate::services::audio_monitor::{Analyzer, AnalyzerConfig};
++    #[test]
++    fn queued_frames_and_capture_restarts_cannot_reuse_evidence() {
++        let mut analyzer = Analyzer::new(AnalyzerConfig::default());
++        let mut frame = analyzer.analyze_samples(&vec![0.0; 2048]);
++        frame.capture_epoch = 1;
++        let mut clock = FrameClock::default();
++        let now = Instant::now(); frame.captured_at = now;
++        assert_eq!(clock.take(&frame, 0.05, now), Some((0.05, true)));
++        assert_eq!(clock.take(&frame, 0.05, now), None);
++        frame.capture_epoch = 2; frame.seq = 0; frame.captured_at = now + Duration::from_millis(50);
++        assert_eq!(clock.take(&frame, 0.05, frame.captured_at), Some((0.05, true)));
++        assert_eq!(clock.take(&frame, 0.05, frame.captured_at + STALE_AUDIO), None);
++        frame.captured_at = now; clock.after_write();
++        assert_eq!(clock.take(&frame, 0.05, Instant::now()), None);
++    }
++    #[test]
++    fn two_calibrations_cannot_own_the_same_lock() {
++        let dir = tempfile::tempdir().unwrap(); let path = dir.path().join("agc.lock");
++        let first = config::storage::SettingsLock::at(&path, Duration::ZERO).unwrap();
++        assert_eq!(config::storage::SettingsLock::at(&path, Duration::ZERO).err().unwrap().kind(), std::io::ErrorKind::WouldBlock);
++        drop(first);
++        assert!(config::storage::SettingsLock::at(&path, Duration::ZERO).is_ok());
++    }
++}

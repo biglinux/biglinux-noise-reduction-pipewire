@@ -30,6 +30,11 @@ pub struct SpectrumFrame {
     pub peak_db: f32,
     /// Monotonic frame counter since the capture started.
     pub seq: u64,
+    /// Monotonic delivery time after reading this PCM block, not an ADC timestamp.
+    pub captured_at: std::time::Instant,
+    /// Changes after every capture restart, even when a Recovering event was
+    /// replaced in the latest-value mailbox before a consumer could see it.
+    pub capture_epoch: u64,
 }
 
 /// Events emitted by [`crate::services::audio_monitor::AudioMonitor`].

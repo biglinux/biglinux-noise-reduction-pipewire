@@ -89,6 +89,19 @@ fn settings_dump_returns_pretty_json() {
 }
 
 #[test]
+fn corrupt_settings_are_reported_without_replacing_them() {
+    let dir = tempdir().unwrap();
+    let path = dir.path().join("biglinux-microphone/settings.json");
+    std::fs::create_dir_all(path.parent().unwrap()).unwrap();
+    std::fs::write(&path, "{broken").unwrap();
+    let out = run(&["settings"], dir.path());
+    assert!(!out.status.success());
+    assert!(out.stdout.is_empty());
+    assert!(!out.stderr.is_empty());
+    assert_eq!(std::fs::read_to_string(path).unwrap(), "{broken");
+}
+
+#[test]
 fn status_prints_single_line_json_with_two_booleans() {
     let dir = tempdir().unwrap();
     let out = run(&["status"], dir.path());
@@ -137,4 +150,49 @@ fn output_conf_prints_module_args_body() {
     assert!(!text.contains("context.properties"));
     assert!(!text.contains("libpipewire-module-protocol-native"));
     assert!(text.contains("output-biglinux"));
+}
+
+#[test]
+fn writing_eq_bands_or_a_preset_never_switches_the_equalizer_on() {
+    // The equalizer is off until somebody asks for it. Sending the sliders'
+    // current position — which the window does whenever a preset is rendered —
+    // must stay a write to `bands`, not a decision to shape the microphone.
+    // The value is persisted before the graph is reconciled, and reconciling
+    // needs a PipeWire this harness deliberately does not have — so read the
+    // file rather than the exit status.
+    let dir = tempdir().unwrap();
+    let saved = |dir: &std::path::Path| -> serde_json::Value {
+        let raw = std::fs::read_to_string(dir.join("biglinux-microphone/settings.json"))
+            .expect("settings written");
+        serde_json::from_str(&raw).expect("valid json")
+    };
+    for (key, value) in [
+        ("mic-eq-bands", "3,0,0,0,0,0,0,0,0,0"),
+        ("mic-eq-preset", "voice_boost"),
+    ] {
+        run(&["set", key, value], dir.path());
+        assert_eq!(
+            saved(dir.path())["equalizer"]["enabled"],
+            false,
+            "`set {key}` enabled the equalizer by itself"
+        );
+    }
+    run(&["set", "mic-equalizer", "on"], dir.path());
+    assert_eq!(saved(dir.path())["equalizer"]["enabled"], true);
+}
+
+#[test]
+fn eq_rejects_non_finite_gains_without_saving() {
+    for invalid in ["NaN", "inf", "-inf"] {
+        let dir = tempdir().unwrap();
+        let value = format!("{invalid},0,0,0,0,0,0,0,0,0");
+        let out = run(&["set", "mic-eq-bands", &value], dir.path());
+        assert!(!out.status.success());
+        assert!(String::from_utf8_lossy(&out.stderr).contains("finite"));
+        assert!(
+            !dir.path()
+                .join("biglinux-microphone/settings.json")
+                .exists()
+        );
+    }
 }

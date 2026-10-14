@@ -19,11 +19,8 @@ pub use gain_safety::GainSafety;
 pub mod noise_model;
 mod output_filter;
 mod paths;
-/// Timing a shipped plugin on this machine, so the quality policy has a measured
-/// number instead of a proxy for one.
-pub mod plugin_cost;
 mod processing;
-mod quality;
+mod profiles;
 mod runtime;
 pub use runtime::RuntimeConfig;
 pub mod storage;
@@ -37,9 +34,12 @@ use serde::{Deserialize, Serialize};
 use std::fs::read_to_string;
 
 pub use audio::{
-    GATE_INTENSITY_DEFAULT, GATE_INTENSITY_MAX, GateConfig, HPF_FREQUENCY_DEFAULT, HpfConfig,
-    MonitorConfig, NoiseModel, NoiseReductionConfig, StereoConfig, StereoMode,
-    deepfilter_attenuation_db, gtcrn_speech_strength,
+    CALIBRATION_TARGET_DBFS, DeviceCalibration, GATE_INTENSITY_DEFAULT, GATE_INTENSITY_MAX,
+    GateConfig, HPF_FREQUENCY_DEFAULT, HpfConfig, MicCalibrationConfig, MonitorConfig, NoiseModel,
+    NoiseReductionConfig, SILENCE_ANCHOR_HZ, SILENCE_ANCHOR_PORTS, SILENCE_ANCHOR_SENTINEL,
+    SILENCE_ANCHORS, SILENCE_DEPTH_DEFAULT, SILENCE_DEPTH_MAX, StereoConfig, StereoMode,
+    VOICE_GATE_DEPTH_MAX, VOICE_LEVEL_MARGIN_DB, VOICE_SENSITIVITY_MAX, VOICE_TILT_MARGIN_DB,
+    VoiceEvidence, VoiceProfile, deepfilter_attenuation_db,
 };
 pub use echo_cancel::{EchoCancelConfig, EchoMode};
 pub use equalizer::{
@@ -48,10 +48,10 @@ pub use equalizer::{
 pub use output_filter::{OutputChannelMode, OutputFilterSettings};
 pub use paths::{
     APP_DATA_DIR, APP_ID, EQ_BANDS_HZ, GETTEXT_PACKAGE, app_id, app_version, config_dir,
-    gettext_package, gtcrn_plugin, illustrations_dir, settings_file,
+    gettext_package, illustrations_dir, settings_file,
 };
 pub use processing::CompressorConfig;
-pub use quality::{Machine, Quality};
+pub use profiles::{Profile, ProfileAudio, ProfilesConfig};
 pub use ui::{UiConfig, WindowConfig};
 
 /// Full settings snapshot, serialized to `settings.json`.
@@ -73,12 +73,11 @@ pub struct AppSettings {
     pub monitor: MonitorConfig,
     pub output_filter: OutputFilterSettings,
     pub echo_cancel: EchoCancelConfig,
-    /// §38's choice: how much of this machine the noise models may cost.
-    ///
-    /// Defaulted rather than required, so a settings file written before this existed
-    /// loads as "automatic" instead of failing and taking every other setting with it.
-    #[serde(default)]
-    pub quality: Quality,
+    /// What each microphone's calibration pass settled on. Empty until somebody
+    /// runs one; nothing here changes by itself.
+    pub mic_calibration: MicCalibrationConfig,
+    /// Saved scenarios: a whole set of preferences under a name.
+    pub profiles: ProfilesConfig,
 }
 
 impl AppSettings {
@@ -96,14 +95,10 @@ impl AppSettings {
         if self.mic_bypass {
             crate::pipeline::cascade_mic_off(&mut effective);
         }
-        // A catalogue model the live graph cannot drive would leave the chain
-        // running a plugin that does nothing; run the nearest one it can.
-        effective.noise_reduction.model = effective.noise_reduction.model.live_equivalent();
-        effective.output_filter.noise_reduction.model = effective
-            .output_filter
-            .noise_reduction
-            .model
-            .live_equivalent();
+        // The playback chain carries notifications and music as well as voices; a
+        // gate that mutes everything but speech does not belong there.
+        effective.output_filter.noise_reduction.voice_gate = false;
+        effective.output_filter.noise_reduction.dpdfnet_voice_gate = false;
         effective
     }
 
@@ -137,42 +132,11 @@ impl AppSettings {
         {
             echo.insert("mode".into(), "off".into());
         }
-        if value.get("quality").is_none()
-            && value
-                .get("noise_reduction")
-                .and_then(|noise| noise.get("model"))
-                .is_some()
-            && let Some(settings) = value.as_object_mut()
-        {
-            settings.insert("quality".into(), "manual".into());
-        }
         if let Some(output) = value
             .get_mut("output_filter")
             .and_then(serde_json::Value::as_object_mut)
         {
             output.remove("routed_apps");
-        }
-        // No screen has ever offered the lookahead, so a file carrying the old
-        // 60 is carrying a default, not a choice — and that default costs 48 ms
-        // of microphone delay for no measurable onset gain (the numbers are on
-        // `LOOKAHEAD_MS_DEFAULT`). Dropping the key lets the new default apply.
-        // Any other value stays: that one somebody typed.
-        for path in [
-            ["noise_reduction"].as_slice(),
-            ["output_filter", "noise_reduction"].as_slice(),
-        ] {
-            let mut at = Some(&mut value);
-            for key in path {
-                at = at.and_then(|node| node.get_mut(*key));
-            }
-            if let Some(noise) = at.and_then(serde_json::Value::as_object_mut)
-                && noise
-                    .get("lookahead_ms")
-                    .and_then(serde_json::Value::as_u64)
-                    == Some(60)
-            {
-                noise.remove("lookahead_ms");
-            }
         }
         let mut settings: Self = serde_json::from_value(value)
             .map_err(|error| io::Error::new(io::ErrorKind::InvalidData, error))?;
@@ -195,61 +159,6 @@ impl AppSettings {
         })
     }
 
-    /// Put §38's choice into effect: pick the model and write it into both chains.
-    ///
-    /// Called where the graph is about to be built, never on load — a policy that ran on
-    /// every read would move the model while somebody was looking at the list of them.
-    /// Leaves a hand-picked model alone, which is what `Quality::Manual` means.
-    ///
-    /// The machine is read here rather than by the caller, and only past the
-    /// guard: `Machine::read` walks `/sys/class/power_supply` and, the first
-    /// time it sees a plugin, forks `measure-model` and blocks for seconds.
-    /// A `Manual` install chose its model by hand and must pay none of that,
-    /// yet all three callers used to read it before asking.
-    pub fn settle_quality(&mut self) {
-        if !self.quality.decides_the_model() || self.filters_running() == 0 {
-            return;
-        }
-        let machine = if self.quality == Quality::Automatic {
-            Machine::read(self.filters_running())
-        } else {
-            Machine::default()
-        };
-        let wanted = quality::loadable(quality::choose(
-            self.quality,
-            &machine,
-            Some(self.noise_reduction.model),
-        ));
-        self.noise_reduction.model = wanted;
-        self.output_filter.noise_reduction.model = wanted;
-    }
-
-    /// How many chains run a noise model at once, which is one of §38's inputs and the
-    /// only one that comes from the settings themselves.
-    ///
-    /// The echo canceller is deliberately not counted. It used to be, and that made the
-    /// heavier model unreachable on every ordinary setup: the mic filter and the echo
-    /// canceller are both on by default, the policy saw two chains, and two is already
-    /// its reason to step down. Nobody with echo cancellation on ever got the better
-    /// model, whatever their machine could do.
-    ///
-    /// It is also the wrong thing to count. The step-down exists because two neural
-    /// models on one graph compete for the same core. WebRTC's canceller is a fixed
-    /// filter that costs a fraction of one, and it is part of the same microphone path
-    /// rather than a second demand on it.
-    #[must_use]
-    pub fn filters_running(&self) -> usize {
-        let microphone = usize::from(!self.mic_bypass && self.noise_reduction.enabled);
-        let output =
-            usize::from(self.output_filter.enabled && self.output_filter.noise_reduction.enabled);
-        let channels = if self.output_filter.channel_mode == OutputChannelMode::Stereo {
-            2
-        } else {
-            1
-        };
-        microphone + output * channels
-    }
-
     /// Persist atomically through the shared storage boundary so a crash
     /// mid-write cannot produce a truncated file.
     pub fn save(&self) -> io::Result<()> {
@@ -257,24 +166,18 @@ impl AppSettings {
         self.save_to(&path)
     }
 
+    /// Writing identical content is skipped, not repeated. `biglinux-microphone.path`
+    /// wakes the reconciler on every change to this file, and the reconciler saves
+    /// as part of applying — so a save that rewrote unchanged bytes would wake it
+    /// again, and again.
     pub fn save_to(&self, path: &Path) -> io::Result<()> {
-        self.save_to_revision(path).map(|_| ())
-    }
-
-    /// Return exactly the bytes this operation persisted, not a later read
-    /// that could acknowledge a concurrent writer's still-unapplied revision.
-    pub(crate) fn save_with_revision(&self) -> io::Result<Vec<u8>> {
-        self.save_to_revision(&settings_file())
-    }
-
-    fn save_to_revision(&self, path: &Path) -> io::Result<Vec<u8>> {
         let json = storage::serialized_preserving_unknown(self, path)?;
         if !path.is_symlink() && std::fs::read(path).is_ok_and(|existing| existing == json) {
-            return Ok(json);
+            return Ok(());
         }
         atomic_write_private(path, &json)?;
         debug!("settings: saved to {}", path.display());
-        Ok(json)
+        Ok(())
     }
 }
 
@@ -312,36 +215,17 @@ mod tests {
     }
 
     #[test]
-    fn an_offline_only_model_runs_as_its_live_equivalent_without_losing_the_choice() {
-        let settings = AppSettings {
-            quality: Quality::Manual,
-            noise_reduction: NoiseReductionConfig {
-                model: NoiseModel::DpdfnetV8,
-                ..NoiseReductionConfig::default()
-            },
-            output_filter: OutputFilterSettings {
-                noise_reduction: NoiseReductionConfig {
-                    model: NoiseModel::DpdfnetV2,
-                    ..NoiseReductionConfig::default()
-                },
-                ..OutputFilterSettings::default()
-            },
-            ..AppSettings::default()
-        };
-
-        let effective = settings.runtime_settings();
-
-        assert_eq!(effective.noise_reduction.model, NoiseModel::DpdfnetV8Hr);
-        assert_eq!(
-            effective.output_filter.noise_reduction.model,
-            NoiseModel::DpdfnetV2Hr
-        );
-        // The saved document still carries what was asked for.
-        assert_eq!(settings.noise_reduction.model, NoiseModel::DpdfnetV8);
-        assert_eq!(
-            settings.output_filter.noise_reduction.model,
-            NoiseModel::DpdfnetV2
-        );
+    fn a_file_naming_a_removed_model_loads_the_default_model_and_keeps_the_rest() {
+        let dir = tempdir().unwrap();
+        let path = dir.path().join("settings.json");
+        atomic_write_private(
+            &path,
+            br#"{"quality":"best","noise_reduction":{"model":4,"strength":0.5}}"#,
+        )
+        .unwrap();
+        let settings = AppSettings::load_from_strict(&path).unwrap();
+        assert_eq!(settings.noise_reduction.model, NoiseModel::default());
+        assert!((settings.noise_reduction.strength - 0.5).abs() < f32::EPSILON);
     }
 
     #[test]
@@ -410,25 +294,6 @@ mod tests {
         assert_eq!(
             s.output_filter.equalizer.bands,
             EqualizerConfig::default().bands
-        );
-    }
-}
-
-#[cfg(test)]
-mod manual_model_tests {
-    #[test]
-    fn reading_preferences_never_replaces_a_manual_model() {
-        let directory = tempfile::tempdir().unwrap();
-        let path = directory.path().join("settings.json");
-        std::fs::write(
-            &path,
-            r#"{"quality":"manual","noise_reduction":{"model":4}}"#,
-        )
-        .unwrap();
-        let settings = super::AppSettings::load_from_strict(&path).unwrap();
-        assert_eq!(
-            settings.noise_reduction.model,
-            super::NoiseModel::DpdfnetV8Hr
         );
     }
 }

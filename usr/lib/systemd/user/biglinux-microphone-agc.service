@@ -1,0 +1,46 @@
+[Unit]
+Description=Filter noise — automatic microphone level (AGC)
+Documentation=https://github.com/biglinux/biglinux-noise-reduction-pipewire
+PartOf=pipewire.service
+After=pipewire.service wireplumber.service
+Wants=pipewire.service wireplumber.service
+
+[Service]
+Type=simple
+ExecStart=/usr/bin/biglinux-microphone-cli agc
+Restart=on-failure
+RestartSec=3s
+SuccessExitStatus=0
+TimeoutStartSec=15s
+StandardOutput=journal
+StandardError=journal
+
+# ── Hardening ────────────────────────────────────────────────────────
+# The loop is off-real-time: it reads the level via a pw-cat monitor and
+# writes the source volume via wpctl, both over the PipeWire unix socket.
+ProtectSystem=full
+ProtectKernelTunables=true
+ProtectKernelModules=true
+ProtectKernelLogs=true
+ProtectClock=true
+ProtectControlGroups=true
+ProtectHostname=true
+ProtectProc=invisible
+PrivateTmp=true
+PrivateDevices=true
+NoNewPrivileges=true
+LockPersonality=true
+RestrictNamespaces=true
+RestrictRealtime=true
+RestrictSUIDSGID=true
+RemoveIPC=true
+CapabilityBoundingSet=
+AmbientCapabilities=
+SystemCallArchitectures=native
+RestrictAddressFamilies=AF_UNIX AF_NETLINK
+SystemCallFilter=@system-service
+SystemCallErrorNumber=EPERM
+
+# No [Install]: the reconciler starts and stops this unit with the Auto mic level
+# setting, the same way it owns the loader units. Enabling it would put the loop
+# back in every session of every user, including those who never turned Auto on.

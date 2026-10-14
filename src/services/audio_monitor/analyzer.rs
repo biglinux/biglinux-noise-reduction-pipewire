@@ -138,6 +138,8 @@ impl Analyzer {
             rms_db,
             peak_db,
             seq,
+            captured_at: std::time::Instant::now(),
+            capture_epoch: 0,
         }
     }
 
@@ -179,8 +181,9 @@ pub fn rms_dbfs(samples: &[f32]) -> f32 {
     if samples.is_empty() {
         return -120.0;
     }
-    let sum_sq: f32 = samples.iter().map(|s| s * s).sum();
-    let rms = (sum_sq / samples.len() as f32).sqrt();
+    // Accumulate in f64: a finite f32 sample can overflow when squared in f32.
+    let sum_sq: f64 = samples.iter().map(|&s| f64::from(s).powi(2)).sum();
+    let rms = (sum_sq / samples.len() as f64).sqrt() as f32;
     amplitude_to_db(rms)
 }
 

@@ -32,11 +32,14 @@ pub(super) fn nodes(settings: &AppSettings, output: bool) -> Vec<Node> {
 /// sits at the end of the chain and exists to offset *downstream* boosts, and
 /// with no EQ or compressor its multiplier is 1.0.
 ///
-/// Halving in front of the network and doubling straight after keeps the chain
-/// at unity gain, and both factors are powers of two, so the round trip is
-/// bit-exact in the graph's float samples. Everything calibrated in dB — the
-/// standalone gate, the compressor, the final ceiling — stays after the makeup
-/// and therefore still sees the original level.
+/// Halving in front of the network and doubling straight after: both factors
+/// are powers of two, so the makeup undoes the pad's *scaling* bit-exactly in
+/// the graph's float samples. This is unity gain staging, not a transparent
+/// wrap — the network is nonlinear (2·F(x/2) ≠ F(x)), so it deliberately sees a
+/// quieter input and denoises it slightly differently. That is the point: the
+/// headroom is what keeps its ~1.4× internal overshoot from clipping.
+/// Everything calibrated in dB — the standalone gate, the compressor, the final
+/// ceiling — stays after the makeup and therefore still sees the original level.
 const NEURAL_PAD: f64 = 0.5;
 
 /// Pad placed immediately before an attenuation-only neural node.
@@ -51,20 +54,15 @@ pub(super) fn neural_makeup() -> Node {
 }
 
 /// Whether this configuration's neural node needs the pad.
-///
-/// GTCRN is excluded deliberately: its gate thresholds are controls on the same
-/// node and are expressed in dB, so padding its input would move them. The
-/// advanced opt-out that disables the rest of the gain safety disables this too.
-pub(crate) fn pads_neural_input(settings: &AppSettings, output: bool) -> bool {
-    if settings.gain_safety == GainSafety::Unrestricted {
-        return false;
-    }
-    let noise_reduction = if output {
-        &settings.output_filter.noise_reduction
-    } else {
-        &settings.noise_reduction
-    };
-    noise_reduction.enabled && noise_reduction.model.is_attenuation_only()
+pub(crate) fn pads_neural_input(_settings: &AppSettings, _output: bool) -> bool {
+    // Disabled: the ×0.5 input pad was anti-clip headroom for the network's ~1.4×
+    // overshoot, but measured against the live chain it starves the denoise of
+    // ~25 dB — the reduced level shifts the post-model level expander's operating
+    // point so it stops ducking, and the network itself leaves a worse residual on
+    // a quieter input (2·F(x/2) ≠ F(x)). The output overshoot it guarded against is
+    // already contained by the final `sample_ceiling` clamp, so the pad only cost
+    // noise reduction. Kept as a function (not deleted) so restoring it is one line.
+    false
 }
 
 /// Graph sample rate. Every chain declares `node.latency = "…/48000"`; the EQ
@@ -223,7 +221,7 @@ mod tests {
         assert!(headroom > 0.2);
     }
     #[test]
-    fn the_neural_pad_is_an_exact_unity_round_trip_only_where_it_belongs() {
+    fn the_neural_pad_is_disabled_but_stays_an_exact_unity_inverse() {
         let pad = neural_pad().controls;
         let makeup = neural_makeup().controls;
         let multiplier = |controls: &[(&str, f64)]| {
@@ -233,23 +231,18 @@ mod tests {
                 .expect("a linear node carries Mult")
                 .1
         };
-        // Bit-exact in float: the product is precisely one.
+        // The functions are retained (restoring the pad is one line) and are still
+        // exact float inverses, so a future re-enable is bit-exact unity.
         assert_eq!(multiplier(&pad) * multiplier(&makeup), 1.0);
         assert!(multiplier(&pad) < 1.0);
 
+        // But the pad is disabled everywhere now: it cost ~25 dB of denoise and the
+        // final clamp already contains the network's output overshoot.
         let mut settings = AppSettings::default();
-        // The default model is GTCRN, whose gate thresholds live on the same
-        // node and are in dB, so its input is never padded.
+        settings.noise_reduction.enabled = true;
         assert!(!pads_neural_input(&settings, false));
-        settings.noise_reduction.model = crate::config::NoiseModel::DeepFilterNet3;
-        assert!(pads_neural_input(&settings, false));
-        // The output chain only pads while it actually runs a model.
-        assert!(!pads_neural_input(&settings, true));
-        settings.output_filter.noise_reduction.model = crate::config::NoiseModel::DeepFilterNet3;
-        assert!(pads_neural_input(&settings, true));
-        // The advanced opt-out disables this along with the rest.
-        settings.gain_safety = GainSafety::Unrestricted;
-        assert!(!pads_neural_input(&settings, false));
+        settings.output_filter.noise_reduction.enabled = true;
+        settings.output_filter.noise_reduction.model = crate::config::NoiseModel::Dfn3;
         assert!(!pads_neural_input(&settings, true));
     }
 

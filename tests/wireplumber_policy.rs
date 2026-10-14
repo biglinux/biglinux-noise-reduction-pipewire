@@ -25,7 +25,22 @@ fn stage_package_recipe(root: &Path, temporary: &Path) -> PathBuf {
     ] {
         fs::write(source.join("target/release").join(binary), b"fixture\n").unwrap();
     }
-    for resource in ["usr", "docs", "LICENSE", "LICENSE-MIT", "README.md"] {
+    // `app` and `packaging` are read for the front-end payload and its
+    // launcher; the rest is the versioned resource tree and the documents.
+    for resource in [
+        "usr",
+        "docs",
+        "app",
+        "packaging",
+        "LICENSE",
+        "LICENSE-MIT",
+        "README.md",
+        "AGENTS.md",
+        "CONTRIBUTING.md",
+        "SUPPORT.md",
+        "SECURITY.md",
+        "CODE_OF_CONDUCT.md",
+    ] {
         symlink(root.join(resource), source.join(resource)).unwrap();
     }
     let catalog = source.join("build-locale/pt_BR/LC_MESSAGES/biglinux-microphone.mo");
@@ -48,6 +63,9 @@ fn stage_package_recipe(root: &Path, temporary: &Path) -> PathBuf {
         .arg(&package)
         .env_remove("BASH_ENV")
         .env_remove("ENV")
+        // package() honours CARGO_TARGET_DIR; the placeholder binaries above
+        // are staged in the fixture's own ./target, so it must not be set.
+        .env_remove("CARGO_TARGET_DIR")
         .env("BIGMIC_FORCE_GIT", "1")
         .output()
         .expect("execute package recipe in the disposable source tree");
@@ -90,6 +108,24 @@ fn packaged_wireplumber_files_are_installed_by_main_pkgbuild() {
         fs::read(package.join("usr/share/locale/pt_BR/LC_MESSAGES/biglinux-microphone.mo"))
             .unwrap(),
         b"catalog fixture\n"
+    );
+    // Reviewer bundles stay out of the documentation, and leaving them out
+    // must not touch the checkout that the fixture's docs/ links to.
+    let docs = package.join("usr/share/doc/biglinux-noise-reduction-pipewire/docs");
+    assert!(docs.join("architecture.md").is_file());
+    assert!(!docs.join("biglinux-microphone-review-20260919").exists());
+    assert!(
+        root.join("docs/biglinux-microphone-review-20260919/README.md")
+            .is_file()
+    );
+    // The front-end's own copy of big_gtk_kit, stylesheet included.
+    let kit = package.join("usr/lib/biglinux-microphone/big_gtk_kit");
+    assert!(kit.join("__init__.py").is_file());
+    assert!(kit.join("tooltip.css").is_file());
+    assert!(
+        package
+            .join("usr/share/licenses/biglinux-noise-reduction-pipewire/LICENSE.big-gtk-kit")
+            .is_file()
     );
 }
 
@@ -139,28 +175,33 @@ fn flatpak_generation_is_pinned_checksummed_and_offline() {
     assert!(manifest.contains("path: ../.."));
     assert!(manifest.contains("- cargo-sources.json"));
     assert!(!manifest.contains("--share=network"));
+    // The numpy wheel is the one download outside the crates.
+    assert!(
+        manifest
+            .contains("sha256: a5fa86b80fd24bcd1aff83ad23be44ea323de3f787be8f8b15d4a65621e25321")
+    );
 }
 
 #[test]
-fn arch_gui_allocator_is_direct_and_not_inherited_by_children() {
+fn rust_binaries_keep_the_system_allocator_and_nothing_preloads_one() {
+    // The GTK front-end is now a Python package (app/), so the old Rust-GUI
+    // gtk-jemalloc anchoring (src/bin/gui.rs, the `gtk-jemalloc` feature and the
+    // `jemalloc-gtk-fixed` dependency) is gone. What must stay true: no Rust
+    // target pulls a custom allocator, and packaging never forces one through
+    // the environment, which every child the tools launch would inherit.
     let cargo = read_fixture("Cargo.toml");
-    let gui = read_fixture("src/bin/gui.rs");
     let pkgbuild = read_fixture("packaging/arch/PKGBUILD");
 
-    assert!(cargo.contains("default = [\"gtk-jemalloc\"]"));
-    assert!(cargo.contains("gtk-jemalloc = [\"dep:big-jemalloc\"]"));
-    assert!(gui.contains("big_jemalloc::anchor();"));
-    assert!(gui.contains("#[cfg(feature = \"gtk-jemalloc\")]"));
-    assert!(pkgbuild.contains("'jemalloc-gtk-fixed'"));
-    assert!(!pkgbuild.contains("--no-default-features"));
-
+    assert!(
+        !cargo.contains("jemalloc"),
+        "Cargo.toml must not pull a custom allocator"
+    );
     for forbidden in ["LD_PRELOAD=", "MALLOC_CONF="] {
         assert!(
-            !gui.contains(forbidden) && !pkgbuild.contains(forbidden),
+            !pkgbuild.contains(forbidden),
             "allocator activation must not be inherited through {forbidden}"
         );
     }
-
     for binary in ["src/bin/cli.rs", "src/bin/probe.rs", "src/bin/pwloader.rs"] {
         assert!(
             !read_fixture(binary).contains("jemalloc"),
@@ -286,8 +327,11 @@ fn jamesdsp_sink_removal_clears_smart_filter_override() {
     assert!(script.contains("\"event.session-item.interface\", \"=\", \"linkable\""));
     // The clear path inside maybe_retarget_output_smart_filter writes
     // a nil value — confirm it is still present so removals actually
-    // tear the override down.
-    assert!(script.contains("metadata:set (filter_id, \"filter.smart.target\", nil, nil)"));
+    // tear the override down. The single parameterized `metadata:set`
+    // clears when no jamesdsp_sink is found: `target` is nil, so both the
+    // value type and the value fall back to nil.
+    assert!(script.contains("metadata:set (filter_id, \"filter.smart.target\","));
+    assert!(script.contains("target and \"Spa:String:JSON\" or nil, target"));
 }
 
 #[test]

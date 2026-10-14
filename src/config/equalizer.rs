@@ -45,6 +45,37 @@ impl EqualizerConfig {
             *b = b.clamp(EQ_BAND_MIN, EQ_BAND_MAX);
         }
     }
+
+    /// The gains this equalizer actually applies.
+    ///
+    /// A `bands` array of the wrong length is not trusted, and the named preset
+    /// is what the user last chose, so that is what gets rendered. Both the
+    /// graph and [`Self::shapes_anything`] have to agree on this — deciding the
+    /// node is pointless from `bands` while the node renders from the preset
+    /// would drop somebody's equalizer.
+    #[must_use]
+    pub fn effective_bands(&self) -> Vec<f32> {
+        if self.bands.len() == EQ_BAND_COUNT {
+            self.bands.clone()
+        } else {
+            eq_preset_bands(&self.preset).map_or_else(
+                || vec![EQ_BAND_DEFAULT; EQ_BAND_COUNT],
+                |bands| bands.to_vec(),
+            )
+        }
+    }
+
+    /// Whether this equalizer changes the sound at all.
+    ///
+    /// `enabled` with every band at 0 dB is a real state — `"flat"` is one of
+    /// the offered presets — and it is ten biquads computing the identity. It
+    /// must not be a reason to build the filter chain: somebody who switches
+    /// the noise filter off is then left with a filter device in their audio
+    /// settings and a loader process, with nothing on screen explaining why.
+    #[must_use]
+    pub fn shapes_anything(&self) -> bool {
+        self.enabled && self.effective_bands().iter().any(|gain| *gain != 0.0)
+    }
 }
 
 // ── Presets ──────────────────────────────────────────────────────────

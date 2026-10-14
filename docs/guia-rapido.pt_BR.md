@@ -3,24 +3,23 @@
 ## Para começar
 
 Use a tela simples. Escolha o microfone, fale no seu volume habitual e observe
-o medidor. Ligue o filtro do microfone. Comece com a qualidade automática e
+o medidor. Ligue o filtro do microfone. Comece com o modelo recomendado (DFN3) e
 ajuste a intensidade apenas se ainda houver ruído ou se a voz ficar artificial.
-Você não precisa escolher um modelo de inteligência artificial para começar.
 
 Faça uma mudança por vez. Compare uma frase curta antes e depois; o resultado
 mais útil é uma voz compreensível, não necessariamente silêncio absoluto.
 
-## Qualidade e consumo
+## Modelos e consumo
 
-**Automática** escolhe entre os modelos disponíveis segundo a política do
-aplicativo e as medições que ele consegue obter. Isso não é uma garantia de
-adaptação contínua a toda mudança de carga do computador.
+**DFN3** é o recomendado: o mais leve, bom também em computadores antigos.
+**DFN3-LL** deixa menos ruído entre as palavras e usa cerca do dobro do
+processamento. **DPDFNet** limpa mais e mantém o fundo silencioso, com cerca de
+quatro vezes o processamento do DFN3. O aplicativo nunca troca o modelo sozinho.
 
-**Menor uso de CPU** é a primeira alternativa quando o computador está ocupado
-ou o som apresenta cortes. **Melhor qualidade** prioriza o modelo de maior
-qualidade da política e pode consumir mais recursos. A lista manual fica nos
-controles avançados; modelos sem a biblioteca necessária não são escolhas
-funcionais, mesmo que um arquivo do plugin esteja presente.
+**Silenciar quando ninguém fala** corta o ruído que escapa enquanto você não
+está falando; o atraso do microfone passa a ser de cerca de 0,07 s. Cada modelo
+guarda a sua escolha: vem ligado nos dois DFN3 e desligado no DPDFNet, que já
+deixa o fundo silencioso sozinho.
 
 A intensidade controla quanto o filtro atua. Aumentar demais pode mudar o
 timbre ou prejudicar consoantes. Reduza um pouco e compare novamente.

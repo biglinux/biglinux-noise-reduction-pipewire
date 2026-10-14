@@ -9,6 +9,7 @@ mod gain_safety;
 mod graph;
 pub(crate) use gain_safety::{mic_headroom, output_headroom};
 mod mic;
+pub(crate) use mic::mic_min_snr_gate_db;
 mod migration;
 mod nodes;
 mod output;
@@ -26,6 +27,7 @@ use log::{debug, info};
 
 use crate::config::AppSettings;
 
+pub(crate) use echo_cancel::{AEC_LIBRARY, AEC_NODE_LATENCY};
 pub use echo_cancel::{EC_CAPTURE_NODE_NAME, EC_SOURCE_NAME, ECHO_CANCEL_CONF_FILE};
 pub use mic::{
     MIC_CAPTURE_NODE_NAME, MIC_CONF_FILE, MIC_DESCRIPTION, MIC_NODE_NAME, ai_node_in_mic_chain,
@@ -185,7 +187,10 @@ pub fn apply_to_dir(settings: &AppSettings, args_dir: &Path) -> io::Result<()> {
 
     let ec_path = args_dir.join(ECHO_CANCEL_CONF_FILE);
     if settings.echo_cancel.enabled {
-        write_if_changed(&ec_path, &echo_cancel::build_echo_cancel_conf())?;
+        write_if_changed(
+            &ec_path,
+            &echo_cancel::build_echo_cancel_conf_settings(&settings.echo_cancel),
+        )?;
     } else {
         remove_file_if_exists(&ec_path)?;
     }

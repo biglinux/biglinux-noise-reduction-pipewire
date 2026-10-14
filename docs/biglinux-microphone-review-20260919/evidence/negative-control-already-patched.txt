@@ -1,0 +1,2 @@
+PASS: expected refusal of already patched source.
+FAIL: Not the uploaded base (or already patched): app/biglinux_microphone/cli.py

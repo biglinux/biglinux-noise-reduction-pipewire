@@ -75,25 +75,46 @@ pub fn merge(
 }
 
 fn merge_value(base: &Value, local: &Value, remote: &Value, path: &str) -> io::Result<Value> {
+    merge_entry(Some(base), Some(local), Some(remote), path)?
+        .ok_or_else(|| io::Error::other("settings root was removed"))
+}
+
+// Absence is not JSON null. A local deletion must survive an unrelated remote
+// edit, but deleting a remotely edited entry is a genuine three-way conflict.
+fn merge_entry(
+    base: Option<&Value>,
+    local: Option<&Value>,
+    remote: Option<&Value>,
+    path: &str,
+) -> io::Result<Option<Value>> {
     if local == base {
-        return Ok(remote.clone());
+        return Ok(remote.cloned());
     }
     if remote == base || remote == local {
-        return Ok(local.clone());
+        return Ok(local.cloned());
     }
-    if let (Some(base), Some(local), Some(remote)) =
-        (base.as_object(), local.as_object(), remote.as_object())
-    {
-        let mut merged = remote.clone();
-        for (key, value) in local {
-            let old = base.get(key).unwrap_or(&Value::Null);
-            let current = remote.get(key).unwrap_or(&Value::Null);
-            merged.insert(
-                key.clone(),
-                merge_value(old, value, current, &format!("{path}.{key}"))?,
-            );
+    if let (Some(base), Some(local), Some(remote)) = (
+        base.and_then(Value::as_object),
+        local.and_then(Value::as_object),
+        remote.and_then(Value::as_object),
+    ) {
+        let keys: std::collections::BTreeSet<_> = base
+            .keys()
+            .chain(local.keys())
+            .chain(remote.keys())
+            .collect();
+        let mut merged = serde_json::Map::new();
+        for key in keys {
+            if let Some(value) = merge_entry(
+                base.get(key),
+                local.get(key),
+                remote.get(key),
+                &format!("{path}.{key}"),
+            )? {
+                merged.insert(key.clone(), value);
+            }
         }
-        return Ok(Value::Object(merged));
+        return Ok(Some(Value::Object(merged)));
     }
     Err(io::Error::new(
         io::ErrorKind::WouldBlock,
@@ -120,31 +141,41 @@ pub fn rebase_local(
 }
 
 fn rebase_value(base: &Value, local: &Value, remote: &Value) -> Value {
+    rebase_entry(Some(base), Some(local), Some(remote)).unwrap_or_else(|| local.clone())
+}
+fn rebase_entry(
+    base: Option<&Value>,
+    local: Option<&Value>,
+    remote: Option<&Value>,
+) -> Option<Value> {
     if local == base {
-        return remote.clone();
+        return remote.cloned();
     }
-    if let (Some(base), Some(local), Some(remote)) =
-        (base.as_object(), local.as_object(), remote.as_object())
-    {
-        let mut result = remote.clone();
-        for (key, value) in local {
-            result.insert(
-                key.clone(),
-                rebase_value(
-                    base.get(key).unwrap_or(&Value::Null),
-                    value,
-                    remote.get(key).unwrap_or(&Value::Null),
-                ),
-            );
+    if let (Some(base), Some(local), Some(remote)) = (
+        base.and_then(Value::as_object),
+        local.and_then(Value::as_object),
+        remote.and_then(Value::as_object),
+    ) {
+        let keys: std::collections::BTreeSet<_> = base
+            .keys()
+            .chain(local.keys())
+            .chain(remote.keys())
+            .collect();
+        let mut merged = serde_json::Map::new();
+        for key in keys {
+            if let Some(value) = rebase_entry(base.get(key), local.get(key), remote.get(key)) {
+                merged.insert(key.clone(), value);
+            }
         }
-        Value::Object(result)
-    } else {
-        local.clone()
+        return Some(Value::Object(merged));
     }
+    local.cloned() // a newer local deletion is newer local intent too
 }
 
-/// Keep unrecognized extension fields when saving a supported configuration.
-/// A corrupt file is never replaced with defaults implicitly.
+/// Keep unknown schema fields, including fields within retained profiles and
+/// calibrations. Only user-owned map keys may be deleted by the known model.
+const OWNED_MAPS: [&str; 2] = ["/profiles/profiles", "/mic_calibration/devices"];
+
 pub(super) fn serialized_preserving_unknown(
     settings: &AppSettings,
     path: &Path,
@@ -171,6 +202,14 @@ pub(super) fn serialized_preserving_unknown(
             "settings must be a JSON object",
         ));
     }
+    for path in OWNED_MAPS {
+        if let (Some(stored_map), Some(known_map)) = (
+            stored.pointer_mut(path).and_then(Value::as_object_mut),
+            known.pointer(path).and_then(Value::as_object),
+        ) {
+            stored_map.retain(|key, _| known_map.contains_key(key));
+        }
+    }
     overlay(&mut stored, &known);
     let mut bytes = serde_json::to_vec_pretty(&stored).map_err(io::Error::other)?;
     bytes.push(b'\n');
@@ -190,6 +229,43 @@ fn overlay(stored: &mut Value, known: &Value) {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn a_scenario_somebody_deleted_is_actually_gone() {
+        // The overlay preserves what a newer version wrote, which means it can
+        // never delete a key. For sections whose keys are the person's own
+        // data that is not preservation, it is a delete button that does
+        // nothing: measured here, `profile delete` reported success and left
+        // the scenario in the file.
+        let dir = tempfile::tempdir().unwrap();
+        let path = dir.path().join("settings.json");
+        std::fs::write(
+            &path,
+            br#"{"profiles":{"active":"live","profiles":{"live":{"label":"Live"}}},
+                 "mic_calibration":{"devices":{"mic":{"volume":1.4}}},
+                 "noise_reduction":{"enabled":true,"a_field_from_the_future":7}}"#,
+        )
+        .unwrap();
+
+        let settings = AppSettings::default();
+        let bytes = serialized_preserving_unknown(&settings, &path).unwrap();
+        let written: Value = serde_json::from_slice(&bytes).unwrap();
+
+        assert!(
+            written["profiles"]["profiles"]
+                .as_object()
+                .unwrap()
+                .is_empty()
+        );
+        assert!(
+            written["mic_calibration"]["devices"]
+                .as_object()
+                .unwrap()
+                .is_empty()
+        );
+        // And the reason the overlay exists still holds for everything else.
+        assert_eq!(written["noise_reduction"]["a_field_from_the_future"], 7);
+    }
 
     #[test]
     fn independent_edits_survive_in_either_order() {
@@ -224,7 +300,7 @@ mod tests {
         let mut current = submitted.clone();
         let mut settled = submitted.clone();
         current.noise_reduction.strength = 0.41;
-        settled.noise_reduction.model = super::super::NoiseModel::DeepFilterNet3;
+        settled.noise_reduction.model = super::super::NoiseModel::Dpdfnet;
         let result = rebase_local(&submitted, &current, &settled);
         assert_eq!(result.noise_reduction.strength, 0.41);
         assert_eq!(result.noise_reduction.model, settled.noise_reduction.model);
@@ -257,5 +333,58 @@ mod tests {
         std::fs::write(&path, "{broken").unwrap();
         assert!(serialized_preserving_unknown(&AppSettings::default(), &path).is_err());
         assert_eq!(std::fs::read_to_string(path).unwrap(), "{broken");
+    }
+    #[test]
+    fn three_way_merge_and_rebase_preserve_deletions_not_just_changes() {
+        let base = serde_json::json!({"devices":{"a":1,"b":2},"other":0});
+        let local = serde_json::json!({"devices":{"b":2},"other":0});
+        let remote = serde_json::json!({"devices":{"a":1,"b":3},"other":4});
+        let expected = serde_json::json!({"devices":{"b":3},"other":4});
+        assert_eq!(
+            merge_value(&base, &local, &remote, "root").unwrap(),
+            expected
+        );
+        assert_eq!(rebase_value(&base, &local, &remote), expected);
+    }
+    #[test]
+    fn deleting_a_concurrently_changed_entry_conflicts_but_null_is_a_value() {
+        let base = serde_json::json!({"a":1});
+        let local = serde_json::json!({});
+        let remote = serde_json::json!({"a":2});
+        assert_eq!(
+            merge_value(&base, &local, &remote, "root")
+                .unwrap_err()
+                .kind(),
+            io::ErrorKind::WouldBlock
+        );
+        assert_eq!(rebase_value(&base, &local, &remote), local);
+        assert_eq!(
+            merge_entry(None, Some(&Value::Null), None, "a").unwrap(),
+            Some(Value::Null)
+        );
+        assert_eq!(
+            merge_entry(Some(&Value::Null), None, Some(&Value::Null), "a").unwrap(),
+            None
+        );
+    }
+    #[test]
+    fn saving_keeps_future_schema_fields_inside_retained_calibrations() {
+        let dir = tempfile::tempdir().unwrap();
+        let path = dir.path().join("settings.json");
+        std::fs::write(&path, br#"{"mic_calibration":{"future":7,"devices":{"mic":{"volume":1.0,"future":8},"deleted":{"volume":1}}}}"#).unwrap();
+        let mut settings = AppSettings::default();
+        settings.mic_calibration.devices.insert(
+            "mic".into(),
+            super::super::DeviceCalibration {
+                volume: 1.0,
+                ..Default::default()
+            },
+        );
+        let value: Value =
+            serde_json::from_slice(&serialized_preserving_unknown(&settings, &path).unwrap())
+                .unwrap();
+        assert_eq!(value["mic_calibration"]["future"], 7);
+        assert_eq!(value["mic_calibration"]["devices"]["mic"]["future"], 8);
+        assert!(value["mic_calibration"]["devices"].get("deleted").is_none());
     }
 }

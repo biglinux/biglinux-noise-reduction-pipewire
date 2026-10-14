@@ -1,323 +1,914 @@
-#
+# Brazilian Portuguese translation of BigLinux Microphone.
+# Distributed under the same license as the project.
+# R3 wording reviewed with AI assistance; see docs/translations.md.
 msgid ""
 msgstr ""
-"Project-Id-Version: biglinux-noise-reduction-pipewire\n"
+"Project-Id-Version: biglinux-microphone 5.0.0\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-09-08 05:53+0000\n"
-"PO-Revision-Date: 2026-09-08 10:10+0000\n"
-"Last-Translator: OpenAI-assisted review (pull request 30)\n"
-"Language-Team: Portuguese (Brazil) <pt_BR@li.org>\n"
+"POT-Creation-Date: 2026-10-12 19:46-0300\n"
+"PO-Revision-Date: 2026-09-20 00:00+0000\n"
+"Last-Translator: Revisão assistida por IA (R3)\n"
+"Language-Team: Portuguese (Brazil)\n"
 "Language: pt_BR\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=2; plural=(n > 1);\n"
 
-#: src/ui/views/output.rs:86
+#: app/biglinux_microphone/main.py:22
+msgid "BigLinux Microphone - real-time microphone noise reduction"
+msgstr "BigLinux Microphone — redução de ruído do microfone em tempo real"
+
+#: app/biglinux_microphone/main.py:24
+msgid "Enable debug logging"
+msgstr "Ativar registros de depuração"
+
+#: app/biglinux_microphone/main.py:26
+msgid "Show version and exit"
+msgstr "Mostrar a versão e sair"
+
+#: app/biglinux_microphone/application.py:35
+#: app/biglinux_microphone/application.py:64
+#: app/biglinux_microphone/window.py:30
+msgid "BigLinux Microphone"
+msgstr "BigLinux Microphone"
+
+#: app/biglinux_microphone/cli.py:233
+msgid "This noise-reduction mode cannot preview a recording."
+msgstr "Este modo de redução de ruído não permite comparar gravações."
+
+#: app/biglinux_microphone/cli.py:237
+msgid "Install ffmpeg to compare recordings."
+msgstr "Instale o ffmpeg para comparar gravações."
+
+#: app/biglinux_microphone/cli.py:256 app/biglinux_microphone/cli.py:335
+msgid "Comparison cancelled"
+msgstr "Comparação cancelada"
+
+#: app/biglinux_microphone/cli.py:289
+msgid "Processing the recording took too long."
+msgstr "O processamento da gravação demorou demais."
+
+#: app/biglinux_microphone/cli.py:293
+msgid "Could not process the recording."
+msgstr "Não foi possível processar a gravação."
+
+#: app/biglinux_microphone/cli.py:314 app/biglinux_microphone/cli.py:317
+msgid "The comparison recording is incomplete."
+msgstr "A gravação para comparação está incompleta."
+
+#: app/biglinux_microphone/cli.py:325
+msgid "The recording is too quiet to compare. Speak closer to the microphone."
+msgstr ""
+"A gravação está baixa demais para comparar. Fale mais perto do microfone."
+
+#: app/biglinux_microphone/ui/view.py:105
+#: app/biglinux_microphone/ui/pages/home.py:29
+msgid "Home"
+msgstr "Início"
+
+#: app/biglinux_microphone/ui/view.py:108
+#: app/biglinux_microphone/ui/view.py:109
+msgid "Back"
+msgstr "Voltar"
+
+#: app/biglinux_microphone/ui/view.py:117
+#: app/biglinux_microphone/ui/view.py:119
+msgid "Pages"
+msgstr "Páginas"
+
+#: app/biglinux_microphone/ui/view.py:132
+#: app/biglinux_microphone/ui/view.py:154
+#: app/biglinux_microphone/ui/pages/diagnostics.py:40
+#: app/biglinux_microphone/ui/pages/calibrate.py:82
+msgid "Microphone"
+msgstr "Microfone"
+
+#: app/biglinux_microphone/ui/view.py:156
+msgid "About"
+msgstr "Sobre"
+
+#: app/biglinux_microphone/ui/view.py:157
+msgid "Quit"
+msgstr "Sair"
+
+#: app/biglinux_microphone/ui/view.py:159
+#: app/biglinux_microphone/ui/view.py:160
+msgid "Main menu"
+msgstr "Menu principal"
+
+#: app/biglinux_microphone/ui/view.py:178
+msgid "Listen back"
+msgstr "Ouvir o retorno"
+
+#: app/biglinux_microphone/ui/view.py:179
+msgid "2 s later — use headphones"
+msgstr "2 s depois — use fones de ouvido"
+
+#: app/biglinux_microphone/ui/view.py:458
+msgid "Live monitoring stopped unexpectedly"
+msgstr "O retorno de voz parou inesperadamente"
+
+#: app/biglinux_microphone/ui/pages/home.py:45
+#: app/biglinux_microphone/ui/pages/home.py:55
+#: app/biglinux_microphone/ui/pages/home.py:242
+#: app/biglinux_microphone/ui/pages/microphone_test.py:198
+#: app/biglinux_microphone/ui/pages/calibrate.py:254
+msgid "Try again"
+msgstr "Tentar novamente"
+
+#: app/biglinux_microphone/ui/pages/home.py:54
+#: app/biglinux_microphone/ui/pages/home.py:241
+#: app/biglinux_microphone/ui/pages/home.py:330
+#: app/biglinux_microphone/ui/pages/voice_volume.py:130
+#: app/biglinux_microphone/ui/pages/diagnostics.py:73
+#: app/biglinux_microphone/ui/pages/calibrate.py:284
+msgid "No microphone available"
+msgstr "Nenhum microfone disponível"
+
+#: app/biglinux_microphone/ui/pages/home.py:64
+#: app/biglinux_microphone/ui/pages/home.py:288
+msgid "Restore microphone"
+msgstr "Restabelecer microfone"
+
+#: app/biglinux_microphone/ui/pages/home.py:74
+#: app/biglinux_microphone/ui/pages/home.py:222
+#: app/biglinux_microphone/ui/pages/home.py:318
+msgid "Speak to check your microphone"
+msgstr "Fale para verificar seu microfone"
+
+#: app/biglinux_microphone/ui/pages/home.py:83
+#: app/biglinux_microphone/ui/pages/noise_reduction.py:56
+#: app/biglinux_microphone/ui/pages/noise_reduction.py:66
+msgid "Noise reduction"
+msgstr "Redução de ruído"
+
+#: app/biglinux_microphone/ui/pages/home.py:83
+msgid "Checking status…"
+msgstr "Verificando o estado…"
+
+#: app/biglinux_microphone/ui/pages/home.py:92
+#: app/biglinux_microphone/ui/pages/noise_reduction.py:80
+msgid "Noise-reduction model"
+msgstr "Modelo de redução de ruído"
+
+#: app/biglinux_microphone/ui/pages/home.py:94
+msgid "DFN3 (recommended)"
+msgstr "DFN3 (recomendado)"
+
+#: app/biglinux_microphone/ui/pages/home.py:103
+#: app/biglinux_microphone/ui/pages/source_picker.py:100
+msgid "Microphone in use"
+msgstr "Microfone em uso"
+
+#: app/biglinux_microphone/ui/pages/home.py:104
+msgid "Looking for microphones…"
+msgstr "Procurando microfones…"
+
+#: app/biglinux_microphone/ui/pages/home.py:120
+#: app/biglinux_microphone/ui/pages/voice_volume.py:18
+msgid "Voice volume"
+msgstr "Volume da voz"
+
+#: app/biglinux_microphone/ui/pages/home.py:120
+#: app/biglinux_microphone/ui/pages/voice_volume.py:28
+msgid "Checking your microphone…"
+msgstr "Verificando seu microfone…"
+
+#: app/biglinux_microphone/ui/pages/home.py:127
+#: app/biglinux_microphone/ui/pages/voice_volume.py:33
+#: app/biglinux_microphone/ui/pages/calibrate.py:32
+msgid "Adjust volume"
+msgstr "Ajustar volume"
+
+#: app/biglinux_microphone/ui/pages/home.py:144
+msgid "Microphone volume"
+msgstr "Volume do microfone"
+
+#: app/biglinux_microphone/ui/pages/home.py:148
+#: app/biglinux_microphone/ui/pages/voice_volume.py:44
+msgid "Automatic volume"
+msgstr "Volume automático"
+
+#: app/biglinux_microphone/ui/pages/home.py:149
+msgid "Follows your voice. Open to change its limits."
+msgstr "Acompanha sua voz. Abra para alterar os limites."
+
+#: app/biglinux_microphone/ui/pages/home.py:161
+#: app/biglinux_microphone/ui/pages/microphone_test.py:32
+#: app/biglinux_microphone/ui/pages/calibrate.py:206
+msgid "Test microphone"
+msgstr "Testar microfone"
+
+#: app/biglinux_microphone/ui/pages/home.py:238
+#: app/biglinux_microphone/ui/pages/voice_volume.py:131
+msgid "Choose a microphone to continue"
+msgstr "Escolha um microfone para continuar"
+
+#: app/biglinux_microphone/ui/pages/home.py:239
+msgid "Choose microphone"
+msgstr "Escolher microfone"
+
+#: app/biglinux_microphone/ui/pages/home.py:288
+msgid "Unmute"
+msgstr "Ativar som"
+
+#: app/biglinux_microphone/ui/pages/home.py:291
+msgid "Updating microphone…"
+msgstr "Atualizando microfone…"
+
+#: app/biglinux_microphone/ui/pages/home.py:295
+msgid "Audio service unavailable"
+msgstr "Serviço de áudio indisponível"
+
+#: app/biglinux_microphone/ui/pages/home.py:297
+msgid "Your microphone is muted"
+msgstr "Seu microfone está silenciado"
+
+#: app/biglinux_microphone/ui/pages/home.py:299
+msgid "The microphone filter is not ready"
+msgstr "O filtro do microfone não está pronto"
+
+#: app/biglinux_microphone/ui/pages/home.py:302
+msgid "Ready — starts when an application uses the microphone"
+msgstr "Pronto — inicia quando um aplicativo usa o microfone"
+
+#: app/biglinux_microphone/ui/pages/home.py:304
+msgid "On — reducing background noise"
+msgstr "Ligada — reduzindo o ruído de fundo"
+
+#: app/biglinux_microphone/ui/pages/home.py:307
+msgid "Off — background noise is not reduced"
+msgstr "Desligada — o ruído de fundo não é reduzido"
+
+#: app/biglinux_microphone/ui/pages/home.py:313
+msgid "Microphone unavailable"
+msgstr "Microfone indisponível"
+
+#: app/biglinux_microphone/ui/pages/home.py:315
+msgid "Microphone muted"
+msgstr "Microfone silenciado"
+
+#: app/biglinux_microphone/ui/pages/home.py:334
+#: app/biglinux_microphone/ui/pages/voice_volume.py:139
+msgid "Adjusted for your voice"
+msgstr "Ajustado para sua voz"
+
+#: app/biglinux_microphone/ui/pages/home.py:336
+msgid "Not adjusted yet — measure once for this microphone"
+msgstr "Ainda não ajustado — faça uma medição para este microfone"
+
+#: app/biglinux_microphone/ui/pages/home.py:339
+msgid "Loading…"
+msgstr "Carregando…"
+
+#: app/biglinux_microphone/ui/pages/home.py:360
+msgid "No sound"
+msgstr "Sem som"
+
+#: app/biglinux_microphone/ui/pages/home.py:362
+msgid "Sound detected — speak normally"
+msgstr "Som detectado — fale normalmente"
+
+#: app/biglinux_microphone/ui/pages/home.py:364
+msgid "Good level"
+msgstr "Bom nível"
+
+#: app/biglinux_microphone/ui/pages/home.py:366
+msgid "Near the limit — lower the microphone volume"
+msgstr "Perto do limite — diminua o volume do microfone"
+
+#: app/biglinux_microphone/ui/pages/home.py:368
+msgid "Too loud — lower the microphone volume"
+msgstr "Muito alto — diminua o volume do microfone"
+
+#: app/biglinux_microphone/ui/pages/source_picker.py:22
+msgid "Select microphone"
+msgstr "Selecionar microfone"
+
+#: app/biglinux_microphone/ui/pages/source_picker.py:26
+msgid "No microphones available"
+msgstr "Nenhum microfone disponível"
+
+#: app/biglinux_microphone/ui/pages/source_picker.py:28
 msgid ""
-"10-band parametric EQ on what you hear. Pick a preset or drag each band "
-"between -40 dB and +40 dB."
+"Connect a microphone. For Bluetooth, enable the headset microphone in your "
+"system sound settings."
 msgstr ""
-"Equalizador paramétrico de 10 bandas no que você ouve. Escolha uma "
-"predefinição ou arraste cada banda entre -40 dB e +40 dB."
+"Conecte um microfone. Para Bluetooth, ative o microfone do headset nas "
+"configurações de som do sistema."
 
-#: src/ui/views/advanced.rs:568
+#: app/biglinux_microphone/ui/pages/source_picker.py:101
+msgid "Other microphones available"
+msgstr "Outros microfones disponíveis"
+
+#: app/biglinux_microphone/ui/pages/source_picker.py:103
+msgid "Microphones from other applications"
+msgstr "Microfones de outros aplicativos"
+
+#: app/biglinux_microphone/ui/pages/source_picker.py:104
+msgid "These inputs may already apply sound effects."
+msgstr "Essas entradas podem já aplicar efeitos ao som."
+
+#: app/biglinux_microphone/ui/pages/source_picker.py:117
+msgid "In use"
+msgstr "Em uso"
+
+#: app/biglinux_microphone/ui/pages/source_picker.py:125
+msgid "Input disconnected"
+msgstr "Entrada desconectada"
+
+#: app/biglinux_microphone/ui/pages/noise_reduction.py:27
+msgid "DFN3 — recommended"
+msgstr "DFN3 — recomendado"
+
+#: app/biglinux_microphone/ui/pages/noise_reduction.py:27
+msgid "The lightest. Works well on older computers."
+msgstr "O mais leve. Funciona bem em computadores mais antigos."
+
+#: app/biglinux_microphone/ui/pages/noise_reduction.py:32
 msgid ""
-"A small extra reserve for USB headsets, microphones and external audio "
-"interfaces. Increase only if you hear tiny cuts or pops on a USB device when "
-"the computer is busy."
+"A larger network that leaves less noise between words. Uses about twice the "
+"processing of DFN3, and has the shortest delay while “Silence when nobody "
+"speaks” is off."
 msgstr ""
-"Uma pequena reserva extra para fones, microfones e interfaces de áudio USB. "
-"Aumente apenas se você ouvir pequenos cortes ou estalos em um dispositivo "
-"USB quando o computador está ocupado."
+"Uma rede maior, que deixa menos ruído entre as palavras. Usa cerca do dobro "
+"do processamento do DFN3 e tem o menor atraso enquanto “Silenciar quando "
+"ninguém fala” está desligado."
 
-#: src/ui/views/output.rs:65
-msgid "AI noise reduction"
-msgstr "Redução de ruído com IA"
-
-#: src/ui/window.rs:262 src/ui/window.rs:435
-msgid "About Filter noise"
-msgstr "Sobre o Filtro de ruído"
-
-#: src/ui/widgets/source_picker.rs:98
+#: app/biglinux_microphone/ui/pages/noise_reduction.py:41
 msgid ""
-"Above 100% may distort your voice. Lower the volume if the level meter "
-"reaches the top."
+"The strongest cleanup, with a steady quiet background. Uses about four times "
+"the processing of DFN3."
 msgstr ""
-"Acima de 100%, sua voz pode ficar distorcida. Reduza o volume se o medidor "
-"atingir o máximo."
+"A limpeza mais forte, com o fundo sempre silencioso. Usa cerca de quatro "
+"vezes o processamento do DFN3."
 
-#: src/ui/views/advanced.rs:164
+#: app/biglinux_microphone/ui/pages/noise_reduction.py:67
+msgid "Applications hear your voice with less background noise."
+msgstr "Os aplicativos recebem sua voz com menos ruído de fundo."
+
+#: app/biglinux_microphone/ui/pages/noise_reduction.py:81
+msgid "Heavier models clean more and use more processing."
+msgstr "Modelos mais pesados limpam mais e usam mais processamento."
+
+#: app/biglinux_microphone/ui/pages/noise_reduction.py:111
+msgid "Silence when nobody speaks"
+msgstr "Silenciar quando ninguém fala"
+
+#: app/biglinux_microphone/ui/pages/noise_reduction.py:113
 msgid ""
-"Adjust how the system drives your audio hardware. Each card starts on the "
-"default we tested across a wide range of machines — change a value only if "
-"you have a specific reason to."
+"Mutes leftover noise while you are not talking. Your voice then arrives "
+"about 0.07 s later."
 msgstr ""
-"Ajuste como o sistema controla o seu hardware de áudio. Cada cartão começa "
-"no padrão que testamos em uma ampla variedade de máquinas — altere um valor "
-"apenas se tiver um motivo específico."
+"Silencia o ruído que sobra enquanto você não fala. Sua voz passa a chegar "
+"cerca de 0,07 s depois."
 
-#: src/ui/window.rs:230 src/ui/window.rs:236
-msgid "Advanced"
-msgstr "Avançado"
+#: app/biglinux_microphone/ui/pages/noise_reduction.py:124
+msgid "Voice detection"
+msgstr "Detecção de voz"
 
-#: src/ui/window.rs:296
+#: app/biglinux_microphone/ui/pages/noise_reduction.py:126
 msgid ""
-"All audio processing settings will return to their factory values. Your "
-"window size and view preferences are kept."
+"Sensitive keeps quiet voices and lets more noise through; strict mutes more "
+"noise and may cut faint words."
 msgstr ""
-"Todas as configurações de processamento de áudio voltarão aos valores de "
-"fábrica. O tamanho da janela e as preferências de exibição são mantidos."
+"A detecção sensível mantém vozes baixas e deixa passar mais ruído; a "
+"rigorosa silencia mais ruído e pode cortar palavras ditas em voz baixa."
 
-#: src/ui/views/advanced.rs:656
+#: app/biglinux_microphone/ui/pages/noise_reduction.py:134
+msgid "Very sensitive"
+msgstr "Muito sensível"
+
+#: app/biglinux_microphone/ui/pages/noise_reduction.py:135
+msgid "Sensitive"
+msgstr "Sensível"
+
+#: app/biglinux_microphone/ui/pages/noise_reduction.py:136
+msgid "Normal"
+msgstr "Normal"
+
+#: app/biglinux_microphone/ui/pages/noise_reduction.py:137
+msgid "Strict"
+msgstr "Rigorosa"
+
+#: app/biglinux_microphone/ui/pages/noise_reduction.py:138
+msgid "Very strict"
+msgstr "Muito rigorosa"
+
+#: app/biglinux_microphone/ui/pages/noise_reduction.py:155
+msgid "Intensity"
+msgstr "Intensidade"
+
+#: app/biglinux_microphone/ui/pages/noise_reduction.py:163
+msgid "How much noise to remove"
+msgstr "Quanto ruído remover"
+
+#: app/biglinux_microphone/ui/pages/noise_reduction.py:166
+msgid "Lower values preserve more of the original sound."
+msgstr "Valores menores preservam mais do som original."
+
+#: app/biglinux_microphone/ui/pages/noise_reduction.py:173
+msgid "The current model already handles residual noise internally."
+msgstr "O modelo atual já trata os ruídos residuais internamente."
+
+#: app/biglinux_microphone/ui/pages/noise_reduction.py:179
+msgid "Noise that still gets through"
+msgstr "Ruídos que ainda passam"
+
+#: app/biglinux_microphone/ui/pages/noise_reduction.py:180
+msgid "DFN3 can silence very quiet residual sounds between words."
+msgstr "O DFN3 pode silenciar ruídos muito baixos entre as palavras."
+
+#: app/biglinux_microphone/ui/pages/noise_reduction.py:183
+msgid "Silence residual noise by frequency"
+msgstr "Silenciar ruídos residuais por frequência"
+
+#: app/biglinux_microphone/ui/pages/noise_reduction.py:184
+msgid "Sounds below the line will be silenced."
+msgstr "Os sons abaixo da linha serão silenciados."
+
+#: app/biglinux_microphone/ui/pages/noise_reduction.py:201
+msgid "Manual adjustments active"
+msgstr "Ajustes manuais ativos"
+
+#: app/biglinux_microphone/ui/pages/noise_reduction.py:203
+msgid "Values set on the command line replace the recommended ones for DFN3."
+msgstr ""
+"Valores definidos pela linha de comando substituem os recomendados para o "
+"DFN3."
+
+#: app/biglinux_microphone/ui/pages/noise_reduction.py:206
+msgid "Restore"
+msgstr "Restaurar"
+
+#: app/biglinux_microphone/ui/pages/noise_reduction.py:225
 msgid ""
-"All audio runs at studio quality (48 kHz) by default. Hi-res music players "
-"and high-end USB DACs can play higher quality if you allow it here, but "
-"every change between qualities causes a brief audio reload. Keep the default "
-"unless you actually own hi-res equipment."
+"Move the line above residual noise, but keep it below the quiet parts of "
+"your voice."
 msgstr ""
-"Todo o áudio funciona em qualidade de estúdio (48 kHz) por padrão. "
-"Reprodutores de música de alta resolução e DACs USB topo de linha podem "
-"reproduzir em qualidade maior se você permitir aqui, mas cada mudança entre "
-"qualidades causa uma breve recarga do áudio. Mantenha o padrão a menos que "
-"você realmente tenha equipamento de alta resolução."
+"Mova a linha para cima do ruído residual, mas mantenha-a abaixo dos trechos "
+"mais baixos da sua voz."
 
-#: src/ui/views/advanced/apply.rs:169
-msgid ""
-"All your custom audio settings will be removed and the audio service will "
-"restart with the defaults."
+#: app/biglinux_microphone/ui/pages/noise_reduction.py:235
+msgid "Restore recommended"
+msgstr "Restaurar o recomendado"
+
+#: app/biglinux_microphone/ui/pages/noise_reduction.py:348
+#, python-format
+msgid "Model in use: %s"
+msgstr "Modelo em uso: %s"
+
+#: app/biglinux_microphone/ui/pages/voice_volume.py:45
+msgid "Adjusts microphone volume within your chosen limits."
+msgstr "Ajusta o volume do microfone dentro dos limites escolhidos."
+
+#: app/biglinux_microphone/ui/pages/voice_volume.py:47
+msgid "Follow my voice"
+msgstr "Acompanhar minha voz"
+
+#: app/biglinux_microphone/ui/pages/voice_volume.py:53
+msgid "Minimum volume (%)"
+msgstr "Volume mínimo (%)"
+
+#: app/biglinux_microphone/ui/pages/voice_volume.py:55
+msgid "Maximum volume (%)"
+msgstr "Volume máximo (%)"
+
+#: app/biglinux_microphone/ui/pages/voice_volume.py:62
+msgid "Apply volume limits"
+msgstr "Aplicar limites de volume"
+
+#: app/biglinux_microphone/ui/pages/voice_volume.py:133
+msgid "Automatic volume is on"
+msgstr "O volume automático está ligado"
+
+#: app/biglinux_microphone/ui/pages/voice_volume.py:135
+#, python-format
+msgid "Follows your voice between %d%% and %d%%"
+msgstr "Acompanha sua voz entre %d%% e %d%%"
+
+#: app/biglinux_microphone/ui/pages/voice_volume.py:140
+msgid "The volume was set for this microphone."
+msgstr "O volume foi ajustado para este microfone."
+
+#: app/biglinux_microphone/ui/pages/voice_volume.py:142
+msgid "Not adjusted yet"
+msgstr "Ainda não ajustado"
+
+#: app/biglinux_microphone/ui/pages/voice_volume.py:144
+msgid "Measure your voice once to set the ideal volume."
+msgstr "Faça uma medição da sua voz para ajustar o volume."
+
+#: app/biglinux_microphone/ui/pages/voice_sound.py:16
+msgid "Natural"
+msgstr "Natural"
+
+#: app/biglinux_microphone/ui/pages/voice_sound.py:17
+msgid "More clarity"
+msgstr "Mais clareza"
+
+#: app/biglinux_microphone/ui/pages/voice_sound.py:18
+msgid "Fuller voice"
+msgstr "Voz mais encorpada"
+
+#: app/biglinux_microphone/ui/pages/voice_sound.py:19
+msgid "Podcast"
+msgstr "Podcast"
+
+#: app/biglinux_microphone/ui/pages/voice_sound.py:20
+msgid "Custom"
+msgstr "Personalizado"
+
+#: app/biglinux_microphone/ui/pages/voice_sound.py:25
+msgid "Voice sound"
+msgstr "Som da voz"
+
+#: app/biglinux_microphone/ui/pages/voice_sound.py:35
+msgid "Voice profile"
+msgstr "Perfil de voz"
+
+#: app/biglinux_microphone/ui/pages/voice_sound.py:36
+msgid "Choose a ready-made sound, or customise your voice."
+msgstr "Escolha um perfil pronto ou personalize o som da sua voz."
+
+#: app/biglinux_microphone/ui/pages/voice_sound.py:88
+msgid "Equalizer"
+msgstr "Equalizador"
+
+#: app/biglinux_microphone/ui/pages/voice_sound.py:90
+msgid "Up boosts a band, down reduces it. 0 dB leaves it unchanged."
 msgstr ""
-"Todas as suas configurações de áudio personalizadas serão removidas e o "
-"serviço de áudio reiniciará com os padrões."
+"Para cima, aumenta o volume da faixa; para baixo, diminui. Em 0 dB, não há "
+"alteração."
 
-#: src/ui/views/advanced.rs:675
-msgid "Allow hi-res audio (44.1 / 48 / 88.2 / 96 / 176.4 / 192 kHz)"
-msgstr ""
-"Permitir áudio de alta resolução (44.1 / 48 / 88.2 / 96 / 176.4 / 192 kHz)"
+#: app/biglinux_microphone/ui/pages/voice_sound.py:126
+#, python-format
+msgid "%s Hz gain"
+msgstr "Ganho em %s Hz"
 
-#: src/ui/views/advanced.rs:688
-msgid "Allowed quality"
-msgstr "Qualidade permitida"
+#: app/biglinux_microphone/ui/pages/voice_sound.py:142
+msgid "Restore custom equalizer"
+msgstr "Restaurar o equalizador personalizado"
 
-#: src/ui/views/mic.rs:129
-msgid "Always"
-msgstr "Sempre"
+#: app/biglinux_microphone/ui/pages/echo_routing.py:16
+msgid "Echo and routing"
+msgstr "Eco e conexões de áudio"
 
-#: src/ui/views/advanced.rs:631
-msgid "Always keep the speakers ready (recommended on desktops)"
-msgstr "Manter os alto-falantes sempre prontos (recomendado em desktops)"
+#: app/biglinux_microphone/ui/pages/echo_routing.py:24
+msgid "Echo cancellation"
+msgstr "Cancelamento de eco"
 
-#: src/ui/mic_shell.rs:755
-msgid ""
-"Another application may be changing the settings, or the settings file is "
-"not writable. Try again, keep this window open, or close without saving your "
-"latest changes."
-msgstr ""
-"Outro aplicativo pode estar alterando as configurações, ou não foi possível "
-"gravar o arquivo. Tente novamente, mantenha a janela aberta ou feche sem "
-"salvar as últimas alterações."
+#: app/biglinux_microphone/ui/pages/echo_routing.py:26
+msgid "Prevents sound from your speakers returning through the microphone."
+msgstr "Evita que o som dos alto-falantes volte pelo microfone."
 
-#: usr/share/plasma/plasmoids/br.com.biglinux.micnoise/contents/ui/main.qml:166
-msgid "Applies your selected effects to the sound you hear."
-msgstr "Aplica os efeitos escolhidos ao som que você escuta."
+#: app/biglinux_microphone/ui/pages/echo_routing.py:29
+msgid "Speaker echo"
+msgstr "Eco dos alto-falantes"
 
-#: src/ui/views/advanced.rs:263
-msgid "Apply and restart audio"
-msgstr "Aplicar e reiniciar o áudio"
-
-#: src/ui/views/advanced.rs:279
-msgid "Applying audio settings…"
-msgstr "Aplicando as configurações de áudio…"
-
-#: src/ui/views/output.rs:69
-msgid "Audio enhancements"
-msgstr "Aprimoramentos de áudio"
-
-#: usr/share/plasma/plasmoids/br.com.biglinux.micnoise/contents/ui/main.qml:122
-msgid "Audio needs attention. Open the controls for details."
-msgstr "O áudio precisa de atenção. Abra os controles para ver os detalhes."
-
-#: src/ui/views/advanced.rs:422
-msgid "Audio responsiveness"
-msgstr "Responsividade do áudio"
-
-#: src/ui/views/advanced/apply.rs:152
-msgid "Audio service restart failed"
-msgstr "Falha ao reiniciar o serviço de áudio"
-
-#: src/ui/views/advanced.rs:137
-msgid ""
-"Audio settings could not be read. Check file permissions and reopen this "
-"window."
-msgstr ""
-"Não foi possível ler as configurações de áudio. Verifique as permissões dos "
-"arquivos e reabra esta janela."
-
-#: src/ui/views/mic.rs:129 src/ui/views/mic.rs:164
+#: app/biglinux_microphone/ui/pages/echo_routing.py:31
 msgid "Automatic"
 msgstr "Automático"
 
-#: src/ui/views/mic.rs:149
-msgid ""
-"Automatic cancels speaker echo and turns off cancellation when headphones "
-"are in use."
-msgstr ""
-"O modo automático cancela o eco dos alto-falantes e desativa o cancelamento "
-"ao usar fones de ouvido."
+#: app/biglinux_microphone/ui/pages/echo_routing.py:31
+msgid "Always on"
+msgstr "Sempre ligado"
 
-#: src/ui/views/mic.rs:190
-msgid ""
-"Automatic chooses a model for this computer. Choose lower CPU use if sound "
-"stutters, or select a model in Advanced."
-msgstr ""
-"O modo automático escolhe um modelo para este computador. Escolha um menor "
-"uso de CPU se o som falhar, ou selecione um modelo em Avançado."
+#: app/biglinux_microphone/ui/pages/echo_routing.py:31
+msgid "Off"
+msgstr "Desligado"
 
-#: src/ui/views/advanced.rs:617
-msgid "Avoid the click at the start of sounds"
-msgstr "Evitar o clique no início dos sons"
+#: app/biglinux_microphone/ui/pages/diagnostics.py:19
+msgid "Diagnostics"
+msgstr "Diagnóstico"
 
-#: src/ui/views/advanced.rs:437
-msgid "Balanced (upstream PipeWire default, ~21 ms)"
-msgstr "Equilibrado (padrão do PipeWire, ~21 ms)"
-
-#: src/ui/widgets/eq_card.rs:182
-msgid "Bass cut"
-msgstr "Corte de graves"
-
-#: src/ui/views/advanced.rs:344
-msgid "Behaviour"
-msgstr "Comportamento"
-
-#: src/ui/views/mic.rs:165
-msgid "Best quality"
-msgstr "Melhor qualidade"
-
-#. ── Bluetooth ────────────────────────────────────────────────────
-#: src/ui/views/advanced.rs:184
-msgid "Bluetooth"
-msgstr "Bluetooth"
-
-#: src/ui/views/advanced.rs:351
-msgid "Bluetooth audio buffer"
-msgstr "Buffer de áudio do Bluetooth"
-
-#: src/ui/views/advanced.rs:318
-msgid "Bluetooth call mode"
-msgstr "Modo de chamada Bluetooth"
-
-#: src/ui/views/advanced.rs:353
-msgid ""
-"Bluetooth needs a small audio reserve so the sound plays smoothly even when "
-"the wireless connection has tiny stutters. A bigger reserve hides hiccups "
-"but adds delay between picture and sound — keep the default unless your "
-"headset stutters or you need quicker audio."
-msgstr ""
-"O Bluetooth precisa de uma pequena reserva de áudio para que o som toque de "
-"forma suave mesmo quando a conexão sem fio tem pequenas falhas. Uma reserva "
-"maior esconde as falhas, mas adiciona atraso entre a imagem e o som — "
-"mantenha o padrão a menos que o seu fone falhe ou você precise de áudio mais "
-"rápido."
-
-#: src/ui/widgets/eq_card.rs:180
-msgid "Bright"
-msgstr "Brilhante"
-
-#: src/ui/views/advanced.rs:380
-msgid "Buffer size"
-msgstr "Tamanho do buffer"
-
-#: src/ui/window.rs:336
-msgid "Built on"
-msgstr "Desenvolvido com"
-
-#: src/ui/views/advanced.rs:591
-msgid "Built-in audio safety margin"
-msgstr "Margem de segurança do áudio integrado"
-
-#: src/ui/views/advanced.rs:671
-msgid "CD and standard quality (44.1 + 48 kHz)"
-msgstr "Qualidade de CD e padrão (44,1 + 48 kHz)"
-
-#: src/ui/window.rs:299 src/ui/views/advanced/apply.rs:172
-msgid "Cancel"
-msgstr "Cancelar"
-
-#: src/ui/views/advanced.rs:283
-msgid "Changes are not applied yet. Apply them when you are ready."
-msgstr ""
-"As alterações ainda não foram aplicadas. Aplique quando terminar de escolher."
-
-#: src/ui/mic_shell.rs:387
-msgid ""
-"Changes have not been saved. You can keep editing or close without saving."
-msgstr ""
-"As alterações não foram salvas. Você pode continuar editando ou fechar sem "
-"salvar."
-
-#: src/ui/mic_shell.rs:995
-msgid "Check again"
-msgstr "Verificar novamente"
-
-#: src/ui/mic_shell.rs:891
-msgid "Check again, or run biglinux-microphone-cli doctor in a terminal."
-msgstr ""
-"Verifique novamente, ou execute biglinux-microphone-cli doctor em um "
-"terminal."
-
-#: src/ui/health.rs:34
-msgid ""
-"Check the audio connection, then check again. Your preferences are kept."
-msgstr ""
-"Verifique a conexão de áudio e tente novamente. Suas preferências foram "
-"mantidas."
-
-#: src/ui/mic_shell.rs:282 src/ui/mic_shell.rs:835
+#: app/biglinux_microphone/ui/pages/diagnostics.py:26
+#: app/biglinux_microphone/ui/pages/diagnostics.py:63
 msgid "Checking the audio system…"
 msgstr "Verificando o sistema de áudio…"
 
-#: src/ui/views/mic.rs:399
-msgid "Chipmunk"
-msgstr "Agudíssimo"
+#: app/biglinux_microphone/ui/pages/diagnostics.py:30
+msgid "Audio system details"
+msgstr "Detalhes do sistema de áudio"
 
-#: src/ui/health.rs:50
+#: app/biglinux_microphone/ui/pages/diagnostics.py:33
 msgid ""
-"Choose another installed model, or install this model and its required "
-"runtime, then check again."
+"Latency is an estimate of processing only; it excludes your device and "
+"applications."
 msgstr ""
-"Escolha outro modelo instalado ou instale este modelo e a biblioteca "
-"necessária. Depois, verifique novamente."
+"O atraso é uma estimativa apenas do processamento; não inclui seu "
+"dispositivo nem os aplicativos."
 
-#: src/ui/views/simple.rs:209
+#: app/biglinux_microphone/ui/pages/diagnostics.py:38
+msgid "Model selected"
+msgstr "Modelo escolhido"
+
+#: app/biglinux_microphone/ui/pages/diagnostics.py:39
+msgid "Model in use"
+msgstr "Modelo em uso"
+
+#: app/biglinux_microphone/ui/pages/diagnostics.py:41
+msgid "Estimated latency"
+msgstr "Latência estimada"
+
+#: app/biglinux_microphone/ui/pages/diagnostics.py:43
+#: app/biglinux_microphone/ui/pages/diagnostics.py:65
+#: app/biglinux_microphone/ui/pages/diagnostics.py:84
+#: app/biglinux_microphone/ui/pages/diagnostics.py:88
+#: app/biglinux_microphone/ui/pages/diagnostics.py:108
+msgid "Unknown"
+msgstr "Desconhecido"
+
+#: app/biglinux_microphone/ui/pages/diagnostics.py:71
+msgid "Settings loaded — test your microphone to check the sound."
+msgstr "Configurações carregadas — teste o microfone para conferir o som."
+
+#: app/biglinux_microphone/ui/pages/diagnostics.py:95
+msgid "None"
+msgstr "Nenhum"
+
+#: app/biglinux_microphone/ui/pages/diagnostics.py:130
+#, python-format
+msgid "%.1f ms"
+msgstr "%.1f ms"
+
+#: app/biglinux_microphone/ui/pages/microphone_test.py:73
+#: app/biglinux_microphone/ui/pages/compare.py:56
+msgid "Record a short sample"
+msgstr "Grave uma amostra curta"
+
+#: app/biglinux_microphone/ui/pages/microphone_test.py:75
+#: app/biglinux_microphone/ui/pages/compare.py:59
 msgid ""
-"Cleans background noise from everything you hear before it reaches your "
-"speakers."
+"Speak normally for five seconds. Then you can hear exactly what applications "
+"receive."
 msgstr ""
-"Limpa o ruído de fundo de tudo o que você ouve antes de chegar aos alto-"
-"falantes."
+"Fale normalmente por cinco segundos. Depois, ouça o áudio que os aplicativos "
+"recebem."
 
-#: usr/share/plasma/plasmoids/br.com.biglinux.micnoise/contents/ui/main.qml:153
-msgid "Cleans your voice for calls and recordings"
-msgstr "Reduz o ruído da sua voz em chamadas e gravações"
+#: app/biglinux_microphone/ui/pages/microphone_test.py:81
+msgid "Use headphones before playing the sample to avoid echo."
+msgstr "Use fones de ouvido ao reproduzir a amostra para evitar eco."
 
-#: src/ui/mic_shell.rs:758
-msgid "Close without saving"
-msgstr "Fechar sem salvar"
+#: app/biglinux_microphone/ui/pages/microphone_test.py:93
+msgid "Record sample"
+msgstr "Gravar amostra"
 
-#: src/ui/views/output.rs:45
-msgid "Combine to mono (lower CPU use)"
-msgstr "Combinar em mono (menor uso de CPU)"
+#: app/biglinux_microphone/ui/pages/microphone_test.py:113
+#: app/biglinux_microphone/ui/pages/calibrate.py:117
+msgid "Speak normally"
+msgstr "Fale normalmente"
 
-#: src/ui/views/mic.rs:447 src/ui/views/output.rs:197
-msgid "Compressor"
-msgstr "Compressor"
+#: app/biglinux_microphone/ui/pages/microphone_test.py:120
+#: app/biglinux_microphone/ui/pages/compare.py:63
+msgid "Recording what applications hear from your microphone."
+msgstr "Gravando o áudio do microfone que os aplicativos recebem."
 
-#: src/ui/mic_shell.rs:1015
+#: app/biglinux_microphone/ui/pages/microphone_test.py:134
+#: app/biglinux_microphone/ui/pages/microphone_test.py:272
+#: app/biglinux_microphone/ui/pages/microphone_test.py:301
+#: app/biglinux_microphone/ui/pages/calibrate.py:145
+#: app/biglinux_microphone/ui/pages/calibrate.py:318
+#: app/biglinux_microphone/ui/pages/calibrate.py:346
+#, python-format
+msgid "%(elapsed)d of %(total)d seconds"
+msgstr "%(elapsed)d de %(total)d segundos"
+
+#: app/biglinux_microphone/ui/pages/microphone_test.py:139
+#: app/biglinux_microphone/ui/pages/calibrate.py:156
+msgid "Cancel"
+msgstr "Cancelar"
+
+#: app/biglinux_microphone/ui/pages/microphone_test.py:160
+msgid "Your sample is ready"
+msgstr "Sua amostra está pronta"
+
+#: app/biglinux_microphone/ui/pages/microphone_test.py:162
+#: app/biglinux_microphone/ui/pages/compare.py:67
 msgid ""
-"Could not apply the audio settings. Your choices are saved — the audio "
-"services have not accepted them yet."
+"Listen to the short recording and check whether your voice sounds clear and "
+"natural."
+msgstr "Ouça a gravação e confira se sua voz está clara e natural."
+
+#: app/biglinux_microphone/ui/pages/microphone_test.py:167
+#: app/biglinux_microphone/ui/pages/microphone_test.py:371
+msgid "Play sample"
+msgstr "Reproduzir amostra"
+
+#: app/biglinux_microphone/ui/pages/microphone_test.py:173
+msgid "Record again"
+msgstr "Gravar novamente"
+
+#: app/biglinux_microphone/ui/pages/microphone_test.py:175
+#: app/biglinux_microphone/ui/pages/calibrate.py:202
+msgid "Done"
+msgstr "Concluir"
+
+#: app/biglinux_microphone/ui/pages/microphone_test.py:195
+msgid "I could not record the microphone"
+msgstr "Não foi possível gravar o microfone"
+
+#: app/biglinux_microphone/ui/pages/microphone_test.py:196
+#: app/biglinux_microphone/ui/pages/microphone_test.py:401
+msgid "Check that the microphone is available and try again."
+msgstr "Confira se o microfone está disponível e tente novamente."
+
+#: app/biglinux_microphone/ui/pages/microphone_test.py:217
+msgid "The microphone changed or became unavailable. Record a new sample."
+msgstr "O microfone mudou ou ficou indisponível. Grave uma nova amostra."
+
+#: app/biglinux_microphone/ui/pages/microphone_test.py:236
+msgid "The microphone is not ready. Return to Home to check its status."
 msgstr ""
-"Não foi possível aplicar as configurações de áudio. Suas escolhas estão "
-"salvas — os serviços de áudio ainda não as aceitaram."
+"O microfone não está pronto. Volte ao início para verificar o estado dele."
+
+#: app/biglinux_microphone/ui/pages/microphone_test.py:240
+msgid "The sample includes the current noise reduction and voice settings."
+msgstr "A amostra inclui a redução de ruído e os ajustes de voz atuais."
+
+#: app/biglinux_microphone/ui/pages/microphone_test.py:244
+msgid "Noise reduction is off, so the sample uses the microphone directly."
+msgstr ""
+"A redução de ruído está desligada. A amostra usa o microfone diretamente."
+
+#: app/biglinux_microphone/ui/pages/microphone_test.py:264
+#: app/biglinux_microphone/ui/pages/calibrate.py:312
+msgid "No microphone is selected"
+msgstr "Nenhum microfone selecionado"
+
+#: app/biglinux_microphone/ui/pages/microphone_test.py:371
+msgid "Stop playback"
+msgstr "Parar reprodução"
+
+#: app/biglinux_microphone/ui/pages/compare.py:27
+msgid "Original"
+msgstr "Original"
+
+#: app/biglinux_microphone/ui/pages/compare.py:29
+msgid "With noise reduction"
+msgstr "Com redução de ruído"
+
+#: app/biglinux_microphone/ui/pages/compare.py:41
+msgid "Compare the same recording"
+msgstr "Compare a mesma gravação"
+
+#: app/biglinux_microphone/ui/pages/compare.py:44
+msgid ""
+"Speak normally for five seconds. Then listen to the same words with and "
+"without noise reduction."
+msgstr ""
+"Fale normalmente por cinco segundos. Depois, ouça as mesmas palavras com e "
+"sem redução de ruído."
+
+#: app/biglinux_microphone/ui/pages/compare.py:48
+msgid "Recording your microphone, then preparing both versions…"
+msgstr "Gravando seu microfone e preparando as duas versões…"
+
+#: app/biglinux_microphone/ui/pages/compare.py:52
+msgid ""
+"Choose a version and play it. Playback volumes are balanced for comparison."
+msgstr ""
+"Escolha uma versão e reproduza. Os volumes são equilibrados para a "
+"comparação."
+
+#: app/biglinux_microphone/ui/pages/compare.py:83
+msgid ""
+"This comparison includes noise reduction only. Equalizer, echo cancellation "
+"and other voice effects are not included."
+msgstr ""
+"Esta comparação inclui apenas a redução de ruído. Equalizador, cancelamento "
+"de eco e outros efeitos de voz não estão incluídos."
+
+#: app/biglinux_microphone/ui/pages/compare.py:127
+msgid "Play original"
+msgstr "Ouvir original"
+
+#: app/biglinux_microphone/ui/pages/compare.py:129
+msgid "Play with noise reduction"
+msgstr "Ouvir com redução de ruído"
+
+#: app/biglinux_microphone/ui/pages/calibrate.py:66
+msgid "Adjust the volume for your voice"
+msgstr "Ajuste o volume para sua voz"
+
+#: app/biglinux_microphone/ui/pages/calibrate.py:75
+msgid ""
+"Speak normally for a few seconds. The program will set the volume for this "
+"microphone."
+msgstr ""
+"Fale normalmente por alguns segundos. O programa ajustará o volume deste "
+"microfone."
+
+#: app/biglinux_microphone/ui/pages/calibrate.py:84
+msgid "Checking…"
+msgstr "Verificando…"
+
+#: app/biglinux_microphone/ui/pages/calibrate.py:93
+msgid ""
+"Speak at the volume and distance you normally use in calls and recordings."
+msgstr ""
+"Fale com o volume e a distância que costuma usar em chamadas e gravações."
+
+#: app/biglinux_microphone/ui/pages/calibrate.py:98
+msgid "Start"
+msgstr "Começar"
+
+#: app/biglinux_microphone/ui/pages/calibrate.py:126
+msgid ""
+"The program is listening to your voice to set the ideal volume for this "
+"microphone."
+msgstr "O programa está ouvindo sua voz para ajustar o volume deste microfone."
+
+#: app/biglinux_microphone/ui/pages/calibrate.py:139
+#: app/biglinux_microphone/ui/pages/calibrate.py:321
+msgid "Listening to your voice"
+msgstr "Ouvindo sua voz"
+
+#: app/biglinux_microphone/ui/pages/calibrate.py:152
+msgid "Speak at the volume and distance you normally use."
+msgstr "Fale com o volume e a distância que costuma usar."
+
+#: app/biglinux_microphone/ui/pages/calibrate.py:179
+msgid "Your microphone is adjusted"
+msgstr "Seu microfone está ajustado"
+
+#: app/biglinux_microphone/ui/pages/calibrate.py:187
+msgid "The volume was set for your voice and this microphone."
+msgstr "O volume foi ajustado para sua voz neste microfone."
+
+#: app/biglinux_microphone/ui/pages/calibrate.py:196
+msgid "Ready to use"
+msgstr "Pronto para usar"
+
+#: app/biglinux_microphone/ui/pages/calibrate.py:197
+msgid "You can test your voice or finish now."
+msgstr "Você pode testar sua voz ou concluir agora."
+
+#: app/biglinux_microphone/ui/pages/calibrate.py:211
+msgid "Adjust again"
+msgstr "Ajustar novamente"
+
+#: app/biglinux_microphone/ui/pages/calibrate.py:218
+msgid "For live streams and long recordings"
+msgstr "Para transmissões ao vivo e gravações longas"
+
+#: app/biglinux_microphone/ui/pages/calibrate.py:221
+msgid "Keep voice volume uniform"
+msgstr "Manter o volume da voz uniforme"
+
+#: app/biglinux_microphone/ui/pages/calibrate.py:222
+msgid "Compensates when you move farther from the microphone."
+msgstr "Compensa quando você se afasta do microfone."
+
+#: app/biglinux_microphone/ui/pages/calibrate.py:240
+msgid "I could not adjust the microphone"
+msgstr "Não foi possível ajustar o microfone"
+
+#: app/biglinux_microphone/ui/pages/calibrate.py:242
+msgid ""
+"Check that the right microphone is selected and try again while speaking "
+"normally."
+msgstr ""
+"Confira se o microfone certo está selecionado e tente novamente, falando "
+"normalmente."
+
+#: app/biglinux_microphone/ui/pages/calibrate.py:287
+msgid "Microphone currently selected"
+msgstr "Microfone selecionado"
+
+#: app/biglinux_microphone/ui/pages/calibrate.py:350
+msgid "Almost done — keep talking"
+msgstr "Quase pronto — continue falando"
+
+#: app/biglinux_microphone/ui/pages/calibrate.py:392
+msgid "Cancelling…"
+msgstr "Cancelando…"
+
+#: app/biglinux_microphone/ui/pages/calibrate.py:417
+#, python-format
+msgid "Could not fully restore the previous microphone level: %s"
+msgstr ""
+"Não foi possível restaurar completamente o volume anterior do microfone: %s"
+
+#: app/biglinux_microphone/ui/widgets/threshold_editor.py:218
+#, python-format
+msgid "%s Hz threshold (dB)"
+msgstr "Limiar em %s Hz (dB)"
+
+#: app/biglinux_microphone/ui/widgets/activity_meter.py:55
+msgid "Microphone level"
+msgstr "Nível do microfone"
+
+#: app/biglinux_microphone/ui/widgets/activity_meter.py:127
+#, python-format
+msgid "Level: %s dBFS"
+msgstr "Nível: %s dBFS"
+
+#: app/biglinux_microphone/ui/widgets/activity_meter.py:128
+#, python-format
+msgid "Peak: %s dBFS"
+msgstr "Pico: %s dBFS"
 
 #: usr/share/plasma/plasmoids/br.com.biglinux.micnoise/contents/ui/main.qml:58
 #: usr/share/plasma/plasmoids/br.com.biglinux.micnoise/contents/ui/main.qml:75
@@ -325,725 +916,6 @@ msgid "Could not read the audio status. Open settings to check the connection."
 msgstr ""
 "Não foi possível verificar o estado do áudio. Abra as configurações para "
 "verificar a conexão."
-
-#: src/ui/widgets/wp_override_warning.rs:172
-msgid "Could not remove the override"
-msgstr "Não foi possível remover a substituição"
-
-#: src/ui/mic_shell.rs:966
-msgid ""
-"Could not stop the audio monitor safely. Close the window again to retry."
-msgstr ""
-"Não foi possível parar o monitor de áudio com segurança. Feche a janela "
-"novamente para tentar de novo."
-
-#: src/ui/widgets/source_picker.rs:258
-msgid ""
-"Could not update the microphone. Check the audio connection and try again."
-msgstr ""
-"Não foi possível atualizar o microfone. Verifique a conexão de áudio e tente "
-"novamente."
-
-#: src/ui/widgets/eq_card.rs:184
-msgid "Custom"
-msgstr "Personalizado"
-
-#: src/ui/views/output.rs:153
-msgid "Cuts low-frequency rumble from playback — wind, AC noise."
-msgstr ""
-"Corta os ruídos graves da reprodução — vento, ruído de ar-condicionado."
-
-#: src/ui/views/mic.rs:307
-msgid "Cuts low-frequency rumble — AC, wind, mic-stand bumps."
-msgstr ""
-"Corta os ruídos graves — ar-condicionado, vento, batidas no pedestal do "
-"microfone."
-
-#: src/ui/widgets/model_picker.rs:113
-msgid ""
-"DNS3 removes more noise but can smudge consonants. VCTK is gentler and "
-"lighter on CPU. Full-band models can sound cleaner when their LADSPA "
-"packages are installed, with higher CPU cost."
-msgstr ""
-"O DNS3 remove mais ruído, mas pode borrar as consoantes. O VCTK é mais suave "
-"e mais leve para a CPU. Os modelos de banda completa podem soar mais limpos "
-"quando seus pacotes LADSPA estão instalados, com maior custo de CPU."
-
-#: src/ui/widgets/eq_card.rs:181
-msgid "De-esser"
-msgstr "De-esser"
-
-#: src/ui/views/mic.rs:395
-msgid "Deep"
-msgstr "Profundo"
-
-#: src/ui/views/advanced.rs:704
-msgid "Default"
-msgstr "Padrão"
-
-#: src/ui/widgets/eq_card.rs:175
-msgid "Default voice"
-msgstr "Voz padrão"
-
-#: src/ui/views/mic.rs:425
-msgid "Delay (ms)"
-msgstr "Atraso (ms)"
-
-#: src/ui/widgets/wp_override_warning.rs:90
-msgid "Don't warn again"
-msgstr "Não avisar de novo"
-
-#: src/ui/views/mic.rs:138 src/ui/views/mic.rs:147
-msgid "Echo cancellation"
-msgstr "Cancelamento de eco"
-
-#: src/ui/views/mic.rs:347 src/ui/views/output.rs:84
-msgid "Equalizer"
-msgstr "Equalizador"
-
-#: src/ui/widgets/eq_card.rs:244
-msgid "Equalizer band"
-msgstr "Faixa do equalizador"
-
-#: src/ui/widgets/eq_card.rs:60
-msgid "Equalizer enabled"
-msgstr "Equalizador ativado"
-
-#: src/ui/views/mic.rs:448
-msgid ""
-"Evens out loud peaks and quiet parts so your voice stays at a steady volume."
-msgstr ""
-"Equilibra os picos altos e as partes baixas para que a sua voz fique em um "
-"volume constante."
-
-#: src/ui/views/output.rs:199
-msgid ""
-"Evens out volume across loud and quiet speakers — useful for meetings with "
-"mixed mic levels."
-msgstr ""
-"Equilibra o volume entre quem fala alto e baixo — útil em reuniões com "
-"níveis de microfone variados."
-
-#: src/ui/views/advanced/apply.rs:145
-msgid "Failed to write configuration"
-msgstr "Falha ao gravar a configuração"
-
-#: src/ui/mic_shell.rs:235 src/ui/window.rs:320
-msgid "Filter noise"
-msgstr "Filtro de ruído"
-
-#: src/ui/views/mic.rs:349
-msgid ""
-"Fine-tune your voice tone across 10 frequency bands. Pick a preset or drag "
-"each band between -40 dB and +40 dB."
-msgstr ""
-"Ajuste o tom da sua voz em 10 faixas de frequência. Escolha uma predefinição "
-"ou arraste cada faixa entre -40 dB e +40 dB."
-
-#: src/ui/widgets/eq_card.rs:176
-msgid "Flat"
-msgstr "Plano"
-
-#: src/ui/views/advanced.rs:399
-msgid "Force off (maximum compatibility)"
-msgstr "Forçar desligado (compatibilidade máxima)"
-
-#: src/ui/views/advanced.rs:398
-msgid "Force on (high quality)"
-msgstr "Forçar ligado (alta qualidade)"
-
-#: src/ui/views/simple.rs:186
-msgid "Headphones only — speakers cause feedback."
-msgstr "Apenas com fones de ouvido — alto-falantes causam microfonia."
-
-#: src/ui/views/simple.rs:193
-msgid "Hear my voice"
-msgstr "Ouvir minha voz"
-
-#: src/ui/views/mic.rs:306 src/ui/views/output.rs:152
-msgid "High-pass filter"
-msgstr "Filtro passa-alta"
-
-#: src/ui/views/advanced.rs:387
-msgid "High-quality Bluetooth audio (SBC-XQ)"
-msgstr "Áudio Bluetooth de alta qualidade (SBC-XQ)"
-
-#: src/ui/views/mic.rs:398
-msgid "Higher"
-msgstr "Agudo"
-
-#: src/ui/views/advanced.rs:411
-msgid "Higher Bluetooth audio quality (SBC-XQ)"
-msgstr "Qualidade de áudio Bluetooth superior (SBC-XQ)"
-
-#: src/ui/views/advanced.rs:424
-msgid ""
-"How fast the system reacts to sound changes. Faster reaction is great for "
-"music production but uses more CPU; slower reaction makes playback steadier "
-"on weaker machines. The default works well for video calls, music and games "
-"on most computers."
-msgstr ""
-"A rapidez com que o sistema reage às mudanças de som. Uma reação mais rápida "
-"é ótima para produção musical, mas usa mais CPU; uma reação mais lenta deixa "
-"a reprodução mais estável em máquinas mais fracas. O padrão funciona bem "
-"para chamadas de vídeo, músicas e jogos na maioria dos computadores."
-
-#: src/ui/widgets/spectrum.rs:70
-msgid "Input level in decibels. Reduce microphone volume if it reaches zero."
-msgstr ""
-"Nível de entrada em decibéis. Reduza o volume do microfone se atingir zero."
-
-#: src/ui/views/mic.rs:111 src/ui/views/mic.rs:332 src/ui/views/mic.rs:452
-#: src/ui/views/output.rs:175 src/ui/views/output.rs:205
-#: src/ui/views/simple.rs:78 src/ui/views/simple.rs:214
-msgid "Intensity"
-msgstr "Intensidade"
-
-#: src/ui/widgets/wp_override_warning.rs:75
-msgid "Keep"
-msgstr "Manter"
-
-#: src/ui/views/mic.rs:480
-msgid "Keep loaded audio data in memory"
-msgstr "Manter os dados de áudio carregados na memória"
-
-#: src/ui/views/output.rs:45
-msgid "Keep stereo (recommended)"
-msgstr "Manter estéreo (recomendado)"
-
-#: src/ui/mic_shell.rs:757
-msgid "Keep window open"
-msgstr "Manter a janela aberta"
-
-#: src/ui/views/advanced.rs:369
-msgid "Large (steadiest, ~85 ms)"
-msgstr "Grande (mais estável, ~85 ms)"
-
-#: src/ui/views/advanced.rs:724
-msgid "Large (virtual machines, ~42 ms)"
-msgstr "Grande (máquinas virtuais, ~42 ms)"
-
-#: src/ui/views/mic.rs:469
-msgid ""
-"Leave these off unless audio still stutters. Changing them briefly restarts "
-"the filters."
-msgstr ""
-"Mantenha estas opções desligadas, a menos que o áudio ainda apresente "
-"cortes. Alterá-las reinicia os filtros por um instante."
-
-#: src/ui/views/advanced.rs:634
-msgid "Let the speakers sleep when idle (default)"
-msgstr "Deixar os alto-falantes dormirem quando ociosos (padrão)"
-
-#: src/ui/widgets/spectrum.rs:148
-msgid "Level: {level} dB · Peak: {peak} dB"
-msgstr "Nível: {level} dB · Pico: {peak} dB"
-
-#: src/ui/views/advanced.rs:435
-msgid "Low delay (~11 ms)"
-msgstr "Baixo atraso (~11 ms)"
-
-#: src/ui/views/mic.rs:396
-msgid "Lower"
-msgstr "Grave"
-
-#: src/ui/views/mic.rs:166
-msgid "Lower CPU use"
-msgstr "Menor uso de CPU"
-
-#: src/ui/views/advanced.rs:364
-msgid "Lower delay (needs a stable headset, ~11 ms)"
-msgstr "Menor atraso (precisa de um fone estável, ~11 ms)"
-
-#: src/ui/views/mic.rs:500
-msgid ""
-"Lowers large boosts and caps sample peaks for microphone and playback. This "
-"can reduce overall volume; it cannot repair distorted recordings. Leave on "
-"unless you manage gain in another audio tool."
-msgstr ""
-"Reduz aumentos excessivos e limita picos no microfone e na reprodução. Isso "
-"pode diminuir o volume geral; não corrige gravações já distorcidas. Mantenha "
-"ligado, a menos que você controle o ganho em outra ferramenta de áudio."
-
-#: src/ui/window.rs:257
-msgid "Main menu"
-msgstr "Menu principal"
-
-#: src/ui/views/mic.rs:167
-msgid "Manual model"
-msgstr "Modelo manual"
-
-#: src/ui/views/advanced.rs:584 src/ui/views/advanced.rs:610
-msgid "Margin"
-msgstr "Margem"
-
-#: src/ui/views/advanced.rs:725
-msgid "Maximum (last resort, ~85 ms)"
-msgstr "Máximo (último recurso, ~85 ms)"
-
-#: src/ui/views/mic.rs:473
-msgid ""
-"May help on some computers, but can use more power. The automatic system "
-"choice is usually best."
-msgstr ""
-"Pode ajudar em alguns computadores, mas consumir mais energia. Em geral, é "
-"melhor deixar o sistema escolher."
-
-#: src/ui/views/mic.rs:481
-msgid ""
-"May reduce pauses under memory pressure, but leaves less RAM for other "
-"applications. This is optional and limited by the system."
-msgstr ""
-"Pode reduzir pausas quando a memória está muito ocupada, mas deixa menos "
-"memória disponível para outros aplicativos. É opcional e respeita o limite "
-"do sistema."
-
-#: src/ui/views/advanced.rs:722
-msgid "Medium (~11 ms)"
-msgstr "Médio (~11 ms)"
-
-#: src/ui/views/advanced.rs:367
-msgid "Medium (~21 ms)"
-msgstr "Médio (~21 ms)"
-
-#. No `bindtextdomain` was called in this test process, so
-#. `gettext` falls back to the input string verbatim. That is
-#. exactly the contract callers rely on at runtime when running
-#. outside an installed locale.
-#: src/ui/window.rs:86 src/ui/widgets/source_picker.rs:90 src/ui/i18n.rs:109
-msgid "Microphone"
-msgstr "Microfone"
-
-#: usr/share/plasma/plasmoids/br.com.biglinux.micnoise/contents/ui/main.qml:121
-msgid "Microphone and system sound filters"
-msgstr "Filtros do microfone e do som do sistema"
-
-#: src/ui/views/mic.rs:43
-msgid "Microphone effects"
-msgstr "Efeitos do microfone"
-
-#: src/ui/views/mic.rs:58
-msgid "Microphone effects are paused. Your choices below are preserved."
-msgstr ""
-"Os efeitos do microfone estão pausados. Suas escolhas abaixo foram "
-"preservadas."
-
-#: usr/share/plasma/plasmoids/br.com.biglinux.micnoise/contents/ui/main.qml:144
-msgid "Microphone filter"
-msgstr "Filtro do microfone"
-
-#: src/ui/widgets/spectrum.rs:51 src/ui/widgets/spectrum.rs:68
-msgid "Microphone level meter"
-msgstr "Medidor de nível do microfone"
-
-#: src/ui/widgets/spectrum.rs:125
-msgid "Microphone monitoring is unavailable."
-msgstr "O monitoramento do microfone está indisponível."
-
-#: src/ui/widgets/spectrum.rs:123
-msgid "Microphone unavailable. Reconnecting…"
-msgstr "Microfone indisponível. Reconectando…"
-
-#: src/ui/views/mic.rs:269 src/ui/views/output.rs:111
-msgid "Model"
-msgstr "Modelo"
-
-#: src/ui/views/advanced.rs:442
-msgid "Most stable (older or busy machines, ~85 ms)"
-msgstr "Mais estável (máquinas antigas ou ocupadas, ~85 ms)"
-
-#: src/ui/views/output.rs:171
-msgid ""
-"Mutes playback during silent moments so you don't hear hiss between words."
-msgstr ""
-"Silencia a reprodução nos momentos de silêncio para que você não ouça chiado "
-"entre as palavras."
-
-#: src/ui/views/mic.rs:326
-msgid ""
-"Mutes the mic during pauses so listeners hear silence instead of hiss. "
-"Higher = more aggressive."
-msgstr ""
-"Silencia o microfone nas pausas para que os ouvintes ouçam silêncio em vez "
-"de chiado. Mais alto = mais agressivo."
-
-#: src/ui/views/mic.rs:397
-msgid "Natural"
-msgstr "Natural"
-
-#: src/ui/views/mic.rs:258 src/ui/views/output.rs:100
-msgid "Neural model"
-msgstr "Modelo neural"
-
-#: src/ui/views/mic.rs:129
-msgid "Never"
-msgstr "Nunca"
-
-#: src/ui/views/mic.rs:203 src/ui/views/mic.rs:232 src/ui/views/simple.rs:127
-#: src/ui/views/simple.rs:156
-msgid "Noise filter"
-msgstr "Filtro de ruído"
-
-#: src/ui/views/mic.rs:67
-msgid "Noise filter — fine-tune"
-msgstr "Filtro de ruído — ajuste fino"
-
-#: src/ui/views/mic.rs:178 src/ui/views/mic.rs:188
-msgid "Noise reduction quality"
-msgstr "Qualidade da redução de ruído"
-
-#: src/ui/views/advanced.rs:720
-msgid "None"
-msgstr "Nenhum"
-
-#: src/ui/views/advanced/apply.rs:147 src/ui/views/advanced/apply.rs:152
-#: src/ui/widgets/wp_override_warning.rs:165
-#: src/ui/widgets/wp_override_warning.rs:177
-msgid "OK"
-msgstr "OK"
-
-#: src/ui/views/advanced.rs:333
-msgid "Off — always keep stereo sound (default)"
-msgstr "Desligado — manter sempre o som estéreo (padrão)"
-
-#: src/ui/views/advanced.rs:332
-msgid "On — switch to call mode automatically"
-msgstr "Ligado — alternar para o modo de chamada automaticamente"
-
-#: usr/share/plasma/plasmoids/br.com.biglinux.micnoise/contents/ui/main.qml:122
-msgid "Open audio filter controls"
-msgstr "Abrir os controles dos filtros de áudio"
-
-#: usr/share/plasma/plasmoids/br.com.biglinux.micnoise/contents/ui/main.qml:172
-msgid "Open settings…"
-msgstr "Abrir configurações…"
-
-#: src/ui/views/simple.rs:107
-msgid "Other microphone effects are still active — see the Advanced view."
-msgstr ""
-"Outros efeitos de microfone ainda estão ativos — veja a exibição Avançada."
-
-#: src/ui/window.rs:92
-msgid "Output filter"
-msgstr "Filtro de saída"
-
-#: src/ui/widgets/wp_override_warning.rs:159
-msgid "Override removed"
-msgstr "Substituição removida"
-
-#: src/ui/views/mic.rs:45
-msgid "Pause or resume all microphone effects without changing your choices."
-msgstr ""
-"Pause ou retome todos os efeitos do microfone sem alterar suas escolhas."
-
-#: src/ui/views/mic.rs:468
-msgid "Performance options"
-msgstr "Opções de desempenho"
-
-#: src/ui/views/mic.rs:410
-msgid "Pitch"
-msgstr "Tom"
-
-#: src/ui/widgets/eq_card.rs:178
-msgid "Podcast"
-msgstr "Podcast"
-
-#: src/ui/views/mic.rs:472
-msgid "Prefer faster processor cores"
-msgstr "Preferir os núcleos mais rápidos do processador"
-
-#: src/ui/widgets/eq_card.rs:183
-msgid "Presence"
-msgstr "Presença"
-
-#: src/ui/widgets/eq_card.rs:168 src/ui/widgets/eq_card.rs:218
-msgid "Preset"
-msgstr "Predefinição"
-
-#: src/ui/views/advanced.rs:496
-msgid "Preview active. The previous buffer will be restored automatically."
-msgstr ""
-"Prévia ativa. A reserva de áudio anterior será restaurada automaticamente."
-
-#: src/ui/views/advanced/apply.rs:113 src/ui/views/advanced.rs:497
-#: src/ui/views/advanced.rs:532
-msgid "Preview finished."
-msgstr "Prévia concluída."
-
-#: src/ui/views/mic.rs:499
-msgid "Protect against excessive peaks"
-msgstr "Proteger contra picos excessivos"
-
-#: src/ui/views/advanced.rs:455
-msgid "Reaction speed"
-msgstr "Velocidade de reação"
-
-#: src/ui/window.rs:329
-msgid ""
-"Real-time noise filter for microphone capture and system audio playback. "
-"Powered by the GTCRN neural network running as a LADSPA plugin on top of "
-"PipeWire — every filter is driven by a WirePlumber smart-filter so the "
-"default source and sink stay clean even after device changes."
-msgstr ""
-"Filtro de ruído em tempo real para a captura do microfone e a reprodução de "
-"áudio do sistema. Movido pela rede neural GTCRN executada como um plugin "
-"LADSPA sobre o PipeWire — cada filtro é controlado por um smart-filter do "
-"WirePlumber, de modo que a fonte e o destino padrão permaneçam limpos mesmo "
-"após trocas de dispositivo."
-
-#: src/ui/views/mic.rs:284 src/ui/views/output.rs:130
-msgid "Recovery"
-msgstr "Recuperação"
-
-#: src/ui/views/simple.rs:165
-msgid ""
-"Reduces background noise in your voice. Turning this off pauses microphone "
-"effects without forgetting your choices."
-msgstr ""
-"Reduz o ruído de fundo da sua voz. Desligar pausa os efeitos do microfone "
-"sem apagar suas escolhas."
-
-#: src/ui/health.rs:65
-msgid "Reinstall Filter noise, then log out and back in."
-msgstr "Reinstale o Filtro de ruído e encerre e inicie a sessão novamente."
-
-#: src/ui/widgets/wp_override_warning.rs:77
-msgid "Remove override"
-msgstr "Remover sobreposição"
-
-#: src/ui/widgets/wp_override_warning.rs:175
-msgid "Remove the file manually, then restart WirePlumber."
-msgstr "Remova o arquivo manualmente, depois reinicie o WirePlumber."
-
-#: src/ui/views/mic.rs:241
-msgid ""
-"Removes background noise from your voice using AI. Higher intensity = "
-"stronger cleanup."
-msgstr ""
-"Remove o ruído de fundo da sua voz usando IA. Maior intensidade = limpeza "
-"mais forte."
-
-#: src/ui/views/advanced/apply.rs:53
-msgid "Restarting audio…"
-msgstr "Reiniciando o áudio…"
-
-#: src/ui/views/advanced/apply.rs:174
-msgid "Restore"
-msgstr "Restaurar"
-
-#: src/ui/views/advanced/apply.rs:167
-msgid "Restore default audio settings?"
-msgstr "Restaurar as configurações de áudio padrão?"
-
-#: src/ui/window.rs:261 src/ui/window.rs:434
-msgid "Restore default settings"
-msgstr "Restaurar configurações padrão"
-
-#: src/ui/window.rs:294
-msgid "Restore default settings?"
-msgstr "Restaurar configurações padrão?"
-
-#: src/ui/window.rs:301 src/ui/views/advanced.rs:258
-msgid "Restore defaults"
-msgstr "Restaurar padrões"
-
-#: src/ui/views/mic.rs:278
-msgid ""
-"Restores high-frequency clarity (sibilants like \"s\", \"sh\") after "
-"suppression. Lower only if your voice already sounds harsh."
-msgstr ""
-"Restaura a clareza das altas frequências (sibilantes como \"s\", \"ch\") "
-"após a supressão. Reduza apenas se a sua voz já soar áspera."
-
-#: src/ui/views/output.rs:120
-msgid ""
-"Restores high-frequency clarity after suppression. Lower only if the source "
-"already sounds harsh."
-msgstr ""
-"Restaura a clareza das altas frequências após a supressão. Reduza apenas se "
-"a fonte já soar áspera."
-
-#: src/ui/views/advanced/apply.rs:45 src/ui/views/advanced.rs:476
-msgid "Restoring the previous audio buffer…"
-msgstr "Restaurando a reserva de áudio anterior…"
-
-#: src/ui/views/mic.rs:419
-msgid ""
-"Round-trip latency for the \"Hear my voice\" monitor. Raise only if the "
-"loopback sounds rushed or chops on your hardware."
-msgstr ""
-"Latência de ida e volta do monitor \"Ouvir minha voz\". Aumente apenas se o "
-"retorno soar acelerado ou cortado no seu hardware."
-
-#: src/ui/views/advanced.rs:593
-msgid ""
-"Same idea as the USB margin, but for the speakers and microphone built into "
-"your laptop or motherboard. Most people never need to change this — try it "
-"only if the internal speaker glitches when the computer is under load."
-msgstr ""
-"Mesma ideia da margem USB, mas para os alto-falantes e o microfone "
-"integrados ao seu notebook ou placa-mãe. A maioria das pessoas nunca precisa "
-"mudar isso — experimente apenas se o alto-falante interno falhar quando o "
-"computador está sob carga."
-
-#: src/ui/mic_shell.rs:919
-msgid "Saving settings…"
-msgstr "Salvando as configurações…"
-
-#: src/ui/views/mic.rs:417
-msgid "Self-listen delay"
-msgstr "Atraso da auto-escuta"
-
-#: src/ui/mic_shell.rs:754
-msgid "Settings could not be saved"
-msgstr "Não foi possível salvar as configurações"
-
-#: src/ui/views/advanced.rs:281
-msgid ""
-"Settings were saved, but audio still needs to restart. Apply to try again."
-msgstr ""
-"As configurações foram salvas, mas o áudio ainda precisa reiniciar. Clique "
-"em Aplicar para tentar novamente."
-
-#: src/ui/views/mic.rs:377
-msgid ""
-"Shifts the pitch of your voice without retiming. Left = deeper, right = "
-"higher. Center keeps your natural voice."
-msgstr ""
-"Altera o tom da sua voz sem mudar o ritmo. Esquerda = mais grave, direita = "
-"mais agudo. O centro mantém a sua voz natural."
-
-#: src/ui/window.rs:235
-msgid "Show every control individually"
-msgstr "Mostrar cada controle individualmente"
-
-#: src/ui/widgets/spectrum.rs:53
-msgid "Shows the live microphone input level and peak."
-msgstr "Mostra o nível de entrada e o pico do microfone ao vivo."
-
-#: src/ui/views/mic.rs:324 src/ui/views/output.rs:170
-msgid "Silence gate"
-msgstr "Portão de silêncio"
-
-#: src/ui/views/advanced.rs:721
-msgid "Small (~5 ms)"
-msgstr "Pequeno (~5 ms)"
-
-#: usr/share/plasma/plasmoids/br.com.biglinux.micnoise/contents/ui/main.qml:138
-msgid "Some audio filters are not ready. Open settings to check them."
-msgstr ""
-"Alguns filtros de áudio não estão prontos. Abra as configurações para "
-"verificá-los."
-
-#: src/ui/views/advanced.rs:619
-msgid ""
-"Some laptops and motherboards put the speakers to sleep after a few seconds "
-"of silence to save power. When the next sound arrives — a notification, a "
-"video starting — you may hear a small click or miss the very first part of "
-"the audio. Turn this on to keep the speakers always ready. The extra battery "
-"use is tiny."
-msgstr ""
-"Alguns notebooks e placas-mãe colocam os alto-falantes para dormir após "
-"alguns segundos de silêncio para economizar energia. Quando o próximo som "
-"chega — uma notificação, um vídeo começando — você pode ouvir um pequeno "
-"clique ou perder o início do áudio. Ligue isto para manter os alto-falantes "
-"sempre prontos. O consumo extra de bateria é mínimo."
-
-#. ── Qualidade de som ─────────────────────────────────────────────
-#: src/ui/views/advanced.rs:197
-msgid "Sound quality"
-msgstr "Qualidade do som"
-
-#: src/ui/views/advanced.rs:654
-msgid "Sound quality range"
-msgstr "Faixa de qualidade do som"
-
-#: src/ui/widgets/spectrum.rs:59
-msgid "Speak normally to check your microphone level."
-msgstr "Fale normalmente para verificar o nível do microfone."
-
-#: src/ui/views/advanced.rs:645
-msgid "Speaker sleep"
-msgstr "Suspensão dos alto-falantes"
-
-#. ── Estabilidade e desempenho ────────────────────────────────────
-#: src/ui/views/advanced.rs:190
-msgid "Stability and performance"
-msgstr "Estabilidade e desempenho"
-
-#: src/ui/views/advanced.rs:368
-msgid "Standard (default, ~42 ms)"
-msgstr "Normal (padrão, ~42 ms)"
-
-#: src/ui/views/advanced.rs:723
-msgid "Standard (~21 ms)"
-msgstr "Padrão (~21 ms)"
-
-#: src/ui/views/advanced.rs:667
-msgid "Standard quality only (default, 48 kHz)"
-msgstr "Apenas qualidade padrão (predefinido, 48 kHz)"
-
-#: src/ui/views/advanced.rs:477
-msgid "Starting the audio preview…"
-msgstr "Iniciando a prévia de áudio…"
-
-#: src/ui/views/advanced.rs:440
-msgid "Steady (default, ~42 ms)"
-msgstr "Estável (padrão, ~42 ms)"
-
-#: src/ui/views/output.rs:43
-msgid ""
-"Stereo keeps left and right separate for music and video. Mono uses fewer "
-"resources but combines both sides; use it mainly for speech."
-msgstr ""
-"O estéreo mantém os lados esquerdo e direito separados em músicas e vídeos. "
-"O mono usa menos recursos, mas combina os dois lados; use principalmente "
-"para voz."
-
-#: src/ui/views/output.rs:42
-msgid "Stereo or lower CPU use"
-msgstr "Estéreo ou menor uso de CPU"
-
-#: src/ui/views/advanced.rs:545
-msgid "Stop preview"
-msgstr "Parar a prévia"
-
-#: src/ui/views/simple.rs:208
-msgid "System sound"
-msgstr "Som do sistema"
-
-#: usr/share/plasma/plasmoids/br.com.biglinux.micnoise/contents/ui/main.qml:158
-msgid "System sound filter"
-msgstr "Filtro do som do sistema"
-
-#: src/ui/views/advanced.rs:460
-msgid ""
-"Temporarily changes the audio buffer for all applications. Stop the preview "
-"to return to the previous value."
-msgstr ""
-"Altera temporariamente a reserva de áudio de todos os aplicativos. Pare a "
-"prévia para voltar ao valor anterior."
-
-#: src/ui/views/advanced/apply.rs:116 src/ui/views/advanced.rs:503
-#: src/ui/views/advanced.rs:536
-msgid ""
-"The audio preview could not be started or restored. Check the audio "
-"connection and try again."
-msgstr ""
-"Não foi possível iniciar a prévia ou restaurar o áudio. Verifique a conexão "
-"de áudio e tente novamente."
-
-#: src/ui/health.rs:33
-msgid "The audio system (PipeWire) is not responding."
-msgstr "O sistema de áudio (PipeWire) não está respondendo."
-
-#: src/ui/mic_shell.rs:889
-msgid "The audio system check failed unexpectedly."
-msgstr "A verificação do sistema de áudio falhou inesperadamente."
-
-#: src/ui/health.rs:64
-msgid "The background audio services are not installed."
-msgstr "Os serviços de áudio em segundo plano não estão instalados."
 
 #: usr/share/plasma/plasmoids/br.com.biglinux.micnoise/contents/ui/main.qml:79
 msgid ""
@@ -1053,275 +925,48 @@ msgstr ""
 "Não foi possível aplicar a alteração. Suas escolhas anteriores foram "
 "mantidas quando possível. Abra as configurações para ver os detalhes."
 
-#: src/ui/widgets/wp_override_warning.rs:184
-msgid ""
-"The file <tt>{path}</tt> is masking the packaged AEC routing script. Package "
-"updates won't take effect while this local copy exists.\n"
-"\n"
-"Recommended: remove the override and restart WirePlumber."
+#: usr/share/plasma/plasmoids/br.com.biglinux.micnoise/contents/ui/main.qml:121
+msgid "Microphone and system sound filters"
+msgstr "Filtros do microfone e do som do sistema"
+
+#: usr/share/plasma/plasmoids/br.com.biglinux.micnoise/contents/ui/main.qml:122
+msgid "Audio needs attention. Open the controls for details."
+msgstr "O áudio precisa de atenção. Abra os controles para ver os detalhes."
+
+#: usr/share/plasma/plasmoids/br.com.biglinux.micnoise/contents/ui/main.qml:122
+msgid "Open audio filter controls"
+msgstr "Abrir os controles dos filtros de áudio"
+
+#: usr/share/plasma/plasmoids/br.com.biglinux.micnoise/contents/ui/main.qml:131
+msgid "Filter noise"
+msgstr "Filtro de ruído"
+
+#: usr/share/plasma/plasmoids/br.com.biglinux.micnoise/contents/ui/main.qml:138
+msgid "Some audio filters are not ready. Open settings to check them."
 msgstr ""
-"O arquivo <tt>{path}</tt> está sobrepondo o script de roteamento AEC do "
-"pacote. As atualizações do pacote não terão efeito enquanto esta cópia local "
-"existir.\n"
-"\n"
-"Recomendado: remova a sobreposição e reinicie o WirePlumber."
+"Alguns filtros de áudio não estão prontos. Abra as configurações para "
+"verificá-los."
 
-#: src/ui/widgets/wp_override_warning.rs:161
-msgid ""
-"The packaged audio routing will be used after WirePlumber restarts. Log out "
-"and back in, or run “systemctl --user restart wireplumber”. Audio keeps "
-"working in the meantime with the old routing."
-msgstr ""
-"O roteamento de áudio do pacote será usado após o WirePlumber reiniciar. "
-"Encerre a sessão e entre novamente, ou execute “systemctl --user restart "
-"wireplumber”. O áudio continua funcionando enquanto isso com o roteamento "
-"antigo."
-
-#: src/ui/health.rs:47
-msgid "The selected noise model is unavailable: {model}."
-msgstr "O modelo de redução de ruído escolhido não está disponível: {model}."
-
-#: src/ui/views/advanced.rs:157 src/ui/views/advanced.rs:287
-msgid "The standard audio settings are in use."
-msgstr "As configurações de áudio padrão estão em uso."
-
-#: src/ui/mic_shell.rs:759 src/ui/mic_shell.rs:825
-msgid "Try again"
-msgstr "Tentar novamente"
-
-#: src/ui/views/advanced.rs:457 src/ui/views/advanced.rs:547
-msgid "Try for 15 seconds"
-msgstr "Testar por 15 segundos"
-
-#: src/ui/window.rs:98
-msgid "Tuning"
-msgstr "Ajustes"
+#: usr/share/plasma/plasmoids/br.com.biglinux.micnoise/contents/ui/main.qml:144
+msgid "Microphone filter"
+msgstr "Filtro do microfone"
 
 #: usr/share/plasma/plasmoids/br.com.biglinux.micnoise/contents/ui/main.qml:146
 msgid "Turning this off pauses the effects without erasing your preferences."
 msgstr "Desligar pausa os efeitos sem apagar suas preferências."
 
-#: src/ui/views/advanced.rs:566
-msgid "USB audio safety margin"
-msgstr "Margem de segurança do áudio USB"
+#: usr/share/plasma/plasmoids/br.com.biglinux.micnoise/contents/ui/main.qml:153
+msgid "Cleans your voice for calls and recordings"
+msgstr "Reduz o ruído da sua voz em chamadas e gravações"
 
-#: src/ui/views/advanced.rs:434
-msgid "Very fast (music production, ~5 ms)"
-msgstr "Muito rápido (produção musical, ~5 ms)"
+#: usr/share/plasma/plasmoids/br.com.biglinux.micnoise/contents/ui/main.qml:158
+msgid "System sound filter"
+msgstr "Filtro do som do sistema"
 
-#: src/ui/widgets/eq_card.rs:177
-msgid "Voice boost"
-msgstr "Realce de voz"
+#: usr/share/plasma/plasmoids/br.com.biglinux.micnoise/contents/ui/main.qml:166
+msgid "Applies your selected effects to the sound you hear."
+msgstr "Aplica os efeitos escolhidos ao som que você escuta."
 
-#: src/ui/views/mic.rs:80 src/ui/views/mic.rs:375
-msgid "Voice changer"
-msgstr "Modificador de voz"
-
-#: src/ui/views/mic.rs:74
-msgid "Voice enhancements"
-msgstr "Aprimoramentos de voz"
-
-#: src/ui/views/mic.rs:276 src/ui/views/output.rs:118
-msgid "Voice presence"
-msgstr "Presença de voz"
-
-#: src/ui/widgets/source_picker.rs:95
-msgid "Volume"
-msgstr "Volume"
-
-#: src/ui/widgets/eq_card.rs:179
-msgid "Warm"
-msgstr "Quente"
-
-#: src/ui/views/advanced.rs:320
-msgid ""
-"When you start a video or voice call, your Bluetooth headset can switch to a "
-"special call mode that turns on the microphone — but the sound becomes mono "
-"and lower quality, like an old phone. This is off by default so music and "
-"movies stay in full quality even when an app asks for the microphone. Turn "
-"it on if you rely on the headset's microphone for calls."
-msgstr ""
-"Quando você inicia uma chamada de vídeo ou voz, o seu fone Bluetooth pode "
-"alternar para um modo de chamada especial que liga o microfone — mas o som "
-"fica mono e com qualidade menor, como em um telefone antigo. Isso vem "
-"desligado por padrão para que músicas e filmes permaneçam em qualidade total "
-"mesmo quando um aplicativo pede o microfone. Ligue se você depende do "
-"microfone do fone para chamadas."
-
-#: src/ui/widgets/wp_override_warning.rs:74
-msgid "WirePlumber configuration overridden"
-msgstr "Configuração do WirePlumber sobreposta"
-
-#: src/ui/views/advanced.rs:389
-msgid ""
-"Your Bluetooth devices already use the best sound mode they support. Force "
-"this on if a headset stubbornly chooses lower quality, or off if you have a "
-"very old device that breaks with the high-quality mode."
-msgstr ""
-"Os seus dispositivos Bluetooth já usam o melhor modo de som que suportam. "
-"Force ligado se um fone insistir em escolher uma qualidade menor, ou "
-"desligado se você tiver um dispositivo muito antigo que não funciona com o "
-"modo de alta qualidade."
-
-#: src/ui/views/advanced.rs:285
-msgid "Your audio settings are active."
-msgstr "Suas configurações de áudio estão ativas."
-
-#: src/ui/widgets/model_picker.rs:128
-msgid "{model} - not installed"
-msgstr "{model} - não instalado"
-
-#~ msgid "Could not apply the audio settings:"
-#~ msgstr "Não foi possível aplicar as configurações de áudio:"
-
-#~ msgid "Install the gtcrn-ladspa package, then check again."
-#~ msgstr "Instale o pacote gtcrn-ladspa e verifique novamente."
-
-#~ msgid ""
-#~ "Its inference runtime is missing. Reinstall the gtcrn-ladspa package, "
-#~ "then check again."
-#~ msgstr ""
-#~ "A biblioteca de inferência não foi encontrada. Reinstale o pacote gtcrn-"
-#~ "ladspa e verifique novamente."
-
-#~ msgid "LEVEL / PEAK"
-#~ msgstr "NÍVEL / PICO"
-
-#~ msgid "Log out and back in, then reopen this window."
-#~ msgstr "Encerre a sessão e entre novamente, depois reabra esta janela."
-
-#~ msgid "The noise-reduction engine cannot start."
-#~ msgstr "O motor de redução de ruído não consegue iniciar."
-
-#~ msgid "The noise-reduction engine is not installed."
-#~ msgstr "O motor de redução de ruído não está instalado."
-
-#~ msgid "Try preview again"
-#~ msgstr "Tentar a prévia novamente"
-
-#~ msgid "Listen to it now"
-#~ msgstr "Ouvir agora"
-
-#~ msgid "Playing at this setting until you log out"
-#~ msgstr "Tocando com este ajuste até você sair da sessão"
-
-#~ msgid "This computer would not let it be tried"
-#~ msgstr "Este computador não permitiu testar"
-
-#~ msgid "Could not switch microphone. Try again or run diagnostics."
-#~ msgstr ""
-#~ "Não foi possível trocar o microfone. Tente novamente ou execute o "
-#~ "diagnóstico."
-
-#~ msgid "Could not change microphone volume. Try again or run diagnostics."
-#~ msgstr ""
-#~ "Não foi possível alterar o volume do microfone. Tente novamente ou "
-#~ "execute o diagnóstico."
-
-#~ msgid "Custom settings active. Click Apply to enable them."
-#~ msgstr ""
-#~ "Configurações personalizadas ativas. Clique em Aplicar para habilitá-las."
-
-#~ msgid "Small (low delay — needs a stable headset, ~11 ms)"
-#~ msgstr "Pequeno (baixo atraso — exige um fone estável, ~11 ms)"
-
-#~ msgid "SBC-XQ"
-#~ msgstr "SBC-XQ"
-
-#~ msgid "Fast (low delay, ~11 ms)"
-#~ msgstr "Rápido (baixo atraso, ~11 ms)"
-
-#~ msgid "Studio quality only (default, 48 kHz)"
-#~ msgstr "Apenas qualidade de estúdio (padrão, 48 kHz)"
-
-#~ msgid "CD + studio quality (44.1 + 48 kHz)"
-#~ msgstr "Qualidade de CD + estúdio (44.1 + 48 kHz)"
-
-#~ msgid "Standard (default, ~21 ms)"
-#~ msgstr "Normal (padrão, ~21 ms)"
-
-#~ msgid "Failed to remove configuration"
-#~ msgstr "Falha ao remover a configuração"
-
-#~ msgid ""
-#~ "Removes speaker bleed from your microphone using the WebRTC AEC. Turn off "
-#~ "when wearing headphones or when troubleshooting microphone routing."
-#~ msgstr ""
-#~ "Remove o vazamento dos alto-falantes no seu microfone usando o AEC do "
-#~ "WebRTC. Desligue ao usar fones de ouvido ou ao diagnosticar o roteamento "
-#~ "do microfone."
-
-#~ msgid ""
-#~ "Removes background noise from your voice with the GTCRN neural network. "
-#~ "Higher intensity = stronger cleanup."
-#~ msgstr ""
-#~ "Remove o ruído de fundo da sua voz com a rede neural GTCRN. Mais "
-#~ "intensidade = limpeza mais forte."
-
-#~ msgid ""
-#~ "10-band parametric EQ. Pick a preset or drag each band between -40 dB and "
-#~ "+40 dB."
-#~ msgstr ""
-#~ "Equalizador paramétrico de 10 bandas. Escolha uma predefinição ou arraste "
-#~ "cada banda entre -40 dB e +40 dB."
-
-#~ msgid "DeepFilterNet3 (48 kHz)"
-#~ msgstr "DeepFilterNet3 (48 kHz)"
-
-#~ msgid "DeepFilterNet3 (48 kHz) — not installed"
-#~ msgstr "DeepFilterNet3 (48 kHz) — não instalado"
-
-#~ msgid "GTCRN – DNS3 (16 kHz, strong)"
-#~ msgstr "GTCRN – DNS3 (16 kHz, forte)"
-
-#~ msgid "GTCRN – VCTK (16 kHz, gentle)"
-#~ msgstr "GTCRN – VCTK (16 kHz, suave)"
-
-#~ msgid ""
-#~ "DNS3 removes more noise but can smudge consonants. VCTK is gentler and "
-#~ "lighter on CPU. DeepFilterNet3 is a full-band 48 kHz model with the "
-#~ "cleanest output and the highest CPU cost."
-#~ msgstr ""
-#~ "O DNS3 remove mais ruído, mas pode borrar as consoantes. O VCTK é mais "
-#~ "suave e mais leve para a CPU. O DeepFilterNet3 é um modelo de banda "
-#~ "completa em 48 kHz, com a saída mais limpa e o maior custo de CPU."
-
-#~ msgid ""
-#~ "DNS3 removes more noise but can smudge consonants. VCTK is gentler and "
-#~ "lighter on CPU — good for podcasts."
-#~ msgstr ""
-#~ "O DNS3 remove mais ruído, mas pode borrar as consoantes. O VCTK é mais "
-#~ "suave e mais leve para a CPU — bom para podcasts."
-
-#~ msgid ""
-#~ "Stops your speakers' sound from being picked up by your microphone during "
-#~ "calls. Turn off when wearing headphones or when troubleshooting "
-#~ "microphone routing."
-#~ msgstr ""
-#~ "Impede que o som dos seus alto-falantes seja captado pelo microfone "
-#~ "durante chamadas. Desligue ao usar fones de ouvido ou ao resolver "
-#~ "problemas de roteamento do microfone."
-
-#, fuzzy
-#~ msgid "Distro default"
-#~ msgstr "Restore defaults"
-
-#, fuzzy
-#~ msgid "Restore distro defaults?"
-#~ msgstr "Restore defaults"
-
-#, fuzzy
-#~ msgid "Configuração do WirePlumber sobreposta"
-#~ msgstr "Configuração do WirePlumber sobreposta"
-
-#, fuzzy
-#~ msgid "Manter"
-#~ msgstr "Manter"
-
-#, fuzzy
-#~ msgid "Remover sobreposição"
-#~ msgstr "Remover sobreposição"
-
-#, fuzzy
-#~ msgid "Não avisar de novo"
-#~ msgstr "Não avisar de novo"
+#: usr/share/plasma/plasmoids/br.com.biglinux.micnoise/contents/ui/main.qml:172
+msgid "Open settings…"
+msgstr "Abrir configurações…"

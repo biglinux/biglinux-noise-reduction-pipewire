@@ -1,0 +1,973 @@
+{
+  "files": [
+    {
+      "path": ".github/ci/build_identity.py",
+      "lines": 69,
+      "sha256": "378a8b953242bf7ff7c91a62c0fdc3cdb683a656b9063346054cc3dd2ff2fb09",
+      "changed": false,
+      "evidence": "inventory/static inspection; not a certification of correctness"
+    },
+    {
+      "path": ".github/ci/plan.py",
+      "lines": 159,
+      "sha256": "56d11460c09d20973de4cacf814d4c4ad3561919aac46e8be7f306eca1711657",
+      "changed": false,
+      "evidence": "inventory/static inspection; not a certification of correctness"
+    },
+    {
+      "path": ".github/ci/result.py",
+      "lines": 63,
+      "sha256": "d299a65a57c3d0b8f8b559ddb0df00d296eeeea61b000e337025009a62745113",
+      "changed": false,
+      "evidence": "inventory/static inspection; not a certification of correctness"
+    },
+    {
+      "path": ".github/ci/test_cadence.py",
+      "lines": 57,
+      "sha256": "80264167dacea68c442a11b5bb21d74dfe67d2923180017f64619f7ac7bcdbc6",
+      "changed": false,
+      "evidence": "inventory/static inspection; not a certification of correctness"
+    },
+    {
+      "path": ".github/ci/test_plan.py",
+      "lines": 140,
+      "sha256": "87968a3aa7b4b4fad9654d0d87f8c49575f1faa86258dae86f59ee8c75bd4bb6",
+      "changed": false,
+      "evidence": "inventory/static inspection; not a certification of correctness"
+    },
+    {
+      "path": ".github/ci/test_release.py",
+      "lines": 73,
+      "sha256": "78b58806e1ba70e60fe53a8b7dc9e68ebeae00632521fac072cab7692729bae0",
+      "changed": false,
+      "evidence": "inventory/static inspection; not a certification of correctness"
+    },
+    {
+      "path": "app/biglinux_microphone/__init__.py",
+      "lines": 1,
+      "sha256": "0e08b00b98ba427f52f52012e6fef719d2f0b93ad317a531c742c161ec26cc8f",
+      "changed": false,
+      "evidence": "inventory/static inspection; not a certification of correctness"
+    },
+    {
+      "path": "app/biglinux_microphone/__main__.py",
+      "lines": 6,
+      "sha256": "816c85226770945f86886cef16fa6018888db35aa0629b60c8785a0df6516679",
+      "changed": false,
+      "evidence": "inventory/static inspection; not a certification of correctness"
+    },
+    {
+      "path": "app/biglinux_microphone/application.py",
+      "lines": 60,
+      "sha256": "cdf9a79fbe3d4ab336aa7ff4cb3c4aeda85bd4e7f82f857ea4dc547e0c7b8fff",
+      "changed": false,
+      "evidence": "inventory/static inspection; not a certification of correctness"
+    },
+    {
+      "path": "app/biglinux_microphone/cli.py",
+      "lines": 339,
+      "sha256": "9008bc0d893148b412a95d87480a3eca35c218a0dae0e4530980e576ab80c208",
+      "changed": true,
+      "evidence": "patched; see tests split"
+    },
+    {
+      "path": "app/biglinux_microphone/main.py",
+      "lines": 49,
+      "sha256": "0d604d0e00873548b3d5a0d3445278fe6eb1b2846ec3962789ab9d41562d26ba",
+      "changed": false,
+      "evidence": "inventory/static inspection; not a certification of correctness"
+    },
+    {
+      "path": "app/biglinux_microphone/monitor.py",
+      "lines": 81,
+      "sha256": "063296335338aa4e561ded21e99b6ab0549ba8736b6b7089a485a66dbc5103dc",
+      "changed": false,
+      "evidence": "inventory/static inspection; not a certification of correctness"
+    },
+    {
+      "path": "app/biglinux_microphone/ui/__init__.py",
+      "lines": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "changed": false,
+      "evidence": "inventory/static inspection; not a certification of correctness"
+    },
+    {
+      "path": "app/biglinux_microphone/ui/audio_capture.py",
+      "lines": 318,
+      "sha256": "a5fbcf55204b56920593ea01799d848358c9be20e1b17dfe274382c19fdc3fb4",
+      "changed": true,
+      "evidence": "patched; see tests split"
+    },
+    {
+      "path": "app/biglinux_microphone/ui/backend.py",
+      "lines": 75,
+      "sha256": "6a1e0cdbc486740424b3839f0904047ae75011619bbb21ea910a4f63f851ce4e",
+      "changed": false,
+      "evidence": "inventory/static inspection; not a certification of correctness"
+    },
+    {
+      "path": "app/biglinux_microphone/ui/compat.py",
+      "lines": 95,
+      "sha256": "0df27720ade9e0a38ac7c14dc843e71382bdda5cd40bf6bdf5b96f572a1b5545",
+      "changed": false,
+      "evidence": "inventory/static inspection; not a certification of correctness"
+    },
+    {
+      "path": "app/biglinux_microphone/ui/loudness.py",
+      "lines": 153,
+      "sha256": "ff41c97d3a2666e90a63e83d11fc8d6b289475c3d9971e9c5965682082ca8f22",
+      "changed": true,
+      "evidence": "patched; see tests split"
+    },
+    {
+      "path": "app/biglinux_microphone/ui/pages/__init__.py",
+      "lines": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "changed": false,
+      "evidence": "inventory/static inspection; not a certification of correctness"
+    },
+    {
+      "path": "app/biglinux_microphone/ui/pages/base.py",
+      "lines": 130,
+      "sha256": "48ac666c497c4639abf8cdf67455a361a643ade10bc7956606e583cd5df0a6a6",
+      "changed": false,
+      "evidence": "inventory/static inspection; not a certification of correctness"
+    },
+    {
+      "path": "app/biglinux_microphone/ui/pages/calibrate.py",
+      "lines": 558,
+      "sha256": "9b2c34cea021c60d5cb8152bdcb8d9976ff456c25671441e5701ef5761f58928",
+      "changed": false,
+      "evidence": "inventory/static inspection; not a certification of correctness"
+    },
+    {
+      "path": "app/biglinux_microphone/ui/pages/simple.py",
+      "lines": 266,
+      "sha256": "31c5583133a010bd0f94f80872ad55f07ca5c5f72149d02b2e3b992906ff2a3b",
+      "changed": false,
+      "evidence": "inventory/static inspection; not a certification of correctness"
+    },
+    {
+      "path": "app/biglinux_microphone/ui/pcm_reader.py",
+      "lines": 55,
+      "sha256": "401caf42b9e3484df006c01c1cedfbef00e8b3eeb34e077e7582998870ac05bd",
+      "changed": true,
+      "evidence": "patched; see tests split"
+    },
+    {
+      "path": "app/biglinux_microphone/ui/spectrum_widget.py",
+      "lines": 866,
+      "sha256": "a88f12619e26511b7e1ea040a633c3d370b5762e9d924fe942bd4741b8cf5733",
+      "changed": false,
+      "evidence": "inventory/static inspection; not a certification of correctness"
+    },
+    {
+      "path": "app/biglinux_microphone/ui/state.py",
+      "lines": 295,
+      "sha256": "42a7953607a6c7df740c0439535164b9c36ea549a8df21901ed8154e5b729461",
+      "changed": true,
+      "evidence": "patched; see tests split"
+    },
+    {
+      "path": "app/biglinux_microphone/ui/style.py",
+      "lines": 92,
+      "sha256": "0a151bcd2e813bdd87b89b8040544a938b5aa1e4d0cb895eae45fc6d51bcbe7d",
+      "changed": false,
+      "evidence": "inventory/static inspection; not a certification of correctness"
+    },
+    {
+      "path": "app/biglinux_microphone/ui/tooltips.py",
+      "lines": 47,
+      "sha256": "a8562eb0426a023946b8d811a6353e44fdb94ba333b70776cc5cfa9751902954",
+      "changed": false,
+      "evidence": "inventory/static inspection; not a certification of correctness"
+    },
+    {
+      "path": "app/biglinux_microphone/ui/view.py",
+      "lines": 1269,
+      "sha256": "04b7117ef9ab3853896b531292ee1b7a54d0b45ece8a57aea9450884437dd971",
+      "changed": false,
+      "evidence": "inventory/static inspection; not a certification of correctness"
+    },
+    {
+      "path": "app/biglinux_microphone/ui/widgets/__init__.py",
+      "lines": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "changed": false,
+      "evidence": "inventory/static inspection; not a certification of correctness"
+    },
+    {
+      "path": "app/biglinux_microphone/ui/widgets/choice.py",
+      "lines": 244,
+      "sha256": "c54c5d05a636a60ac01b3ea95be2c59f18d766e9ba53bd27ad3d33e932b85916",
+      "changed": false,
+      "evidence": "inventory/static inspection; not a certification of correctness"
+    },
+    {
+      "path": "app/biglinux_microphone/ui/widgets/filter_card.py",
+      "lines": 102,
+      "sha256": "f2b73020b74ff8026296d9a48aaddd911166b91cd90ed8d6b25400e69426387e",
+      "changed": false,
+      "evidence": "inventory/static inspection; not a certification of correctness"
+    },
+    {
+      "path": "app/biglinux_microphone/ui/widgets/power_button.py",
+      "lines": 229,
+      "sha256": "48a06fa19f53c807d37cbe951bfe920700eb3eb68c11cf127ae7298107bd9bf7",
+      "changed": false,
+      "evidence": "inventory/static inspection; not a certification of correctness"
+    },
+    {
+      "path": "app/biglinux_microphone/utils/__init__.py",
+      "lines": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "changed": false,
+      "evidence": "inventory/static inspection; not a certification of correctness"
+    },
+    {
+      "path": "app/biglinux_microphone/utils/async_utils.py",
+      "lines": 300,
+      "sha256": "dafc7eca3c5fb53860d597160e199fbd65c3ceef98a98bc9084f5987073660c0",
+      "changed": true,
+      "evidence": "patched; see tests split"
+    },
+    {
+      "path": "app/biglinux_microphone/utils/i18n.py",
+      "lines": 44,
+      "sha256": "3ee9053df13cab6ed5b5b09f81b71a817e3695ddbcc5a02b1765006fd354e7b8",
+      "changed": false,
+      "evidence": "inventory/static inspection; not a certification of correctness"
+    },
+    {
+      "path": "app/biglinux_microphone/utils/tooltip_helper.py",
+      "lines": 389,
+      "sha256": "d344e101252fed70b574e21660e750d2dd67ca7ce8c2bbe00d25b15e0d89641c",
+      "changed": false,
+      "evidence": "inventory/static inspection; not a certification of correctness"
+    },
+    {
+      "path": "app/biglinux_microphone/window.py",
+      "lines": 50,
+      "sha256": "4f122fa45b6b73e5a70299c46075fb7d1958bdda88f3f5b3f99addf2663385ad",
+      "changed": false,
+      "evidence": "inventory/static inspection; not a certification of correctness"
+    },
+    {
+      "path": "app/tests/__init__.py",
+      "lines": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "changed": false,
+      "evidence": "inventory/static inspection; not a certification of correctness"
+    },
+    {
+      "path": "app/tests/test_async_contracts.py",
+      "lines": 90,
+      "sha256": "cb13fc1e382457175edf9fe3082f3348bec76ea6af8f576e114e1d4376fb646b",
+      "changed": true,
+      "evidence": "patched; see tests split"
+    },
+    {
+      "path": "app/tests/test_choice_widgets.py",
+      "lines": 135,
+      "sha256": "eed2913c0eab6fcae5de364dfc87ed592fdb93bd98b79d87280d73ef84302f7b",
+      "changed": false,
+      "evidence": "inventory/static inspection; not a certification of correctness"
+    },
+    {
+      "path": "app/tests/test_cli_calibration.py",
+      "lines": 43,
+      "sha256": "8aae3234a2fdbbee11baaf05525446d224a3c89a9266d6ade1b206df7479dac4",
+      "changed": true,
+      "evidence": "patched; see tests split"
+    },
+    {
+      "path": "app/tests/test_loudness.py",
+      "lines": 141,
+      "sha256": "cff2f26953a3ace47dc19e75ab0bff1d21378c26b529532ed68974a3cf2083a9",
+      "changed": true,
+      "evidence": "patched; see tests split"
+    },
+    {
+      "path": "app/tests/test_no_unasked_writes.py",
+      "lines": 147,
+      "sha256": "81e052ed8efef9930b36d70689f31bd4d2b38d7f14862038f466b3b020a5d9ca",
+      "changed": false,
+      "evidence": "inventory/static inspection; not a certification of correctness"
+    },
+    {
+      "path": "app/tests/test_pcm_reader.py",
+      "lines": 63,
+      "sha256": "f864e7d415abb2abd6fa4d7f9f32de6bbd9a2d9db09a73a8d81341e9fb1c1fb4",
+      "changed": true,
+      "evidence": "patched; see tests split"
+    },
+    {
+      "path": "app/tests/test_state_store.py",
+      "lines": 218,
+      "sha256": "f9bb91bbe13dc5bcc71300b5af8d31e8852f484ff7eb825b0d5f7226968b75a9",
+      "changed": true,
+      "evidence": "patched; see tests split"
+    },
+    {
+      "path": "app/tests/test_view_contracts.py",
+      "lines": 435,
+      "sha256": "bf7a437ecbcfb47a047cb5b11e417e251e5c4e713ad35368550c8c1c0882dff5",
+      "changed": false,
+      "evidence": "inventory/static inspection; not a certification of correctness"
+    },
+    {
+      "path": "scripts/leak-perf-microphone-dialogs.sh",
+      "lines": 186,
+      "sha256": "affed644429428e36038ea23d47637c4a50f26e64585227ca18ac7d095990c44",
+      "changed": false,
+      "evidence": "inventory/static inspection; not a certification of correctness"
+    },
+    {
+      "path": "scripts/quality-check.sh",
+      "lines": 213,
+      "sha256": "a620a1ce2ac433ce6b144a4d16be6b63109c183021aea7631a18fd639eec4883",
+      "changed": false,
+      "evidence": "inventory/static inspection; not a certification of correctness"
+    },
+    {
+      "path": "scripts/refresh-pot.sh",
+      "lines": 45,
+      "sha256": "f58f8c47b64d71009a891e9fbcc65461eccc064c5ce8b5df0887eef6fc90ed19",
+      "changed": false,
+      "evidence": "inventory/static inspection; not a certification of correctness"
+    },
+    {
+      "path": "scripts/test-miri.sh",
+      "lines": 8,
+      "sha256": "5207d904b528dac08cd29be1adf395c90af3b3981c248419c09866adce147702",
+      "changed": false,
+      "evidence": "inventory/static inspection; not a certification of correctness"
+    },
+    {
+      "path": "scripts/test-package.sh",
+      "lines": 97,
+      "sha256": "4937b5f8669c60fe5aa71a5ec441386bbd32a7b55a459fcd8d4ec09461b7e537",
+      "changed": false,
+      "evidence": "inventory/static inspection; not a certification of correctness"
+    },
+    {
+      "path": "scripts/test-pipewire.sh",
+      "lines": 38,
+      "sha256": "321a1997f0cff13966f39ab38c7dbde88943c1f863e1e171a9eb8681f5a5d7b6",
+      "changed": false,
+      "evidence": "inventory/static inspection; not a certification of correctness"
+    },
+    {
+      "path": "scripts/test-ui.sh",
+      "lines": 35,
+      "sha256": "df5a14669b788bd3a4c65371f3de479f0dbce6ec174cd3953055fa624a9a1bd2",
+      "changed": false,
+      "evidence": "inventory/static inspection; not a certification of correctness"
+    },
+    {
+      "path": "scripts/ui-smoke-microphone-window.sh",
+      "lines": 125,
+      "sha256": "047045113a01d7ed6e20c8c94b39f4e2c3407b1badec1bafee10fa006f4fe40a",
+      "changed": false,
+      "evidence": "inventory/static inspection; not a certification of correctness"
+    },
+    {
+      "path": "scripts/verify-package.py",
+      "lines": 82,
+      "sha256": "0b01072ea9f2285bb41b46896132fa1a89e161ac796d90cd745cc60ca2175e42",
+      "changed": false,
+      "evidence": "inventory/static inspection; not a certification of correctness"
+    },
+    {
+      "path": "src/agc/calibration.rs",
+      "lines": 160,
+      "sha256": "43a203059d122f0d9b53c740c9ede8c30b7e859ac1d2394811bd98a94eeff73f",
+      "changed": true,
+      "evidence": "patched; see tests split"
+    },
+    {
+      "path": "src/agc/control.rs",
+      "lines": 333,
+      "sha256": "93db7268773ee65c33cff66f0da27eb335c47bb5a6f75d83c506fdf7e397e5ea",
+      "changed": true,
+      "evidence": "patched; see tests split"
+    },
+    {
+      "path": "src/agc/control_tests.rs",
+      "lines": 386,
+      "sha256": "5427c346fb75dd8c7c3f62e6fb653bebaa333a1b0108f4af2b9ae0f205c2d7ed",
+      "changed": true,
+      "evidence": "patched; see tests split"
+    },
+    {
+      "path": "src/agc/features.rs",
+      "lines": 392,
+      "sha256": "000954cd4c16a3389d17742298779a2c3f09df27f97081778a12d8ee780f8e8d",
+      "changed": true,
+      "evidence": "patched; see tests split"
+    },
+    {
+      "path": "src/agc/features_tests.rs",
+      "lines": 324,
+      "sha256": "265e3854aa21414ce27788b1947e474dc03b3a5e7ec15aa253740124f1e56cf1",
+      "changed": true,
+      "evidence": "patched; see tests split"
+    },
+    {
+      "path": "src/agc/policy_tests.rs",
+      "lines": 86,
+      "sha256": "d3d487b71f74c8c757d439adcf5918bcc0144f11b643ee3d8ba0bd97ff57ffd3",
+      "changed": false,
+      "evidence": "inventory/static inspection; not a certification of correctness"
+    },
+    {
+      "path": "src/agc/session.rs",
+      "lines": 128,
+      "sha256": "e3600e7cefbcf56f91cc234f3ea9a6ce6579d02c5628a15888a56d14d20202f8",
+      "changed": true,
+      "evidence": "patched; see tests split"
+    },
+    {
+      "path": "src/agc.rs",
+      "lines": 378,
+      "sha256": "8d7c30c5917058f07d1f5e6067de01f202a3f676e1422954433f3a2d3dece360",
+      "changed": true,
+      "evidence": "patched; see tests split"
+    },
+    {
+      "path": "src/bin/cli.rs",
+      "lines": 1272,
+      "sha256": "729d8c18782e0d1b6d36c4b7723ca471fb3e8a675335cd63db14ee2596c22ec9",
+      "changed": true,
+      "evidence": "patched; see tests split"
+    },
+    {
+      "path": "src/bin/probe.rs",
+      "lines": 173,
+      "sha256": "0d0f33bf1288ec27b73c65b730cbe04f0e33235bf9eacc217166425cd9ccf28a",
+      "changed": false,
+      "evidence": "inventory/static inspection; not a certification of correctness"
+    },
+    {
+      "path": "src/bin/pwloader.rs",
+      "lines": 323,
+      "sha256": "3318759fc163995bc9a7c71f59c690b1da96fa1cf3dc3c217202a511dd47af8c",
+      "changed": false,
+      "evidence": "inventory/static inspection; not a certification of correctness"
+    },
+    {
+      "path": "src/config/audio.rs",
+      "lines": 727,
+      "sha256": "131fbae4b534e143ffb003c4c96cd9010c44013d4ebf91329b9b04367d32e009",
+      "changed": true,
+      "evidence": "patched; see tests split"
+    },
+    {
+      "path": "src/config/dynamics.rs",
+      "lines": 108,
+      "sha256": "8f517d7361c496b6fbf402eeaa0b69732db25d462b594606e24215f59767686f",
+      "changed": false,
+      "evidence": "inventory/static inspection; not a certification of correctness"
+    },
+    {
+      "path": "src/config/echo_cancel.rs",
+      "lines": 106,
+      "sha256": "f30a3ba6d9906feb30f38d10f4702927520f2026da4e3ca0b176c584ade796bb",
+      "changed": false,
+      "evidence": "inventory/static inspection; not a certification of correctness"
+    },
+    {
+      "path": "src/config/equalizer.rs",
+      "lines": 209,
+      "sha256": "5131679ca1d71e48f19ab0d8bca28fa8aa13d850f4f33fd073928dc222bbe465",
+      "changed": false,
+      "evidence": "inventory/static inspection; not a certification of correctness"
+    },
+    {
+      "path": "src/config/gain_safety.rs",
+      "lines": 10,
+      "sha256": "1ad00aa7b36fe3bd9f61c4fd424b3eeab94db05e0d5ed7bec8c1a225fc2d3d81",
+      "changed": false,
+      "evidence": "inventory/static inspection; not a certification of correctness"
+    },
+    {
+      "path": "src/config/noise_model.rs",
+      "lines": 498,
+      "sha256": "87f1ed4948a1c2503a45f4a7e0014c5de9d7a417a6c891fcba78a8098480636f",
+      "changed": false,
+      "evidence": "inventory/static inspection; not a certification of correctness"
+    },
+    {
+      "path": "src/config/output_filter.rs",
+      "lines": 81,
+      "sha256": "c7b0d1a9f519f984e315c008c1800d4d35acb05c00dd80774e72e82d727dea80",
+      "changed": false,
+      "evidence": "inventory/static inspection; not a certification of correctness"
+    },
+    {
+      "path": "src/config/paths.rs",
+      "lines": 88,
+      "sha256": "46ad957bc5512bd34b5ae3305ecc0740408cc1257a39ba979b1ca74103272cf6",
+      "changed": false,
+      "evidence": "inventory/static inspection; not a certification of correctness"
+    },
+    {
+      "path": "src/config/plugin_cost.rs",
+      "lines": 508,
+      "sha256": "3acd440f201613c84540c5652129c7437597845120c5a2630f460ad7ff11eb66",
+      "changed": false,
+      "evidence": "inventory/static inspection; not a certification of correctness"
+    },
+    {
+      "path": "src/config/processing.rs",
+      "lines": 37,
+      "sha256": "adbe0d5292a4ee6f7759561e7f0a360707c6f0d01655a44c21777fe641262d9f",
+      "changed": false,
+      "evidence": "inventory/static inspection; not a certification of correctness"
+    },
+    {
+      "path": "src/config/profiles.rs",
+      "lines": 120,
+      "sha256": "1dbbabb9ce884308ff1912598b3436e73e20974a2a0b42bd2857c77e53329944",
+      "changed": false,
+      "evidence": "inventory/static inspection; not a certification of correctness"
+    },
+    {
+      "path": "src/config/quality.rs",
+      "lines": 526,
+      "sha256": "ccd37802c0d79c5f0197cecab156e1872a7d9b14c988deb03307d573a41f6e23",
+      "changed": false,
+      "evidence": "inventory/static inspection; not a certification of correctness"
+    },
+    {
+      "path": "src/config/runtime.rs",
+      "lines": 9,
+      "sha256": "5792f23a22ba04d3e74c66297ea8994c98bd06555e034d54af60bf1879043272",
+      "changed": false,
+      "evidence": "inventory/static inspection; not a certification of correctness"
+    },
+    {
+      "path": "src/config/storage.rs",
+      "lines": 320,
+      "sha256": "0bf750dfb3d95027c82dac91cf7485d1a458168b4b5081561b461a21e2d5a1e2",
+      "changed": true,
+      "evidence": "patched; see tests split"
+    },
+    {
+      "path": "src/config/ui.rs",
+      "lines": 67,
+      "sha256": "870771754d708a75d72eb70271bb570508dc2bd40a894e971a161595534fa30d",
+      "changed": false,
+      "evidence": "inventory/static inspection; not a certification of correctness"
+    },
+    {
+      "path": "src/config.rs",
+      "lines": 439,
+      "sha256": "8f5221b46a0c7aed3a40b18c8519211180084ae320fa245fe1d1323e18df4b8e",
+      "changed": false,
+      "evidence": "inventory/static inspection; not a certification of correctness"
+    },
+    {
+      "path": "src/diagnostics.rs",
+      "lines": 673,
+      "sha256": "e021282b621511237b1c821c8e787cfc3ffc2c1122b6efaf44a6a812b03fe812",
+      "changed": false,
+      "evidence": "inventory/static inspection; not a certification of correctness"
+    },
+    {
+      "path": "src/gain_policy.rs",
+      "lines": 1110,
+      "sha256": "b56ca594e6d03f77772a10eaad5d8830e8a250342081a4f23b4510b5bf11d6a4",
+      "changed": true,
+      "evidence": "patched; see tests split"
+    },
+    {
+      "path": "src/lib.rs",
+      "lines": 27,
+      "sha256": "bee84beb0e95999985674b76cddf49fd6be891d5d82933bea8d032470633129b",
+      "changed": false,
+      "evidence": "inventory/static inspection; not a certification of correctness"
+    },
+    {
+      "path": "src/pipeline/echo_cancel.rs",
+      "lines": 209,
+      "sha256": "15a45304dfecc16efccafdc8308ac0f31309d88e04d03a080b62f2bd0c25958d",
+      "changed": false,
+      "evidence": "inventory/static inspection; not a certification of correctness"
+    },
+    {
+      "path": "src/pipeline/gain_safety.rs",
+      "lines": 261,
+      "sha256": "f68dc919661740115c7e9d162b3243d769ed9ee390847737d56ffbf2dceea3f3",
+      "changed": false,
+      "evidence": "inventory/static inspection; not a certification of correctness"
+    },
+    {
+      "path": "src/pipeline/graph.rs",
+      "lines": 176,
+      "sha256": "e0cda171f387648268d91c25c29e90f2986f6da691347841d33901ab78ccdc96",
+      "changed": false,
+      "evidence": "inventory/static inspection; not a certification of correctness"
+    },
+    {
+      "path": "src/pipeline/mic/tests.rs",
+      "lines": 650,
+      "sha256": "c20a5ca87bc89e28ff32144789b72291c17354fb7ba3acd6c3493023e87ff1b6",
+      "changed": false,
+      "evidence": "inventory/static inspection; not a certification of correctness"
+    },
+    {
+      "path": "src/pipeline/mic.rs",
+      "lines": 523,
+      "sha256": "9b57bce65cf90eb0dce139947338bdefe28d2456725aff37ab31a424ac0c7450",
+      "changed": false,
+      "evidence": "inventory/static inspection; not a certification of correctness"
+    },
+    {
+      "path": "src/pipeline/migration.rs",
+      "lines": 138,
+      "sha256": "2adb2731dca3edff3f8301db072b731545f391dd081fa7db33a0513e6fdb99a4",
+      "changed": false,
+      "evidence": "inventory/static inspection; not a certification of correctness"
+    },
+    {
+      "path": "src/pipeline/nodes.rs",
+      "lines": 250,
+      "sha256": "6fbe9cebfe15a45c0244c203f46f14f0812a32c71ee1e5498c9ebd1e6d878799",
+      "changed": false,
+      "evidence": "inventory/static inspection; not a certification of correctness"
+    },
+    {
+      "path": "src/pipeline/output.rs",
+      "lines": 432,
+      "sha256": "845660c51d885adfa3265aa62be16f1cadaf37aea6656a79e77556b7f04977b5",
+      "changed": false,
+      "evidence": "inventory/static inspection; not a certification of correctness"
+    },
+    {
+      "path": "src/pipeline/output_tests.rs",
+      "lines": 327,
+      "sha256": "db25a931ff889ba5e37747cded430938e0af52d3d875a1937e00895a69dfc11c",
+      "changed": false,
+      "evidence": "inventory/static inspection; not a certification of correctness"
+    },
+    {
+      "path": "src/pipeline.rs",
+      "lines": 321,
+      "sha256": "7c07ebcd71830263fdf789052336f924dd5a74f499a44843c247f1a4f5a2e293",
+      "changed": false,
+      "evidence": "inventory/static inspection; not a certification of correctness"
+    },
+    {
+      "path": "src/pwloader/denoise_watch.rs",
+      "lines": 269,
+      "sha256": "104ad305100c6dc0ec08e8123c6f861a353369a66719d89cb7c6085f120f6212",
+      "changed": false,
+      "evidence": "inventory/static inspection; not a certification of correctness"
+    },
+    {
+      "path": "src/services/audio_monitor/analyzer.rs",
+      "lines": 480,
+      "sha256": "4e4f3e9feac2f904e0243ae05bb2699de2d29f51c68697e7b60a6572bfedd38a",
+      "changed": true,
+      "evidence": "patched; see tests split"
+    },
+    {
+      "path": "src/services/audio_monitor/capture.rs",
+      "lines": 284,
+      "sha256": "fd227a72df98e7b7154a74e2b7729e9bf7e3c5ddb847b4eabc9891f24c19cdd6",
+      "changed": true,
+      "evidence": "patched; see tests split"
+    },
+    {
+      "path": "src/services/audio_monitor/types.rs",
+      "lines": 50,
+      "sha256": "f80169d4305336c09aa5b3d09da24f030f5774a3722a57d589065bcbd626b239",
+      "changed": true,
+      "evidence": "patched; see tests split"
+    },
+    {
+      "path": "src/services/audio_monitor.rs",
+      "lines": 379,
+      "sha256": "5a2679dcef0622a07871cfb83c5faef21ad5c11723ad0d99978765b5a94410c5",
+      "changed": true,
+      "evidence": "patched; see tests split"
+    },
+    {
+      "path": "src/services/echo.rs",
+      "lines": 634,
+      "sha256": "626b366e00a8d8823f153548b57f0372b5ea892978ba4bc80b9aba980a4efbc6",
+      "changed": true,
+      "evidence": "patched; see tests split"
+    },
+    {
+      "path": "src/services/latency.rs",
+      "lines": 369,
+      "sha256": "b16471aaf7882e3938595d94e3b0599cd537176de2f8bad28f03fcdd2dc5a856",
+      "changed": true,
+      "evidence": "patched; see tests split"
+    },
+    {
+      "path": "src/services/loopback.rs",
+      "lines": 80,
+      "sha256": "1be629f97ed3bf21ae38bc22556c19f4203c61de387eaa8688eb781c13fc897d",
+      "changed": false,
+      "evidence": "inventory/static inspection; not a certification of correctness"
+    },
+    {
+      "path": "src/services/pipewire/cards.rs",
+      "lines": 348,
+      "sha256": "9160f27c97bc8668a1de1fb35923126bfc8bef8f2eb6ddf49f93b4e1ac6b4584",
+      "changed": false,
+      "evidence": "inventory/static inspection; not a certification of correctness"
+    },
+    {
+      "path": "src/services/pipewire/live.rs",
+      "lines": 1016,
+      "sha256": "181f2cd478cdc7f7246f7c46c1cf06675c127faf2e3fe3467d70120ba7acfe0e",
+      "changed": false,
+      "evidence": "inventory/static inspection; not a certification of correctness"
+    },
+    {
+      "path": "src/services/pipewire/module.rs",
+      "lines": 170,
+      "sha256": "913e14c209d8a0ece5bb3a7435c230c71ddacd2ecde605da9ff8f19bdebb0608",
+      "changed": false,
+      "evidence": "inventory/static inspection; not a certification of correctness"
+    },
+    {
+      "path": "src/services/pipewire/native.rs",
+      "lines": 357,
+      "sha256": "e940e97df68a7fc090fdaad821bf8021434eae6290a89951f7f6901e0e5fbfbc",
+      "changed": false,
+      "evidence": "inventory/static inspection; not a certification of correctness"
+    },
+    {
+      "path": "src/services/pipewire/source_watch.rs",
+      "lines": 232,
+      "sha256": "cf4c9d93c8e5703bc0e55d9571c7305e25d073cfd45d1a846de38cb00302e2d1",
+      "changed": true,
+      "evidence": "patched; see tests split"
+    },
+    {
+      "path": "src/services/pipewire/sources.rs",
+      "lines": 644,
+      "sha256": "6405e9556b23f08722f1998b08f4487168c78cf8de28786740baae68451869f6",
+      "changed": true,
+      "evidence": "patched; see tests split"
+    },
+    {
+      "path": "src/services/pipewire/types.rs",
+      "lines": 98,
+      "sha256": "a7695078d3e5f037636c53c60550becb8f91f65c18862ea604a755f179867148",
+      "changed": false,
+      "evidence": "inventory/static inspection; not a certification of correctness"
+    },
+    {
+      "path": "src/services/pipewire/user_tweaks.rs",
+      "lines": 637,
+      "sha256": "eb5730dd4713ec64d8f742336f3a6c3800db17d2476cc2af4b9e3f1b39ca2bae",
+      "changed": false,
+      "evidence": "inventory/static inspection; not a certification of correctness"
+    },
+    {
+      "path": "src/services/pipewire.rs",
+      "lines": 187,
+      "sha256": "c2186be176f0cdf9a1dd025639ed99f76204fad241b3b722bfe4153a7bd313dc",
+      "changed": true,
+      "evidence": "patched; see tests split"
+    },
+    {
+      "path": "src/services/preview.rs",
+      "lines": 448,
+      "sha256": "68bd98fdf93c2cbfafa594639875f61ff005ae839f6b4b3619353f883f5f9d47",
+      "changed": true,
+      "evidence": "patched; see tests split"
+    },
+    {
+      "path": "src/services/profiles.rs",
+      "lines": 252,
+      "sha256": "2673074100ce3ec2119b2984fe8ebcd76ecd144686b98ccd06fa8ae7db5d8434",
+      "changed": true,
+      "evidence": "patched; see tests split"
+    },
+    {
+      "path": "src/services/reconcile.rs",
+      "lines": 724,
+      "sha256": "0788135a98f4797207d38f1ca0a56ef4ce856ee6e82c53164ccab32864152941",
+      "changed": false,
+      "evidence": "inventory/static inspection; not a certification of correctness"
+    },
+    {
+      "path": "src/services/system_audio.rs",
+      "lines": 47,
+      "sha256": "dcc180cad2bf3a9263e58726ac2c5fab1c5efd6a7aa0f5377137f17c0ee6ba62",
+      "changed": false,
+      "evidence": "inventory/static inspection; not a certification of correctness"
+    },
+    {
+      "path": "src/services.rs",
+      "lines": 23,
+      "sha256": "53a5237eb4126693e96ca80c84d27b1ee0eb7f44473ce3ddc3a08fd124d77689",
+      "changed": false,
+      "evidence": "inventory/static inspection; not a certification of correctness"
+    },
+    {
+      "path": "tests/cli_subcommands.rs",
+      "lines": 185,
+      "sha256": "a0465110b8c17c131de5814e3d6d2777d6c342986adbfb7df41d54e0f5f5e200",
+      "changed": false,
+      "evidence": "inventory/static inspection; not a certification of correctness"
+    },
+    {
+      "path": "tests/pipeline_apply.rs",
+      "lines": 232,
+      "sha256": "88576f19b7030af8731f6f90049f8330747b17ae819b359962d19768c833e52d",
+      "changed": false,
+      "evidence": "inventory/static inspection; not a certification of correctness"
+    },
+    {
+      "path": "tests/pipewire_runtime.rs",
+      "lines": 159,
+      "sha256": "61a9c0241a86163fd6953454ce9ebef7310c3667e004c36401e3029ff467078a",
+      "changed": false,
+      "evidence": "inventory/static inspection; not a certification of correctness"
+    },
+    {
+      "path": "tests/plasmoid_status.test.cjs",
+      "lines": 39,
+      "sha256": "3eb7a5b321cb523858028eb8e3d8c208dd3ba2e8643c9fc84ef354f23675da4f",
+      "changed": false,
+      "evidence": "inventory/static inspection; not a certification of correctness"
+    },
+    {
+      "path": "tests/review_audio.rs",
+      "lines": 34,
+      "sha256": "42ea3cfda1369d677203d94b6e0639451de61bb126ffd89cde423ad548ac54b1",
+      "changed": false,
+      "evidence": "inventory/static inspection; not a certification of correctness"
+    },
+    {
+      "path": "tests/review_gain_safety.rs",
+      "lines": 32,
+      "sha256": "8408c06199712e23120eb6860d402c65be0b4672a6d26a6339c274647e0910e3",
+      "changed": false,
+      "evidence": "inventory/static inspection; not a certification of correctness"
+    },
+    {
+      "path": "tests/review_master.rs",
+      "lines": 19,
+      "sha256": "9c47743297c29cdc51ed5332aa1e8827f79adadc2e6d675c8fed0b9620105bdd",
+      "changed": false,
+      "evidence": "inventory/static inspection; not a certification of correctness"
+    },
+    {
+      "path": "tests/review_stereo.rs",
+      "lines": 31,
+      "sha256": "b03bb9f58eb4cd035bf95f417042482e2fa71692f3b8275c1b0f46b64f3a7ccf",
+      "changed": false,
+      "evidence": "inventory/static inspection; not a certification of correctness"
+    },
+    {
+      "path": "tests/review_subprocess.rs",
+      "lines": 206,
+      "sha256": "4af724bbea8729ec55030d228ca8d4aab89461c9dc3cf435b3f2867e471e41d9",
+      "changed": false,
+      "evidence": "inventory/static inspection; not a certification of correctness"
+    },
+    {
+      "path": "tests/review_xdg_units.rs",
+      "lines": 99,
+      "sha256": "33b44afc06aed24dd62b42c3a6ac1a5141711c38290469b8ab171922fc35b6c8",
+      "changed": false,
+      "evidence": "inventory/static inspection; not a certification of correctness"
+    },
+    {
+      "path": "tests/settings_round_trip.rs",
+      "lines": 170,
+      "sha256": "4f5ab34f1a91801d68608660a38e44491430b778de52fd6961c9099f00e75e03",
+      "changed": false,
+      "evidence": "inventory/static inspection; not a certification of correctness"
+    },
+    {
+      "path": "tests/wireplumber_policy.rs",
+      "lines": 330,
+      "sha256": "56b55a5f14955b78457aee49c810df504f805eab0d90f4158fd7001228da34af",
+      "changed": false,
+      "evidence": "inventory/static inspection; not a certification of correctness"
+    },
+    {
+      "path": "tools/headroom-override.py",
+      "lines": 29,
+      "sha256": "1ce4526620bc893c3ce35b5bf01b01d985be2ea5f2f3dc09b5c2be66150f81b6",
+      "changed": false,
+      "evidence": "inventory/static inspection; not a certification of correctness"
+    },
+    {
+      "path": "usr/lib/systemd/user/biglinux-microphone-aec.service",
+      "lines": 59,
+      "sha256": "431f02a2eb1d3b10f9d658864cdf3df1f8b6bcbfe6b3930607639e54e0501038",
+      "changed": false,
+      "evidence": "inventory/static inspection; not a certification of correctness"
+    },
+    {
+      "path": "usr/lib/systemd/user/biglinux-microphone-agc.service",
+      "lines": 46,
+      "sha256": "0bf64aee26ad7655208bd1e32d515eb399bbf50360d913d46a8d91dcc4fc34b8",
+      "changed": false,
+      "evidence": "inventory/static inspection; not a certification of correctness"
+    },
+    {
+      "path": "usr/lib/systemd/user/biglinux-microphone-call-source.service",
+      "lines": 36,
+      "sha256": "49c483abbfab93839374a38a3bf00d21824c88edb26bc67ba50853be8388b00a",
+      "changed": false,
+      "evidence": "inventory/static inspection; not a certification of correctness"
+    },
+    {
+      "path": "usr/lib/systemd/user/biglinux-microphone-mic.service",
+      "lines": 76,
+      "sha256": "bb609f47460e24d1902285618cac69e28600f6570c4ce8af53b0731e5707fdfc",
+      "changed": false,
+      "evidence": "inventory/static inspection; not a certification of correctness"
+    },
+    {
+      "path": "usr/lib/systemd/user/biglinux-microphone-output.service",
+      "lines": 66,
+      "sha256": "06cca79abebb0f742ce03a30ef07df71a4cc04c894cc59ff64cabf5eb2573453",
+      "changed": false,
+      "evidence": "inventory/static inspection; not a certification of correctness"
+    },
+    {
+      "path": "usr/lib/systemd/user/biglinux-microphone-route.service",
+      "lines": 51,
+      "sha256": "5cab161f9af3c3c157227aa7c0e130ed9c22c499b36d6f645774c9ec521bb0de",
+      "changed": false,
+      "evidence": "inventory/static inspection; not a certification of correctness"
+    },
+    {
+      "path": "usr/lib/systemd/user/biglinux-microphone.service",
+      "lines": 63,
+      "sha256": "d18a0c67d7d43017fbf21cff828deff5779969c39c4e81527dd95530e17b997d",
+      "changed": false,
+      "evidence": "inventory/static inspection; not a certification of correctness"
+    },
+    {
+      "path": "usr/share/plasma/plasmoids/br.com.biglinux.micnoise/contents/ui/main.qml",
+      "lines": 178,
+      "sha256": "099eaf5870532e49249f1430ab4a7d398a138efb3907cc8a5433e6d99226e194",
+      "changed": false,
+      "evidence": "inventory/static inspection; not a certification of correctness"
+    },
+    {
+      "path": "usr/share/wireplumber/scripts/biglinux/echo-cancel-routing.lua",
+      "lines": 672,
+      "sha256": "c1d77f0b333b03168eb1c580b60ca5fb864a9a77369688c8b8f45283ba2a8fb8",
+      "changed": false,
+      "evidence": "inventory/static inspection; not a certification of correctness"
+    }
+  ],
+  "total_files": 138,
+  "total_lines": 32220,
+  "note": "Inventory does not claim complete semantic audit or runtime validation."
+}

@@ -13,11 +13,13 @@ from the observed audio graph.
 ## Features
 
 ### AI noise reduction
-- **GTCRN neural network** — voice-grade denoising via a LADSPA host
-- **DNS3 & VCTK models** (16 kHz) — aggressive or gentle profiles
-- **DeepFilterNet3** (full-band 48 kHz) — optional backend, exposed in
-  the model dropdown when the `deepfilternet-ladspa` package is
-  installed; same intensity slider drives its attenuation cap
+- **Three native 48 kHz models** from `speech-enhancement-native`:
+  DFN3 (default, the lightest), DFN3-LL and DPDFNet-2; the intensity slider
+  drives their attenuation limit
+- **Silence when nobody speaks** — the Silero voice gate inside each denoiser
+  plugin mutes the noise that leaks while nobody talks; the microphone delay
+  becomes 66 ms with any model (26 ms more for DFN3, 46 ms for DFN3-LL, 6 ms for
+  DPDFNet). On by default for the DFN3 models, off for DPDFNet
 
 ### Audio processing
 - **Equalizer** with ten bands and voice presets
@@ -47,8 +49,6 @@ from the observed audio graph.
 - **Plasma 6 applet** — toggle both filters from the system tray with
   bidirectional sync against the GTK window
 - **Persistent settings** — `serde`-backed JSON, atomic writes
-- **Processing quality** — automatic or explicit model cost selection; native
-  plugin measurements run in the CLI process, isolated from the GUI allocator
 
 ## Requirements
 
@@ -56,13 +56,12 @@ from the observed audio graph.
 - Linux with PipeWire **>= 1.4**, WirePlumber **>= 0.5**, and systemd user services
 - `jemalloc-gtk-fixed` for the default native GUI build
 - GTK4 **>= 4.22** and libadwaita **>= 1.9**
-- `gtcrn-ladspa` (neural denoiser plugin — GTCRN backend)
+- `deepfilternet3-native` and `dpdfnet-native` (the three denoisers)
+- `gtcrn-aec-native` (echo cancellation)
 - `swh-plugins` (gate, compressor, pitch shifter)
-- `deepfilternet-ladspa` *(optional)* — enables the DeepFilterNet3
-  full-band 48 kHz backend in the model dropdown
 
 ### Build (from source)
-- Rust **>= 1.97.1** (`rustup` recommended)
+- Rust **>= 1.98.1** (`rustup` recommended)
 - `pkg-config`, `clang`, `pipewire-devel`, `gtk4-devel`, `libadwaita-devel`
 
 ## Build & Run
@@ -99,7 +98,7 @@ SDK and separate host audio integration; it is not an installed-unit validation.
 
 ## Choosing settings
 
-Start with the simple view and automatic quality. Advanced controls are optional;
+Start with the simple view and the recommended DFN3 model. Advanced controls are optional;
 master bypass preserves individual preferences. Buffer previews are reversible,
 and expert affinity/memory policies are opt-in. See the
 [Portuguese quick guide](docs/guia-rapido.pt_BR.md) for practical choices.
@@ -147,7 +146,6 @@ GNU General Public License v3.0 - see [LICENSE](LICENSE) for details.
 
 ## Acknowledgments
 
-- [GTCRN Project](https://github.com/Xiaobin-Rong/gtcrn) - Neural network for noise reduction
 - [DeepFilterNet](https://github.com/Rikorose/DeepFilterNet) - Full-band neural denoiser (DFN3 backend)
 - [PipeWire](https://pipewire.org/) - Modern audio server
 - [GTK4](https://gtk.org/) / [Libadwaita](https://gnome.pages.gitlab.gnome.org/libadwaita/) - UI framework

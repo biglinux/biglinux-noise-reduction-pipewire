@@ -72,9 +72,9 @@ Doctests build and run a helper binary under `TMPDIR`. On a BigLinux workstation
 every other test passes. Point `TMPDIR` at an executable path — for example
 `TMPDIR=~/.cache/biglinux-microphone-tests` — before counting that step.
 
-The declared toolchain is `rust-toolchain.toml` (1.97.1, the version BigLinux
+The declared toolchain is `rust-toolchain.toml` (1.98.1, the version BigLinux
 ships). CI pins newer toolchains for some jobs, so keep the strict Clippy gate
-clean on 1.97.1 as well: a lint the newer Clippy suppresses still fails on the
+clean on 1.98.1 as well: a lint the newer Clippy suppresses still fails on the
 toolchain this document tells a maintainer to use.
 
 The maintainers validate their own jemalloc fork separately. This application

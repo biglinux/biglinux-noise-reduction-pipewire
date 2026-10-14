@@ -16,8 +16,6 @@
 
 use std::fmt::Write as _;
 
-pub use crate::config::noise_model::{GTCRN_LADSPA_PATH as LADSPA_GTCRN, LABEL_GTCRN_MONO};
-
 /// Source of a filter node.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum NodeKind {
@@ -196,11 +194,11 @@ mod tests {
 
     #[test]
     fn ladspa_render_uses_plugin_stem() {
-        let n = Node::ladspa("ai", LADSPA_GTCRN, LABEL_GTCRN_MONO);
+        let n = Node::ladspa("gate", LADSPA_SWH_GATE, LABEL_SWH_GATE);
         let s = n.render(0);
         assert!(s.contains("type = ladspa"));
-        assert!(s.contains(&format!("plugin = \"{LADSPA_GTCRN}\"")));
-        assert!(s.contains("label = \"gtcrn_mono\""));
+        assert!(s.contains(&format!("plugin = \"{LADSPA_SWH_GATE}\"")));
+        assert!(s.contains("label = \"gate\""));
     }
 
     #[test]

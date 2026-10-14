@@ -48,13 +48,10 @@ StandardError=journal
 # ── Realtime budget ──────────────────────────────────────────────────
 LimitRTPRIO=95
 LimitNICE=-19
-# Bounded: mlockall(MCL_CURRENT|MCL_FUTURE) in the loader pins every
-# mapping the process makes, and the OpenVINO CPU plugin's JIT is by far
-# the hungriest of them. Measured with the heaviest model we ship,
-# dpdfnet8_48khz_hr: VmLck peaks at 530 MB while compiling. At the old
-# 512M cap `compile_model` failed outright and the chain silently passed
-# audio through undenoised. 1G keeps real headroom above the measured
-# peak while still capping a leak instead of pinning all of RAM.
+# The loader uses mlockall(MCL_CURRENT): only mappings existing at that call
+# are covered. Later allocations/JIT mappings are not implicitly locked.
+# Keep the existing cap pending measurement with the shipped models. This
+# resource limit neither proves prefaulting nor makes the callback hard-RT.
 LimitMEMLOCK=1G
 
 # ── Hardening ────────────────────────────────────────────────────────

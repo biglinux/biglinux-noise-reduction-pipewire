@@ -1,0 +1,36 @@
+[Unit]
+Description=BigLinux persistent microphone presentation endpoint (opt-in)
+Documentation=https://docs.pipewire.org/page_module_loopback.html
+After=pipewire.service wireplumber.service
+Wants=pipewire.service wireplumber.service
+# The server's own restart is NOT covered by endpoint persistence. Deliberately
+# no dependency on the mic/AEC loaders: their replacement must not stop this one.
+PartOf=pipewire.service
+StartLimitIntervalSec=30
+StartLimitBurst=5
+
+[Service]
+Type=simple
+ExecStart=/usr/bin/biglinux-microphone-pwloader libpipewire-module-loopback /usr/share/biglinux-microphone/call-source.args
+Restart=on-failure
+RestartSec=2s
+LimitRTPRIO=95
+LimitNICE=-19
+LimitMEMLOCK=64M
+NoNewPrivileges=true
+ProtectKernelTunables=true
+ProtectKernelModules=true
+ProtectKernelLogs=true
+ProtectControlGroups=true
+PrivateTmp=true
+RestrictNamespaces=true
+RestrictRealtime=false
+RestrictSUIDSGID=true
+LockPersonality=true
+RestrictAddressFamilies=AF_UNIX AF_NETLINK
+SystemCallArchitectures=native
+SystemCallFilter=@system-service @resources
+SystemCallErrorNumber=EPERM
+
+[Install]
+WantedBy=default.target

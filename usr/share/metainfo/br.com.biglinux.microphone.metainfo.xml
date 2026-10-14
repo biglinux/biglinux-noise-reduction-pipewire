@@ -17,14 +17,14 @@
   <description>
     <p>
       Filter noise inserts a PipeWire filter chain on the default
-      audio source, powered by the GTCRN deep-learning speech enhancement
-      plugin. The result is a clean, noise-free microphone signal for
+      audio source, powered by native neural speech enhancement
+      plugins. The result is a clean, noise-free microphone signal for
       every application — meetings, streams, voice notes — with no need
       to pick a virtual source manually.
     </p>
     <p>Main features:</p>
     <ul>
-      <li>GTCRN neural-network noise reduction with DNS3 and VCTK models.</li>
+      <li>Neural noise reduction with three models: DFN3, DFN3-LL and DPDFNet.</li>
       <li>Silence gate and broadcast-style compressor tuned for voice.</li>
       <li>WebRTC acoustic echo cancellation (opt-in) for calls without headphones.</li>
       <li>Output filter that cleans every sound the system plays
@@ -46,7 +46,7 @@
     <keyword>microphone</keyword>
     <keyword>noise reduction</keyword>
     <keyword>pipewire</keyword>
-    <keyword>gtcrn</keyword>
+    <keyword>deepfilternet</keyword>
     <keyword>filter chain</keyword>
   </keywords>
 

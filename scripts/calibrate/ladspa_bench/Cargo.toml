@@ -1,0 +1,16 @@
+[package]
+name = "ladspa_bench"
+version = "0.1.0"
+edition = "2021"
+description = "Steady-state per-block CPU cost of an arbitrary LADSPA plugin"
+
+[[bin]]
+name = "ladspa_bench"
+path = "src/main.rs"
+
+[dependencies]
+libc = "0.2"
+
+[profile.release]
+opt-level = 3
+lto = true

@@ -1,0 +1,121 @@
+# Systems compared by the diagnostic benchmark (compare_systems.py).
+#
+# Each entry is one speech-enhancement system, driven in its real deployment:
+#   kind = "ladspa"  -> installed .so, driven through ffmpeg's ladspa filter
+#   kind = "onnx"    -> streaming ONNX, driven through lib/denoisers.py (OLA loop)
+#
+# `onnx` paths are machine-agnostic: a relative path resolves under the
+# calibrate cache models dir (see cache_root()/models in compare_systems.py),
+# so this file carries no developer-specific absolute paths.
+#
+# Fields feed BOTH the runner and Table A (architectural). Provenance is the
+# exact commit/tag/package version measured. `published_*` values are what the
+# upstream project reports and are NEVER mixed with our measurements — the report
+# labels them "upstream reported".
+#
+# Controls: LADSPA control ports are left at their plugin defaults (see
+# `analyseplugin <so>`); the effective control string is recorded per row so a
+# reader knows exactly how each plugin was configured.
+
+[[system]]
+id = "dfn3_w8a16"
+label = "DFN3 W8A16"
+kind = "ladspa"
+so = "/usr/lib/ladspa/libdfn3_ladspa.so"
+plugin_label = "deep_filter_net3_rs_mono"
+sample_rate = 48000
+backend = "Native Rust/SIMD"
+quantization = "W8A16"
+external_runtime = "None"
+version = "deepfilternet-quantized-ladspa @ 0e9da54"
+origin = "BigLinux (ours)"
+
+[[system]]
+id = "dfn3ll_w8a16"
+label = "DFN3-LL W8A16"
+kind = "ladspa"
+so = "/usr/lib/ladspa/libdfn3ll_ladspa.so"
+plugin_label = "deep_filter_net3_ll_rs_mono"
+sample_rate = 48000
+backend = "Native Rust/SIMD"
+quantization = "W8A16"
+external_runtime = "None"
+version = "deepfilternet-quantized-ladspa @ 0e9da54"
+origin = "BigLinux (ours)"
+
+[[system]]
+id = "deepfilternet_upstream"
+label = "DeepFilterNet upstream"
+kind = "ladspa"
+so = "/usr/lib/ladspa/libdeep_filter_ladspa.so"
+plugin_label = "deep_filter_mono"
+sample_rate = 48000
+backend = "Official Rust (tract)"
+quantization = "none (f32)"
+external_runtime = "None"
+version = "DeepFilterNet v0.5.6-89-gd375b2d"
+origin = "external"
+
+[[system]]
+id = "rnnoise"
+label = "RNNoise (werman)"
+kind = "ladspa"
+so = "/usr/lib/ladspa/librnnoise_ladspa.so"
+plugin_label = "noise_suppressor_mono"
+# c0 VAD threshold %, c1 VAD grace ms, c2 retro grace ms, c3 placeholder
+# (mandatory, no default), c4 dry mix. Plugin defaults except c3=0.
+controls = "c0=74|c1=500|c2=100|c3=0|c4=0"
+sample_rate = 48000
+backend = "Native C"
+quantization = "none (f32)"
+external_runtime = "None"
+version = "noise-suppression-for-voice 1.21-1 (RNNoise upstream)"
+origin = "external"
+
+[[system]]
+id = "dpdfnet2_48k_hr"
+label = "DPDFNet2 48k HR"
+kind = "onnx"
+onnx = "models/dpdfnet/dpdfnet2_48khz_hr.onnx"
+onnx_name = "dpdfnet2_48khz_hr"
+sample_rate = 48000
+backend = "ONNX Runtime"
+quantization = "none (f32)"
+external_runtime = "onnxruntime 1.30.0"
+version = "ceva-ip/DPDFNet @ 84828ad"
+origin = "external"
+published_params = "2.58 M (upstream reported)"
+published_macs = "2.42 G (upstream reported)"
+published_onnx_mb = "10.0 (upstream reported)"
+
+[[system]]
+id = "dpdfnet8_48k_hr"
+label = "DPDFNet8 48k HR"
+kind = "onnx"
+onnx = "models/dpdfnet/dpdfnet8_48khz_hr.onnx"
+onnx_name = "dpdfnet8_48khz_hr"
+sample_rate = 48000
+backend = "ONNX Runtime"
+quantization = "none (f32)"
+external_runtime = "onnxruntime 1.30.0"
+version = "ceva-ip/DPDFNet @ 84828ad"
+origin = "external"
+published_params = "3.63 M (upstream reported)"
+published_macs = "7.17 G (upstream reported)"
+published_onnx_mb = "14.2 (upstream reported)"
+
+[[system]]
+# Native 16 kHz model; the LADSPA wrapper resamples inside, so driving it at
+# 48 kHz measures the real operational cost with the resampler included (the
+# 48/16 kHz honesty note — no hidden narrow-band advantage).
+id = "gtcrn"
+label = "GTCRN"
+kind = "ladspa"
+so = "/usr/lib/ladspa/libgtcrn_ladspa.so"
+plugin_label = "gtcrn_mono"
+sample_rate = 48000
+backend = "ONNX Runtime (16 kHz model, in LADSPA)"
+quantization = "none (f32)"
+external_runtime = "onnxruntime (in-plugin)"
+version = "gtcrn-ladspa 26.04.27-0355"
+origin = "external"

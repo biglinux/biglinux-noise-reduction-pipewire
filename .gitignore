@@ -42,6 +42,13 @@ cobertura.xml
 # cache the moment its unittest suite runs, which is every gate.
 **/__pycache__/
 
+# The front-end's PEP 517 output. `package()` builds the wheel itself and
+# deletes these first, so a committed copy is never the one that ships — it is
+# only a second, stale answer to "what does this package contain".
+/app/build/
+/app/dist/
+/app/*.egg-info/
+
 # Calibration system: virtualenv + ad-hoc artefacts. Models and
 # datasets fetched by setup.sh live in $XDG_CACHE_HOME, never inside
 # the repo, but cover stray local copies just in case.
@@ -50,6 +57,20 @@ scripts/calibrate/reports/
 scripts/calibrate/signals/
 scripts/calibrate/models/
 scripts/calibrate/datasets/
+# The bench crate's own build output, next to its sources rather than in the
+# workspace target/ the rules above already cover.
+scripts/calibrate/ladspa_bench/target/
 
 # cargo-mutants run artifacts
 /mutants.out*/
+docs/biglinux-microphone-agc-patches-20260916/reviewed-code/
+
+# Working notes and benchmark dumps kept beside the repo rather than in it.
+# They are investigation records, not project documentation: README.md,
+# ARCHITECTURE.md and REVIEW.md are, and stay tracked.
+/ANALISE-*.md
+/PLANO-*.md
+/DENOISE-*.md
+/DPDFNET-*.md
+/BIGLINUX-*.md
+/denoise-benchmark.json

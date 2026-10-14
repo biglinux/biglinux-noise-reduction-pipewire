@@ -27,9 +27,9 @@ fn read_bounded(path: &Path, max_bytes: u64) -> std::io::Result<Vec<u8>> {
     Ok(bytes)
 }
 
-use crate::config::{AppSettings, gtcrn_plugin};
+use crate::config::{AppSettings, NoiseModel};
 use crate::pipeline;
-use crate::services::pipewire::{AEC_UNIT, MIC_UNIT, OUTPUT_UNIT};
+use crate::services::pipewire::{AEC_UNIT, MIC_UNIT, OUTPUT_UNIT, has_capture_consumer};
 
 const SC4_MONO_PLUGIN: &str = "/usr/lib/ladspa/sc4m_1916.so";
 const SWH_GATE_PLUGIN: &str = "/usr/lib/ladspa/gate_1410.so";
@@ -61,12 +61,13 @@ pub fn doctor() -> ExitCode {
         env!("CARGO_PKG_VERSION")
     );
 
-    check_live_model(&mut report, &settings);
     check_ladspa_plugins(&mut report);
     check_runtime_daemons(&mut report);
     check_systemd_units(&mut report);
     check_generated_configs(&mut report, &settings);
     check_graph_nodes(&mut report, &settings);
+    check_graph_transport(&mut report, &settings);
+    check_live_controls(&mut report, &settings);
     check_echo_cancel(&mut report, &settings);
     check_wireplumber_script(&mut report);
     print_unit_state(&settings);
@@ -100,27 +101,11 @@ impl Report {
     }
 }
 
-/// The saved model against the one the live chain can actually run.
-///
-/// The catalogue also carries 16 kHz models meant for offline pipelines. The
-/// picker hides them, but a settings file can name one, and the live chain
-/// would then host a plugin that produces no denoising at all. The effective
-/// snapshot substitutes the nearest model it can drive; this line is how a
-/// person finds out that happened.
-fn check_live_model(report: &mut Report, settings: &AppSettings) {
-    let requested = settings.noise_reduction.model;
-    let effective = settings.runtime_settings().noise_reduction.model;
-    let detail = if requested == effective {
-        format!("{requested:?}")
-    } else {
-        format!("{requested:?} cannot run in the live chain; using {effective:?} instead")
-    };
-    report.check("Live noise model", requested == effective, &detail);
-}
-
 fn check_ladspa_plugins(report: &mut Report) {
-    let gtcrn = gtcrn_plugin();
-    report.check("GTCRN plugin", gtcrn.exists(), &gtcrn.display().to_string());
+    for model in NoiseModel::ALL {
+        let (path, _label) = model.plugin_and_label();
+        report.check(&format!("{model:?} plugin"), Path::new(path).exists(), path);
+    }
     let sc4 = Path::new(SC4_MONO_PLUGIN);
     report.check(
         "SC4 mono compressor (swh-plugins)",
@@ -204,6 +189,25 @@ fn check_echo_cancel(report: &mut Report, settings: &AppSettings) {
         ec_path.exists(),
         &ec_path.display().to_string(),
     );
+    // A stale conf left behind by an older version (e.g. one that shipped the
+    // removed WebRTC engine) would keep a different canceller active despite the
+    // current setting (review DIAG-02). We ship a single engine, so the conf must
+    // declare exactly it.
+    if let Ok(bytes) = read_bounded(&ec_path, 64 * 1024) {
+        let requested = pipeline::AEC_LIBRARY;
+        match aec_backend_in_conf(&String::from_utf8_lossy(&bytes)) {
+            Some(active) => report.check(
+                "AEC backend matches the requested engine",
+                active == requested,
+                &format!("requested {requested}, conf loads {active}"),
+            ),
+            None => report.check(
+                "AEC backend declared in conf",
+                false,
+                "no library.name found in the echo-cancel conf",
+            ),
+        }
+    }
     let graph_dump = crate::services::pipewire::graph_nodes_dump();
     report.check(
         "echo-cancel-source node visible",
@@ -240,6 +244,21 @@ fn check_echo_cancel(report: &mut Report, settings: &AppSettings) {
             "pw-link -l | grep -A1 echo-cancel-sink",
         ),
     }
+}
+
+/// The `library.name` the written echo-cancel conf will load — i.e. the backend
+/// that is actually active. Differs from the requested backend when a stale conf
+/// was not regenerated after switching engines (review DIAG-02).
+fn aec_backend_in_conf(conf: &str) -> Option<String> {
+    conf.lines()
+        .filter_map(|line| line.split_once("library.name"))
+        .find_map(|(_, rest)| {
+            rest.trim_start()
+                .trim_start_matches('=')
+                .split_whitespace()
+                .next()
+        })
+        .map(str::to_owned)
 }
 
 /// What the graph says about the canceller's reference signal.
@@ -299,33 +318,6 @@ fn aec_reference_state(link_dump: &str) -> AecReference {
         return AecReference::NothingRecording;
     }
     AecReference::Missing
-}
-
-/// Is an application reading the microphone chain?
-///
-/// Our own nodes link to each other — `echo-cancel-source` feeds
-/// `mic-biglinux-capture` whether or not anybody is listening — so a consumer
-/// is a link *out* of the chain's source ports into a node that is not part of
-/// the chain.
-fn has_capture_consumer(lines: &[&str]) -> bool {
-    const CHAIN: [&str; 4] = [
-        "mic-biglinux-capture",
-        "mic-biglinux",
-        "echo-cancel-capture",
-        "echo-cancel-source",
-    ];
-    lines.iter().enumerate().any(|(index, line)| {
-        let source = line.starts_with("mic-biglinux:") || line.starts_with("echo-cancel-source:");
-        source
-            && lines
-                .iter()
-                .skip(index + 1)
-                .take_while(|next| next.starts_with(' '))
-                .any(|next| {
-                    next.contains("|->")
-                        && !CHAIN.iter().any(|node| next.contains(&format!("{node}:")))
-                })
-    })
 }
 
 /// Detect a stale `~/.local/share/wireplumber/scripts/biglinux/` copy
@@ -396,6 +388,94 @@ fn check_graph_nodes(report: &mut Report, settings: &AppSettings) {
             "output-biglinux node absent while disabled",
             !graph_dump.contains(OUTPUT_NODE_TAG),
             "pw-cli ls Node | grep output-biglinux",
+        );
+    }
+}
+
+/// Distinguish a node that merely exists from one that is actually transporting
+/// frames (review HEALTH-01). Presence is [`check_graph_nodes`]' job; this adds
+/// the node's PipeWire state and whether any link is carrying audio. Only a node
+/// stuck in `error` is a hard failure — a `running` node with no links is idle
+/// (no app is recording/playing yet), not broken, so it must not cry wolf.
+fn check_graph_transport(report: &mut Report, settings: &AppSettings) {
+    let Ok(graph) = crate::services::pipewire::graph_snapshot() else {
+        return;
+    };
+    let wanted = [
+        (
+            "mic",
+            pipeline::MIC_CAPTURE_NODE_NAME,
+            pipeline::mic_chain_wanted(settings),
+        ),
+        (
+            "output",
+            pipeline::OUTPUT_NODE_NAME,
+            settings.output_filter.enabled,
+        ),
+    ];
+    for (chain, node_name, want) in wanted {
+        if !want {
+            continue;
+        }
+        let Some(transport) = crate::services::pipewire::node_transport(&graph, node_name) else {
+            continue;
+        };
+        let detail = if transport.active_links > 0 {
+            format!(
+                "state={}, {} active link(s) — transporting",
+                transport.state, transport.active_links
+            )
+        } else {
+            format!(
+                "state={}, no active links (idle: no consumer yet)",
+                transport.state
+            )
+        };
+        report.check(
+            &format!("{chain} node not stuck in error"),
+            transport.state != "error",
+            &detail,
+        );
+    }
+}
+
+/// Confirm the control keys the daemon pushes live are actually recognised by
+/// the running node. `pw-cli` drops unknown keys silently, so a typo or a stale
+/// control name looks like a successful apply while the value never takes effect
+/// (review API-01). Only runs against a live, running node; a suspended or
+/// absent node has no schema to check and is left to [`check_graph_nodes`].
+fn check_live_controls(report: &mut Report, settings: &AppSettings) {
+    let Ok(graph) = crate::services::pipewire::graph_snapshot() else {
+        return;
+    };
+    let effective = settings.runtime_settings();
+    let audits: [(&str, &str, Vec<(String, f64)>); 2] = [
+        (
+            "mic",
+            pipeline::MIC_CAPTURE_NODE_NAME,
+            crate::services::pipewire::mic_params(&effective),
+        ),
+        (
+            "output",
+            pipeline::OUTPUT_NODE_NAME,
+            crate::services::pipewire::output_params(&effective),
+        ),
+    ];
+    for (chain, node_name, sent) in audits {
+        let Some(unknown) =
+            crate::services::pipewire::unknown_controls_for(&graph, node_name, &sent)
+        else {
+            continue;
+        };
+        let detail = if unknown.is_empty() {
+            format!("{} live controls recognised", sent.len())
+        } else {
+            format!("silently dropped by pw-cli: {}", unknown.join(", "))
+        };
+        report.check(
+            &format!("{chain} live controls accepted"),
+            unknown.is_empty(),
+            &detail,
         );
     }
 }
@@ -493,7 +573,18 @@ fn dump_journal(unit: &str) {
 
 #[cfg(test)]
 mod tests {
-    use super::{AecReference, aec_reference_state};
+    use super::{AecReference, aec_backend_in_conf, aec_reference_state};
+
+    #[test]
+    fn aec_backend_in_conf_reads_the_loaded_library() {
+        let conf = "aec.args = {\n    library.name = aec/libspa-aec-gtcrn\n    foo = 1\n}\n";
+        assert_eq!(
+            aec_backend_in_conf(conf).as_deref(),
+            Some("aec/libspa-aec-gtcrn")
+        );
+        // No declaration → None, so the doctor reports the conf as incomplete.
+        assert_eq!(aec_backend_in_conf("aec.method = webrtc\n"), None);
+    }
 
     const MONITOR_LINKED: &str = "\
 alsa_output.pci-0000_00_1f.3.analog-stereo:monitor_FL

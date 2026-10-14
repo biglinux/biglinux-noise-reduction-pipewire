@@ -17,37 +17,34 @@
 //! lets each unit have an independent lifecycle (toggling the output
 //! filter on/off does not touch the mic chain).
 //!
-//! Because GTCRN is mono, the incoming stereo is first summed via the
+//! Because the denoisers are mono, the incoming stereo is first summed via the
 //! `mixer` builtin, processed through a single mono chain, and then
 //! fanned out with two `copy` nodes to the `FL`/`FR` playback ports:
 //!
 //! ```text
-//! FL,FR → mixer → hpf → gtcrn → gate → compressor → param_eq
+//! FL,FR → mixer → hpf → ai → gate → compressor → param_eq
 //!                                                  ├→ copy_l → FL
 //!                                                  └→ copy_r → FR
 //! ```
 //!
-//! GTCRN is **permanently** wired into the output graph: its `Enable`
-//! port is flipped between 0 and 1 by the live-controls path on master
-//! / NR toggle. Dropping it from the topology would mean rewriting the
-//! conf and reloading the unit, which yanks the smart-filter sink out
-//! from under any active stream — Chromium-based browsers pause
-//! HTMLMediaElement playback the moment their target sink disappears.
-//! Keeping the node alive trades a constant STFT/iSTFT + ONNX cost for
-//! gap-free toggling. The standalone SWH gate is independent and also
-//! stays always-instantiated — `Output select = 1.0` is a true bypass.
+//! The denoiser is **permanently** wired into the output graph while noise
+//! reduction is on: master off renders it with `Attenuation Limit = 0`, a live
+//! update. Dropping it from the topology would mean rewriting the conf and
+//! reloading the unit, which yanks the smart-filter sink out from under any
+//! active stream — Chromium-based browsers pause HTMLMediaElement playback the
+//! moment their target sink disappears. The standalone SWH gate is independent
+//! and also stays always-instantiated — `Output select = 1.0` is a true bypass.
 
 use std::fmt::Write as _;
 
 use crate::config::{
     AppSettings, EQ_BAND_COUNT, EQ_BANDS_HZ, deepfilter_attenuation_db, eq_preset_bands,
-    gtcrn_speech_strength,
 };
 
 use super::graph::{Graph, Link};
 use super::nodes::{
-    LABEL_BQ_HIGHPASS, LABEL_COPY, LABEL_GTCRN_MONO, LABEL_MIXER, LABEL_PARAM_EQ, LABEL_SC4_MONO,
-    LABEL_SWH_GATE, LADSPA_GTCRN, LADSPA_SC4_MONO, LADSPA_SWH_GATE, Node,
+    LABEL_BQ_HIGHPASS, LABEL_COPY, LABEL_MIXER, LABEL_PARAM_EQ, LABEL_SC4_MONO, LABEL_SWH_GATE,
+    LADSPA_SC4_MONO, LADSPA_SWH_GATE, Node,
 };
 
 /// Stem used as the `node.name` of the output virtual sink.
@@ -128,14 +125,10 @@ fn build_stereo_conf(settings: &AppSettings) -> String {
     .render()
 }
 
-/// True when GTCRN should *process* (Enable=1.0) inside the output
-/// graph. The node itself is always present in the topology — gating
-/// processing via the LADSPA `Enable` port keeps toggling the master
-/// switch a live-update operation, with no service restart and no
-/// dropout. Otherwise toggling off would drop the node from the conf
-/// but leave the running unit untouched (we deliberately keep it up
-/// so Chromium-based browsers don't pause playback), and the live
-/// AI would keep processing with stale controls.
+/// True when the output denoiser should attenuate. While noise reduction is on
+/// the node stays in the topology and master off sets its attenuation to 0, so
+/// toggling the master switch is a live update with no service restart and no
+/// dropout.
 #[must_use]
 pub fn output_ai_processing(settings: &AppSettings) -> bool {
     let of = &settings.output_filter;
@@ -162,49 +155,21 @@ fn output_nodes(settings: &AppSettings) -> Vec<Node> {
     };
 
     let nr = &of.noise_reduction;
-    // Backend swap (GTCRN ↔ attenuation-only models) is a topology
-    // change — selecting one emits a different LADSPA plugin/control surface
-    // and port names. The reconciler treats `model` changes as
-    // restart-worthy, so live-toggling between the two is intentionally
-    // not graceful (one-shot restart on swap).
-    let denoiser = if !nr.enabled {
-        Node::builtin("ai", LABEL_COPY)
-    } else if nr.model.is_attenuation_only() {
-        // Attenuation-only plugins have no `Enable` port, so master-off
-        // / NR-off renders the node with `Attenuation Limit = 0` to make
-        // it a passthrough.
+    // A model change emits a different plugin, controls and port names; the
+    // reconciler treats it as a restart.
+    let denoiser = if nr.enabled {
         let atten_db = if ai_processing {
             deepfilter_attenuation_db(nr.strength)
         } else {
             0.0
         };
         let (plugin, label) = nr.model.plugin_and_label();
+        let (input, output) = nr.model.attenuation_ports();
         Node::ladspa("ai", plugin, label)
-            .with_ports("Audio In", "Audio Out")
-            .with_controls([("Attenuation Limit (dB)", atten_db)])
+            .with_ports(input, output)
+            .with_controls(nr.attenuation_controls(atten_db, nr.min_snr_gate_db()))
     } else {
-        // GTCRN ships with an integrated noise gate fused into `run()`
-        // (port `Threshold (dB)`, default `-60`). On the mic chain that
-        // integrated gate is the user-facing one; on the output chain
-        // the user-facing gate is a separate SWH `gate_1410` node and
-        // GTCRN's internal gate must stay permanently off — otherwise
-        // quiet playback gets cut every time the signal dips below
-        // -60 dBFS, even with the UI gate toggle disabled.
-        //
-        // `-80 dB` is the sentinel the rest of the codebase uses to
-        // park the integrated gate below the noise floor (the port's
-        // valid range is `-80..0`, so -80 is the lowest threshold that
-        // never triggers).
-        Node::ladspa("ai", LADSPA_GTCRN, LABEL_GTCRN_MONO).with_controls([
-            ("Enable", if ai_processing { 1.0 } else { 0.0 }),
-            ("Strength", f64::from(nr.strength)),
-            ("Model", f64::from(nr.model.ladspa_control())),
-            ("SpeechStrength", gtcrn_speech_strength(nr.strength)),
-            ("LookaheadMs", f64::from(nr.lookahead_ms)),
-            ("ModelBlend", f64::from(nr.model_blending)),
-            ("VoiceRecovery", f64::from(nr.voice_recovery)),
-            ("Threshold (dB)", -80.0),
-        ])
+        Node::builtin("ai", LABEL_COPY)
     };
 
     let gate_d = of.gate.ladspa_controls();
@@ -274,10 +239,6 @@ fn output_nodes(settings: &AppSettings) -> Vec<Node> {
     if padded {
         nodes.push(super::gain_safety::neural_pad());
     }
-    // GTCRN is always wired in; toggling master flips its Enable
-    // port between 0 and 1, which the live update path can push
-    // without restarting the unit. DFN3 has no Enable port, so
-    // master-off renders it with Attenuation Limit = 0 instead.
     nodes.push(denoiser);
     if padded {
         nodes.push(super::gain_safety::neural_makeup());
@@ -359,11 +320,17 @@ fn capture_props() -> String {
     // which connects as a regular client of the main PipeWire daemon.
     // The filter graph's nodes are exported to the daemon and driven
     // by the daemon's data-loop — single clock, no cross-process
-    // drift. We still pass `node.async = true` as belt-and-braces:
-    // it changes scheduling and can add one graph cycle of latency. A downstream
-    // sink with a different negotiated rate (Bluetooth
-    // or a USB device) relies on separate adapter/resampler policy, not this flag;
-    // do not describe this scheduling trade-off as cost-free.
+    // drift.
+    //
+    // No `node.async`: async scheduling is *not* the resampler. A
+    // downstream sink with a different negotiated rate (Bluetooth, USB)
+    // is reconciled by PipeWire's own adapter/resampler regardless of
+    // this flag, so async bought nothing for rate safety — but when the
+    // wrapped sink is another process's node (e.g. `jamesdsp_sink`), the
+    // async producer keeps that consumer's data-loop fd hot every cycle,
+    // spinning its RT thread to ~100% of a core with no extra work done.
+    // Measured: dropping this flag took the downstream JamesDSP loop from
+    // 99% to 10% with identical audio and zero xruns.
     //
     // No explicit `node.latency` / `node.lock-quantum` — pinning a
     // quantum here forces a buffer size the hw sink may not have
@@ -377,7 +344,6 @@ fn capture_props() -> String {
         format!("node.description = \"{OUTPUT_DESCRIPTION}\""),
         "media.class = Audio/Sink".to_owned(),
         "node.pause-on-idle = false".to_owned(),
-        "node.async = true".to_owned(),
         "audio.rate = 48000".to_owned(),
         "audio.channels = 2".to_owned(),
         "audio.position = [ FL FR ]".to_owned(),
@@ -392,17 +358,17 @@ fn playback_props() -> String {
     // it to the current default sink. `node.passive = true` keeps the chain idle when
     // no app is producing audio so it doesn't hold the hw sink awake.
     // Same rationale as the capture side: no explicit latency / no
-    // lock-quantum, plus `node.async = true` as belt-and-braces in
-    // case a downstream sink negotiates a slightly different rate
-    // (Bluetooth codec switches, USB renegotiation). Cross-process
-    // drift is no longer a concern — every filter graph in the
-    // package now runs as a client of the main PipeWire daemon, all
-    // sharing one clock.
+    // lock-quantum, and no `node.async` — the adapter/resampler, not
+    // async, reconciles a downstream sink on a different rate (Bluetooth
+    // codec switches, USB renegotiation), while async on this playback
+    // node feeding a cross-process sink (`jamesdsp_sink`) spun that
+    // consumer's RT loop to ~100%. Cross-process drift is a non-issue:
+    // every filter graph in the package runs as a client of the main
+    // PipeWire daemon, all sharing one clock.
     [
         format!("node.name = \"{OUTPUT_NODE_NAME}-out\""),
         "node.passive = true".to_owned(),
         "node.pause-on-idle = false".to_owned(),
-        "node.async = true".to_owned(),
         "audio.rate = 48000".to_owned(),
         "audio.channels = 2".to_owned(),
         "audio.position = [ FL FR ]".to_owned(),

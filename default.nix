@@ -1,3 +1,12 @@
+# UNSUPPORTED / NEEDS MIGRATION (review PKG-02): this expression is a
+# rustPlatform.buildRustPackage that expects a `biglinux-microphone` Rust GUI
+# binary which no longer exists — the front-end is now the Python package under
+# app/, installed as sources into a private root with packaging/launcher.py as
+# its entry point. This expression installs neither. Do not advertise Nix
+# support until this is migrated (build the Rust cli/pwloader, copy the Python
+# front-end beside its launcher, wrap the GTK app) and a
+# `nix-build` + launch is verified. The validated reference is
+# packaging/arch/PKGBUILD.
 {
   lib,
   rustPlatform,

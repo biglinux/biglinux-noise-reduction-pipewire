@@ -1,0 +1,55 @@
+From 7f1e642f163b8f03242f491a9ac9c6e620455552 Mon Sep 17 00:00:00 2001
+From: OpenAI Review <review@example.invalid>
+Date: Sat, 19 Sep 2026 05:31:43 +0000
+Subject: [PATCH] Keep speech reachability independent from a narrowed
+ integrator window
+
+---
+ src/agc/control.rs | 3 ++-
+ src/gain_policy.rs | 5 ++++-
+ 2 files changed, 6 insertions(+), 2 deletions(-)
+
+diff --git a/src/agc/control.rs b/src/agc/control.rs
+index d8f375e..e448be8 100644
+--- a/src/agc/control.rs
++++ b/src/agc/control.rs
+@@ -310,7 +310,8 @@ impl SourceController {
+                     && !matches!(decision.state, "manual_hold" | "muted")));
+         // Match the existing setter's decimal quantization BEFORE requesting a
+         // write. Round the lower bound inward so readback stays inside the policy.
+-        let minimum_knob = (db_to_wpctl(lower) * 100.0).ceil() / 100.0;
++        let minimum_knob = self.window.map_or(
++            (db_to_wpctl(lower) * 100.0).ceil() / 100.0, |(low, _)| low);
+         let quantized = ((db_to_wpctl(target_db) * 100.0).round() / 100.0)
+             .clamp(minimum_knob, 3.0);
+         // Inside the calibrated window, or not at all.
+diff --git a/src/gain_policy.rs b/src/gain_policy.rs
+index b78dfc7..fd5fd0e 100644
+--- a/src/gain_policy.rs
++++ b/src/gain_policy.rs
+@@ -131,6 +131,8 @@ pub struct Decision {
+ pub struct GainPolicy {
+     config: Config,
+     hardware: Option<Hardware>,
++    // Reachability uses physical headroom, not a subsequently narrowed licence.
++    evidence_max_boost_db: f64,
+     gain_db: f64,
+     time: f64,
+     speech_time: f64,
+@@ -210,6 +212,7 @@ impl GainPolicy {
+             }
+         }
+         Ok(Self {
++            evidence_max_boost_db: config.max_boost_db,
+             config,
+             hardware,
+             gain_db: 0.0,
+@@ -489,7 +492,7 @@ impl GainPolicy {
+         // baseline, and the slack keeps the deliberately supported journey of a
+         // weak capsule that needs nearly all of it.
+         let reachable = features.speech_dbfs
+-            >= self.config.target_speech_dbfs - (self.config.max_boost_db + UNREACHABLE_SLACK_DB);
++            >= self.config.target_speech_dbfs - (self.evidence_max_boost_db + UNREACHABLE_SLACK_DB);
+         if features.far_end_only || features.unreliable_double_talk {
+             self.interrupt_tracking();
+         }

@@ -1,18 +1,21 @@
 # Files with translatable strings (gettext).
-# Keep this list in sync with `grep -rln 'i18n(' src/`.
-
-src/ui/health.rs
-src/ui/mic_shell.rs
-src/ui/window.rs
-src/ui/views/advanced.rs
-src/ui/views/advanced/apply.rs
-src/ui/views/mic.rs
-src/ui/views/output.rs
-src/ui/views/simple.rs
-src/ui/widgets/eq_card.rs
-src/ui/widgets/model_picker.rs
-src/ui/widgets/source_picker.rs
-src/ui/widgets/spectrum.rs
-src/ui/widgets/wp_override_warning.rs
+# The UI is the Python front-end under app/; the tray applet is the QML plasmoid.
+app/biglinux_microphone/main.py
+app/biglinux_microphone/application.py
+app/biglinux_microphone/cli.py
+app/biglinux_microphone/window.py
+app/biglinux_microphone/ui/view.py
+app/biglinux_microphone/ui/pages/home.py
+app/biglinux_microphone/ui/pages/source_picker.py
+app/biglinux_microphone/ui/pages/noise_reduction.py
+app/biglinux_microphone/ui/pages/voice_volume.py
+app/biglinux_microphone/ui/pages/voice_sound.py
+app/biglinux_microphone/ui/pages/echo_routing.py
+app/biglinux_microphone/ui/pages/diagnostics.py
+app/biglinux_microphone/ui/pages/microphone_test.py
+app/biglinux_microphone/ui/pages/compare.py
+app/biglinux_microphone/ui/pages/calibrate.py
+app/biglinux_microphone/ui/widgets/threshold_editor.py
+app/biglinux_microphone/ui/pages/common.py
 usr/share/plasma/plasmoids/br.com.biglinux.micnoise/contents/ui/main.qml
-src/ui/i18n.rs
+app/biglinux_microphone/ui/widgets/activity_meter.py

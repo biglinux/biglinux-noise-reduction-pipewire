@@ -7,7 +7,7 @@ license = "GPL-3.0-or-later"
 description = "AI-powered microphone noise reduction with GTK4/libadwaita interface for PipeWire"
 homepage = "https://github.com/biglinux/biglinux-noise-reduction-pipewire"
 repository = "https://github.com/biglinux/biglinux-noise-reduction-pipewire"
-rust-version = "1.97.1"
+rust-version = "1.98.1"
 # Distro application, never published to crates.io — also lets cargo-deny's
 # `allow-wildcard-paths` cover the internal `big-os-kit` path dependency.
 publish = false
@@ -15,10 +15,6 @@ publish = false
 [lib]
 name = "biglinux_microphone"
 path = "src/lib.rs"
-
-[[bin]]
-name = "biglinux-microphone"
-path = "src/bin/gui.rs"
 
 [[bin]]
 name = "biglinux-microphone-cli"
@@ -45,10 +41,6 @@ opt-level = 3
 
 [profile.dev]
 opt-level = 1
-
-[features]
-default = ["gtk-jemalloc"]
-gtk-jemalloc = ["dep:big-jemalloc"]
 
 [dependencies]
 # Serialization (settings.json persistence)
@@ -80,41 +72,16 @@ async-channel = "2"
 # FFI to worry about — and it compiles under Miri for unit tests.
 rustfft = "6"
 
-# GTK4 + libadwaita stack for the configuration GUI. Versions match the
-# big-media-player project to keep the shared knowledge base consistent.
-adw = { version = "0.9", features = ["v1_9"], package = "libadwaita" }
-gtk = { version = "0.11", features = ["v4_22"], package = "gtk4" }
-glib = "0.22"
+# gio for the settings-file watcher and preview blocking spawns. The GTK4 GUI
+# moved to a separate Python front-end; only these file primitives remain,
+# used by services::{settings_watch, preview} and config's atomic replace.
 gio = "0.22"
-cairo = { version = "0.22", package = "cairo-rs" }
-
-# gettext bindings for translating user-facing strings.
-#
-# 0.8 is the floor because 0.7 marked `setlocale` safe when it is not
-# (RUSTSEC-2026-0244): concurrent calls corrupt memory. 0.8 makes it
-# `unsafe` and documents the condition; see `ui::i18n::init_gettext`.
-gettext-rs = { version = "0.8", features = ["gettext-system"] }
 
 # Shared subprocess runner: argv-only spawns with concurrent stdout/stderr
 # pipe draining (no >64 KiB deadlock on `pw-cli ls Node`), a kill timeout, and
 # zombie reaping. Replaces the raw `std::process::Command` calls in the
 # pipewire/system-audio service layer.
 big-os-kit = { path = "vendor/big-rust-components/crates/foundation/big-os-kit" }
-
-# Links the system jemalloc into the GUI binary (anchored in gui.rs main): GTK4
-# returns freed memory to the OS only under jemalloc. Only the GUI bin calls
-# anchor(), so the cli/pwloader bins stay on glibc.
-big-jemalloc = { path = "vendor/big-rust-components/crates/foundation/big-jemalloc", optional = true }
-
-# Shared BigLinux UI primitives — cards, slider/switch rows, preference cards,
-# tooltips. The settings UI reuses these instead of app-local widget forks.
-big-relm4-components = { path = "vendor/big-rust-components/crates/ui/generic/big-relm4-components" }
-
-# Relm4 component model for the GUI shell (matches the workspace 0.11 stack).
-# The microphone window is a mountable Relm4 `Component` (ADR-D14 pattern,
-# shared with bigiris/players); raw gtk widgets that have no Relm4 equivalent
-# (the custom-draw spectrum DrawingArea) stay embedded inside the component.
-relm4 = { version = "0.11", features = ["libadwaita"] }
 
 [dev-dependencies]
 tempfile = "3"

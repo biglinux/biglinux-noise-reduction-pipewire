@@ -1,5 +1,12 @@
 # Flatpak manifest for biglinux-microphone (GUI configurator).
 #
+# The GUI is the Python front-end under app/, installed as sources into a
+# private root with packaging/launcher.py as its entry point, as the Arch
+# package does. The Rust binaries are the backend (cli, probe, pwloader).
+# The runtime provides Python, PyGObject, pycairo and the PipeWire tools;
+# numpy is added here.
+# The validated reference build is packaging/arch/PKGBUILD.
+#
 # Local test build (source = this working tree):
 #   flatpak-builder --user --install --force-clean build-dir \
 #       packaging/flatpak/br.com.biglinux.microphone.yml
@@ -24,6 +31,8 @@ runtime-version: '50'
 sdk: org.gnome.Sdk
 sdk-extensions:
   - org.freedesktop.Sdk.Extension.rust-stable
+  # libclang for the bindgen step of pipewire-sys.
+  - org.freedesktop.Sdk.Extension.llvm22
 command: biglinux-microphone
 
 finish-args:
@@ -32,8 +41,10 @@ finish-args:
   - --socket=fallback-x11
   - --share=ipc
   - --device=dri
-  # Audio: PipeWire socket for spectrum analyzer + live param probes
-  - --socket=pipewire
+  # Audio: PipeWire socket for the meters, probes and pw-cat/pw-record;
+  # the PulseAudio socket for pactl's device list
+  - --filesystem=xdg-run/pipewire-0
+  - --socket=pulseaudio
   # PipeWire / WirePlumber configuration that the GUI writes to
   - --filesystem=xdg-config/pipewire:create
   - --filesystem=xdg-config/wireplumber:create
@@ -47,24 +58,47 @@ finish-args:
   - --filesystem=xdg-config/gtk-4.0:ro
 
 build-options:
-  append-path: /usr/lib/sdk/rust-stable/bin
+  # clang on PATH gives bindgen its own builtin headers (stdbool.h).
+  append-path: /usr/lib/sdk/rust-stable/bin:/usr/lib/sdk/llvm22/bin
   env:
     CARGO_HOME: /run/build/biglinux-microphone/cargo
     RUST_BACKTRACE: '1'
+    LIBCLANG_PATH: /usr/lib/sdk/llvm22/lib
 
 modules:
+  - name: python3-numpy
+    buildsystem: simple
+    build-commands:
+      - pip3 install --no-index --no-deps --find-links="file://${PWD}" --prefix="${FLATPAK_DEST}" numpy
+    sources:
+      - type: file
+        url: https://files.pythonhosted.org/packages/3a/1b/3b16a9bc514a440a7a0883684111dcb1ef1aee960af2ca95da8fc775f124/numpy-2.5.3-cp313-cp313-manylinux_2_27_x86_64.manylinux_2_28_x86_64.whl
+        sha256: a5fa86b80fd24bcd1aff83ad23be44ea323de3f787be8f8b15d4a65621e25321
+        only-arches:
+          - x86_64
+
   - name: biglinux-microphone
     buildsystem: simple
     build-commands:
-      # Build both binaries (GUI + CLI)
+      # Backend binaries; the GUI is the Python front-end below.
       - cargo build --release --frozen --offline --no-default-features -p biglinux-microphone
+      - |
+        for binary in biglinux-microphone-cli biglinux-microphone-probe biglinux-microphone-pwloader; do
+          install -Dm755 "target/release/${binary}" "${FLATPAK_DEST}/bin/${binary}"
+        done
 
-      # Binaries
-      - install -Dm755 target/release/biglinux-microphone     "${FLATPAK_DEST}/bin/biglinux-microphone"
-      - install -Dm755 target/release/biglinux-microphone-cli "${FLATPAK_DEST}/bin/biglinux-microphone-cli"
+      # Front-end and its big_gtk_kit, in the launcher's private root.
+      - |
+        app_root="${FLATPAK_DEST}/lib/biglinux-microphone"
+        install -d "$app_root"
+        cp -a app/biglinux_microphone app/big_gtk_kit "$app_root/"
+        find "$app_root" -type d -name __pycache__ -prune -exec rm -rf '{}' +
+        install -Dm755 packaging/launcher.py "$app_root/launcher.py"
+        ln -s ../lib/biglinux-microphone/launcher.py "${FLATPAK_DEST}/bin/biglinux-microphone"
 
       - install -Dm644 LICENSE "${FLATPAK_DEST}/share/licenses/biglinux-microphone/LICENSE"
       - install -Dm644 LICENSE-MIT "${FLATPAK_DEST}/share/licenses/biglinux-microphone/LICENSE-MIT"
+      - install -Dm644 app/big_gtk_kit/LICENSE "${FLATPAK_DEST}/share/licenses/biglinux-microphone/LICENSE.big-gtk-kit"
 
       # Desktop entry
       - install -Dm644 usr/share/applications/br.com.biglinux.microphone.desktop
@@ -84,21 +118,12 @@ modules:
       - install -Dm644 usr/share/icons/hicolor/scalable/status/big-noise-reduction-off.svg
           "${FLATPAK_DEST}/share/icons/hicolor/scalable/status/big-noise-reduction-off.svg"
 
-      # Didactic illustrations rendered inside the GTK preference cards
-      - install -d "${FLATPAK_DEST}/share/biglinux-microphone/illustrations"
+      # Translations: the po/LINGUAS release allowlist, as the PKGBUILD builds it.
       - |
-        for svg in usr/share/biglinux-microphone/illustrations/*.svg; do
-          install -m644 "$svg" "${FLATPAK_DEST}/share/biglinux-microphone/illustrations/"
-        done
-
-      # Compile + install translations
-      - |
-        for po in po/*.po; do
-          lang="$(basename "$po" .po)"
-          locale_dir="${lang//-/_}"
-          msgfmt -o "/tmp/${lang}.mo" "$po"
-          install -Dm644 "/tmp/${lang}.mo" \
-            "${FLATPAK_DEST}/share/locale/${locale_dir}/LC_MESSAGES/biglinux-microphone.mo"
+        for lang in $(sed 's/#.*//' po/LINGUAS); do
+          install -d "${FLATPAK_DEST}/share/locale/${lang}/LC_MESSAGES"
+          msgfmt --check --check-format "po/${lang}.po" \
+            -o "${FLATPAK_DEST}/share/locale/${lang}/LC_MESSAGES/biglinux-microphone.mo"
         done
 
     sources:
@@ -110,6 +135,7 @@ modules:
         skip:
           - target
           - .git
+          - build-locale
           - packaging/arch/pkg
           - packaging/arch/src
       - cargo-sources.json

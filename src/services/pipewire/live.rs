@@ -1,40 +1,18 @@
-//! Live control updates on running filter-chain nodes.
-//!
-//! The filter-chain module exposes every LADSPA / builtin control as an
-//! SPA property under the node's `Props` parameter, keyed by the control
-//! name we declared in the `.conf` file (`"Strength"`, `"Enable"`,
-//! `"Freq"`, …). `pw-cli s <id> Props '{ params = [ … ] }'` pushes a new
-//! value without touching the module graph, so slider drags update the
-//! running audio pipeline in real time — no loader restart, no pop, no
-//! drop-out.
-//!
-//! The helper intentionally stays argv-based: it invokes `pw-cli`
-//! through the shared subprocess boundary with an argument array, never
-//! through a shell (`sh -c`), so there is no shell-quoting or injection
-//! surface. Rationale:
-//!
-//! - Transparent to debug (`strace` the spawned process).
-//! - Uses the same parser PipeWire itself ships, so property-name typos
-//!   surface with a clear error message instead of silently corrupt POD.
-//! - Zero-cost to replace later with a native `libspa` POD builder when
-//!   we decide the subprocess overhead matters.
-//!
-//! Gracefully no-ops when the target node is absent (e.g. the first run
-//! before the loader units have started) or still `suspended`, which is
-//! where PipeWire drops Props silently — see [`find_live_node`]. Both
-//! cases report "not pushed" so the caller restarts the loader instead.
-//! A loader restart is also required whenever the **graph structure**
-//! changes — adding/removing a filter, swapping the model — because
-//! only the control values can be updated live.
+//! Live controls through a persistent, control-thread-owned PipeWire client.
+//! A graph snapshot establishes the expected core cookie and node generation;
+//! the native client checks them before writing through its bound proxy, then
+//! confirms readable Props after a sync barrier. No pw-cli write or shell.
+//! Absent nodes may be repaired; unconfirmed controls on existing nodes stay pending.
+//! This is per-node confirmation, not a transaction across multiple nodes or
+//! a guarantee about which audio frame first sees a new control value.
 
-use std::collections::HashMap;
+use std::collections::{HashMap, HashSet};
 use std::io;
 
 use big_os_kit::subprocess::{BigSubprocessOutputMode, BigSubprocessSpec};
-use log::debug;
 use serde_json::Value;
 
-use crate::config::{AppSettings, deepfilter_attenuation_db, gtcrn_speech_strength};
+use crate::config::{AppSettings, deepfilter_attenuation_db};
 use crate::pipeline::{
     MIC_CAPTURE_NODE_NAME, OUTPUT_NODE_NAME, ai_node_in_mic_chain, mic_chain_wanted,
     output_ai_processing,
@@ -46,8 +24,8 @@ use crate::pipeline::{
 /// live in the PipeWire graph and its controls were updated. A `false`
 /// tells the caller the running graph is stale — the loader is not up
 /// yet, or its node is still `suspended` and would swallow the update.
-/// The caller should then restart that loader so it picks up the args
-/// file the reconciler just wrote.
+/// The caller must distinguish absence from a failed write to an existing
+/// endpoint. The latter is reported as pending, never an automatic restart.
 #[derive(Debug, Clone, Copy, Default, PartialEq, Eq)]
 pub struct LiveOutcome {
     pub mic_pushed: bool,
@@ -99,11 +77,11 @@ pub(crate) fn apply_live_to_graph(
     graph: &[Value],
     targets: UpdateTargets,
 ) -> LiveReport {
-    let nodes = parse_live_filter_nodes(graph);
     let mut report = LiveReport::default();
     if targets.microphone {
         report.pushed.mic_pushed = push_one(
-            nodes.get(MIC_CAPTURE_NODE_NAME).copied(),
+            graph,
+            MIC_CAPTURE_NODE_NAME,
             || mic_params(settings),
             "microphone",
             &mut report.failures,
@@ -111,7 +89,8 @@ pub(crate) fn apply_live_to_graph(
     }
     if targets.output {
         report.pushed.output_pushed = push_one(
-            nodes.get(OUTPUT_NODE_NAME).copied(),
+            graph,
+            OUTPUT_NODE_NAME,
             || output_params(settings),
             "output",
             &mut report.failures,
@@ -121,15 +100,33 @@ pub(crate) fn apply_live_to_graph(
 }
 
 fn push_one(
-    id: Option<u32>,
+    graph: &[Value],
+    name: &str,
     controls: impl FnOnce() -> Vec<(String, f64)>,
     chain: &str,
     failures: &mut Vec<String>,
 ) -> bool {
-    let Some(id) = id else {
+    let Some(node) = unique_live_node(graph, name) else {
         return false;
     };
-    match set_props(id, &controls()) {
+    let Some(id) = node["id"].as_u64().and_then(|id| u32::try_from(id).ok()) else {
+        return false;
+    };
+    let serial = &node["info"]["props"]["object.serial"];
+    let serial = serial
+        .as_str()
+        .map(str::to_owned)
+        .or_else(|| serial.as_u64().map(|n| n.to_string()));
+    let cookie = graph
+        .iter()
+        .find(|o| o["type"] == "PipeWire:Interface:Core")
+        .and_then(|o| o["info"]["cookie"].as_u64())
+        .and_then(|n| u32::try_from(n).ok());
+    let (Some(serial), Some(cookie)) = (serial, cookie) else {
+        failures.push(format!("{chain}: missing core cookie/node serial"));
+        return false;
+    };
+    match super::native::set_props(name, id, &serial, cookie, &controls()) {
         Ok(()) => true,
         Err(error) => {
             failures.push(format!("{chain} live update: {error}"));
@@ -140,19 +137,10 @@ fn push_one(
 
 /// `node.name` → object id for every node whose filter graph is set up.
 ///
-/// One `pw-dump` for the whole question. Resolving a name and then its state
-/// through `pw-cli` cost four spawns per apply — `ls Node` plus `info <id>`,
-/// once per chain — and `ls Node` renders the entire graph as text anyway,
-/// which the module below warns can exceed 64 KiB on a busy graph.
-///
-/// Nodes still `suspended` are deliberately absent: their filter graph is
-/// only set up at format negotiation, and until then PipeWire accepts the
-/// `set-param` and drops it — `pw-cli` still exits 0 and the control keeps
-/// its load-time value. Leaving them out makes the caller fall back to a
-/// loader restart, which re-reads the args file the reconciler just wrote.
-/// Verified on PipeWire 1.6.8: a `Props` push to a suspended node leaves the
-/// value unchanged in `pw-dump`, while the same push on a running node takes
-/// effect.
+/// Snapshot for initial identity/readiness, not a receipt for a write.
+/// Native control binds the matching generation and verifies exposed Props.
+/// Suspended nodes remain excluded conservatively: successful marshalling is
+/// not evidence that a filter graph has negotiated or applied its controls.
 pub(crate) fn graph_snapshot() -> io::Result<Vec<Value>> {
     let output = BigSubprocessSpec::builder()
         .program("/usr/bin/pw-dump")
@@ -171,45 +159,211 @@ pub(crate) fn graph_snapshot() -> io::Result<Vec<Value>> {
     serde_json::from_slice(&output.stdout).map_err(io::Error::other)
 }
 
+#[cfg(test)]
 fn parse_live_filter_nodes(graph: &[Value]) -> HashMap<String, u32> {
-    graph
+    let mut nodes = HashMap::new();
+    let mut ambiguous = HashSet::new();
+    for object in graph
         .iter()
-        .filter(|object| object["type"] == "PipeWire:Interface:Node")
-        .filter(|object| matches!(object["info"]["state"].as_str(), Some("running" | "idle")))
-        .filter_map(|object| {
-            let name = object["info"]["props"]["node.name"].as_str()?;
-            let id = u32::try_from(object["id"].as_u64()?).ok()?;
-            Some((name.to_owned(), id))
+        .filter(|o| o["type"] == "PipeWire:Interface:Node")
+    {
+        let Some(name) = object["info"]["props"]["node.name"].as_str() else {
+            continue;
+        };
+        let Some(id) = object["id"].as_u64().and_then(|n| u32::try_from(n).ok()) else {
+            continue;
+        };
+        // A duplicate must never silently replace the identity selected earlier.
+        if nodes.insert(name.to_owned(), id).is_some() {
+            ambiguous.insert(name.to_owned());
+        }
+    }
+    nodes.retain(|name, id| {
+        !ambiguous.contains(name)
+            && graph.iter().any(|o| {
+                o["id"].as_u64() == Some(u64::from(*id))
+                    && matches!(o["info"]["state"].as_str(), Some("running" | "idle"))
+            })
+    });
+    nodes
+}
+
+fn unique_live_node<'a>(graph: &'a [Value], name: &str) -> Option<&'a Value> {
+    let mut matches = graph.iter().filter(|o| {
+        o["type"] == "PipeWire:Interface:Node"
+            && o["info"]["props"]["node.name"].as_str() == Some(name)
+    });
+    let node = matches.next()?;
+    if matches.next().is_some()
+        || !matches!(node["info"]["state"].as_str(), Some("running" | "idle"))
+    {
+        return None;
+    }
+    Some(node)
+}
+
+#[cfg(test)]
+fn control_values(node: &Value) -> HashMap<&str, f64> {
+    let mut values = HashMap::new();
+    if let Some(props) = node["info"]["params"]["Props"].as_array() {
+        for entry in props {
+            if let Some(params) = entry["params"].as_array() {
+                for pair in params.as_chunks::<2>().0 {
+                    if let (Some(key), Some(value)) = (pair[0].as_str(), pair[1].as_f64()) {
+                        values.insert(key, value);
+                    }
+                }
+            }
+        }
+    }
+    values
+}
+
+#[cfg(test)]
+fn confirmed_update(before: &[Value], after: &[Value], name: &str, sent: &[(String, f64)]) -> bool {
+    let (Some(old), Some(new)) = (
+        unique_live_node(before, name),
+        unique_live_node(after, name),
+    ) else {
+        return false;
+    };
+    let serial = &old["info"]["props"]["object.serial"];
+    if serial.is_null()
+        || serial != &new["info"]["props"]["object.serial"]
+        || old["id"] != new["id"]
+        || !unknown_live_controls(old, sent).is_empty()
+    {
+        return false;
+    }
+    let old_values = control_values(old);
+    let new_values = control_values(new);
+    let mut checked = 0;
+    for (key, expected) in sent {
+        // Keep the existing optional-node contract, but do not count a batch
+        // with no readable controls as a successful write.
+        if !old_values.contains_key(key.as_str()) {
+            continue;
+        }
+        checked += 1;
+        let Some(actual) = new_values.get(key.as_str()) else {
+            return false;
+        };
+        let tolerance = 1e-5 * expected.abs().max(1.0); // f32 POD readback
+        if !expected.is_finite() || !actual.is_finite() || (actual - expected).abs() > tolerance {
+            return false;
+        }
+    }
+    checked > 0 || sent.is_empty()
+}
+
+/// Filter-graph control keys a node actually exposes, as `prefix -> {controls}`.
+///
+/// `pw-dump` renders each `Props` param object's `params` field as a flat
+/// `[key, value, key, value, …]` list; the filter-graph controls are the keys
+/// shaped `<graph_node>:<control>` (e.g. `hpf:Freq`). Audioconvert keys without
+/// a `:` prefix are ignored.
+fn exposed_graph_controls(node: &Value) -> HashMap<String, HashSet<String>> {
+    let mut map: HashMap<String, HashSet<String>> = HashMap::new();
+    let Some(props) = node["info"]["params"]["Props"].as_array() else {
+        return map;
+    };
+    for entry in props {
+        let Some(list) = entry["params"].as_array() else {
+            continue;
+        };
+        for pair in list.as_chunks::<2>().0 {
+            if let Some((prefix, control)) = pair[0].as_str().and_then(|k| k.split_once(':')) {
+                map.entry(prefix.to_owned())
+                    .or_default()
+                    .insert(control.to_owned());
+            }
+        }
+    }
+    map
+}
+
+/// Sent control keys that address a *present* graph node but a control it does
+/// not expose. `pw-cli s <owned-node-name> Props` silently drops such keys, so the value
+/// never takes effect — a typo or a stale control name looks like success
+/// (review API-01).
+///
+/// Keys whose whole node prefix is absent are deliberately skipped: several
+/// optional nodes (`hpf_pre`, …) are addressed unconditionally and are a
+/// harmless no-op when the node is not instantiated. An empty exposed set means
+/// the node is suspended / not yet format-negotiated, so there is no schema to
+/// check against and nothing is reported.
+fn unknown_live_controls(node: &Value, sent: &[(String, f64)]) -> Vec<String> {
+    let exposed = exposed_graph_controls(node);
+    if exposed.is_empty() {
+        return Vec::new();
+    }
+    sent.iter()
+        .filter_map(|(key, _)| {
+            let (prefix, control) = key.split_once(':')?;
+            let controls = exposed.get(prefix)?;
+            (!controls.contains(control)).then(|| key.clone())
         })
         .collect()
 }
 
-/// Push a set of control values to a node via `pw-cli s <id> Props`.
-fn set_props(node_id: u32, controls: &[(String, f64)]) -> io::Result<()> {
-    if controls.is_empty() {
-        return Ok(());
+/// Audit the live controls the daemon would push against what the running node
+/// exposes. `None` when the node is absent or not running (nothing to audit);
+/// `Some(unknown)` lists sent keys that would be silently dropped.
+pub(crate) fn unknown_controls_for(
+    graph: &[Value],
+    node_name: &str,
+    sent: &[(String, f64)],
+) -> Option<Vec<String>> {
+    let node = graph.iter().find(|object| {
+        object["type"] == "PipeWire:Interface:Node"
+            && object["info"]["props"]["node.name"].as_str() == Some(node_name)
+    })?;
+    if !matches!(node["info"]["state"].as_str(), Some("running" | "idle")) {
+        return None;
     }
-    let payload = format_params(controls);
-    debug!("live: pw-cli s {node_id} Props {payload}");
-    let output = BigSubprocessSpec::builder()
-        .program("/usr/bin/pw-cli")
-        .args(["s", &node_id.to_string(), "Props", &payload])
-        .timeout(std::time::Duration::from_secs(2))
-        .stdout(BigSubprocessOutputMode::Null)
-        .allow_list(["/usr/bin/pw-cli"])
-        .build()
-        .run()
-        .map_err(io::Error::other)?;
-    if output.status.success() {
-        return Ok(());
-    }
-    let stderr = output.stderr_lossy().trim().to_owned();
-    Err(io::Error::other(format!(
-        "pw-cli set-param {node_id} exited with {:?}: {stderr}",
-        output.status.code()
-    )))
+    Some(unknown_live_controls(node, sent))
 }
 
+/// Transport health of a filter-chain node, read from a `pw-dump` snapshot.
+///
+/// Presence alone does not prove a chain is working: a node can be `created`,
+/// `suspended`, in `error`, or `running` with no consumer. This separates the
+/// node's own state from whether any of its links are actively carrying frames
+/// (review HEALTH-01).
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub(crate) struct NodeTransport {
+    pub state: String,
+    pub active_links: usize,
+}
+
+/// Read a node's state and active-link count. `None` when the node is not in
+/// the graph — presence is the caller's separate concern.
+pub(crate) fn node_transport(graph: &[Value], node_name: &str) -> Option<NodeTransport> {
+    let node = graph.iter().find(|object| {
+        object["type"] == "PipeWire:Interface:Node"
+            && object["info"]["props"]["node.name"].as_str() == Some(node_name)
+    })?;
+    let id = node["id"].as_u64()?;
+    let state = node["info"]["state"]
+        .as_str()
+        .unwrap_or("unknown")
+        .to_owned();
+    let active_links = graph
+        .iter()
+        .filter(|object| object["type"] == "PipeWire:Interface:Link")
+        .filter(|link| link["info"]["state"].as_str() == Some("active"))
+        .filter(|link| {
+            link["info"]["output-node-id"].as_u64() == Some(id)
+                || link["info"]["input-node-id"].as_u64() == Some(id)
+        })
+        .count();
+    Some(NodeTransport {
+        state,
+        active_links,
+    })
+}
+
+#[cfg(test)]
 fn format_params(controls: &[(String, f64)]) -> String {
     let mut out = String::from("{ params = [ ");
     for (i, (k, v)) in controls.iter().enumerate() {
@@ -225,6 +379,7 @@ fn format_params(controls: &[(String, f64)]) -> String {
     out
 }
 
+#[cfg(test)]
 fn format_f64(v: f64) -> String {
     if v.fract() == 0.0 && v.abs() < 1e15 {
         format!("{v:.1}")
@@ -243,67 +398,35 @@ fn format_f64(v: f64) -> String {
 /// prefix) would match nothing and get silently discarded — so every
 /// entry here is spelled out with the node prefix we declared in
 /// `mic.rs`.
-fn mic_params(s: &AppSettings) -> Vec<(String, f64)> {
+pub(crate) fn mic_params(s: &AppSettings) -> Vec<(String, f64)> {
     let nr = &s.noise_reduction;
     let gate = &s.gate;
     let gate_derived = gate.ladspa_controls();
-    let threshold_db = if gate.enabled {
-        gate_derived.threshold_db
-    } else {
-        -80.0
-    };
     let hpf_freq = if s.hpf.enabled {
         f64::from(s.hpf.frequency)
     } else {
         5.0
     };
 
-    let mut params = vec![
-        // HPF — the filter-chain builtin `bq_highpass` node. When the
-        // user enables HPF the chain is a cascade of two identical
-        // biquads (`hpf_pre` → `hpf`); both controls are addressed
-        // here so a frequency change applies to the full slope.
-        // `hpf_pre` only exists when HPF is enabled — sending the key
-        // when the node is absent is a no-op (pw-cli silently drops
-        // unknown control names) so it's safe to always include.
-        ("hpf:Freq".to_owned(), hpf_freq),
-        ("hpf_pre:Freq".to_owned(), hpf_freq),
-    ];
-
-    // GTCRN controls only matter when the node is in the graph; when
-    // it isn't, sending the keys would just be no-ops (pw-cli silently
-    // drops unknown control names) but pruning them keeps the trace
-    // log honest about what the running graph actually accepts.
-    if ai_node_in_mic_chain(s) {
-        if nr.model.is_attenuation_only() {
-            // Attenuation-only models have a single live-tunable knob:
-            // the attenuation cap driven by the user's strength slider.
-            // The gate (when enabled) lives in a separate `gate:` SWH-gate node.
-            let atten_db = deepfilter_attenuation_db(nr.strength);
-            params.push(("ai:Attenuation Limit (dB)".to_owned(), atten_db));
-        } else {
-            params.extend([
-                ("ai:Enable".to_owned(), if nr.enabled { 1.0 } else { 0.0 }),
-                ("ai:Strength".to_owned(), f64::from(nr.strength)),
-                ("ai:Model".to_owned(), f64::from(nr.model.ladspa_control())),
-                (
-                    "ai:SpeechStrength".to_owned(),
-                    gtcrn_speech_strength(nr.strength),
-                ),
-                ("ai:LookaheadMs".to_owned(), f64::from(nr.lookahead_ms)),
-                ("ai:ModelBlend".to_owned(), f64::from(nr.model_blending)),
-                ("ai:VoiceRecovery".to_owned(), f64::from(nr.voice_recovery)),
-                // Integrated gate (same LADSPA plugin as GTCRN).
-                ("ai:Threshold (dB)".to_owned(), threshold_db),
-                ("ai:Attack (ms)".to_owned(), gate_derived.attack_ms),
-                ("ai:Hold (ms)".to_owned(), gate_derived.hold_ms),
-                ("ai:Release (ms)".to_owned(), gate_derived.release_ms),
-                ("ai:Range (dB)".to_owned(), gate_derived.range_db),
-            ]);
-        }
+    let mut params = vec![("hpf:Freq".to_owned(), hpf_freq)];
+    // Address only nodes actually emitted by the renderer. Native read-back
+    // still validates the generation and the writable control set.
+    if s.hpf.enabled {
+        params.push(("hpf_pre:Freq".to_owned(), hpf_freq));
     }
 
-    if nr.model.is_attenuation_only() && gate.enabled {
+    // Address only the denoiser that is in the graph; pw-cli silently drops
+    // unknown control names, but pruning them keeps the trace log honest.
+    if ai_node_in_mic_chain(s) {
+        let atten_db = deepfilter_attenuation_db(nr.strength);
+        params.extend(
+            nr.attenuation_controls(atten_db, crate::pipeline::mic_min_snr_gate_db(s))
+                .into_iter()
+                .map(|(k, v)| (format!("ai:{k}"), v)),
+        );
+    }
+
+    if gate.enabled {
         params.extend([
             ("gate:Threshold (dB)".to_owned(), gate_derived.threshold_db),
             ("gate:Attack (ms)".to_owned(), gate_derived.attack_ms),
@@ -329,7 +452,7 @@ fn mic_params(s: &AppSettings) -> Vec<(String, f64)> {
 /// Master-off (`output_filter.enabled = false`) forces every sub-effect
 /// to bypass — the same policy used by the on-disk configuration while
 /// the output service is stopping or before it is reconciled.
-fn output_params(s: &AppSettings) -> Vec<(String, f64)> {
+pub(crate) fn output_params(s: &AppSettings) -> Vec<(String, f64)> {
     let mut parameters = output_params_mono(s);
     if s.output_filter.channel_mode == crate::config::OutputChannelMode::Stereo {
         let right: Vec<_> = parameters
@@ -358,42 +481,18 @@ fn output_params_mono(s: &AppSettings) -> Vec<(String, f64)> {
 
     let mut params = vec![("hpf:Freq".to_owned(), hpf_freq)];
 
-    // GTCRN is always wired in the output graph; toggling master or NR
-    // flips its `Enable` port between 0 and 1 while the node is running.
+    // Master or NR off sets the attenuation to 0 while the node keeps running.
     let ai_processing = output_ai_processing(s);
-    if nr.model.is_attenuation_only() {
-        let atten_db = if ai_processing {
-            deepfilter_attenuation_db(nr.strength)
-        } else {
-            0.0
-        };
-        params.push(("ai:Attenuation Limit (dB)".to_owned(), atten_db));
+    let atten_db = if ai_processing {
+        deepfilter_attenuation_db(nr.strength)
     } else {
-        params.extend([
-            (
-                "ai:Enable".to_owned(),
-                if ai_processing { 1.0 } else { 0.0 },
-            ),
-            ("ai:Strength".to_owned(), f64::from(nr.strength)),
-            ("ai:Model".to_owned(), f64::from(nr.model.ladspa_control())),
-            // Same strength→speech-strength curve the static conf uses
-            // (`output.rs`); sending the raw strength here made the
-            // output chain sound different live vs after a reload.
-            (
-                "ai:SpeechStrength".to_owned(),
-                gtcrn_speech_strength(nr.strength),
-            ),
-            ("ai:LookaheadMs".to_owned(), f64::from(nr.lookahead_ms)),
-            ("ai:ModelBlend".to_owned(), f64::from(nr.model_blending)),
-            ("ai:VoiceRecovery".to_owned(), f64::from(nr.voice_recovery)),
-            // Park GTCRN's integrated gate below the noise floor. The
-            // user-facing gate on the output chain is the separate SWH
-            // `gate_1410` node; the integrated one must never fire on
-            // playback, otherwise quiet audio dips trigger it even with
-            // the UI gate toggle off (default port value is -60 dB).
-            ("ai:Threshold (dB)".to_owned(), -80.0),
-        ]);
-    }
+        0.0
+    };
+    params.extend(
+        nr.attenuation_controls(atten_db, nr.min_snr_gate_db())
+            .into_iter()
+            .map(|(k, v)| (format!("ai:{k}"), v)),
+    );
 
     params.extend([
         // Standalone SWH gate — "Output select" = 1.0 bypasses.
@@ -478,7 +577,138 @@ fn append_compressor_params(
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn live_mic_gate_matches_renderer_with_and_without_aec() {
+        for aec in [false, true] {
+            for depth in [0, 20, 30, 40] {
+                let mut s = AppSettings::default();
+                s.echo_cancel.enabled = aec;
+                s.noise_reduction.silence_depth = depth;
+                let params = mic_params(&s);
+                let actual = params
+                    .iter()
+                    .find(|(k, _)| k == "ai:Min SNR gate (dB)")
+                    .unwrap()
+                    .1;
+                assert_eq!(actual, crate::pipeline::mic_min_snr_gate_db(&s));
+                if aec {
+                    assert!(actual <= -20.0);
+                }
+            }
+        }
+    }
+
+    #[test]
+    fn live_hpf_control_set_matches_optional_node() {
+        let mut s = AppSettings::default();
+        for enabled in [false, true] {
+            s.hpf.enabled = enabled;
+            assert_eq!(
+                mic_params(&s).iter().any(|(k, _)| k == "hpf_pre:Freq"),
+                enabled
+            );
+        }
+    }
+
     use crate::config::AppSettings;
+
+    fn node_with_controls(state: &str, keys: &[&str]) -> Value {
+        let params: Vec<Value> = keys
+            .iter()
+            .flat_map(|k| [Value::from(*k), Value::from(1.0)])
+            .collect();
+        serde_json::json!({
+            "type": "PipeWire:Interface:Node",
+            "info": {
+                "state": state,
+                "props": { "node.name": "mic-biglinux-capture" },
+                "params": { "Props": [
+                    { "params": ["channelmix.disable", false, "resample.quality", 4] },
+                    { "params": params },
+                ] },
+            },
+        })
+    }
+
+    #[test]
+    fn unknown_controls_flags_typos_under_present_nodes_only() {
+        let node = node_with_controls("running", &["hpf:Freq", "ai:Attenuation Limit (dB)"]);
+        let sent = vec![
+            ("hpf:Freq".to_owned(), 40.0), // present control — accepted
+            ("ai:Attenuation Limit (dB)".to_owned(), 90.0), // present control — accepted
+            ("ai:Typo".to_owned(), 1.0),   // present node, unknown control — dropped
+            ("hpf_pre:Freq".to_owned(), 40.0), // absent optional node — skipped, not flagged
+        ];
+        assert_eq!(
+            unknown_live_controls(&node, &sent),
+            vec!["ai:Typo".to_owned()]
+        );
+    }
+
+    #[test]
+    fn suspended_node_has_no_schema_to_audit() {
+        // No graph controls exposed yet (empty second Props): report nothing
+        // rather than flag every key as unknown.
+        let node = node_with_controls("suspended", &[]);
+        assert!(unknown_live_controls(&node, &[("hpf:Freq".to_owned(), 40.0)]).is_empty());
+        // …and unknown_controls_for skips a non-running node entirely.
+        assert!(
+            unknown_controls_for(
+                std::slice::from_ref(&node),
+                "mic-biglinux-capture",
+                &[("hpf:Freq".to_owned(), 40.0)]
+            )
+            .is_none()
+        );
+    }
+
+    fn graph_with_link(node_state: &str, link_state: Option<&str>) -> Vec<Value> {
+        let mut graph = vec![serde_json::json!({
+            "id": 78,
+            "type": "PipeWire:Interface:Node",
+            "info": { "state": node_state, "props": { "node.name": "mic-biglinux-capture" } },
+        })];
+        if let Some(ls) = link_state {
+            graph.push(serde_json::json!({
+                "id": 190,
+                "type": "PipeWire:Interface:Link",
+                "info": { "state": ls, "output-node-id": 190, "input-node-id": 78 },
+            }));
+        }
+        graph
+    }
+
+    #[test]
+    fn node_transport_separates_state_from_active_links() {
+        // Running with an active link → transporting.
+        let t = node_transport(
+            &graph_with_link("running", Some("active")),
+            "mic-biglinux-capture",
+        )
+        .unwrap();
+        assert_eq!(t.state, "running");
+        assert_eq!(t.active_links, 1);
+
+        // Running but no consumer → idle, not an error.
+        let t = node_transport(&graph_with_link("running", None), "mic-biglinux-capture").unwrap();
+        assert_eq!(t.active_links, 0);
+
+        // A link that is not active does not count as transporting.
+        let t = node_transport(
+            &graph_with_link("running", Some("inactive")),
+            "mic-biglinux-capture",
+        )
+        .unwrap();
+        assert_eq!(t.active_links, 0);
+
+        // Error state is surfaced verbatim for the caller to fail on.
+        let t = node_transport(&graph_with_link("error", None), "mic-biglinux-capture").unwrap();
+        assert_eq!(t.state, "error");
+
+        // Absent node → None (presence is a separate check).
+        assert!(node_transport(&graph_with_link("running", None), "output-biglinux").is_none());
+    }
 
     #[test]
     fn fully_applied_ignores_chains_that_are_disabled() {
@@ -572,7 +802,6 @@ mod tests {
     #[test]
     fn attenuation_gate_updates_without_a_neural_node() {
         let mut settings = AppSettings::default();
-        settings.noise_reduction.model = crate::config::NoiseModel::DeepFilterNet3;
         settings.noise_reduction.enabled = false;
         settings.gate.enabled = true;
         let controls = mic_params(&settings);
@@ -584,11 +813,13 @@ mod tests {
     fn mic_params_includes_prefixed_controls() {
         let s = AppSettings::default();
         let p = mic_params(&s);
-        // Every control must carry its graph-node prefix.
-        assert!(p.iter().any(|(k, _)| k == "ai:Enable"));
-        assert!(p.iter().any(|(k, _)| k == "ai:Strength"));
+        // Every control must carry its graph-node prefix. The default is an
+        // attenuation-only plugin: one AI knob, gate in its own `gate:` node.
+        assert!(p.iter().any(|(k, _)| k == "ai:Attenuation Limit (dB)"));
         assert!(p.iter().any(|(k, _)| k == "hpf:Freq"));
         assert!(p.iter().any(|(k, _)| k == "compressor:Ratio (1:n)"));
+        // A plugin build without this port would fail the whole live push.
+        assert!(!p.iter().any(|(k, _)| k.starts_with("ai:Voice sensitivity")));
     }
 
     #[test]
@@ -606,7 +837,10 @@ mod tests {
     }
 
     #[test]
-    fn mic_params_threshold_drops_when_gate_disabled() {
+    fn mic_params_omits_gate_controls_when_gate_disabled() {
+        // The default plugin is attenuation-only: the gate is a separate
+        // `gate:` node, emitted only when the gate is on. Off means no gate
+        // keys reach the live graph at all.
         let s = AppSettings {
             gate: crate::config::GateConfig {
                 enabled: false,
@@ -615,8 +849,7 @@ mod tests {
             ..AppSettings::default()
         };
         let p = mic_params(&s);
-        let (_, th) = p.iter().find(|(k, _)| k == "ai:Threshold (dB)").unwrap();
-        assert!((*th - -80.0).abs() < 1e-9);
+        assert!(!p.iter().any(|(k, _)| k.starts_with("gate:")));
     }
 
     #[test]
@@ -655,10 +888,49 @@ mod tests {
             ..AppSettings::default()
         };
         let p = output_params(&s);
-        assert!(p.iter().any(|(k, _)| k == "ai:Strength"));
-        assert!(p.iter().any(|(k, _)| k == "ai:Enable"));
+        assert!(p.iter().any(|(k, _)| k == "ai:Attenuation Limit (dB)"));
         assert!(p.iter().any(|(k, _)| k == "hpf:Freq"));
         assert!(p.iter().any(|(k, _)| k == "gate:Threshold (dB)"));
         assert!(p.iter().any(|(k, _)| k == "compressor:Makeup gain (dB)"));
+    }
+    #[test]
+    fn readback_requires_generation_and_actual_control_value() {
+        let graph = |serial, value| {
+            vec![serde_json::json!({
+                "id": 40, "type": "PipeWire:Interface:Node",
+                "info": { "state": "running", "props": {
+                    "node.name": MIC_CAPTURE_NODE_NAME, "object.serial": serial
+                }, "params": {"Props": [{"params": ["ai:Strength", value]}]} }
+            })]
+        };
+        let before = graph(100, 0.3);
+        let sent = vec![("ai:Strength".into(), 0.7)];
+        assert!(confirmed_update(
+            &before,
+            &graph(100, 0.7),
+            MIC_CAPTURE_NODE_NAME,
+            &sent
+        ));
+        assert!(!confirmed_update(
+            &before,
+            &graph(101, 0.7),
+            MIC_CAPTURE_NODE_NAME,
+            &sent
+        ));
+        assert!(!confirmed_update(
+            &before,
+            &graph(100, 0.3),
+            MIC_CAPTURE_NODE_NAME,
+            &sent
+        ));
+        let mut duplicate = graph(100, 0.7);
+        duplicate.extend(graph(101, 0.7));
+        assert!(!confirmed_update(
+            &before,
+            &duplicate,
+            MIC_CAPTURE_NODE_NAME,
+            &sent
+        ));
+        assert!(!parse_live_filter_nodes(&duplicate).contains_key(MIC_CAPTURE_NODE_NAME));
     }
 }

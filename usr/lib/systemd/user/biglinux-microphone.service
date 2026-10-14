@@ -1,17 +1,33 @@
 [Unit]
 Description=Filter noise — reconcile PipeWire filter chain with saved settings
 Documentation=https://github.com/biglinux/biglinux-noise-reduction-pipewire
-PartOf=pipewire.service
 After=pipewire.service wireplumber.service
 Wants=pipewire.service wireplumber.service
+# No start limit. systemd counts every start, not just the failed ones, and
+# biglinux-microphone.path starts this unit on each settings change — so a limit
+# sized for a crash loop is reached by somebody simply changing six settings in a
+# row, and from then on their edits stop being applied. Runaway triggers are the
+# path unit's job (TriggerLimitBurst); a genuinely failing reconcile is bounded
+# below by RestartSec instead.
+StartLimitIntervalSec=0
 
 [Service]
-Type=simple
-ExecStart=/usr/bin/biglinux-microphone-cli watch
+# Reconcile, then leave. Every long-lived job this used to hold is now owned by
+# something that only exists while it is needed: biglinux-microphone.path wakes
+# this unit when the settings file changes, and the reconciler starts the AGC and
+# the route observer when their features are on. With every filter off, nothing
+# of ours stays resident.
+Type=oneshot
+ExecStart=/usr/bin/biglinux-microphone-cli autostart
+# A reconcile can legitimately fail while the graph is still coming up — PipeWire
+# not yet accepting clients, the AEC source not visible within its deadline. The
+# in-process watcher retried these with a backoff that topped out at 30s; this is
+# the same ceiling without a thread alive to hold the timer. Each attempt is short
+# and stops as soon as one succeeds.
 Restart=on-failure
-RestartSec=3s
+RestartSec=30s
 SuccessExitStatus=0
-TimeoutStartSec=15s
+TimeoutStartSec=30s
 StandardOutput=journal
 StandardError=journal
 

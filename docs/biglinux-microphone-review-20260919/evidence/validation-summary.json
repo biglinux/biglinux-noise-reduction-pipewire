@@ -1,0 +1,22 @@
+{
+  "patches": 17,
+  "changed_source_and_test_files": 33,
+  "apply_reverse": "PASS",
+  "git_am": "PASS",
+  "product_tests": {
+    "python_real": 66,
+    "python_subtests_additional": 33,
+    "python_GLib_shim_model_only": 19,
+    "node_plasma_reducer": 2
+  },
+  "collector_parser_tests_not_hardware": 4,
+  "python_AST_files": 47,
+  "shell_syntax_files": 8,
+  "new_Rust_test_functions": 29,
+  "Rust_tests": "NOT_RUN",
+  "Rust_build": "NOT_RUN",
+  "GTK_real_runtime": "NOT_RUN",
+  "audio_hardware": "NOT_RUN",
+  "reason": "No Rust invocation permitted; vendor missing from input; no native audio/GTK runtime.",
+  "bench_scope": "LoudnessMeter.push_block Python only; not AGC Rust or overall CPU"
+}

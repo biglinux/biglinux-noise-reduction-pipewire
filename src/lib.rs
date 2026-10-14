@@ -17,8 +17,11 @@ pub mod pipeline;
 /// Runtime services: PipeWire client, filter-chain lifecycle, audio monitor.
 pub mod services;
 
-/// GTK4 / libadwaita GUI.
-pub mod ui;
-
 /// End-to-end diagnostic probe (mirrors `biglinux-microphone-cli doctor`).
 pub mod diagnostics;
+
+/// Microphone auto-gain **policy** (no PCM, no hardware I/O; off by default).
+pub mod gain_policy;
+
+/// Automatic mic-level control loop (off-RT; drives the policy + source volume).
+pub mod agc;

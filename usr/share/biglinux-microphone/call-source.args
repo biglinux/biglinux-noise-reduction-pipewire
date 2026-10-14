@@ -1,0 +1,24 @@
+# Opt-in persistent presentation endpoint. Never restart this loader merely
+# to replace the DSP/AEC loaders. Select it explicitly in the recording app;
+# keep the system default set to the physical mic (see deployment instructions).
+{
+    audio.rate = 48000
+    audio.position = [ FL FR ]
+    capture.props = {
+        node.name = "biglinux-call-source-capture"
+        target.object = "mic-biglinux"
+        node.dont-fallback = true
+        node.dont-reconnect = false
+        node.dont-move = true
+        node.passive = true
+        stream.dont-remix = true
+    }
+    playback.props = {
+        node.name = "biglinux-call-source"
+        node.description = "BigLinux Microphone (stable capture)"
+        media.class = Audio/Source
+        node.virtual = true
+        priority.session = 0
+        filter.smart = false
+    }
+}

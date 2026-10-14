@@ -16,7 +16,7 @@ For NixOS, import `packaging/nix/module.nix`, enable
 registers user services and WirePlumber policy through their declared package
 options. Merely putting the GUI on PATH is not equivalent to that integration.
 
-Requires Nixpkgs with Rust >= 1.97.1, GTK >= 4.22 and libadwaita >= 1.9.
+Requires Nixpkgs with Rust >= 1.98.1, GTK >= 4.22 and libadwaita >= 1.9.
 The native BigLinux/Arch validation does not certify a NixOS deployment: run
 `nix build`, the package tests and a disposable NixOS audio-session test before
 publishing a Nix release. Hardware and neural-runtime checks remain separate.

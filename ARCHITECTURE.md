@@ -67,7 +67,7 @@ process-group cleanup. An explicitly empty allow-list denies every executable.
 
 ## Dependencies and translation
 
-Native target: Rust >= 1.97.1, GTK >= 4.22, libadwaita >= 1.9, PipeWire >= 1.4,
+Native target: Rust >= 1.98.1, GTK >= 4.22, libadwaita >= 1.9, PipeWire >= 1.4,
 WirePlumber >= 0.5, systemd user services, GTCRN and SWH LADSPA packages.
 Optional neural backends require their matching inference runtimes. Nix uses
 the system-allocator feature configuration rather than the BigLinux-specific
