@@ -37,6 +37,8 @@ extend-exclude = [
     # Localized prose is not English; gettext catalogs have a separate gate.
     # Keep English docs, Rust code, protocol identifiers and fixtures checked.
     "docs/*.pt_BR.md",
+    # Research notes are written in Portuguese.
+    "docs/research/**",
     # Portuguese working notes and external review bundles. The bundles carry
     # their own .patch copies of code this gate already reads at its source.
     "ANALISE-*.md",

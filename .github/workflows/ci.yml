@@ -239,7 +239,7 @@ jobs:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
         with:
           persist-credentials: false
-      - uses: crate-ci/typos@master
+      - uses: crate-ci/typos@5ca5db740be4c6b2e6ce383819386a7340babd1e # v1.45.1
 
   complexity:
     name: Complexity and duplication
@@ -250,7 +250,7 @@ jobs:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
         with:
           persist-credentials: false
-      - run: pipx install lizard
+      - run: pipx install lizard==1.22.1
       - run: npm install -g jscpd
       - run: lizard src/ -l rust -C 25 -w
       - run: jscpd --min-lines 50 --min-tokens 100 --threshold 5 --reporters console --silent src/
