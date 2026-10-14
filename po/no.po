@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: biglinux-noise-reduction-pipewire\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-10-12 19:46-0300\n"
+"POT-Creation-Date: 2026-10-12 22:29-0300\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: no\n"
@@ -36,49 +36,6 @@ msgstr ""
 msgid "BigLinux Microphone"
 msgstr "BigLinux Microphone"
 
-#: app/biglinux_microphone/cli.py:233
-msgid "This noise-reduction mode cannot preview a recording."
-msgstr ""
-
-#: app/biglinux_microphone/cli.py:237
-msgid "Install ffmpeg to compare recordings."
-msgstr ""
-
-#: app/biglinux_microphone/cli.py:256 app/biglinux_microphone/cli.py:335
-msgid "Comparison cancelled"
-msgstr ""
-
-#: app/biglinux_microphone/cli.py:289
-msgid "Processing the recording took too long."
-msgstr ""
-
-#: app/biglinux_microphone/cli.py:293
-msgid "Could not process the recording."
-msgstr ""
-
-#: app/biglinux_microphone/cli.py:314 app/biglinux_microphone/cli.py:317
-msgid "The comparison recording is incomplete."
-msgstr ""
-
-#: app/biglinux_microphone/cli.py:325
-msgid "The recording is too quiet to compare. Speak closer to the microphone."
-msgstr ""
-
-#: app/biglinux_microphone/ui/view.py:105
-#: app/biglinux_microphone/ui/pages/home.py:29
-msgid "Home"
-msgstr ""
-
-#: app/biglinux_microphone/ui/view.py:108
-#: app/biglinux_microphone/ui/view.py:109
-msgid "Back"
-msgstr ""
-
-#: app/biglinux_microphone/ui/view.py:117
-#: app/biglinux_microphone/ui/view.py:119
-msgid "Pages"
-msgstr ""
-
 # #-#-#-#-#  biglinux-noise-reduction-pipewire.pot (biglinux-noise-reduction-
 # pipewire)  #-#-#-#-#
 #
@@ -86,56 +43,69 @@ msgstr ""
 # pipewire/src/biglinux_microphone/ui/main_view.py, line: 88
 # File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/config.py,
 # line: 27
-#: app/biglinux_microphone/ui/view.py:132
+#: app/biglinux_microphone/ui/view.py:106
 #: app/biglinux_microphone/ui/view.py:154
+#: app/biglinux_microphone/ui/view.py:173
+#: app/biglinux_microphone/ui/view.py:284
 #: app/biglinux_microphone/ui/pages/diagnostics.py:40
 #: app/biglinux_microphone/ui/pages/calibrate.py:82
 msgid "Microphone"
 msgstr "Mikrofon"
 
+#: app/biglinux_microphone/ui/view.py:109
+#: app/biglinux_microphone/ui/view.py:110
+msgid "Back"
+msgstr ""
+
+#: app/biglinux_microphone/ui/view.py:118
+#: app/biglinux_microphone/ui/view.py:120
+msgid "Settings"
+msgstr ""
+
+#: app/biglinux_microphone/ui/view.py:130
+#: app/biglinux_microphone/ui/pages/diagnostics.py:19
+msgid "Diagnostics"
+msgstr ""
+
 # File: biglinux-noise-reduction-
 # pipewire/usr/share/bigbashview/apps/microphone/noise_reducer.py, line: 276
-#: app/biglinux_microphone/ui/view.py:156
+#: app/biglinux_microphone/ui/view.py:132
 msgid "About"
 msgstr "Om"
 
 # File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/window.py,
 # line: 196
-#: app/biglinux_microphone/ui/view.py:157
+#: app/biglinux_microphone/ui/view.py:133
 msgid "Quit"
 msgstr "Avslutt"
 
-#: app/biglinux_microphone/ui/view.py:159
-#: app/biglinux_microphone/ui/view.py:160
+#: app/biglinux_microphone/ui/view.py:136
+#: app/biglinux_microphone/ui/view.py:137
 msgid "Main menu"
 msgstr ""
 
-#: app/biglinux_microphone/ui/view.py:178
-msgid "Listen back"
-msgstr ""
-
-#: app/biglinux_microphone/ui/view.py:179
-msgid "2 s later — use headphones"
-msgstr ""
-
-#: app/biglinux_microphone/ui/view.py:458
+#: app/biglinux_microphone/ui/view.py:425
 msgid "Live monitoring stopped unexpectedly"
 msgstr ""
 
-#: app/biglinux_microphone/ui/pages/home.py:45
-#: app/biglinux_microphone/ui/pages/home.py:55
-#: app/biglinux_microphone/ui/pages/home.py:242
-#: app/biglinux_microphone/ui/pages/microphone_test.py:198
-#: app/biglinux_microphone/ui/pages/calibrate.py:254
+#: app/biglinux_microphone/ui/pages/home.py:24
+msgid "Home"
+msgstr ""
+
+#: app/biglinux_microphone/ui/pages/home.py:39
+#: app/biglinux_microphone/ui/pages/home.py:49
+#: app/biglinux_microphone/ui/pages/home.py:266
+#: app/biglinux_microphone/ui/pages/calibrate.py:249
 msgid "Try again"
 msgstr ""
 
-#: app/biglinux_microphone/ui/pages/home.py:54
-#: app/biglinux_microphone/ui/pages/home.py:241
-#: app/biglinux_microphone/ui/pages/home.py:330
-#: app/biglinux_microphone/ui/pages/voice_volume.py:130
+#: app/biglinux_microphone/ui/pages/home.py:48
+#: app/biglinux_microphone/ui/pages/home.py:265
+#: app/biglinux_microphone/ui/controls.py:543
+#: app/biglinux_microphone/ui/controls.py:579
+#: app/biglinux_microphone/ui/controls.py:695
 #: app/biglinux_microphone/ui/pages/diagnostics.py:73
-#: app/biglinux_microphone/ui/pages/calibrate.py:284
+#: app/biglinux_microphone/ui/pages/calibrate.py:279
 #, fuzzy
 msgid "No microphone available"
 msgstr "Mikrofonfilter"
@@ -147,120 +117,36 @@ msgstr "Mikrofonfilter"
 # pipewire/src/biglinux_microphone/ui/main_view.py, line: 88
 # File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/config.py,
 # line: 27
-#: app/biglinux_microphone/ui/pages/home.py:64
-#: app/biglinux_microphone/ui/pages/home.py:288
+#: app/biglinux_microphone/ui/pages/home.py:58
+#: app/biglinux_microphone/ui/pages/home.py:290
 #, fuzzy
 msgid "Restore microphone"
 msgstr "Mikrofon"
 
 # File: biglinux-noise-reduction-
 # pipewire/src/biglinux_microphone/ui/main_view.py, line: 550
-#: app/biglinux_microphone/ui/pages/home.py:74
-#: app/biglinux_microphone/ui/pages/home.py:222
-#: app/biglinux_microphone/ui/pages/home.py:318
+#: app/biglinux_microphone/ui/pages/home.py:71
+#: app/biglinux_microphone/ui/pages/home.py:246
+#: app/biglinux_microphone/ui/pages/home.py:324
 #, fuzzy
 msgid "Speak to check your microphone"
 msgstr "Hør stemmen min"
 
-# File: biglinux-noise-reduction-
-# pipewire/src/biglinux_microphone/ui/main_view.py, line: 310
-#: app/biglinux_microphone/ui/pages/home.py:83
-#: app/biglinux_microphone/ui/pages/noise_reduction.py:56
-#: app/biglinux_microphone/ui/pages/noise_reduction.py:66
-#, fuzzy
-msgid "Noise reduction"
-msgstr "AI-støydemping"
-
-#: app/biglinux_microphone/ui/pages/home.py:83
+#: app/biglinux_microphone/ui/pages/home.py:101
 msgid "Checking status…"
 msgstr ""
 
-# File: biglinux-noise-reduction-
-# pipewire/src/biglinux_microphone/ui/main_view.py, line: 930
-#: app/biglinux_microphone/ui/pages/home.py:92
-#: app/biglinux_microphone/ui/pages/noise_reduction.py:80
-#, fuzzy
-msgid "Noise-reduction model"
-msgstr "Støyreduksjon deaktivert"
-
-#: app/biglinux_microphone/ui/pages/home.py:94
-msgid "DFN3 (recommended)"
+#: app/biglinux_microphone/ui/pages/home.py:128
+msgid "Listen back"
 msgstr ""
 
-#: app/biglinux_microphone/ui/pages/home.py:103
-#: app/biglinux_microphone/ui/pages/source_picker.py:100
-#, fuzzy
-msgid "Microphone in use"
-msgstr "Mikrofonfilter"
-
-# File: biglinux-noise-reduction-
-# pipewire/src/biglinux_microphone/ui/main_view.py, line: 550
-#: app/biglinux_microphone/ui/pages/home.py:104
-#, fuzzy
-msgid "Looking for microphones…"
-msgstr "Hør stemmen min"
-
-#: app/biglinux_microphone/ui/pages/home.py:120
-#: app/biglinux_microphone/ui/pages/voice_volume.py:18
-#, fuzzy
-msgid "Voice volume"
-msgstr "Mikrofonfilter"
-
-# File: biglinux-noise-reduction-
-# pipewire/src/biglinux_microphone/ui/main_view.py, line: 550
-#: app/biglinux_microphone/ui/pages/home.py:120
-#: app/biglinux_microphone/ui/pages/voice_volume.py:28
-#, fuzzy
-msgid "Checking your microphone…"
-msgstr "Hør stemmen min"
-
-# #-#-#-#-#  biglinux-noise-reduction-pipewire.pot (biglinux-noise-reduction-
-# pipewire)  #-#-#-#-#
-#
-# File: biglinux-noise-reduction-
-# pipewire/src/biglinux_microphone/ui/main_view.py, line: 88
-# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/config.py,
-# line: 27
-#: app/biglinux_microphone/ui/pages/home.py:127
-#: app/biglinux_microphone/ui/pages/voice_volume.py:33
-#: app/biglinux_microphone/ui/pages/calibrate.py:32
-#, fuzzy
-msgid "Adjust volume"
-msgstr "Mikrofon"
-
-#: app/biglinux_microphone/ui/pages/home.py:144
-#, fuzzy
-msgid "Microphone volume"
-msgstr "Mikrofonfilter"
-
-#: app/biglinux_microphone/ui/pages/home.py:148
-#: app/biglinux_microphone/ui/pages/voice_volume.py:44
-#, fuzzy
-msgid "Automatic volume"
-msgstr "Mikrofonfilter"
-
-#: app/biglinux_microphone/ui/pages/home.py:149
-msgid "Follows your voice. Open to change its limits."
+#: app/biglinux_microphone/ui/pages/home.py:130
+msgid "2 s later — use headphones"
 msgstr ""
-
-# #-#-#-#-#  biglinux-noise-reduction-pipewire.pot (biglinux-noise-reduction-
-# pipewire)  #-#-#-#-#
-#
-# File: biglinux-noise-reduction-
-# pipewire/src/biglinux_microphone/ui/main_view.py, line: 88
-# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/config.py,
-# line: 27
-#: app/biglinux_microphone/ui/pages/home.py:161
-#: app/biglinux_microphone/ui/pages/microphone_test.py:32
-#: app/biglinux_microphone/ui/pages/calibrate.py:206
-#, fuzzy
-msgid "Test microphone"
-msgstr "Mikrofon"
 
 # File: biglinux-noise-reduction-
 # pipewire/src/biglinux_microphone/ui/main_view.py, line: 443
-#: app/biglinux_microphone/ui/pages/home.py:238
-#: app/biglinux_microphone/ui/pages/voice_volume.py:131
+#: app/biglinux_microphone/ui/pages/home.py:262
 #, fuzzy
 msgid "Choose a microphone to continue"
 msgstr "Velg hvordan stemmen din høres ut for andre."
@@ -272,18 +158,18 @@ msgstr "Velg hvordan stemmen din høres ut for andre."
 # pipewire/src/biglinux_microphone/ui/main_view.py, line: 88
 # File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/config.py,
 # line: 27
-#: app/biglinux_microphone/ui/pages/home.py:239
+#: app/biglinux_microphone/ui/pages/home.py:263
 #, fuzzy
 msgid "Choose microphone"
 msgstr "Mikrofon"
 
-#: app/biglinux_microphone/ui/pages/home.py:288
+#: app/biglinux_microphone/ui/pages/home.py:290
 msgid "Unmute"
 msgstr ""
 
 # File: biglinux-noise-reduction-
 # pipewire/src/biglinux_microphone/ui/main_view.py, line: 550
-#: app/biglinux_microphone/ui/pages/home.py:291
+#: app/biglinux_microphone/ui/pages/home.py:293
 #, fuzzy
 msgid "Updating microphone…"
 msgstr "Hør stemmen min"
@@ -315,49 +201,37 @@ msgstr ""
 msgid "Off — background noise is not reduced"
 msgstr ""
 
-#: app/biglinux_microphone/ui/pages/home.py:313
+#: app/biglinux_microphone/ui/pages/home.py:319
 #, fuzzy
 msgid "Microphone unavailable"
 msgstr "Mikrofonfilter"
 
-#: app/biglinux_microphone/ui/pages/home.py:315
+#: app/biglinux_microphone/ui/pages/home.py:321
 #, fuzzy
 msgid "Microphone muted"
 msgstr "Mikrofonfilter"
 
 # File: biglinux-noise-reduction-
-# pipewire/src/biglinux_microphone/ui/main_view.py, line: 550
-#: app/biglinux_microphone/ui/pages/home.py:334
-#: app/biglinux_microphone/ui/pages/voice_volume.py:139
-#, fuzzy
-msgid "Adjusted for your voice"
-msgstr "Hør stemmen min"
-
-#: app/biglinux_microphone/ui/pages/home.py:336
-msgid "Not adjusted yet — measure once for this microphone"
-msgstr ""
-
-# File: biglinux-noise-reduction-
 # pipewire/src/biglinux_microphone/ui/main_view.py, line: 227
-#: app/biglinux_microphone/ui/pages/home.py:339
+#: app/biglinux_microphone/ui/pages/home.py:326
 #, fuzzy
 msgid "Loading…"
 msgstr "Bruker innstillinger…"
 
-#: app/biglinux_microphone/ui/pages/home.py:360
+#: app/biglinux_microphone/ui/pages/home.py:347
 #, fuzzy
 msgid "No sound"
 msgstr "Systemlyd"
 
-#: app/biglinux_microphone/ui/pages/home.py:362
+#: app/biglinux_microphone/ui/pages/home.py:349
 msgid "Sound detected — speak normally"
 msgstr ""
 
-#: app/biglinux_microphone/ui/pages/home.py:364
+#: app/biglinux_microphone/ui/pages/home.py:351
 msgid "Good level"
 msgstr ""
 
-#: app/biglinux_microphone/ui/pages/home.py:366
+#: app/biglinux_microphone/ui/pages/home.py:353
 msgid "Near the limit — lower the microphone volume"
 msgstr ""
 
@@ -368,336 +242,10 @@ msgstr ""
 # pipewire/src/biglinux_microphone/ui/main_view.py, line: 88
 # File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/config.py,
 # line: 27
-#: app/biglinux_microphone/ui/pages/home.py:368
+#: app/biglinux_microphone/ui/pages/home.py:355
 #, fuzzy
 msgid "Too loud — lower the microphone volume"
 msgstr "Mikrofon"
-
-# #-#-#-#-#  biglinux-noise-reduction-pipewire.pot (biglinux-noise-reduction-
-# pipewire)  #-#-#-#-#
-#
-# File: biglinux-noise-reduction-
-# pipewire/src/biglinux_microphone/ui/main_view.py, line: 88
-# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/config.py,
-# line: 27
-#: app/biglinux_microphone/ui/pages/source_picker.py:22
-#, fuzzy
-msgid "Select microphone"
-msgstr "Mikrofon"
-
-#: app/biglinux_microphone/ui/pages/source_picker.py:26
-#, fuzzy
-msgid "No microphones available"
-msgstr "Mikrofonfilter"
-
-#: app/biglinux_microphone/ui/pages/source_picker.py:28
-msgid ""
-"Connect a microphone. For Bluetooth, enable the headset microphone in your "
-"system sound settings."
-msgstr ""
-
-#: app/biglinux_microphone/ui/pages/source_picker.py:101
-msgid "Other microphones available"
-msgstr ""
-
-#: app/biglinux_microphone/ui/pages/source_picker.py:103
-msgid "Microphones from other applications"
-msgstr ""
-
-#: app/biglinux_microphone/ui/pages/source_picker.py:104
-msgid "These inputs may already apply sound effects."
-msgstr ""
-
-#: app/biglinux_microphone/ui/pages/source_picker.py:117
-msgid "In use"
-msgstr ""
-
-#: app/biglinux_microphone/ui/pages/source_picker.py:125
-msgid "Input disconnected"
-msgstr ""
-
-# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/window.py,
-# line: 193
-#: app/biglinux_microphone/ui/pages/noise_reduction.py:27
-#, fuzzy
-msgid "DFN3 — recommended"
-msgstr "Gjenopprett standard"
-
-#: app/biglinux_microphone/ui/pages/noise_reduction.py:27
-msgid "The lightest. Works well on older computers."
-msgstr ""
-
-#: app/biglinux_microphone/ui/pages/noise_reduction.py:32
-msgid ""
-"A larger network that leaves less noise between words. Uses about twice the "
-"processing of DFN3, and has the shortest delay while “Silence when nobody "
-"speaks” is off."
-msgstr ""
-
-#: app/biglinux_microphone/ui/pages/noise_reduction.py:41
-msgid ""
-"The strongest cleanup, with a steady quiet background. Uses about four times "
-"the processing of DFN3."
-msgstr ""
-
-#: app/biglinux_microphone/ui/pages/noise_reduction.py:67
-msgid "Applications hear your voice with less background noise."
-msgstr ""
-
-#: app/biglinux_microphone/ui/pages/noise_reduction.py:81
-msgid "Heavier models clean more and use more processing."
-msgstr ""
-
-#: app/biglinux_microphone/ui/pages/noise_reduction.py:111
-msgid "Silence when nobody speaks"
-msgstr ""
-
-#: app/biglinux_microphone/ui/pages/noise_reduction.py:113
-msgid ""
-"Mutes leftover noise while you are not talking. Your voice then arrives "
-"about 0.07 s later."
-msgstr ""
-
-#: app/biglinux_microphone/ui/pages/noise_reduction.py:124
-msgid "Voice detection"
-msgstr "Stemmedeteksjon"
-
-#: app/biglinux_microphone/ui/pages/noise_reduction.py:126
-msgid ""
-"Sensitive keeps quiet voices and lets more noise through; strict mutes more "
-"noise and may cut faint words."
-msgstr ""
-"En følsom innstilling beholder svake stemmer og slipper gjennom mer støy; en "
-"streng demper mer støy og kan kutte svake ord."
-
-#: app/biglinux_microphone/ui/pages/noise_reduction.py:134
-msgid "Very sensitive"
-msgstr "Svært følsom"
-
-#: app/biglinux_microphone/ui/pages/noise_reduction.py:135
-msgid "Sensitive"
-msgstr "Følsom"
-
-#: app/biglinux_microphone/ui/pages/noise_reduction.py:136
-msgid "Normal"
-msgstr "Normal"
-
-#: app/biglinux_microphone/ui/pages/noise_reduction.py:137
-msgid "Strict"
-msgstr "Streng"
-
-#: app/biglinux_microphone/ui/pages/noise_reduction.py:138
-msgid "Very strict"
-msgstr "Svært streng"
-
-# File: biglinux-noise-reduction-
-# pipewire/src/biglinux_microphone/ui/main_view.py, line: 434
-# File: biglinux-noise-reduction-
-# pipewire/src/biglinux_microphone/ui/main_view.py, line: 472
-#: app/biglinux_microphone/ui/pages/noise_reduction.py:155
-msgid "Intensity"
-msgstr "Intensitet"
-
-#: app/biglinux_microphone/ui/pages/noise_reduction.py:163
-msgid "How much noise to remove"
-msgstr ""
-
-#: app/biglinux_microphone/ui/pages/noise_reduction.py:166
-msgid "Lower values preserve more of the original sound."
-msgstr ""
-
-#: app/biglinux_microphone/ui/pages/noise_reduction.py:173
-msgid "The current model already handles residual noise internally."
-msgstr ""
-
-#: app/biglinux_microphone/ui/pages/noise_reduction.py:179
-msgid "Noise that still gets through"
-msgstr ""
-
-#: app/biglinux_microphone/ui/pages/noise_reduction.py:180
-msgid "DFN3 can silence very quiet residual sounds between words."
-msgstr ""
-
-#: app/biglinux_microphone/ui/pages/noise_reduction.py:183
-msgid "Silence residual noise by frequency"
-msgstr ""
-
-#: app/biglinux_microphone/ui/pages/noise_reduction.py:184
-msgid "Sounds below the line will be silenced."
-msgstr ""
-
-#: app/biglinux_microphone/ui/pages/noise_reduction.py:201
-msgid "Manual adjustments active"
-msgstr ""
-
-#: app/biglinux_microphone/ui/pages/noise_reduction.py:203
-msgid "Values set on the command line replace the recommended ones for DFN3."
-msgstr ""
-
-#: app/biglinux_microphone/ui/pages/noise_reduction.py:206
-msgid "Restore"
-msgstr ""
-
-#: app/biglinux_microphone/ui/pages/noise_reduction.py:225
-msgid ""
-"Move the line above residual noise, but keep it below the quiet parts of "
-"your voice."
-msgstr ""
-
-#: app/biglinux_microphone/ui/pages/noise_reduction.py:235
-msgid "Restore recommended"
-msgstr ""
-
-#: app/biglinux_microphone/ui/pages/noise_reduction.py:348
-#, fuzzy, python-format
-msgid "Model in use: %s"
-msgstr "Mikrofonfilter"
-
-#: app/biglinux_microphone/ui/pages/voice_volume.py:45
-msgid "Adjusts microphone volume within your chosen limits."
-msgstr ""
-
-# File: biglinux-noise-reduction-
-# pipewire/src/biglinux_microphone/ui/main_view.py, line: 550
-#: app/biglinux_microphone/ui/pages/voice_volume.py:47
-#, fuzzy
-msgid "Follow my voice"
-msgstr "Hør stemmen min"
-
-#: app/biglinux_microphone/ui/pages/voice_volume.py:53
-msgid "Minimum volume (%)"
-msgstr ""
-
-#: app/biglinux_microphone/ui/pages/voice_volume.py:55
-msgid "Maximum volume (%)"
-msgstr ""
-
-#: app/biglinux_microphone/ui/pages/voice_volume.py:62
-msgid "Apply volume limits"
-msgstr ""
-
-#: app/biglinux_microphone/ui/pages/voice_volume.py:133
-msgid "Automatic volume is on"
-msgstr ""
-
-#: app/biglinux_microphone/ui/pages/voice_volume.py:135
-#, python-format
-msgid "Follows your voice between %d%% and %d%%"
-msgstr ""
-
-# #-#-#-#-#  biglinux-noise-reduction-pipewire.pot (biglinux-noise-reduction-
-# pipewire)  #-#-#-#-#
-#
-# File: biglinux-noise-reduction-
-# pipewire/src/biglinux_microphone/ui/main_view.py, line: 88
-# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/config.py,
-# line: 27
-#: app/biglinux_microphone/ui/pages/voice_volume.py:140
-#, fuzzy
-msgid "The volume was set for this microphone."
-msgstr "Mikrofon"
-
-#: app/biglinux_microphone/ui/pages/voice_volume.py:142
-msgid "Not adjusted yet"
-msgstr ""
-
-#: app/biglinux_microphone/ui/pages/voice_volume.py:144
-msgid "Measure your voice once to set the ideal volume."
-msgstr ""
-
-#: app/biglinux_microphone/ui/pages/voice_sound.py:16
-msgid "Natural"
-msgstr "Naturlig"
-
-#: app/biglinux_microphone/ui/pages/voice_sound.py:17
-msgid "More clarity"
-msgstr ""
-
-# File: biglinux-noise-reduction-
-# pipewire/src/biglinux_microphone/ui/main_view.py, line: 550
-#: app/biglinux_microphone/ui/pages/voice_sound.py:18
-#, fuzzy
-msgid "Fuller voice"
-msgstr "Hør stemmen min"
-
-#: app/biglinux_microphone/ui/pages/voice_sound.py:19
-msgid "Podcast"
-msgstr "Podcast"
-
-# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/config.py,
-# line: 607
-#: app/biglinux_microphone/ui/pages/voice_sound.py:20
-msgid "Custom"
-msgstr "Egendefinert"
-
-# File: biglinux-noise-reduction-
-# pipewire/src/biglinux_microphone/ui/main_view.py, line: 392
-#: app/biglinux_microphone/ui/pages/voice_sound.py:25
-#, fuzzy
-msgid "Voice sound"
-msgstr "Stemme-tilstedeværelse"
-
-# File: biglinux-noise-reduction-
-# pipewire/src/biglinux_microphone/ui/main_view.py, line: 392
-#: app/biglinux_microphone/ui/pages/voice_sound.py:35
-#, fuzzy
-msgid "Voice profile"
-msgstr "Stemme-tilstedeværelse"
-
-#: app/biglinux_microphone/ui/pages/voice_sound.py:36
-msgid "Choose a ready-made sound, or customise your voice."
-msgstr ""
-
-# File: biglinux-noise-reduction-
-# pipewire/src/biglinux_microphone/ui/main_view.py, line: 477
-#: app/biglinux_microphone/ui/pages/voice_sound.py:88
-msgid "Equalizer"
-msgstr "Equalizer"
-
-#: app/biglinux_microphone/ui/pages/voice_sound.py:90
-msgid "Up boosts a band, down reduces it. 0 dB leaves it unchanged."
-msgstr ""
-
-#: app/biglinux_microphone/ui/pages/voice_sound.py:126
-#, python-format
-msgid "%s Hz gain"
-msgstr ""
-
-# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/window.py,
-# line: 193
-#: app/biglinux_microphone/ui/pages/voice_sound.py:142
-#, fuzzy
-msgid "Restore custom equalizer"
-msgstr "Gjenopprett standard"
-
-# File: biglinux-noise-reduction-
-# pipewire/src/biglinux_microphone/ui/main_view.py, line: 687
-#: app/biglinux_microphone/ui/pages/echo_routing.py:16
-#, fuzzy
-msgid "Echo and routing"
-msgstr "Ekko-kansellering"
-
-# File: biglinux-noise-reduction-
-# pipewire/src/biglinux_microphone/ui/main_view.py, line: 687
-#: app/biglinux_microphone/ui/pages/echo_routing.py:24
-msgid "Echo cancellation"
-msgstr "Ekko-kansellering"
-
-#: app/biglinux_microphone/ui/pages/echo_routing.py:26
-msgid "Prevents sound from your speakers returning through the microphone."
-msgstr ""
-
-#: app/biglinux_microphone/ui/pages/echo_routing.py:29
-msgid "Speaker echo"
-msgstr ""
-
-#: app/biglinux_microphone/ui/pages/echo_routing.py:31
-msgid "Automatic"
-msgstr ""
-
-#: app/biglinux_microphone/ui/pages/echo_routing.py:31
-msgid "Always on"
-msgstr ""
 
 # File: biglinux-noise-reduction-
 # pipewire/src/biglinux_microphone/ui/main_view.py, line: 363
@@ -705,12 +253,257 @@ msgstr ""
 # pipewire/src/biglinux_microphone/ui/main_view.py, line: 381
 # File: biglinux-noise-reduction-
 # pipewire/src/biglinux_microphone/ui/main_view.py, line: 400
-#: app/biglinux_microphone/ui/pages/echo_routing.py:31
+#: app/biglinux_microphone/ui/controls.py:37
+#: app/biglinux_microphone/ui/controls.py:182
+#: app/biglinux_microphone/ui/controls.py:279
+#: app/biglinux_microphone/ui/controls.py:449
+#: app/biglinux_microphone/ui/widgets/setting_cards.py:363
+#: app/biglinux_microphone/ui/widgets/setting_cards.py:375
 msgid "Off"
 msgstr "Avslått"
 
-#: app/biglinux_microphone/ui/pages/diagnostics.py:19
-msgid "Diagnostics"
+#: app/biglinux_microphone/ui/controls.py:38
+#, fuzzy
+msgid "Light filter"
+msgstr "Mikrofonfilter"
+
+#: app/biglinux_microphone/ui/controls.py:41
+msgid ""
+"DFN3: good for most situations, with a clean voice of good quality. The "
+"lightest, it works well on older computers."
+msgstr ""
+
+#: app/biglinux_microphone/ui/controls.py:44
+msgid "High quality"
+msgstr ""
+
+#: app/biglinux_microphone/ui/controls.py:47
+msgid ""
+"DPDFNet: the strongest cleanup, with a steady quiet background. Uses about "
+"four times the processing of DFN3."
+msgstr ""
+
+#: app/biglinux_microphone/ui/controls.py:53
+msgid "Very sensitive"
+msgstr "Svært følsom"
+
+#: app/biglinux_microphone/ui/controls.py:54
+msgid "Sensitive"
+msgstr "Følsom"
+
+#: app/biglinux_microphone/ui/controls.py:55
+msgid "Normal"
+msgstr "Normal"
+
+#: app/biglinux_microphone/ui/controls.py:56
+msgid "Strict"
+msgstr "Streng"
+
+#: app/biglinux_microphone/ui/controls.py:57
+msgid "Very strict"
+msgstr "Svært streng"
+
+#: app/biglinux_microphone/ui/controls.py:62
+msgid "Natural"
+msgstr "Naturlig"
+
+#: app/biglinux_microphone/ui/controls.py:63
+msgid "Podcast"
+msgstr "Podcast"
+
+# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/config.py,
+# line: 607
+#: app/biglinux_microphone/ui/controls.py:64
+msgid "Custom"
+msgstr "Egendefinert"
+
+# File: biglinux-noise-reduction-
+# pipewire/src/biglinux_microphone/ui/main_view.py, line: 310
+#: app/biglinux_microphone/ui/controls.py:131
+#, fuzzy
+msgid "Noise reduction"
+msgstr "AI-støydemping"
+
+#: app/biglinux_microphone/ui/controls.py:132
+msgid "Applications hear your voice with less background noise."
+msgstr ""
+
+#: app/biglinux_microphone/ui/controls.py:150
+msgid "How much noise to remove"
+msgstr ""
+
+#: app/biglinux_microphone/ui/controls.py:157
+msgid "Values set on the command line replace the recommended ones for DFN3."
+msgstr ""
+
+#: app/biglinux_microphone/ui/controls.py:161
+msgid "Restore"
+msgstr ""
+
+# File: biglinux-noise-reduction-
+# pipewire/src/biglinux_microphone/ui/main_view.py, line: 434
+# File: biglinux-noise-reduction-
+# pipewire/src/biglinux_microphone/ui/main_view.py, line: 472
+#: app/biglinux_microphone/ui/controls.py:167
+msgid "Intensity"
+msgstr "Intensitet"
+
+#: app/biglinux_microphone/ui/controls.py:168
+msgid "Lower values preserve more of the original sound."
+msgstr ""
+
+# File: biglinux-noise-reduction-
+# pipewire/src/biglinux_microphone/ui/main_view.py, line: 687
+#: app/biglinux_microphone/ui/controls.py:180
+msgid "Echo cancellation"
+msgstr "Ekko-kansellering"
+
+#: app/biglinux_microphone/ui/controls.py:181
+msgid "Prevents sound from your speakers returning through the microphone."
+msgstr ""
+
+#: app/biglinux_microphone/ui/controls.py:182
+#: app/biglinux_microphone/ui/controls.py:721
+msgid "Automatic"
+msgstr ""
+
+#: app/biglinux_microphone/ui/controls.py:182
+msgid "Always on"
+msgstr ""
+
+#: app/biglinux_microphone/ui/controls.py:195
+#: app/biglinux_microphone/ui/controls.py:199
+#, fuzzy
+msgid "Microphone in use"
+msgstr "Mikrofonfilter"
+
+# File: biglinux-noise-reduction-
+# pipewire/src/biglinux_microphone/ui/main_view.py, line: 392
+#: app/biglinux_microphone/ui/controls.py:220
+#, fuzzy
+msgid "Voice sound"
+msgstr "Stemme-tilstedeværelse"
+
+#: app/biglinux_microphone/ui/controls.py:221
+msgid "Choose a ready-made sound, or customise your voice."
+msgstr ""
+
+#: app/biglinux_microphone/ui/controls.py:249
+#, python-format
+msgid "%s Hz gain"
+msgstr ""
+
+# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/window.py,
+# line: 193
+#: app/biglinux_microphone/ui/controls.py:265
+#, fuzzy
+msgid "Restore custom equalizer"
+msgstr "Gjenopprett standard"
+
+#: app/biglinux_microphone/ui/controls.py:269
+msgid "Up boosts a band, down reduces it. 0 dB leaves it unchanged."
+msgstr ""
+
+#: app/biglinux_microphone/ui/controls.py:279
+#: app/biglinux_microphone/ui/controls.py:314
+msgid "Noise that still gets through"
+msgstr ""
+
+#: app/biglinux_microphone/ui/controls.py:279
+#: app/biglinux_microphone/ui/widgets/setting_cards.py:363
+#: app/biglinux_microphone/ui/widgets/setting_cards.py:375
+msgid "On"
+msgstr ""
+
+#: app/biglinux_microphone/ui/controls.py:299
+msgid "Voice detection"
+msgstr "Stemmedeteksjon"
+
+#: app/biglinux_microphone/ui/controls.py:304
+msgid ""
+"Sensitive keeps quiet voices and lets more noise through; strict mutes more "
+"noise and may cut faint words."
+msgstr ""
+"En følsom innstilling beholder svake stemmer og slipper gjennom mer støy; en "
+"streng demper mer støy og kan kutte svake ord."
+
+#: app/biglinux_microphone/ui/controls.py:315
+msgid "Mutes leftover noise while you are not talking."
+msgstr ""
+
+#: app/biglinux_microphone/ui/controls.py:338
+#: app/biglinux_microphone/ui/controls.py:392
+#, fuzzy
+msgid "Microphone volume"
+msgstr "Mikrofonfilter"
+
+# File: biglinux-noise-reduction-
+# pipewire/src/biglinux_microphone/ui/main_view.py, line: 550
+#: app/biglinux_microphone/ui/controls.py:340
+#, fuzzy
+msgid "Follow my voice"
+msgstr "Hør stemmen min"
+
+#: app/biglinux_microphone/ui/controls.py:356
+msgid "Minimum volume (%)"
+msgstr ""
+
+#: app/biglinux_microphone/ui/controls.py:357
+msgid "Maximum volume (%)"
+msgstr ""
+
+#: app/biglinux_microphone/ui/controls.py:366
+msgid "Apply volume limits"
+msgstr ""
+
+# #-#-#-#-#  biglinux-noise-reduction-pipewire.pot (biglinux-noise-reduction-
+# pipewire)  #-#-#-#-#
+#
+# File: biglinux-noise-reduction-
+# pipewire/src/biglinux_microphone/ui/main_view.py, line: 88
+# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/config.py,
+# line: 27
+#: app/biglinux_microphone/ui/controls.py:376
+#: app/biglinux_microphone/ui/pages/calibrate.py:32
+#, fuzzy
+msgid "Adjust volume"
+msgstr "Mikrofon"
+
+#: app/biglinux_microphone/ui/controls.py:606
+msgid "Input disconnected"
+msgstr ""
+
+#: app/biglinux_microphone/ui/controls.py:608
+msgid "These inputs may already apply sound effects."
+msgstr ""
+
+#: app/biglinux_microphone/ui/controls.py:625
+msgid ""
+"Connect a microphone. For Bluetooth, enable the headset microphone in your "
+"system sound settings."
+msgstr ""
+
+# File: biglinux-noise-reduction-
+# pipewire/src/biglinux_microphone/ui/main_view.py, line: 310
+#: app/biglinux_microphone/ui/controls.py:659
+#, fuzzy
+msgid "Noise reduction is off"
+msgstr "AI-støydemping"
+
+#: app/biglinux_microphone/ui/controls.py:723
+#, python-format
+msgid "Follows your voice between %d%% and %d%%"
+msgstr ""
+
+# File: biglinux-noise-reduction-
+# pipewire/src/biglinux_microphone/ui/main_view.py, line: 550
+#: app/biglinux_microphone/ui/controls.py:731
+#, fuzzy
+msgid "Adjusted for your voice"
+msgstr "Hør stemmen min"
+
+#: app/biglinux_microphone/ui/controls.py:733
+msgid "Not adjusted yet — measure once for this microphone"
 msgstr ""
 
 #: app/biglinux_microphone/ui/pages/diagnostics.py:26
@@ -751,7 +544,7 @@ msgid "Unknown"
 msgstr ""
 
 #: app/biglinux_microphone/ui/pages/diagnostics.py:71
-msgid "Settings loaded — test your microphone to check the sound."
+msgid "Settings loaded — listen back to check the sound."
 msgstr ""
 
 #: app/biglinux_microphone/ui/pages/diagnostics.py:95
@@ -762,169 +555,6 @@ msgstr ""
 #, python-format
 msgid "%.1f ms"
 msgstr ""
-
-#: app/biglinux_microphone/ui/pages/microphone_test.py:73
-#: app/biglinux_microphone/ui/pages/compare.py:56
-msgid "Record a short sample"
-msgstr ""
-
-#: app/biglinux_microphone/ui/pages/microphone_test.py:75
-#: app/biglinux_microphone/ui/pages/compare.py:59
-msgid ""
-"Speak normally for five seconds. Then you can hear exactly what applications "
-"receive."
-msgstr ""
-
-#: app/biglinux_microphone/ui/pages/microphone_test.py:81
-msgid "Use headphones before playing the sample to avoid echo."
-msgstr ""
-
-#: app/biglinux_microphone/ui/pages/microphone_test.py:93
-msgid "Record sample"
-msgstr ""
-
-#: app/biglinux_microphone/ui/pages/microphone_test.py:113
-#: app/biglinux_microphone/ui/pages/calibrate.py:117
-msgid "Speak normally"
-msgstr ""
-
-#: app/biglinux_microphone/ui/pages/microphone_test.py:120
-#: app/biglinux_microphone/ui/pages/compare.py:63
-msgid "Recording what applications hear from your microphone."
-msgstr ""
-
-#: app/biglinux_microphone/ui/pages/microphone_test.py:134
-#: app/biglinux_microphone/ui/pages/microphone_test.py:272
-#: app/biglinux_microphone/ui/pages/microphone_test.py:301
-#: app/biglinux_microphone/ui/pages/calibrate.py:145
-#: app/biglinux_microphone/ui/pages/calibrate.py:318
-#: app/biglinux_microphone/ui/pages/calibrate.py:346
-#, python-format
-msgid "%(elapsed)d of %(total)d seconds"
-msgstr ""
-
-# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/window.py,
-# line: 175
-#: app/biglinux_microphone/ui/pages/microphone_test.py:139
-#: app/biglinux_microphone/ui/pages/calibrate.py:156
-#, fuzzy
-msgid "Cancel"
-msgstr "Avbryt"
-
-#: app/biglinux_microphone/ui/pages/microphone_test.py:160
-msgid "Your sample is ready"
-msgstr ""
-
-#: app/biglinux_microphone/ui/pages/microphone_test.py:162
-#: app/biglinux_microphone/ui/pages/compare.py:67
-msgid ""
-"Listen to the short recording and check whether your voice sounds clear and "
-"natural."
-msgstr ""
-
-#: app/biglinux_microphone/ui/pages/microphone_test.py:167
-#: app/biglinux_microphone/ui/pages/microphone_test.py:371
-msgid "Play sample"
-msgstr ""
-
-#: app/biglinux_microphone/ui/pages/microphone_test.py:173
-msgid "Record again"
-msgstr ""
-
-#: app/biglinux_microphone/ui/pages/microphone_test.py:175
-#: app/biglinux_microphone/ui/pages/calibrate.py:202
-msgid "Done"
-msgstr ""
-
-# #-#-#-#-#  biglinux-noise-reduction-pipewire.pot (biglinux-noise-reduction-
-# pipewire)  #-#-#-#-#
-#
-# File: biglinux-noise-reduction-
-# pipewire/src/biglinux_microphone/ui/main_view.py, line: 88
-# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/config.py,
-# line: 27
-#: app/biglinux_microphone/ui/pages/microphone_test.py:195
-#, fuzzy
-msgid "I could not record the microphone"
-msgstr "Mikrofon"
-
-#: app/biglinux_microphone/ui/pages/microphone_test.py:196
-#: app/biglinux_microphone/ui/pages/microphone_test.py:401
-msgid "Check that the microphone is available and try again."
-msgstr ""
-
-#: app/biglinux_microphone/ui/pages/microphone_test.py:217
-msgid "The microphone changed or became unavailable. Record a new sample."
-msgstr ""
-
-#: app/biglinux_microphone/ui/pages/microphone_test.py:236
-msgid "The microphone is not ready. Return to Home to check its status."
-msgstr ""
-
-#: app/biglinux_microphone/ui/pages/microphone_test.py:240
-msgid "The sample includes the current noise reduction and voice settings."
-msgstr ""
-
-#: app/biglinux_microphone/ui/pages/microphone_test.py:244
-msgid "Noise reduction is off, so the sample uses the microphone directly."
-msgstr ""
-
-#: app/biglinux_microphone/ui/pages/microphone_test.py:264
-#: app/biglinux_microphone/ui/pages/calibrate.py:312
-#, fuzzy
-msgid "No microphone is selected"
-msgstr "Mikrofonfilter"
-
-#: app/biglinux_microphone/ui/pages/microphone_test.py:371
-msgid "Stop playback"
-msgstr ""
-
-#: app/biglinux_microphone/ui/pages/compare.py:27
-msgid "Original"
-msgstr ""
-
-# File: biglinux-noise-reduction-
-# pipewire/src/biglinux_microphone/ui/main_view.py, line: 310
-#: app/biglinux_microphone/ui/pages/compare.py:29
-#, fuzzy
-msgid "With noise reduction"
-msgstr "AI-støydemping"
-
-#: app/biglinux_microphone/ui/pages/compare.py:41
-msgid "Compare the same recording"
-msgstr ""
-
-#: app/biglinux_microphone/ui/pages/compare.py:44
-msgid ""
-"Speak normally for five seconds. Then listen to the same words with and "
-"without noise reduction."
-msgstr ""
-
-#: app/biglinux_microphone/ui/pages/compare.py:48
-msgid "Recording your microphone, then preparing both versions…"
-msgstr ""
-
-#: app/biglinux_microphone/ui/pages/compare.py:52
-msgid ""
-"Choose a version and play it. Playback volumes are balanced for comparison."
-msgstr ""
-
-#: app/biglinux_microphone/ui/pages/compare.py:83
-msgid ""
-"This comparison includes noise reduction only. Equalizer, echo cancellation "
-"and other voice effects are not included."
-msgstr ""
-
-#: app/biglinux_microphone/ui/pages/compare.py:127
-msgid "Play original"
-msgstr ""
-
-# File: biglinux-noise-reduction-
-# pipewire/src/biglinux_microphone/ui/main_view.py, line: 310
-#: app/biglinux_microphone/ui/pages/compare.py:129
-#, fuzzy
-msgid "Play with noise reduction"
-msgstr "AI-støydemping"
 
 #: app/biglinux_microphone/ui/pages/calibrate.py:66
 msgid "Adjust the volume for your voice"
@@ -949,6 +579,10 @@ msgstr ""
 msgid "Start"
 msgstr ""
 
+#: app/biglinux_microphone/ui/pages/calibrate.py:117
+msgid "Speak normally"
+msgstr ""
+
 #: app/biglinux_microphone/ui/pages/calibrate.py:126
 msgid ""
 "The program is listening to your voice to set the ideal volume for this "
@@ -956,14 +590,28 @@ msgid ""
 msgstr ""
 
 #: app/biglinux_microphone/ui/pages/calibrate.py:139
-#: app/biglinux_microphone/ui/pages/calibrate.py:321
+#: app/biglinux_microphone/ui/pages/calibrate.py:316
 #, fuzzy
 msgid "Listening to your voice"
 msgstr "Støystyrke (ingen stemme)"
 
+#: app/biglinux_microphone/ui/pages/calibrate.py:145
+#: app/biglinux_microphone/ui/pages/calibrate.py:313
+#: app/biglinux_microphone/ui/pages/calibrate.py:341
+#, python-format
+msgid "%(elapsed)d of %(total)d seconds"
+msgstr ""
+
 #: app/biglinux_microphone/ui/pages/calibrate.py:152
 msgid "Speak at the volume and distance you normally use."
 msgstr ""
+
+# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/window.py,
+# line: 175
+#: app/biglinux_microphone/ui/pages/calibrate.py:156
+#, fuzzy
+msgid "Cancel"
+msgstr "Avbryt"
 
 #: app/biglinux_microphone/ui/pages/calibrate.py:179
 #, fuzzy
@@ -990,6 +638,10 @@ msgstr ""
 msgid "You can test your voice or finish now."
 msgstr ""
 
+#: app/biglinux_microphone/ui/pages/calibrate.py:202
+msgid "Done"
+msgstr ""
+
 # #-#-#-#-#  biglinux-noise-reduction-pipewire.pot (biglinux-noise-reduction-
 # pipewire)  #-#-#-#-#
 #
@@ -997,21 +649,21 @@ msgstr ""
 # pipewire/src/biglinux_microphone/ui/main_view.py, line: 88
 # File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/config.py,
 # line: 27
-#: app/biglinux_microphone/ui/pages/calibrate.py:211
+#: app/biglinux_microphone/ui/pages/calibrate.py:206
 #, fuzzy
 msgid "Adjust again"
 msgstr "Mikrofon"
 
-#: app/biglinux_microphone/ui/pages/calibrate.py:218
+#: app/biglinux_microphone/ui/pages/calibrate.py:213
 #, fuzzy
 msgid "For live streams and long recordings"
 msgstr "Renser stemmen din for samtaler og opptak"
 
-#: app/biglinux_microphone/ui/pages/calibrate.py:221
+#: app/biglinux_microphone/ui/pages/calibrate.py:216
 msgid "Keep voice volume uniform"
 msgstr ""
 
-#: app/biglinux_microphone/ui/pages/calibrate.py:222
+#: app/biglinux_microphone/ui/pages/calibrate.py:217
 msgid "Compensates when you move farther from the microphone."
 msgstr ""
 
@@ -1022,41 +674,41 @@ msgstr ""
 # pipewire/src/biglinux_microphone/ui/main_view.py, line: 88
 # File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/config.py,
 # line: 27
-#: app/biglinux_microphone/ui/pages/calibrate.py:240
+#: app/biglinux_microphone/ui/pages/calibrate.py:235
 #, fuzzy
 msgid "I could not adjust the microphone"
 msgstr "Mikrofon"
 
-#: app/biglinux_microphone/ui/pages/calibrate.py:242
+#: app/biglinux_microphone/ui/pages/calibrate.py:237
 msgid ""
 "Check that the right microphone is selected and try again while speaking "
 "normally."
 msgstr ""
 
-#: app/biglinux_microphone/ui/pages/calibrate.py:287
+#: app/biglinux_microphone/ui/pages/calibrate.py:282
 #, fuzzy
 msgid "Microphone currently selected"
 msgstr "Mikrofonfilter"
 
-#: app/biglinux_microphone/ui/pages/calibrate.py:350
+#: app/biglinux_microphone/ui/pages/calibrate.py:307
+#, fuzzy
+msgid "No microphone is selected"
+msgstr "Mikrofonfilter"
+
+#: app/biglinux_microphone/ui/pages/calibrate.py:345
 msgid "Almost done — keep talking"
 msgstr ""
 
 # File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/window.py,
 # line: 175
-#: app/biglinux_microphone/ui/pages/calibrate.py:392
+#: app/biglinux_microphone/ui/pages/calibrate.py:387
 #, fuzzy
 msgid "Cancelling…"
 msgstr "Avbryt"
 
-#: app/biglinux_microphone/ui/pages/calibrate.py:417
+#: app/biglinux_microphone/ui/pages/calibrate.py:412
 #, python-format
 msgid "Could not fully restore the previous microphone level: %s"
-msgstr ""
-
-#: app/biglinux_microphone/ui/widgets/threshold_editor.py:218
-#, python-format
-msgid "%s Hz threshold (dB)"
 msgstr ""
 
 #: app/biglinux_microphone/ui/widgets/activity_meter.py:55
@@ -1073,6 +725,17 @@ msgstr ""
 #, python-format
 msgid "Peak: %s dBFS"
 msgstr ""
+
+#: app/biglinux_microphone/ui/widgets/setting_cards.py:232
+msgid "Reset"
+msgstr ""
+
+#: app/biglinux_microphone/ui/widgets/setting_cards.py:447
+#, python-brace-format
+msgid "{count} active"
+msgid_plural "{count} active"
+msgstr[0] ""
+msgstr[1] ""
 
 #: usr/share/plasma/plasmoids/br.com.biglinux.micnoise/contents/ui/main.qml:58
 #: usr/share/plasma/plasmoids/br.com.biglinux.micnoise/contents/ui/main.qml:75

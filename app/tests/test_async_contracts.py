@@ -171,6 +171,7 @@ def test_spectrum_uses_waveform_peak_and_preserves_frequency_scale(tmp_path):
     import subprocess
 
     import numpy as np
+
     from biglinux_microphone.ui.audio_capture import SpectrumTap
 
     real_popen = subprocess.Popen
@@ -184,7 +185,7 @@ def test_spectrum_uses_waveform_peak_and_preserves_frequency_scale(tmp_path):
     pcm.astype("float32").tofile(path)
     frames = []
     tap = SpectrumTap(lambda *_: None)
-    tap.configure("fixture", ("fixture",), detailed=True)
+    tap.configure("fixture", ("fixture",))
     with (
         patch(
             "biglinux_microphone.ui.audio_capture.subprocess.Popen",
@@ -196,7 +197,7 @@ def test_spectrum_uses_waveform_peak_and_preserves_frequency_scale(tmp_path):
             side_effect=lambda _g, bands, peak: frames.append((bands, peak)),
         ),
     ):
-        tap._capture("pw-cat", np, "fixture", True, tap._generation)
+        tap._capture("pw-cat", np, "fixture", tap._generation)
     assert len(frames) == 8
     for (bands, peak), db in zip(frames, expected):
         assert abs((-60 + peak * 60) - db) < 0.001
@@ -206,12 +207,11 @@ def test_spectrum_uses_waveform_peak_and_preserves_frequency_scale(tmp_path):
     assert frames[7] == ([0.0] * 30, 0.0)
 
 
-def test_meter_pause_reaps_capture_and_level_only_mode_never_runs_an_fft():
+def test_meter_pause_reaps_capture():
     import subprocess
     import sys
     import threading
 
-    import numpy as np
     from biglinux_microphone.ui.audio_capture import SpectrumTap
 
     started = threading.Event()
@@ -237,11 +237,6 @@ def test_meter_pause_reaps_capture_and_level_only_mode_never_runs_an_fft():
         patch(
             "biglinux_microphone.ui.audio_capture.GLib.idle_add",
             side_effect=lambda _: frame.set(),
-        ),
-        patch.object(
-            np.fft,
-            "rfft",
-            side_effect=AssertionError("level-only capture performed FFT"),
         ),
     ):
         try:

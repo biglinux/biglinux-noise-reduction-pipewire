@@ -67,16 +67,6 @@ fn status_from_graph(settings: &AppSettings, graph: Option<&[Value]>) -> Value {
             .as_bool()
             .or_else(|| props["biglinux.denoising"].as_str()?.parse::<bool>().ok())
     });
-    let comparison_filter = model
-        .filter(|id| observed.mic_present && denoising == Some(true) && matches!(id, 11 | 12))
-        .map(|id| crate::config::NoiseModel::from(id as u8))
-        .map(|model| {
-            let (plugin, label) = model.plugin_and_label();
-            let attenuation = crate::config::noise_model::deepfilter_attenuation_db(
-                settings.noise_reduction.strength,
-            );
-            format!("ladspa=file={plugin}:plugin={label}:controls=c0={attenuation:.2}")
-        });
     serde_json::json!({
         "settings": settings,
         "mic_enabled": pipeline::mic_chain_wanted(&settings.runtime_settings()),
@@ -91,7 +81,6 @@ fn status_from_graph(settings: &AppSettings, graph: Option<&[Value]>) -> Value {
             .or_else(|| props["object.serial"].as_str().map(str::to_owned))),
         "effective_model": if observed.mic_present && denoising == Some(true) { model } else { None },
         "denoising": if observed.mic_present { denoising } else { None },
-        "comparison_filter": comparison_filter,
     })
 }
 
@@ -563,15 +552,8 @@ mod tests {
         assert_eq!(ready["effective_model"], 12);
         assert_eq!(ready["denoising"], true);
         assert_eq!(ready["mic_serial"], "42");
-        assert_eq!(
-            ready["comparison_filter"],
-            "ladspa=file=/usr/lib/ladspa/libdfn3ll_ladspa.so:plugin=deep_filter_net3_ll_rs_mono:controls=c0=100.00"
-        );
-        graph[0]["info"]["props"]["biglinux.model"] = 13.into();
-        assert!(status_from_graph(&settings, Some(&graph))["comparison_filter"].is_null());
         graph[0]["info"]["props"]["biglinux.denoising"] = false.into();
         assert!(status_from_graph(&settings, Some(&graph))["effective_model"].is_null());
-        assert!(status_from_graph(&settings, Some(&graph))["comparison_filter"].is_null());
         graph[1]["info"]["state"] = "error".into();
         let failed = status_from_graph(&settings, Some(&graph));
         assert_eq!(failed["mic_running"], false);

@@ -43,7 +43,7 @@ class ActivityMeter(Gtk.Box):
         readings.append(self._reading)
         readings.append(self._held)
         self.append(readings)
-        self._canvas = Gtk.DrawingArea(hexpand=True, content_height=96)
+        self._canvas = Gtk.DrawingArea(hexpand=True, vexpand=True, content_height=96)
         self._canvas.add_css_class("caption")
         self._canvas.set_accessible_role(Gtk.AccessibleRole.METER)
         self._canvas.update_property(

@@ -15,18 +15,19 @@ The settings window is not a required resident daemon. Event-driven systemd/Wire
 
 ## Python UI
 
-`app/biglinux_microphone/` is organized around a beginner-first navigation shell:
+`app/biglinux_microphone/` is one window: the settings in a sidebar, the live microphone beside them.
 
-- `ui/view.py` — navigation, page lifecycle, backend runner, meter and advanced monitor ownership.
+- `ui/view.py` — the window, task navigation, backend runner, meter and monitor ownership.
+- `ui/controls.py` — the sidebar's setting rows and their cards.
 - `ui/state.py` — immutable-ish UI snapshot + serialized backend reads/writes.
 - `ui/backend.py` — worker execution and error delivery off the GTK main thread.
-- `ui/pages/` — one user task/area per module.
+- `ui/pages/` — the live panel and the tasks: calibration, diagnostics.
 - `ui/widgets/` — custom controls only where native libadwaita widgets are insufficient.
 - `cli.py` — thin process/tool boundary used by the UI.
 
-The same sidebar is available on Home and every settings or testing page; it becomes a drawer on narrow windows. Home exposes reduction mode, microphone selection, input volume, calibration and recording actions directly. Calibration and source selection are transient tasks pushed through `Adw.NavigationView`, with a Back action returning to the previous page.
+Every setting is a sidebar row that shows its value and opens a card, as in the BigLinux converters (`big_gtk_kit.hover_cards`), the microphone choice included; the sidebar becomes a drawer on narrow windows. The live panel shows the status, the meter and Listen back. Calibration and diagnostics are tasks pushed through `Adw.NavigationView` over the panel, with a Back action returning to it.
 
-Only Home is constructed at startup. Other pages are created on first navigation and receive the current snapshot before being shown. Returning to a page reuses its widgets, with task cleanup handled by its visibility lifecycle.
+The panel and the sidebar are built at startup; a task is created on first navigation and receives the current snapshot before being shown, with its cleanup handled by its visibility lifecycle.
 
 ### UI state rules
 
@@ -34,11 +35,11 @@ Only Home is constructed at startup. Other pages are created on first navigation
 - Backend calls that can block run off the GTK main thread.
 - Generation/cancellation guards prevent obsolete callbacks from updating a closed/replaced page.
 - The application follows the system color scheme.
-- Home shows a 30-band spectrum (50 Hz–20 kHz) and a separate sample-peak meter (−60–0 dBFS). Frequency analysis runs only while Home or the residual-noise editor is visible. Hidden/minimized windows and pages without meters release their capture stream and stop animation; changing the source identity invalidates queued frames and clears the held peak.
+- The live panel shows a 30-band spectrum (50 Hz–20 kHz) and a separate sample-peak meter (−60–0 dBFS). Frequency analysis runs only while the panel is visible. Hidden/minimized windows and open tasks release the capture stream and stop animation; changing the source identity invalidates queued frames and clears the held peak.
 
-The Home meter uses the OBS sample-peak convention, including the previous four samples at block boundaries, with immediate attack, the medium decay profile (11.76 dB/s), a 20-second peak hold and −20/−9 dBFS colour boundaries. Spectrum height retains the former −75..−20 dBFS band sensitivity; frequency energy never substitutes for waveform peak. This is not an inter-sample true-peak or LUFS measurement. The meter reads the same processed endpoint as the microphone test; comparison with OBS requires that same source, unity gain and no additional OBS filters. Animation is bounded to 30 updates/s; FFT stays on the capture worker.
+The meter uses the OBS sample-peak convention, including the previous four samples at block boundaries, with immediate attack, the medium decay profile (11.76 dB/s), a 20-second peak hold and −20/−9 dBFS colour boundaries. Spectrum height retains the former −75..−20 dBFS band sensitivity; frequency energy never substitutes for waveform peak. This is not an inter-sample true-peak or LUFS measurement. The meter reads the processed endpoint applications record; comparison with OBS requires that same source, unity gain and no additional OBS filters. Animation is bounded to 30 updates/s; FFT stays on the capture worker.
 
-`status` returns saved settings separately from observed PipeWire endpoints. The microphone graph exports its denoising flag and model identifier, so an absent filter cannot appear enabled just because its switch was saved. Idle/suspended endpoints are ready for clients, not proof of an acoustic result. Microphone tests use the observed chain even when only EQ is enabled, and refuse to fall back to raw audio when the requested chain is missing.
+`status` returns saved settings separately from observed PipeWire endpoints. The microphone graph exports its denoising flag and model identifier, so an absent filter cannot appear enabled just because its switch was saved. Idle/suspended endpoints are ready for clients, not proof of an acoustic result.
 
 While the window exists, one `pactl subscribe` connection watches source, sink, server and card events. A GIO file monitor also observes atomic settings replacements. Refreshes coalesce; client/source-output events are ignored because the application's own queries and captures generate them. Recording/calibration waits use a separate worker so they cannot block device refreshes. Shutdown cancels the subscription and owned captures.
 
@@ -54,7 +55,7 @@ $XDG_CONFIG_HOME/biglinux-microphone/settings.json
 
 with the usual `~/.config` fallback.
 
-Desired state and effective state are intentionally different: the saved model is the person's choice, and the running graph reports the model it actually loaded. The settings know three models (DFN3, DFN3-LL, DPDFNet); a file naming any other number loads as DFN3.
+Desired state and effective state differ: the saved model is the person's choice, and the running graph reports the model it actually loaded. The settings know three models (DFN3, DFN3-LL, DPDFNet); a file naming any other number loads as DFN3.
 
 Both `settings` and `status` use strict loading: a malformed settings file reports failure and remains untouched.
 
@@ -68,24 +69,14 @@ Model/plugin availability is runtime-dependent. A settings value naming a model 
 
 ## Calibration and monitoring
 
-Volume can be adjusted manually or calibrated for a microphone. The Voice volume page also restores the backend's existing bounded automatic gain control: a saved minimum/maximum range enables it, and disabling it clears that range. The backend starts its gain-control service only when a saved device has a range. Home shows this state in place of the manual slider, so the two controls cannot compete for the same capture volume. Rendering or opening the window never enables it.
+Volume can be adjusted manually or calibrated for a microphone. The Microphone volume card also restores the backend's existing bounded automatic gain control: a saved minimum/maximum range enables it, and disabling it clears that range. The backend starts its gain-control service only when a saved device has a range. The card shows this state in place of the manual slider, so the two controls cannot compete for the same capture volume. Rendering or opening the window never enables it.
 
-The everyday microphone test records a short local sample and plays it back. Continuous delayed monitoring is an advanced feature and must terminate when disabled or when the UI exits.
+Listen back, the delayed live return, is how a person hears the result; it must terminate when switched off or when the UI exits.
 
-When a supported native denoiser is running and `ffmpeg` is available, the comparison page records the selected input once and renders a second version with that denoiser. Both versions use matched RMS levels and shared peak headroom; the preview excludes EQ, echo cancellation and other downstream effects. Rendering and cancellation run off the GTK thread, and leaving the page removes both private recordings. The Home shortcut is hidden when this capability is unavailable; the sidebar page remains discoverable and explains why recording is unavailable.
-
-Temporary samples are local, mode 0600, and removed on leaving the task or
-quitting the application, including the application Quit action. An existing
-sample remains replayable while its test page is open. Successful capture also
-requires a valid, non-truncated mono 48 kHz PCM WAV, not merely a zero exit code.
-PipeWire 1.6.8's sample-limit exit code is accepted only when stderr contains
-just the sample path and the WAV contains exactly the requested number of
-frames; real diagnostics and truncated recordings remain errors.
-Cancellation pins the original calibration device and rollback level. Window
+Calibration cancellation pins the original calibration device and rollback level. Window
 close hands rollback to a bounded non-daemon worker: GTK does not wait for
 PipeWire, but normal interpreter exit waits for that cleanup. A forced SIGKILL
-or power loss cannot provide the same cleanup guarantee. A stale
-callback cannot replace the recording or playback of a newer session.
+or power loss cannot provide the same cleanup guarantee.
 
 The continuous monitor runs the package-owned file in isolated Python mode; it
 does not depend on importing the private package from a child process via -m.

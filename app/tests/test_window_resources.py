@@ -10,12 +10,13 @@ from unittest.mock import patch
 import gi
 
 gi.require_version("Adw", "1")
+from gi.repository import Adw, GLib, Gtk
+
 from biglinux_microphone import cli
 from biglinux_microphone.application import MicrophoneApplication
 from biglinux_microphone.ui.state import AudioState, Snapshot
 from biglinux_microphone.ui.view import MicrophoneView
 from biglinux_microphone.window import MicrophoneWindow
-from gi.repository import Adw, GLib, Gtk
 
 # Unlike weak notifications (dispose), qdata destruction proves finalization.
 _gobject = ctypes.CDLL("libgobject-2.0.so.0")
@@ -64,19 +65,14 @@ def test_closed_windows_finalize_with_all_pages():
         for _ in range(3):
             window = MicrophoneWindow(app)
             window.present()
-            for page_id in (
-                "noise_reduction",
-                "voice_volume",
-                "voice_sound",
-                "echo_routing",
-                "mic_test",
-                "diagnostics",
-                "source_picker",
-                "calibrate",
-            ):
+            for page_id in ("diagnostics", "calibrate"):
                 window._view.navigate(page_id)
-            window._view._by_id["noise_reduction"]._ensure_editor()
-            window._view._by_id["voice_sound"]._ensure_equalizer()
+            controls = window._view._controls
+            # The voice sound card with its equalizer, open as for the keyboard.
+            controls._show_equalizer(True)
+            controls.cards.hover_cards.open_for_keyboard(controls.voice_sound)
+            _settle(context, 0.2)
+            controls.cards.close()
             window._view.navigate("home")
             window._view._cli_worker.submit(lambda: None).result(timeout=3)
             objects = {
@@ -84,7 +80,7 @@ def test_closed_windows_finalize_with_all_pages():
                 "view": window._view,
                 "meter": window._view._home._meter,
                 **{page.id: page.widget for page in window._view._pages},
-                "threshold": window._view._by_id["noise_reduction"]._editor.canvas,
+                "controls": controls.widget,
             }
             _settle(context, 0.2)
             MicrophoneApplication._on_about(SimpleNamespace(_window=window), None, None)
@@ -118,7 +114,7 @@ def test_closed_windows_finalize_with_all_pages():
                 _tracked[pointer] = (label, finalized)
                 created[label] += 1
                 _gobject.g_object_set_qdata_full(pointer, _key, pointer, _finalized)
-            del objects, widget
+            del objects, widget, controls
             about.close()
             del about
             window.close()

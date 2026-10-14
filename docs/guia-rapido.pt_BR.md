@@ -2,22 +2,25 @@
 
 ## Para começar
 
-Use a tela simples. Escolha o microfone, fale no seu volume habitual e observe
-o medidor. Ligue o filtro do microfone. Comece com o modelo recomendado (DFN3) e
-ajuste a intensidade apenas se ainda houver ruído ou se a voz ficar artificial.
+Os ajustes ficam na barra lateral: passe o mouse sobre uma linha para abrir as
+opções dela. Escolha o microfone, fale no seu volume habitual e observe o
+medidor ao lado. Ligue a redução de ruído. Comece com o modelo recomendado (DFN3)
+e ajuste a intensidade apenas se ainda houver ruído ou se a voz ficar artificial.
 
-Faça uma mudança por vez. Compare uma frase curta antes e depois; o resultado
+Faça uma mudança por vez. Para comparar, use **Ouvir o retorno** com fones e
+desligue e ligue a redução de ruído enquanto fala uma frase curta; o resultado
 mais útil é uma voz compreensível, não necessariamente silêncio absoluto.
 
 ## Modelos e consumo
 
-**DFN3** é o recomendado: o mais leve, bom também em computadores antigos.
-**DFN3-LL** deixa menos ruído entre as palavras e usa cerca do dobro do
-processamento. **DPDFNet** limpa mais e mantém o fundo silencioso, com cerca de
-quatro vezes o processamento do DFN3. O aplicativo nunca troca o modelo sozinho.
+Em **Redução de ruído** você escolhe **Desligado**, **Filtro leve** ou **Alta
+qualidade**. O filtro leve (modelo DFN3) é o recomendado: já deixa a voz limpa
+e com boa qualidade na maioria das situações, e funciona bem também em
+computadores antigos. A alta qualidade (modelo DPDFNet) limpa mais e mantém o
+fundo silencioso, com cerca de quatro vezes o processamento do filtro leve. O aplicativo nunca troca o modelo sozinho.
 
-**Silenciar quando ninguém fala** corta o ruído que escapa enquanto você não
-está falando; o atraso do microfone passa a ser de cerca de 0,07 s. Cada modelo
+**Ruídos que ainda passam** corta o ruído que escapa enquanto você não
+está falando, com um pequeno atraso a mais no microfone. Cada modelo
 guarda a sua escolha: vem ligado nos dois DFN3 e desligado no DPDFNet, que já
 deixa o fundo silencioso sozinho.
 
@@ -30,7 +33,7 @@ O eco acontece quando o microfone capta o que sai dos alto-falantes. A opção
 automática de cancelamento considera o dispositivo de saída. Fones de ouvido
 normalmente evitam esse caminho acústico.
 
-Use **Ouvir minha voz** somente com fones. Com alto-falantes, o retorno pode
+Use **Ouvir o retorno** somente com fones. Com alto-falantes, o retorno pode
 produzir realimentação. Comece com volume baixo. O retorno pertence à janela e
 é encerrado ao fechá-la; não é uma gravação permanente.
 

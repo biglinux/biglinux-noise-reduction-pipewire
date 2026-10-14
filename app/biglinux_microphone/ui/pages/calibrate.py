@@ -203,16 +203,11 @@ class CalibratePage(Page):
         done.connect(
             "clicked", weak_callback(self, lambda self, _b: self.ctx.navigate("home"))
         )
-        test = action_button(_("Test microphone"), "audio-input-microphone-symbolic")
-        test.connect(
-            "clicked",
-            weak_callback(self, lambda self, _b: self.ctx.navigate("mic_test")),
-        )
         again = action_button(_("Adjust again"), "view-refresh-symbolic")
         again.connect(
             "clicked", weak_callback(self, lambda self, _b: self._show_prepare())
         )
-        body.append(adaptive_button_row(done, test, again))
+        body.append(adaptive_button_row(done, again))
 
         self._professional = Adw.PreferencesGroup(
             title=_("For live streams and long recordings"), visible=False

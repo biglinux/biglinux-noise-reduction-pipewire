@@ -37,7 +37,7 @@ class SpectrumTap:
         self._wake = threading.Event()
         self._thread: threading.Thread | None = None
         self._closed = False
-        self._request: tuple[str, tuple[str, ...], bool] = ("", (), False)
+        self._request: tuple[str, tuple[str, ...]] = ("", ())
         self._generation = 0
         self._pending = False
         self._frame: tuple[int, list[float], float] | None = None
@@ -53,11 +53,9 @@ class SpectrumTap:
         self,
         target: str = "",
         identity: tuple[str, ...] = (),
-        *,
-        detailed: bool = False,
     ) -> None:
         with self._lock:
-            request = (target, identity, detailed)
+            request = (target, identity)
             if self._closed or request == self._request:
                 return
             self._request = request
@@ -86,7 +84,7 @@ class SpectrumTap:
             with self._lock:
                 if self._closed:
                     return
-                target, _identity, detailed = self._request
+                target, _identity = self._request
                 generation = self._generation
                 self._wake.clear()
             if not target:
@@ -98,12 +96,12 @@ class SpectrumTap:
                 except ImportError:
                     logger.warning("microphone meter requires numpy")
                     return
-            self._capture(pw_cat, np, target, detailed, generation)
+            self._capture(pw_cat, np, target, generation)
             self._publish(generation, [], 0.0)
             self._wake.wait(3)
 
     def _capture(
-        self, pw_cat: str, np, target: str, detailed: bool, generation: int
+        self, pw_cat: str, np, target: str, generation: int
     ) -> None:
         proc = None
         reader = None
@@ -126,12 +124,11 @@ class SpectrumTap:
                 stderr=subprocess.DEVNULL,
                 bufsize=0,
             )
-            if detailed:
-                edges = np.logspace(np.log10(50), np.log10(20000), BANDS + 1)
-                indices = np.searchsorted(np.fft.rfftfreq(CHUNK, 1.0 / RATE), edges)
-                band_slices = tuple(pairwise(indices))
-                window = np.hanning(CHUNK)
-                window_gain = 2.0 / window.sum()
+            edges = np.logspace(np.log10(50), np.log10(20000), BANDS + 1)
+            indices = np.searchsorted(np.fft.rfftfreq(CHUNK, 1.0 / RATE), edges)
+            band_slices = tuple(pairwise(indices))
+            window = np.hanning(CHUNK)
+            window_gain = 2.0 / window.sum()
             reader = PCMReader(proc.stdout, CHUNK * 4)
             cancelled = lambda: self._cancelled(generation)
             previous_peak = 0.0
@@ -150,15 +147,14 @@ class SpectrumTap:
                 peak_db = 20.0 * np.log10(max(sample_peak, 1e-9))
                 peak = max(0.0, min(1.0, (peak_db + 60.0) / 60.0))
                 bands = []
-                if detailed:
-                    # Remove DC from the spectrum, but preserve waveform peak
-                    # for headroom measurement, as OBS's sample-peak meter does.
-                    pcm = pcm - pcm.mean()
-                    amp = np.abs(np.fft.rfft(pcm * window)) * window_gain
-                    for low, high in band_slices:
-                        amplitude = float(amp[low:high].max()) if high > low else 0.0
-                        db = 20.0 * np.log10(amplitude + 1e-9)
-                        bands.append(max(0.0, min(1.0, (db + 75.0) / 55.0)))
+                # Remove DC from the spectrum, but preserve waveform peak for
+                # headroom measurement, as OBS's sample-peak meter does.
+                pcm = pcm - pcm.mean()
+                amp = np.abs(np.fft.rfft(pcm * window)) * window_gain
+                for low, high in band_slices:
+                    amplitude = float(amp[low:high].max()) if high > low else 0.0
+                    db = 20.0 * np.log10(amplitude + 1e-9)
+                    bands.append(max(0.0, min(1.0, (db + 75.0) / 55.0)))
                 self._publish(generation, bands, peak)
         except (OSError, ValueError):
             if not self._cancelled(generation):

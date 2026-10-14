@@ -16,7 +16,7 @@ from the observed audio graph.
 - **Three native 48 kHz models** from `speech-enhancement-native`:
   DFN3 (default, the lightest), DFN3-LL and DPDFNet-2; the intensity slider
   drives their attenuation limit
-- **Silence when nobody speaks** — the Silero voice gate inside each denoiser
+- **Noise that still gets through** — the Silero voice gate inside each denoiser
   plugin mutes the noise that leaks while nobody talks; the microphone delay
   becomes 66 ms with any model (26 ms more for DFN3, 46 ms for DFN3-LL, 6 ms for
   DPDFNet). On by default for the DFN3 models, off for DPDFNet

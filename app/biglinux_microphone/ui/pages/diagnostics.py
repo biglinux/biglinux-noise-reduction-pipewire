@@ -68,7 +68,7 @@ class DiagnosticsPage(Page):
             s.get("name") == snapshot.current_source for s in snapshot.sources
         )
         status = (
-            _("Settings loaded — test your microphone to check the sound.")
+            _("Settings loaded — listen back to check the sound.")
             if has_source
             else _("No microphone available")
         )

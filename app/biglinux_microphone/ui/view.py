@@ -1,4 +1,8 @@
-"""Persistent sidebar navigation and cancellable microphone tasks."""
+"""The window: settings in the sidebar, the live microphone beside them.
+
+Measuring the voice and the diagnostics are tasks shown in place of the live
+panel until they are done.
+"""
 
 from __future__ import annotations
 
@@ -15,36 +19,25 @@ gi.require_version("Adw", "1")
 
 from gi.repository import Adw, Gio, GLib, GObject, Gtk
 
+from big_gtk_kit.hover_cards import CardLayer
 from biglinux_microphone import cli
 from biglinux_microphone.ui import style
 from biglinux_microphone.ui.audio_capture import SpectrumTap
 from biglinux_microphone.ui.backend import BackendRunner
 from biglinux_microphone.ui.callbacks import weak_callback
+from biglinux_microphone.ui.controls import Controls
 from biglinux_microphone.ui.pages.base import PageContext
 from biglinux_microphone.ui.pages.calibrate import CalibratePage
-from biglinux_microphone.ui.pages.compare import ComparePage
 from biglinux_microphone.ui.pages.diagnostics import DiagnosticsPage
-from biglinux_microphone.ui.pages.echo_routing import EchoRoutingPage
 from biglinux_microphone.ui.pages.home import HomePage
-from biglinux_microphone.ui.pages.noise_reduction import NoiseReductionPage
-from biglinux_microphone.ui.pages.source_picker import SourcePickerPage
-from biglinux_microphone.ui.pages.voice_sound import VoiceSoundPage
-from biglinux_microphone.ui.pages.voice_volume import VoiceVolumePage
 from biglinux_microphone.ui.state import AudioState
 from biglinux_microphone.utils.i18n import _
 
 logger = logging.getLogger(__name__)
 
-_PAGES = (
-    HomePage,
-    NoiseReductionPage,
-    VoiceVolumePage,
-    VoiceSoundPage,
-    EchoRoutingPage,
-    ComparePage,
-    DiagnosticsPage,
-)
-_TASKS = (SourcePickerPage, CalibratePage)
+_TASKS = (CalibratePage, DiagnosticsPage)
+# Settings other parts of the window point to: their row's card opens.
+_ROW_CARDS = {"source_picker": "source", "voice_volume": "volume"}
 
 
 class MicrophoneView(Gtk.Box):
@@ -72,7 +65,6 @@ class MicrophoneView(Gtk.Box):
         self._pages = []
         self._by_id = {}
         self._task_pages: dict[str, Adw.NavigationPage] = {}
-        self._sidebar_rows: dict[str, Gtk.ListBoxRow] = {}
         self._current_id = "home"
         self._shown_id: str | None = None
 
@@ -93,16 +85,26 @@ class MicrophoneView(Gtk.Box):
             shell=weakref.proxy(self),
         )
         self._split = Adw.OverlaySplitView(
-            sidebar_width_fraction=0.25,
-            min_sidebar_width=220,
-            max_sidebar_width=270,
+            sidebar_width_fraction=0.36,
+            min_sidebar_width=300,
+            max_sidebar_width=400,
         )
-        self.append(self._split)
+        # The sidebar's cards open over the whole window, beside their rows.
+        self._card_layer = CardLayer()
+        overlay = Gtk.Overlay(child=self._split, vexpand=True)
+        overlay.add_overlay(self._card_layer)
+        self.append(overlay)
         self._split.set_sidebar(self._build_sidebar())
+        for name in ("show-sidebar", "collapsed"):
+            self._split.connect(
+                f"notify::{name}",
+                weak_callback(self, lambda self, *_: self._controls.cards.close()),
+            )
 
         toolbar = Adw.ToolbarView()
         header = Adw.HeaderBar(show_start_title_buttons=False)
-        self._page_title = Adw.WindowTitle(title=_("Home"), subtitle="")
+        # Empty over the panel, as the sidebar names the app; a task names itself.
+        self._page_title = Adw.WindowTitle(title="", subtitle="")
         header.set_title_widget(self._page_title)
         self._back = Gtk.Button(icon_name="go-previous-symbolic", visible=False)
         self._back.set_tooltip_text(_("Back"))
@@ -114,9 +116,9 @@ class MicrophoneView(Gtk.Box):
         self._sidebar_button = Gtk.ToggleButton(
             icon_name="sidebar-show-symbolic", visible=False
         )
-        self._sidebar_button.set_tooltip_text(_("Pages"))
+        self._sidebar_button.set_tooltip_text(_("Settings"))
         self._sidebar_button.update_property(
-            [Gtk.AccessibleProperty.LABEL], [_("Pages")]
+            [Gtk.AccessibleProperty.LABEL], [_("Settings")]
         )
         header.pack_start(self._sidebar_button)
         self._sidebar_binding = self._split.bind_property(
@@ -125,22 +127,39 @@ class MicrophoneView(Gtk.Box):
             "active",
             GObject.BindingFlags.BIDIRECTIONAL | GObject.BindingFlags.SYNC_CREATE,
         )
+        menu = Gio.Menu()
+        menu.append(_("Diagnostics"), "view.diagnostics")
+        about = Gio.Menu()
+        about.append(_("About"), "app.about")
+        about.append(_("Quit"), "app.quit")
+        menu.append_section(None, about)
+        button = Gtk.MenuButton(icon_name="open-menu-symbolic", menu_model=menu)
+        button.set_tooltip_text(_("Main menu"))
+        button.update_property([Gtk.AccessibleProperty.LABEL], [_("Main menu")])
+        header.pack_end(button)
+        actions = Gio.SimpleActionGroup()
+        diagnostics = Gio.SimpleAction.new("diagnostics", None)
+        diagnostics.connect(
+            "activate",
+            weak_callback(self, lambda self, *_: self.navigate("diagnostics")),
+        )
+        actions.add_action(diagnostics)
+        self.insert_action_group("view", actions)
         toolbar.add_top_bar(header)
-        self._stack = Gtk.Stack(vexpand=True)
         self._nav = Adw.NavigationView()
+        self._home = HomePage(self._context)
+        self._pages.append(self._home)
+        self._by_id["home"] = self._home
         self._nav.add(
-            Adw.NavigationPage(child=self._stack, title=_("Microphone"), tag="pages")
+            Adw.NavigationPage(
+                child=self._home.widget, title=_("Microphone"), tag="home"
+            )
         )
         self._nav.connect(
             "popped", weak_callback(self, lambda self, *_: self._page_changed())
         )
         toolbar.set_content(self._nav)
         self._split.set_content(toolbar)
-        self._home = self._ensure_page("home")
-        self._stack.connect(
-            "notify::visible-child-name",
-            weak_callback(self, lambda self, *_: self._page_changed()),
-        )
         self._install_shortcuts()
         self.connect(
             "notify::root",
@@ -150,68 +169,31 @@ class MicrophoneView(Gtk.Box):
 
     def _build_sidebar(self) -> Gtk.Widget:
         toolbar = Adw.ToolbarView()
-        header = Adw.HeaderBar(show_end_title_buttons=False)
-        header.set_title_widget(Adw.WindowTitle(title=_("Microphone"), subtitle=""))
-        menu = Gio.Menu()
-        menu.append(_("About"), "app.about")
-        menu.append(_("Quit"), "app.quit")
-        button = Gtk.MenuButton(icon_name="open-menu-symbolic", menu_model=menu)
-        button.set_tooltip_text(_("Main menu"))
-        button.update_property([Gtk.AccessibleProperty.LABEL], [_("Main menu")])
-        header.pack_end(button)
+        header = Adw.HeaderBar(
+            show_end_title_buttons=False,
+            title_widget=Adw.WindowTitle(title=_("Microphone"), subtitle=""),
+        )
+        # The sidebar's title names the app; window buttons on the left stay.
+        layout = Gtk.Settings.get_default().get_property("gtk-decoration-layout") or ""
+        header.set_decoration_layout(
+            ":".join(
+                ",".join(item for item in side.split(",") if item and item != "icon")
+                for side in layout.split(":")
+            )
+        )
         toolbar.add_top_bar(header)
-        self._sidebar_list = Gtk.ListBox(css_classes=["navigation-sidebar"])
-        self._sidebar_list.set_selection_mode(Gtk.SelectionMode.SINGLE)
-        self._sidebar_list.connect(
-            "row-activated",
-            weak_callback(self, lambda self, _list, row: self.navigate(row.page_id)),
+        scrolled = Gtk.ScrolledWindow(
+            hscrollbar_policy=Gtk.PolicyType.NEVER,
+            vexpand=True,
+            css_classes=["sidebar"],
         )
-        for factory in _PAGES:
-            row = Adw.ActionRow(title=factory.title, activatable=True)
-            row.add_prefix(Gtk.Image.new_from_icon_name(factory.icon))
-            row.page_id = factory.id
-            self._sidebar_list.append(row)
-            self._sidebar_rows[factory.id] = row
-        toolbar.set_content(Gtk.ScrolledWindow(child=self._sidebar_list, vexpand=True))
-        # An action, not a place: kept out of the page list, below it.
-        self._listen_back = Adw.SwitchRow(
-            title=_("Listen back"),
-            subtitle=_("2 s later — use headphones"),
-        )
-        self._listen_back.add_prefix(
-            Gtk.Image.new_from_icon_name("audio-headphones-symbolic")
-        )
-        self._listen_back.connect(
-            "notify::active", weak_callback(self, type(self)._listen_back_toggled)
-        )
-        actions = Gtk.ListBox(
-            css_classes=["navigation-sidebar"], selection_mode=Gtk.SelectionMode.NONE
-        )
-        actions.append(self._listen_back)
-        toolbar.add_bottom_bar(actions)
+        self._controls = Controls(self._context, scrolled, self._card_layer)
+        scrolled.set_child(self._controls.widget)
+        toolbar.set_content(scrolled)
         return toolbar
-
-    def _listen_back_toggled(self, row: Adw.SwitchRow, _param) -> None:
-        if row.get_active() != self.monitor_active:
-            self.set_monitor(row.get_active())
 
     def _install_shortcuts(self) -> None:
         controller = Gtk.ShortcutController(scope=Gtk.ShortcutScope.GLOBAL)
-        for index, page in enumerate(_PAGES, start=1):
-            controller.add_shortcut(
-                Gtk.Shortcut(
-                    trigger=Gtk.ShortcutTrigger.parse_string(f"<Control>{index}"),
-                    action=Gtk.CallbackAction.new(
-                        weak_callback(
-                            self,
-                            lambda self, *_a, page_id=page.id: (
-                                self.navigate(page_id),
-                                True,
-                            )[1],
-                        )
-                    ),
-                )
-            )
         controller.add_shortcut(
             Gtk.Shortcut(
                 trigger=Gtk.ShortcutTrigger.parse_string("<Control>r"),
@@ -263,52 +245,53 @@ class MicrophoneView(Gtk.Box):
     def _ensure_page(self, page_id: str):
         if page_id in self._by_id:
             return self._by_id[page_id]
-        factory = next(
-            (page for page in (*_PAGES, *_TASKS) if page.id == page_id), None
-        )
+        factory = next((page for page in _TASKS if page.id == page_id), None)
         if factory is None or self._closed:
             return None
         page = factory(self._context)
         self._pages.append(page)
         self._by_id[page.id] = page
-        if factory in _PAGES:
-            self._stack.add_titled(page.widget, page.id, page.title)
-        else:
-            self._task_pages[page.id] = Adw.NavigationPage(
-                child=page.widget, title=page.title, tag=page.id
-            )
+        self._task_pages[page.id] = Adw.NavigationPage(
+            child=page.widget, title=page.title, tag=page.id
+        )
         page.sync(self._state.snapshot)
         page.on_monitor(self.monitor_active)
         return page
 
     def navigate(self, page_id: str) -> None:
-        if self._closed or self._ensure_page(page_id) is None:
+        if self._closed:
             return
-        if page_id in self._task_pages:
+        self._controls.cards.close()
+        if page_id == "home":
+            self._nav.pop_to_tag("home")
+        elif page_id in _ROW_CARDS:
+            # A setting, not a place: back to the panel with its card open.
+            self._nav.pop_to_tag("home")
+            if self._split.get_collapsed():
+                self._split.set_show_sidebar(True)
+            row = getattr(self._controls, _ROW_CARDS[page_id])
+            self._controls.cards.hover_cards.open_for_keyboard(row)
+            self._page_changed()
+            return
+        elif self._ensure_page(page_id) is not None:
             nav_page = self._task_pages[page_id]
             if nav_page.get_parent() is None:
                 self._nav.push(nav_page)
-        else:
-            self._nav.pop_to_tag("pages")
-            self._stack.set_visible_child_name(page_id)
         if self._split.get_collapsed():
             self._split.set_show_sidebar(False)
         self._page_changed()
 
     def _visible_id(self) -> str:
         visible = self._nav.get_visible_page()
-        tag = visible.get_tag() if visible is not None else "pages"
-        if tag == "pages":
-            return self._stack.get_visible_child_name() or "home"
-        return tag
+        return visible.get_tag() if visible is not None else "home"
 
     def _page_changed(self) -> None:
         current = self._visible_id()
         self._current_id = current
         page = self._by_id.get(current)
-        if page is not None:
-            self._page_title.set_title(page.title)
-        self._sidebar_list.select_row(self._sidebar_rows.get(current))
+        self._page_title.set_title(
+            page.title if page is not None and current != "home" else ""
+        )
         self._back.set_visible(current in self._task_pages)
         previous = self._shown_id
         if self._closed or previous == current:
@@ -331,8 +314,10 @@ class MicrophoneView(Gtk.Box):
                 page.sync(snapshot)
             except Exception:
                 logger.exception("page %s failed to render", page.id)
-        # A return that is playing can always be stopped.
-        self._listen_back.set_sensitive(snapshot.ready or self.monitor_active)
+        try:
+            self._controls.sync(snapshot)
+        except Exception:
+            logger.exception("the settings failed to render")
         self._sync_capture()
 
     def _backend_failed(self, message: str) -> None:
@@ -348,24 +333,17 @@ class MicrophoneView(Gtk.Box):
 
     def _sync_capture(self) -> None:
         snapshot = self._state.snapshot
-        page_id = self._visible_id()
-        noise = self._by_id.get("noise_reduction")
         window = self.get_root()
         suspended = isinstance(window, Gtk.Window) and window.get_property("suspended")
-        detailed = page_id == "home" or bool(
-            page_id == "noise_reduction"
-            and noise is not None
-            and noise._editor_reveal.get_reveal_child()
-        )
         if (
             self.get_mapped()
             and not suspended
             and snapshot.ready
             and not snapshot.muted
-            and (page_id == "home" or detailed)
+            and self._visible_id() == "home"
         ):
             self._spectrum_tap.configure(
-                snapshot.capture_target, snapshot.capture_identity, detailed=detailed
+                snapshot.capture_target, snapshot.capture_identity
             )
         else:
             self._spectrum_tap.configure()
@@ -378,13 +356,12 @@ class MicrophoneView(Gtk.Box):
     ) -> None:
         if self._closed:
             return
-        page = self._by_id.get(self._visible_id())
-        if page is not None:
-            try:
-                page.on_bands(bands)
-                page.on_peak(peak)
-            except Exception:
-                logger.exception("meter update failed: %s", page.id)
+        try:
+            if self._visible_id() == "home":
+                self._home.on_bands(bands)
+                self._home.on_peak(peak)
+        except Exception:
+            logger.exception("meter update failed")
 
     # ── delayed live monitor (the Listen back switch) ────────────────────
 
@@ -402,7 +379,6 @@ class MicrophoneView(Gtk.Box):
             self._stop_monitor()
 
     def _sync_monitor_surfaces(self) -> None:
-        self._listen_back.set_active(self.monitor_active)
         for page in self._pages:
             try:
                 page.on_monitor(self.monitor_active)
@@ -483,6 +459,7 @@ class MicrophoneView(Gtk.Box):
                 page.shutdown()
             except Exception:
                 logger.exception("page shutdown failed: %s", page.id)
+        self._controls.shutdown()
         self._stop_monitor()
         self._spectrum_tap.stop()
         self._state.shutdown()

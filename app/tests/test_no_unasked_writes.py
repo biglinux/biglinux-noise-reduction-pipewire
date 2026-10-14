@@ -21,24 +21,10 @@ import gi
 gi.require_version("Gtk", "4.0")
 gi.require_version("Adw", "1")
 
-from biglinux_microphone import cli
-from biglinux_microphone.ui.view import _PAGES, _TASKS, MicrophoneView
-from biglinux_microphone.ui.widgets.choice import ChoiceRow
 from gi.repository import Adw, Gdk, GLib, Gtk
 
-
-def _choice_rows(widget: Gtk.Widget) -> list[ChoiceRow]:
-    """Every choice on a page, so opening each one can be checked too: a panel
-    that writes as it draws its options is the same bug one level down."""
-    found = []
-    if isinstance(widget, ChoiceRow):
-        found.append(widget)
-    child = widget.get_first_child()
-    while child is not None:
-        found += _choice_rows(child)
-        child = child.get_next_sibling()
-    return found
-
+from biglinux_microphone import cli
+from biglinux_microphone.ui.view import _TASKS, MicrophoneView
 
 #: A saved state where every control has something non-default to render: the
 #: filter on, a model other than the default, an equalizer that is off with a preset
@@ -97,18 +83,23 @@ class NoUnaskedWrites(unittest.TestCase):
             window.present()
             self.addCleanup(window.destroy)
             self._settle(view)
-            for factory in (*_PAGES, *_TASKS):
-                view._ensure_page(factory.id)
-            for page in view._pages:
+            # Every card opens as for the keyboard: a card that writes as it
+            # draws its choices is the same bug one level down.
+            cards = view._controls.cards
+            for rows, _count in cards.groups:
+                for row in rows:
+                    if row.card is not None and row.get_sensitive():
+                        cards.hover_cards.open_for_keyboard(row)
+                        self._settle(view)
+                        cards.close()
+            for factory in _TASKS:
                 # Calibration is included: it asks a question on arrival and
                 # listens only once somebody has answered it, so merely opening
                 # it must be as harmless as opening any other page.
-                view.navigate(page.id)
+                view.navigate(factory.id)
                 self._settle(view)
-                for row in _choice_rows(page.widget):
-                    row.emit("activated")
-                    self._settle(view)
-                    row.popover.popdown()
+            view.navigate("home")
+            self._settle(view)
         self.assertEqual(writes, [], f"the window wrote without being asked: {writes}")
 
     def test_closing_the_window_writes_nothing(self) -> None:
