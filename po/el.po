@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: biglinux-noise-reduction-pipewire\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-10-12 22:29-0300\n"
+"POT-Creation-Date: 2026-10-13 21:42-0300\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: el\n"
@@ -36,6 +36,38 @@ msgstr ""
 msgid "BigLinux Microphone"
 msgstr "BigLinux Microphone"
 
+#: app/biglinux_microphone/ui/view.py:110
+#: app/biglinux_microphone/ui/view.py:111
+msgid "Back"
+msgstr ""
+
+#: app/biglinux_microphone/ui/view.py:119
+#: app/biglinux_microphone/ui/view.py:121
+msgid "Settings"
+msgstr ""
+
+#: app/biglinux_microphone/ui/view.py:131
+#: app/biglinux_microphone/ui/pages/diagnostics.py:19
+msgid "Diagnostics"
+msgstr ""
+
+# File: biglinux-noise-reduction-
+# pipewire/usr/share/bigbashview/apps/microphone/noise_reducer.py, line: 276
+#: app/biglinux_microphone/ui/view.py:133
+msgid "About"
+msgstr "Σχετικά"
+
+# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/window.py,
+# line: 196
+#: app/biglinux_microphone/ui/view.py:134
+msgid "Quit"
+msgstr "Έξοδος"
+
+#: app/biglinux_microphone/ui/view.py:137
+#: app/biglinux_microphone/ui/view.py:138
+msgid "Main menu"
+msgstr ""
+
 # #-#-#-#-#  biglinux-noise-reduction-pipewire.pot (biglinux-noise-reduction-
 # pipewire)  #-#-#-#-#
 #
@@ -43,48 +75,14 @@ msgstr "BigLinux Microphone"
 # pipewire/src/biglinux_microphone/ui/main_view.py, line: 88
 # File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/config.py,
 # line: 27
-#: app/biglinux_microphone/ui/view.py:106
-#: app/biglinux_microphone/ui/view.py:154
-#: app/biglinux_microphone/ui/view.py:173
-#: app/biglinux_microphone/ui/view.py:284
+#: app/biglinux_microphone/ui/view.py:155
+#: app/biglinux_microphone/ui/view.py:174
 #: app/biglinux_microphone/ui/pages/diagnostics.py:40
 #: app/biglinux_microphone/ui/pages/calibrate.py:82
 msgid "Microphone"
 msgstr "Μικρόφωνο"
 
-#: app/biglinux_microphone/ui/view.py:109
-#: app/biglinux_microphone/ui/view.py:110
-msgid "Back"
-msgstr ""
-
-#: app/biglinux_microphone/ui/view.py:118
-#: app/biglinux_microphone/ui/view.py:120
-msgid "Settings"
-msgstr ""
-
-#: app/biglinux_microphone/ui/view.py:130
-#: app/biglinux_microphone/ui/pages/diagnostics.py:19
-msgid "Diagnostics"
-msgstr ""
-
-# File: biglinux-noise-reduction-
-# pipewire/usr/share/bigbashview/apps/microphone/noise_reducer.py, line: 276
-#: app/biglinux_microphone/ui/view.py:132
-msgid "About"
-msgstr "Σχετικά"
-
-# File: biglinux-noise-reduction-pipewire/src/biglinux_microphone/window.py,
-# line: 196
-#: app/biglinux_microphone/ui/view.py:133
-msgid "Quit"
-msgstr "Έξοδος"
-
-#: app/biglinux_microphone/ui/view.py:136
-#: app/biglinux_microphone/ui/view.py:137
-msgid "Main menu"
-msgstr ""
-
-#: app/biglinux_microphone/ui/view.py:425
+#: app/biglinux_microphone/ui/view.py:434
 msgid "Live monitoring stopped unexpectedly"
 msgstr ""
 
@@ -493,7 +491,7 @@ msgstr "Μείωση θορύβου AI"
 
 #: app/biglinux_microphone/ui/controls.py:723
 #, python-format
-msgid "Follows your voice between %d%% and %d%%"
+msgid "Follows your voice between %(low)d%% and %(high)d%%"
 msgstr ""
 
 # File: biglinux-noise-reduction-

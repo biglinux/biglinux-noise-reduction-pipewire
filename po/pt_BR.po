@@ -5,7 +5,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: biglinux-microphone 5.0.0\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-10-12 22:29-0300\n"
+"POT-Creation-Date: 2026-10-13 21:42-0300\n"
 "PO-Revision-Date: 2026-09-20 00:00+0000\n"
 "Last-Translator: Revisão assistida por IA (R3)\n"
 "Language-Team: Portuguese (Brazil)\n"
@@ -33,44 +33,42 @@ msgstr "Mostrar a versão e sair"
 msgid "BigLinux Microphone"
 msgstr "BigLinux Microphone"
 
-#: app/biglinux_microphone/ui/view.py:106
-#: app/biglinux_microphone/ui/view.py:154
-#: app/biglinux_microphone/ui/view.py:173
-#: app/biglinux_microphone/ui/view.py:284
+#: app/biglinux_microphone/ui/view.py:110
+#: app/biglinux_microphone/ui/view.py:111
+msgid "Back"
+msgstr "Voltar"
+
+#: app/biglinux_microphone/ui/view.py:119
+#: app/biglinux_microphone/ui/view.py:121
+msgid "Settings"
+msgstr "Configurações"
+
+#: app/biglinux_microphone/ui/view.py:131
+#: app/biglinux_microphone/ui/pages/diagnostics.py:19
+msgid "Diagnostics"
+msgstr "Diagnóstico"
+
+#: app/biglinux_microphone/ui/view.py:133
+msgid "About"
+msgstr "Sobre"
+
+#: app/biglinux_microphone/ui/view.py:134
+msgid "Quit"
+msgstr "Sair"
+
+#: app/biglinux_microphone/ui/view.py:137
+#: app/biglinux_microphone/ui/view.py:138
+msgid "Main menu"
+msgstr "Menu principal"
+
+#: app/biglinux_microphone/ui/view.py:155
+#: app/biglinux_microphone/ui/view.py:174
 #: app/biglinux_microphone/ui/pages/diagnostics.py:40
 #: app/biglinux_microphone/ui/pages/calibrate.py:82
 msgid "Microphone"
 msgstr "Microfone"
 
-#: app/biglinux_microphone/ui/view.py:109
-#: app/biglinux_microphone/ui/view.py:110
-msgid "Back"
-msgstr "Voltar"
-
-#: app/biglinux_microphone/ui/view.py:118
-#: app/biglinux_microphone/ui/view.py:120
-msgid "Settings"
-msgstr "Configurações"
-
-#: app/biglinux_microphone/ui/view.py:130
-#: app/biglinux_microphone/ui/pages/diagnostics.py:19
-msgid "Diagnostics"
-msgstr "Diagnóstico"
-
-#: app/biglinux_microphone/ui/view.py:132
-msgid "About"
-msgstr "Sobre"
-
-#: app/biglinux_microphone/ui/view.py:133
-msgid "Quit"
-msgstr "Sair"
-
-#: app/biglinux_microphone/ui/view.py:136
-#: app/biglinux_microphone/ui/view.py:137
-msgid "Main menu"
-msgstr "Menu principal"
-
-#: app/biglinux_microphone/ui/view.py:425
+#: app/biglinux_microphone/ui/view.py:434
 msgid "Live monitoring stopped unexpectedly"
 msgstr "O retorno de voz parou inesperadamente"
 
@@ -405,8 +403,8 @@ msgstr "A redução de ruído está desligada"
 
 #: app/biglinux_microphone/ui/controls.py:723
 #, python-format
-msgid "Follows your voice between %d%% and %d%%"
-msgstr "Acompanha sua voz entre %d%% e %d%%"
+msgid "Follows your voice between %(low)d%% and %(high)d%%"
+msgstr "Acompanha sua voz entre %(low)d%% e %(high)d%%"
 
 #: app/biglinux_microphone/ui/controls.py:731
 msgid "Adjusted for your voice"

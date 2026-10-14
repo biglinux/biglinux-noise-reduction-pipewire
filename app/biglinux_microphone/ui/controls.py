@@ -720,8 +720,8 @@ class Controls:
         if limits is not None:
             self.volume.show_value(_("Automatic"), True)
             self._volume_status.set_text(
-                _("Follows your voice between %d%% and %d%%")
-                % (round(limits[0] * 100), round(limits[1] * 100))
+                _("Follows your voice between %(low)d%% and %(high)d%%")
+                % {"low": round(limits[0] * 100), "high": round(limits[1] * 100)}
             )
         else:
             self.volume.show_value(
