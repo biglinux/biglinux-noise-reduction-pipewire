@@ -64,7 +64,7 @@ cargo test --no-default-features --locked -- --test-threads=1
 bash scripts/test-ui.sh --no-default-features
 bash scripts/test-pipewire.sh --no-default-features
 node --test tests/plasmoid_status.test.cjs
-bash scripts/refresh-pot.sh --check
+python3 tools/validate-translations.py
 ```
 
 Doctests build and run a helper binary under `TMPDIR`. On a BigLinux workstation

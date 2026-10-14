@@ -124,7 +124,7 @@ They are maintained with this application. The application remains GPL-3.0-or-la
   `scripts/test-ui.sh` separately for an isolated graphical session.
 - Source language is English. Translatable UI strings flow through
   gettext: `po/` is the only translation source of truth. Refresh the
-  catalog with `./scripts/refresh-pot.sh` after touching user-facing text.
+  catalog with `tools/update-translations.sh` after touching user-facing text.
 - Runtime ownership and validation boundaries are documented in
   [ARCHITECTURE.md](ARCHITECTURE.md).
 

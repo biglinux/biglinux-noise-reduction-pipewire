@@ -140,13 +140,13 @@ else
 fi
 
 # Translation validation includes source coverage, not just PO syntax.
-if has_cmd xtr && has_cmd xgettext && has_cmd msgcat && has_cmd msgcmp && has_cmd msgmerge && has_cmd msgfmt; then
-    run_check "translation extraction coverage" bash scripts/refresh-pot.sh --check
+if has_cmd xgettext && has_cmd msgmerge && has_cmd msgfmt; then
+    run_check "translation extraction coverage" python3 tools/validate-translations.py
     for catalog in po/*.po; do
         run_check "catalog: $catalog" msgfmt --check --check-header -o /dev/null "$catalog"
     done
 else
-    skip_check "gettext source coverage" "install gettext and xtr"
+    skip_check "gettext source coverage" "install gettext"
 fi
 
 # ── --full extras ──────────────────────────────────────────────────

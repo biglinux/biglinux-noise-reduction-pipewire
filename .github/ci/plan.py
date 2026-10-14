@@ -64,7 +64,6 @@ def classify(paths: list[str] | None) -> dict[str, bool]:
             result["shell"] = True
             result["native"] |= path in ("scripts/test-ui.sh", "scripts/test-pipewire.sh")
             result["rust"] |= path == "scripts/test-miri.sh"
-            result["i18n"] |= path == "scripts/refresh-pot.sh"
         elif path == ".github/workflows/security.yml" or path == ".github/dependabot.yml":
             result["dependencies"] = True
         elif path.startswith(".github/workflows/") or path == "_typos.toml":
