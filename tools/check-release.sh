@@ -54,8 +54,8 @@ run_stage python-tests 90 dbus-run-session -- xvfb-run -a "${PY[@]}" -m pytest -
 run_stage translations 60 "${PY[@]}" tools/validate-translations.py --report "$OUT/translations.json"
 run_stage desktop 20 desktop-file-validate usr/share/applications/br.com.biglinux.microphone.desktop
 run_stage appstream 20 appstreamcli validate --no-net usr/share/metainfo/br.com.biglinux.microphone.metainfo.xml
-run_stage shell-syntax 20 bash -c 'for f in packaging/arch/PKGBUILD tools/*.sh; do bash -n "$f" || exit; done'
-run_stage shellcheck 20 shellcheck -S warning -e SC2034 packaging/arch/PKGBUILD tools/check-release.sh tools/update-translations.sh
+run_stage shell-syntax 20 bash -c 'for f in pkgbuild/PKGBUILD tools/*.sh; do bash -n "$f" || exit; done'
+run_stage shellcheck 20 shellcheck -S warning -e SC2034 pkgbuild/PKGBUILD tools/check-release.sh tools/update-translations.sh
 if [[ $MODE == full ]]; then
     run_stage rust-format 30 cargo fmt --all -- --check
     if run_stage cargo-resolution 60 cargo metadata --format-version 1 --locked --offline; then

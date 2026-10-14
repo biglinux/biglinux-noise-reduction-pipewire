@@ -9,10 +9,10 @@
 Cargo.lock.orig
 
 # makepkg work dirs
-/packaging/arch/pkg/
-/packaging/arch/src/
-/packaging/arch/*.pkg.tar.*
-/packaging/arch/*.log
+/pkgbuild/pkg/
+/pkgbuild/src/
+/pkgbuild/*.pkg.tar.*
+/pkgbuild/*.log
 
 # Compiled translations (built during makepkg from po/*.po).
 # `po/` is the only translation source of truth. A compiled dev tree

@@ -57,7 +57,7 @@ fn stage_package_recipe(root: &Path, temporary: &Path) -> PathBuf {
             "source \"$1\"; srcdir=$2; pkgdir=$3; package",
             "package-fixture",
         ])
-        .arg(root.join("packaging/arch/PKGBUILD"))
+        .arg(root.join("pkgbuild/PKGBUILD"))
         .arg(srcdir)
         .arg(&package)
         .env_remove("BASH_ENV")
@@ -123,8 +123,8 @@ fn packaged_wireplumber_files_are_installed_by_main_pkgbuild() {
 
 #[test]
 fn package_hooks_never_mutate_user_homes_or_wireplumber_package_files() {
-    let install_hook = read_fixture("packaging/arch/biglinux-noise-reduction-pipewire.install");
-    let pkgbuild = read_fixture("packaging/arch/PKGBUILD");
+    let install_hook = read_fixture("pkgbuild/biglinux-noise-reduction-pipewire.install");
+    let pkgbuild = read_fixture("pkgbuild/PKGBUILD");
 
     for forbidden in [
         "/home/*",
@@ -143,7 +143,7 @@ fn package_hooks_never_mutate_user_homes_or_wireplumber_package_files() {
 
 #[test]
 fn arch_package_preserves_its_name_and_replaces_the_legacy_microphone_package() {
-    let pkgbuild = read_fixture("packaging/arch/PKGBUILD");
+    let pkgbuild = read_fixture("pkgbuild/PKGBUILD");
     assert!(pkgbuild.contains("pkgname=biglinux-noise-reduction-pipewire"));
     for declaration in [
         "provides=('biglinux-microphone')",
@@ -182,7 +182,7 @@ fn rust_binaries_keep_the_system_allocator_and_nothing_preloads_one() {
     // target pulls a custom allocator, and packaging never forces one through
     // the environment, which every child the tools launch would inherit.
     let cargo = read_fixture("Cargo.toml");
-    let pkgbuild = read_fixture("packaging/arch/PKGBUILD");
+    let pkgbuild = read_fixture("pkgbuild/PKGBUILD");
 
     assert!(
         !cargo.contains("jemalloc"),

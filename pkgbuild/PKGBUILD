@@ -96,7 +96,7 @@ _local_root=""
 if [ -z "${_release_commit}" ] && [ "${BIGMIC_FORCE_GIT:-0}" != "1" ] && [ -n "${BASH_SOURCE[0]:-}" ]; then
 	_pkg_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" 2>/dev/null && pwd -P)"
 	if [ -n "${_pkg_dir}" ]; then
-		_candidate="$(cd "${_pkg_dir}/../.." && pwd -P)"
+		_candidate="$(cd "${_pkg_dir}/.." && pwd -P)"
 		if _has_workspace_files "${_candidate}"; then
 			_local_root="${_candidate}"
 		fi
@@ -161,8 +161,8 @@ prepare() {
 		--exclude='/.git' \
 		--exclude='/.ci-results' \
 		--exclude='/build-locale' \
-		--exclude='/packaging/arch/pkg' \
-		--exclude='/packaging/arch/src' \
+		--exclude='/pkgbuild/pkg' \
+		--exclude='/pkgbuild/src' \
 		--exclude='*.pkg.tar.*' \
 		--exclude='*.log' \
 		"${nested_exclusion[@]}" \

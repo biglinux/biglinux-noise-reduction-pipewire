@@ -13,8 +13,8 @@ for tool in cargo rsync msgfmt desktop-file-validate appstreamcli python3 readel
 done
 stage=$(mktemp -d)
 trap 'status=$?; rm -rf -- "$stage" 2>/dev/null || :; exit "$status"' EXIT
-# shellcheck source=../packaging/arch/PKGBUILD
-source "$root/packaging/arch/PKGBUILD"
+# shellcheck source=../pkgbuild/PKGBUILD
+source "$root/pkgbuild/PKGBUILD"
 msg2() { printf '%s\n' "$*"; }
 
 # The source fixture contains nested makepkg/custom output directories.
@@ -24,7 +24,7 @@ msg2() { printf '%s\n' "$*"; }
     mkdir -p "$_local_root/src" "$_local_root/target" "$_local_root/.git" "$_local_root/build-locale"
     printf 'original\n' > "$_local_root/src/example.rs"
     printf 'generated\n' > "$_local_root/target/do-not-copy"
-    for location in packaging/arch/src custom-source; do
+    for location in pkgbuild/src custom-source; do
         srcdir="$_local_root/$location"
         prepare
         destination="$srcdir/$pkgname"

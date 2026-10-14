@@ -5,7 +5,7 @@
 # package does. The Rust binaries are the backend (cli, probe, pwloader).
 # The runtime provides Python, PyGObject, pycairo and the PipeWire tools;
 # numpy is added here.
-# The validated reference build is packaging/arch/PKGBUILD.
+# The validated reference build is pkgbuild/PKGBUILD.
 #
 # Local test build (source = this working tree):
 #   flatpak-builder --user --install --force-clean build-dir \
@@ -136,6 +136,6 @@ modules:
           - target
           - .git
           - build-locale
-          - packaging/arch/pkg
-          - packaging/arch/src
+          - pkgbuild/pkg
+          - pkgbuild/src
       - cargo-sources.json

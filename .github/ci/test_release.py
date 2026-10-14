@@ -52,7 +52,7 @@ class ResultTests(unittest.TestCase):
             self.assertEqual(blocked_jobs(jobs, False), {"native": status})
 
     def test_package_inputs_select_builds(self):
-        for path in ("packaging/arch/PKGBUILD", "scripts/test-package.sh", "scripts/verify-package.py"):
+        for path in ("pkgbuild/PKGBUILD", "scripts/test-package.sh", "scripts/verify-package.py"):
             with self.subTest(path=path):
                 checks = classify([path])
                 self.assertTrue(checks["rust"])

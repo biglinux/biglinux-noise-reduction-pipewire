@@ -314,7 +314,7 @@ jobs:
         with:
           persist-credentials: false
       - run: sudo apt-get update && sudo apt-get install -y shellcheck
-      - run: shellcheck -e SC2034,SC2154 scripts/*.sh packaging/flatpak/generate-cargo-sources.sh packaging/arch/PKGBUILD packaging/arch/*.install
+      - run: shellcheck -e SC2034,SC2154 scripts/*.sh packaging/flatpak/generate-cargo-sources.sh pkgbuild/PKGBUILD pkgbuild/*.install
 
   plasmoid-contracts:
     name: Plasma status transitions

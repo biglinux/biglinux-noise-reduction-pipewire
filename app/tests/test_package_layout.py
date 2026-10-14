@@ -39,7 +39,7 @@ def package(tmp_path, source, target):
     env.update(srcdir=str(source.parent), pkgdir=str(tmp_path/'payload'),
                CARGO_TARGET_DIR=str(target), BIGMIC_SOURCE_COMMIT='')
     return subprocess.run(['bash', '-c', 'set -e; source "$1"; package', 'package-fixture',
-                           str(ROOT/'packaging/arch/PKGBUILD')],
+                           str(ROOT/'pkgbuild/PKGBUILD')],
                           env=env, text=True, capture_output=True, timeout=15)
 
 

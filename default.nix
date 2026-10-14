@@ -6,7 +6,7 @@
 # support until this is migrated (build the Rust cli/pwloader, copy the Python
 # front-end beside its launcher, wrap the GTK app) and a
 # `nix-build` + launch is verified. The validated reference is
-# packaging/arch/PKGBUILD.
+# pkgbuild/PKGBUILD.
 {
   lib,
   rustPlatform,

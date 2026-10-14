@@ -84,7 +84,7 @@ cargo run --release --bin biglinux-microphone          # launch the GUI
 cargo run --release --bin biglinux-microphone-cli doctor   # environment diagnostics
 ```
 
-Packaging (Arch/BigLinux): `packaging/arch/PKGBUILD` builds with
+Packaging (Arch/BigLinux): `pkgbuild/PKGBUILD` builds with
 `--locked`, compiles `po/*.po` into `build-locale/`, and installs the
 systemd user units, plasmoid, and PipeWire/WirePlumber drop-ins.
 

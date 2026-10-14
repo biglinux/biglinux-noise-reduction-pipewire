@@ -49,7 +49,7 @@ def classify(paths: list[str] | None) -> dict[str, bool]:
             result["rust"] = result["native"] = result["i18n"] = True
         elif path.startswith("vendor/"):
             result["rust"] = result["native"] = True
-        elif path.startswith("packaging/arch/") or path in ("scripts/test-package.sh", "scripts/verify-package.py"):
+        elif path.startswith("pkgbuild/") or path in ("scripts/test-package.sh", "scripts/verify-package.py"):
             result["rust"] = result["native"] = result["shell"] = True
         elif path.startswith("packaging/flatpak/"):
             result["flatpak"] = True

@@ -16,7 +16,7 @@ Thanks for helping improve microphone audio on Linux. Contributions do not need 
 - `src/bin/pwloader.rs`: PipeWire module host. `src/bin/probe.rs`: diagnostics probe.
 - `usr/`: package payload: desktop and AppStream metadata, systemd units, WirePlumber policy, icons and the Plasma applet.
 - `packaging/launcher.py`: the GUI launcher; its isolation and version-neutral path are release invariants.
-- `packaging/arch/`: the BigLinux/Arch package recipe.
+- `pkgbuild/`: the BigLinux/Arch package recipe.
 - `po/`: translation source of truth.
 - `docs/research/`: dated measurements; check the code before citing them as current behavior.
 

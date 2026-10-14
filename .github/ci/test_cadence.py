@@ -26,10 +26,10 @@ class CadenceTests(unittest.TestCase):
                 self.assertNotIn("  push:", text)
                 self.assertNotIn("  pull_request:", text)
 
-    def test_empty_packaging_hook_is_not_automatic(self):
+    def test_package_hook_runs_on_release_branches(self):
         text = (WORKFLOWS / "build-package.yml").read_text(encoding="utf-8")
         self.assertIn("  workflow_dispatch:", text)
-        self.assertNotIn("  push:", text)
+        self.assertIn('branches: [main, "stable-*", "testing-*"]', text)
         self.assertNotIn("  pull_request:", text)
         self.assertNotIn("  schedule:", text)
 

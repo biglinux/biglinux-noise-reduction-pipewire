@@ -60,7 +60,7 @@ A launcher failure after a Python update should identify the missing active depe
 
 ## Arch package layout
 
-`packaging/arch/PKGBUILD` installs:
+`pkgbuild/PKGBUILD` installs:
 
 - Rust backend binaries in `/usr/bin`;
 - Python GUI in `/usr/lib/biglinux-microphone`;
