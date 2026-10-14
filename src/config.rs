@@ -39,7 +39,7 @@ pub use audio::{
     NoiseReductionConfig, SILENCE_ANCHOR_HZ, SILENCE_ANCHOR_PORTS, SILENCE_ANCHOR_SENTINEL,
     SILENCE_ANCHORS, SILENCE_DEPTH_DEFAULT, SILENCE_DEPTH_MAX, StereoConfig, StereoMode,
     VOICE_GATE_DEPTH_MAX, VOICE_LEVEL_MARGIN_DB, VOICE_SENSITIVITY_MAX, VOICE_TILT_MARGIN_DB,
-    VoiceEvidence, VoiceProfile, deepfilter_attenuation_db,
+    VoiceEvidence, VoiceProfile,
 };
 pub use echo_cancel::{EchoCancelConfig, EchoMode};
 pub use equalizer::{

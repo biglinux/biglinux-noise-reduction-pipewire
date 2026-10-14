@@ -7,7 +7,7 @@
 use std::collections::BTreeMap;
 
 use crate::config::dynamics::GateDerived;
-pub use crate::config::noise_model::{NoiseModel, deepfilter_attenuation_db};
+pub use crate::config::noise_model::NoiseModel;
 use serde::{Deserialize, Serialize};
 
 // ── Noise reduction ──────────────────────────────────────────────────
@@ -179,7 +179,7 @@ impl DeviceCalibration {
     /// the calibration measured. `None` when nothing was recorded, when the
     /// recording is half written, or when the daemon is metering the other one.
     ///
-    /// The bounds are deliberately generous. Level is open at the top: leaning
+    /// The bounds are generous. Level is open at the top: leaning
     /// into the microphone is still the owner, and only what arrives far below
     /// anything they were measured saying is refused. Tilt is bounded both ways:
     /// a wall takes treble off a voice and a keyboard adds it.
@@ -327,22 +327,31 @@ impl NoiseReductionConfig {
     /// The `Silence expander depth (dB)` control value, clamped to the port range.
     /// When a per-frequency floor curve is set it is the only silence control, so
     /// the expander runs at full depth (the curve decides *where* to mute, the
-    /// depth only needs to be non-zero for the mute to reach silence).
+    /// depth only needs to be non-zero for the mute to reach silence). The voice
+    /// gate, when it runs, mutes the pauses itself and keeps word onsets, which
+    /// the expander takes 40-50 ms to reopen for, so the expander is off then.
     #[must_use]
     pub fn silence_expander_depth_db(&self) -> f64 {
         if self.silence_curve_db.is_some() {
             return f64::from(SILENCE_DEPTH_MAX);
+        }
+        if self.voice_gate_for(self.model) {
+            return 0.0;
         }
         f64::from(self.silence_depth.min(SILENCE_DEPTH_MAX))
     }
 
     /// The `Min SNR gate (dB)` control value. Derived from the same "quiet pauses"
     /// depth so the single UI slider drives both the post-model level expander
-    /// (steady floor) and the model's own gate (intermittent bursts) together.
+    /// (steady floor) and the model's own gate (intermittent bursts) together;
+    /// at its lowest while the voice gate handles the pauses.
     #[must_use]
     pub fn min_snr_gate_db(&self) -> f64 {
         if let Some(value) = self.min_snr_override_db.filter(|v| v.is_finite()) {
             return f64::from(value.clamp(-40.0, 0.0));
+        }
+        if self.voice_gate_for(self.model) && self.silence_curve_db.is_none() {
+            return MIN_SNR_GATE_AT_ZERO_DB;
         }
         let f = f64::from(self.silence_depth.min(SILENCE_DEPTH_MAX)) / f64::from(SILENCE_DEPTH_MAX);
         MIN_SNR_GATE_AT_ZERO_DB + f * (MIN_SNR_GATE_AT_MAX_DB - MIN_SNR_GATE_AT_ZERO_DB)
@@ -607,7 +616,7 @@ mod tests {
     const SENSITIVITY: &str = "Voice sensitivity (1 sensitive, 3 normal, 5 strict)";
 
     #[test]
-    fn dfn_extension_controls_are_bounded_and_model_specific() {
+    fn dfn_controls_are_bounded() {
         let mut nr = NoiseReductionConfig::default();
         let ctrls = nr.dfn_extension_controls();
         assert_eq!(ctrls[0], ("Post filter beta", 0.0));
@@ -652,10 +661,11 @@ mod tests {
     }
 
     #[test]
-    fn min_snr_gate_tracks_the_quiet_pauses_depth() {
+    fn snr_gate_tracks_pauses() {
         let gate = |d: u8| {
             NoiseReductionConfig {
                 silence_depth: d,
+                voice_gate: false,
                 ..Default::default()
             }
             .min_snr_gate_db()
@@ -667,6 +677,22 @@ mod tests {
         assert!((gate(SILENCE_DEPTH_MAX) - MIN_SNR_GATE_AT_MAX_DB).abs() < 1e-9);
         // Over-range depth is clamped, never past the ceiling.
         assert!((gate(200) - MIN_SNR_GATE_AT_MAX_DB).abs() < 1e-9);
+    }
+
+    #[test]
+    fn voice_gate_turns_expander_off() {
+        let nr = NoiseReductionConfig::default();
+        assert!(nr.voice_gate);
+        assert_eq!(nr.silence_expander_depth_db(), 0.0);
+        assert!((nr.min_snr_gate_db() - MIN_SNR_GATE_AT_ZERO_DB).abs() < 1e-9);
+        let off = NoiseReductionConfig {
+            voice_gate: false,
+            ..Default::default()
+        };
+        assert_eq!(
+            off.silence_expander_depth_db(),
+            f64::from(SILENCE_DEPTH_DEFAULT)
+        );
     }
 
     #[test]
@@ -687,20 +713,23 @@ mod tests {
     }
 
     #[test]
-    fn deepfilter_attenuation_curve_is_quadratic() {
-        // Endpoints + clamp.
-        assert!((deepfilter_attenuation_db(0.0) - 0.0).abs() < 1e-6);
-        assert!((deepfilter_attenuation_db(1.0) - 100.0).abs() < 1e-6);
-        assert!((deepfilter_attenuation_db(-1.0) - 0.0).abs() < 1e-6);
-        assert!((deepfilter_attenuation_db(2.0) - 100.0).abs() < 1e-6);
-        // Quadratic midpoints — give the slider perceptible travel
-        // (linear `s*100` saturates DFN3 above s≈0.1 in practice).
-        assert!((deepfilter_attenuation_db(0.5) - 25.0).abs() < 1e-4);
-        assert!((deepfilter_attenuation_db(0.25) - 6.25).abs() < 1e-4);
+    fn attenuation_capped_per_model() {
+        for (model, full) in [
+            (NoiseModel::Dfn3, 24.0),
+            (NoiseModel::Dfn3Ll, 24.0),
+            (NoiseModel::Dpdfnet, 48.0),
+        ] {
+            assert_eq!(model.attenuation_db(0.0), 0.0);
+            assert_eq!(model.attenuation_db(1.0), full);
+            assert_eq!(model.attenuation_db(0.5), full / 2.0);
+            assert_eq!(model.attenuation_db(2.0), full);
+            assert_eq!(model.attenuation_db(-1.0), 0.0);
+            assert_eq!(model.attenuation_db(f32::NAN), 0.0);
+        }
     }
 
     #[test]
-    fn a_round_of_places_keeps_only_the_quietest_and_the_loudest() {
+    fn round_keeps_quietest_and_loudest() {
         let mut device = DeviceCalibration::default();
         device.start_round(1.0, None);
         assert_eq!(device.window(), None, "one place is not a window");
@@ -734,7 +763,7 @@ mod tests {
     }
 
     #[test]
-    fn a_voice_is_recognised_by_what_the_calibration_heard_of_it() {
+    fn voice_matches_calibration() {
         let near = VoiceEvidence {
             dbfs: -24.0,
             tilt_db: -8.0,
@@ -797,7 +826,7 @@ mod tests {
     }
 
     #[test]
-    fn a_hand_drawn_window_is_checked_before_it_is_kept() {
+    fn drawn_window_is_validated() {
         let mut device = DeviceCalibration {
             volume: 1.2,
             ..DeviceCalibration::default()
@@ -828,7 +857,7 @@ mod tests {
     }
 
     #[test]
-    fn a_half_written_calibration_window_is_not_a_window() {
+    fn partial_window_is_rejected() {
         let mut device = DeviceCalibration {
             volume: 1.2,
             min_volume: Some(0.8),

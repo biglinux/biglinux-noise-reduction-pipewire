@@ -84,7 +84,7 @@ fn enabling_only_noise_reduction_writes_mic_conf_with_smart_filter() {
         !conf.contains("filter.smart.before"),
         "no EC cascade when AEC is off",
     );
-    assert!(conf.contains("\"Attenuation Limit (dB)\" = 100.0"));
+    assert!(conf.contains("\"Attenuation Limit (dB)\" = 24.0"));
 }
 
 #[test]

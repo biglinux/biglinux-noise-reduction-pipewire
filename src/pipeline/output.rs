@@ -37,9 +37,7 @@
 
 use std::fmt::Write as _;
 
-use crate::config::{
-    AppSettings, EQ_BAND_COUNT, EQ_BANDS_HZ, deepfilter_attenuation_db, eq_preset_bands,
-};
+use crate::config::{AppSettings, EQ_BAND_COUNT, EQ_BANDS_HZ, eq_preset_bands};
 
 use super::graph::{Graph, Link};
 use super::nodes::{
@@ -159,7 +157,7 @@ fn output_nodes(settings: &AppSettings) -> Vec<Node> {
     // reconciler treats it as a restart.
     let denoiser = if nr.enabled {
         let atten_db = if ai_processing {
-            deepfilter_attenuation_db(nr.strength)
+            nr.model.attenuation_db(nr.strength)
         } else {
             0.0
         };

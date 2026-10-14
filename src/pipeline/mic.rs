@@ -51,7 +51,7 @@
 
 use std::fmt::Write as _;
 
-use crate::config::{AppSettings, EQ_BANDS_HZ, EchoMode, StereoMode, deepfilter_attenuation_db};
+use crate::config::{AppSettings, EQ_BANDS_HZ, EchoMode, StereoMode};
 
 use super::graph::{Graph, Link};
 use super::nodes::{
@@ -240,10 +240,10 @@ pub(crate) fn mic_min_snr_gate_db(settings: &AppSettings) -> f64 {
 
 /// The denoiser node. These plugins have no `Enable` port: toggling noise
 /// reduction drops the node from the graph (a reload, not a live update). The
-/// strength→cap mapping lives in [`deepfilter_attenuation_db`].
+/// strength→cap mapping lives in [`crate::config::NoiseModel::attenuation_db`].
 fn denoiser_node(settings: &AppSettings) -> Node {
     let nr = &settings.noise_reduction;
-    let atten_db = deepfilter_attenuation_db(nr.strength);
+    let atten_db = nr.model.attenuation_db(nr.strength);
     let (plugin, label) = nr.model.plugin_and_label();
     let (input, output) = nr.model.attenuation_ports();
     Node::ladspa("ai", plugin, label)

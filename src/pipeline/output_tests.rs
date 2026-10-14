@@ -247,7 +247,7 @@ fn conf_graph_inputs_map_to_mixer() {
 fn ai_processing_on_renders_full_attenuation() {
     // Master + NR on → the denoiser actually processes. For the
     // attenuation-only default that means the full attenuation cap
-    // (strength 1.0 → 100 dB). Pins output_ai_processing's true path.
+    // (strength 1.0 → the DFN3 cap, 24 dB). Pins output_ai_processing's true path.
     let s = AppSettings {
         output_filter: crate::config::OutputFilterSettings {
             enabled: true,
@@ -262,7 +262,7 @@ fn ai_processing_on_renders_full_attenuation() {
     };
     let conf = build_output_conf(&s);
     assert!(
-        conf.contains("\"Attenuation Limit (dB)\" = 100.0"),
+        conf.contains("\"Attenuation Limit (dB)\" = 24.0"),
         "denoiser must process at full attenuation when master + NR are on: {conf}"
     );
 }

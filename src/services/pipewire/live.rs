@@ -12,7 +12,7 @@ use std::io;
 use big_os_kit::subprocess::{BigSubprocessOutputMode, BigSubprocessSpec};
 use serde_json::Value;
 
-use crate::config::{AppSettings, deepfilter_attenuation_db};
+use crate::config::AppSettings;
 use crate::pipeline::{
     MIC_CAPTURE_NODE_NAME, OUTPUT_NODE_NAME, ai_node_in_mic_chain, mic_chain_wanted,
     output_ai_processing,
@@ -416,9 +416,9 @@ pub(crate) fn mic_params(s: &AppSettings) -> Vec<(String, f64)> {
     }
 
     // Address only the denoiser that is in the graph; pw-cli silently drops
-    // unknown control names, but pruning them keeps the trace log honest.
+    // unknown control names, but pruning them keeps the trace log accurate.
     if ai_node_in_mic_chain(s) {
-        let atten_db = deepfilter_attenuation_db(nr.strength);
+        let atten_db = nr.model.attenuation_db(nr.strength);
         params.extend(
             nr.attenuation_controls(atten_db, crate::pipeline::mic_min_snr_gate_db(s))
                 .into_iter()
@@ -484,7 +484,7 @@ fn output_params_mono(s: &AppSettings) -> Vec<(String, f64)> {
     // Master or NR off sets the attenuation to 0 while the node keeps running.
     let ai_processing = output_ai_processing(s);
     let atten_db = if ai_processing {
-        deepfilter_attenuation_db(nr.strength)
+        nr.model.attenuation_db(nr.strength)
     } else {
         0.0
     };

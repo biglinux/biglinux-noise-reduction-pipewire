@@ -82,6 +82,24 @@ impl NoiseModel {
         }
     }
 
+    /// The attenuation cap for `strength` 0..=1, linear up to where the model
+    /// stops removing more noise from speech (24 dB for the DFN3 networks, 48 dB
+    /// for DPDFNet, as in the BigLinux converters). Past it the model only erases
+    /// the soft parts of words it takes for noise; the voice gate mutes pauses.
+    #[must_use]
+    pub fn attenuation_db(self, strength: f32) -> f64 {
+        let strength = if strength.is_nan() {
+            0.0
+        } else {
+            strength.clamp(0.0, 1.0)
+        };
+        let full_db = match self {
+            Self::Dfn3 | Self::Dfn3Ll => 24.0,
+            Self::Dpdfnet => 48.0,
+        };
+        f64::from(strength) * full_db
+    }
+
     /// The plugin's shared object and LADSPA label.
     #[must_use]
     pub fn plugin_and_label(self) -> (&'static str, &'static str) {
@@ -106,15 +124,6 @@ impl NoiseModel {
     pub fn plugin_available(self) -> bool {
         Path::new(self.plugin_and_label().0).is_file()
     }
-}
-
-pub fn deepfilter_attenuation_db(strength: f32) -> f64 {
-    let strength = if strength.is_nan() {
-        0.0
-    } else {
-        strength.clamp(0.0, 1.0)
-    };
-    f64::from(strength * strength) * 100.0
 }
 
 #[cfg(test)]
