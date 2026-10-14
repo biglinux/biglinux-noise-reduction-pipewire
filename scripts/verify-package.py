@@ -32,7 +32,8 @@ def verify(source: Path, package: Path, report: Path) -> None:
                 errors.append(f"Missing or changed runtime resource: {relative}")
 
     domain = "biglinux-microphone"
-    expected = {path.stem for path in (source / "po").glob("*.po")}
+    linguas = (source / "po/LINGUAS").read_text(encoding="utf-8")
+    expected = {lang for line in linguas.splitlines() for lang in line.split("#")[0].split()}
     catalogs = package / "usr/share/locale"
     actual = {path.parent.parent.name for path in catalogs.glob(f"*/LC_MESSAGES/{domain}.mo")}
     if expected != actual:
@@ -43,12 +44,12 @@ def verify(source: Path, package: Path, report: Path) -> None:
     brazilian = catalogs / "pt_BR/LC_MESSAGES" / f"{domain}.mo"
     with brazilian.open("rb") as stream:
         translation = gettext.GNUTranslations(stream)
-    for message in ("Main menu", "Restore default settings", "About Filter noise"):
+    for message in ("Main menu", "Voice detection", "Noise that still gets through"):
         if translation.gettext(message) == message:
             errors.append(f"Brazilian catalog does not translate: {message}")
 
     documentation = package / "usr/share/doc/biglinux-noise-reduction-pipewire"
-    if not (documentation / "guia-rapido.pt_BR.md").is_file():
+    if not (documentation / "docs/guia-rapido.pt_BR.md").is_file():
         errors.append("The Portuguese quick-start guide was not installed")
     units = package / "usr/lib/systemd/user"
     for suffix in ("", "-mic", "-aec", "-output"):
