@@ -1,6 +1,6 @@
 //! What the microphone path costs, stage by stage.
 //!
-//! There is no single honest "your latency is N milliseconds". Nothing cheap
+//! No single "your latency is N milliseconds" is true. Nothing cheap
 //! can see the acoustic path from a mouth to a capsule, the device's own DMA
 //! buffering, or how much audio the application on the other side holds before
 //! it plays. A number that pretends otherwise is worse than no number, and the

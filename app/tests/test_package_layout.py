@@ -21,7 +21,7 @@ def fixture_tree(tmp_path):
     shutil.copytree(ROOT/'docs', source/'docs')
     for name in ('usr', 'packaging'):
         (source/name).symlink_to(ROOT/name, target_is_directory=True)
-    for name in ('README.md', 'AGENTS.md', 'CONTRIBUTING.md', 'SUPPORT.md',
+    for name in ('README.md', 'CONTRIBUTING.md', 'SUPPORT.md',
                  'SECURITY.md', 'CODE_OF_CONDUCT.md', 'LICENSE', 'LICENSE-MIT'):
         shutil.copy2(ROOT/name, source/name)
     cache = source/'app/biglinux_microphone/__pycache__'
@@ -70,7 +70,6 @@ def test_package_uses_custom_target_and_preserves_private_layout(tmp_path, relat
     assert (docs/'docs/screenshots/home.png').is_file()
     assert (docs/'docs/guia-rapido.pt_BR.md').is_file()
     assert (docs/'SUPPORT.md').is_file()
-    assert not list((docs/'docs').glob('biglinux-microphone-*'))
     for link in payload.rglob('*'):
         if link.is_symlink():
             assert link.resolve().is_relative_to(payload)

@@ -47,7 +47,5 @@ contrast. Keyboard focus and screen-reader acceptance are distinct from a PNG.
 Keep realtime callbacks free of filesystem access, subprocesses, blocking
 locks and allocation-heavy work. Unit-policy tests do not prove DSP quality.
 
-Maintained docs describe current behavior. Historical records live in
-`docs/archive/`; environment evidence belongs in delivery artifacts, not the
-source root. Preserve a Git checkpoint before expensive work and verify it by
-cloning/extracting elsewhere and running at least one real test.
+Docs describe current behavior; measurements with a date live in
+`docs/research/`.

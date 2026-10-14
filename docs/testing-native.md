@@ -15,7 +15,7 @@ new branches or unavailable history conservatively select every regular check.
 A push to a testing/stable branch with an open PR into main at the same SHA is
 covered by that PR. If discovery fails, push checks run rather than losing
 coverage. A push to main is never suppressed. PRs validate the merge checkout;
-post-merge builds validate the actual main revision. These are intentionally
+post-merge builds validate the actual main revision. These are
 different integration points, not interchangeable success evidence.
 
 Concurrency cancels obsolete runs within an event and branch/PR. Push and PR
@@ -29,7 +29,7 @@ checks licenses, bans and sources without repeating the advisory scan. The
 secret scan runs once under CI.
 
 The `CI result` check fails when planning or a selected job fails/cancels.
-Non-applicable or intentionally deferred jobs are visibly skipped, not reported
+Non-applicable or deferred jobs are visibly skipped, not reported
 as tests that ran. There is no workflow-wide documentation path exclusion
 leaving CI pending. The planner has inexpensive Python regression tests.
 

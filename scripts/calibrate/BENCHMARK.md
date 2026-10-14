@@ -92,7 +92,7 @@ published leaderboard.
 **CPU (steady-state, warm).** `ladspa_bench` (Rust) drives a `.so` the way an audio
 thread does — dlopen once, `run()` one quantum over and over, paced — and reports the
 per-block audio-thread RTF (p50/p95/p99/max) **and** the total process CPU across all
-threads. The total is what stays honest when a plugin offloads to a worker: DeepFilterNet
+threads. The total is what stays valid when a plugin offloads to a worker: DeepFilterNet
 upstream shows a near-free `run()` (0.0006 audio-thread RTF) while a worker core burns
 0.29 total. ONNX systems are timed with a warm session. Note the RTF column in the
 quality tables is host-measured — LADSPA rows there pay a per-clip ffmpeg model reload,

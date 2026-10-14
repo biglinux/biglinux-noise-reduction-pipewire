@@ -164,7 +164,7 @@ class Snapshot:
     def capabilities(self) -> dict[str, Any]:
         """Optional UI feature flags supplied by newer backends.
 
-        Old backends do not expose the section; absence is deliberately treated
+        Old backends do not expose the section; absence reads
         as false rather than guessing that a feature exists.
         """
         value = self.settings.get("capabilities")
@@ -208,8 +208,7 @@ class AudioState:
         self._queued_values: dict[str, str] = {}
         #: Why the last action failed, kept until an action succeeds. A reading
         #: must not clear it: the re-read that follows a failed write would
-        #: otherwise erase the only explanation the person was going to get
-        #: (docs/archive/review-2026-09-08.md R20 — separate a stale query error from an action failure).
+        #: otherwise erase the only explanation the person was going to get.
         self._action_error = ""
         self.snapshot = Snapshot()
         #: True while a broadcast is running. Handlers check it and stand down,

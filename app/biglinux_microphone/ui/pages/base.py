@@ -64,7 +64,7 @@ class Page:
         that show how loud the microphone is *right now*."""
 
     def on_bands(self, bands: list[float]) -> None:
-        """Newest normalised spectrum frame for deliberately visual pages."""
+        """Newest normalised spectrum frame for pages that draw it."""
 
     def on_monitor(self, active: bool) -> None:
         """The delayed live return started or stopped. Every control that

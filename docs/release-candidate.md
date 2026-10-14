@@ -9,7 +9,7 @@ request these builds. There is still one owner for every application suite.
 
 `CI result` checks both the selection plan and the result of each required
 job. A selected job that was skipped is a failure of acceptance. Out-of-scope
-checks and deliberately deferred draft builds remain explicit skips.
+checks and deferred draft builds remain explicit skips.
 
 The release job calls the Arch recipe's `build()` and `package()` functions.
 It does not execute the recipe's `check()` a second time, install the package,

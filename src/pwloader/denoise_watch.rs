@@ -176,8 +176,8 @@ impl Drop for DenoiseWatch {
 /// Every `.so` a filter-chain configuration names.
 ///
 /// The loader is handed the chain's arguments as text, so the plugins it is
-/// about to load are right there. Reading them back is cheaper and more
-/// honest than a second list that could disagree with the one in force.
+/// about to load are right there. Reading them back is cheaper and safer
+/// than a second list that could disagree with the one in force.
 #[must_use]
 pub fn plugin_paths(chain_args: &str) -> Vec<String> {
     chain_args

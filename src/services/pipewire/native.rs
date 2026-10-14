@@ -367,7 +367,7 @@ impl State {
     }
 }
 
-/// Every reason an in-flight request can no longer be completed honestly.
+/// Every reason an in-flight request can no longer complete.
 fn refused(s: &State, p: &mut Pending) -> Option<String> {
     // Last reason wins, as it always has: a listener's error is the base, and
     // each structural check below overrides it. The request is refused either

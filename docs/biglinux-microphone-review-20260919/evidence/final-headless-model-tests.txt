@@ -1,3 +1,0 @@
-MODEL TESTS ONLY: GI/GLib import shim; no GTK display or real GLib loop tested.
-...................                                                      [100%]
-19 passed in 0.11s

@@ -32,7 +32,7 @@ depends=(
 	'wireplumber>=0.5'
 	'systemd'
 	'swh-plugins'
-	# GTK stack is now for the Python front-end (PyGObject), not a Rust GUI.
+	# GTK stack of the Python front-end (PyGObject).
 	'gtk4>=4.22'
 	'libadwaita>=1.9'
 	'python'
@@ -215,7 +215,7 @@ check() {
 package() {
 	cd "${srcdir}/${pkgname}" || exit 1
 	local binary mo target_dir="${CARGO_TARGET_DIR:-target}"
-	# The GTK GUI is now the Python front-end; only the backend bins are Rust.
+	# The GUI is Python; only the backend binaries are Rust.
 	for binary in biglinux-microphone-cli biglinux-microphone-probe biglinux-microphone-pwloader; do
 		install -Dm755 "${target_dir}/release/${binary}" "${pkgdir}/usr/bin/${binary}" || return 1
 	done
@@ -259,13 +259,8 @@ package() {
 	# Keep the README's relative documentation links and screenshot usable offline.
 	local doc_root="${pkgdir}/usr/share/doc/${pkgname}" document
 	install -d "$doc_root/docs"
-	for document in README.md AGENTS.md CONTRIBUTING.md SUPPORT.md SECURITY.md CODE_OF_CONDUCT.md LICENSE LICENSE-MIT; do
+	for document in README.md CONTRIBUTING.md SUPPORT.md SECURITY.md CODE_OF_CONDUCT.md LICENSE LICENSE-MIT; do
 		install -Dm644 "$document" "$doc_root/$document" || return 1
 	done
-	for document in docs/*; do
-		# Reviewer bundles carry patches and test scripts for developers, not
-		# documentation for users, and their scripts would need pytest.
-		[[ "$document" == docs/biglinux-microphone-* ]] && continue
-		cp -a "$document" "$doc_root/docs/" || return 1
-	done
+	cp -a docs/. "$doc_root/docs/" || return 1
 }

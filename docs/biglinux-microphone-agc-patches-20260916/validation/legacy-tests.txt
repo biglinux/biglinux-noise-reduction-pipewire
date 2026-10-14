@@ -1,3 +1,0 @@
-Original GainPolicy test module byte-identical after trimming outer whitespace.
-Tests: 20
-SHA-256 of preserved module: 39f8b9f2a57e520c0bcc2279f731fb65087d498058c0f7e3f8990d2778f834f0

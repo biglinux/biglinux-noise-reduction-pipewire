@@ -82,6 +82,6 @@ be resolved as gettext's reserved metadata header.
 
 Run `scripts/quality-check.sh --ci` for required portable gates,
 `scripts/test-ui.sh` for isolated graphical contracts, and
-`scripts/test-miri.sh` for the selected pure data-model tests. See `REVIEW.md`
-for finding-to-implementation mapping. No passing text-renderer test constitutes
+`scripts/test-miri.sh` for the selected pure data-model tests.
+No passing text-renderer test constitutes
 an acoustic benchmark or an accessibility/visual-design certification.

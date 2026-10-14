@@ -1,9 +1,9 @@
 #!/usr/bin/env python3
-"""Steady-state processing cost per system, honest across hosts.
+"""Steady-state processing cost per system, comparable across hosts.
 
 LADSPA systems are driven by the `ladspa_bench` Rust tool (warm dlopen, no
 ffmpeg reload): it reports the audio-thread per-block RTF and the total process
-CPU across all threads — the number that stays honest when a plugin offloads to
+CPU across all threads — the number that stays valid when a plugin offloads to
 a worker. ONNX systems are timed here with a warm session over a handful of
 clips, process CPU over audio duration. One thread throughout, matching the
 real-time deployment. Emits reports/cpu.json for gen_report.

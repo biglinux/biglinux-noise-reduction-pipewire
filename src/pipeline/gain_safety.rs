@@ -35,7 +35,7 @@ pub(super) fn nodes(settings: &AppSettings, output: bool) -> Vec<Node> {
 /// Halving in front of the network and doubling straight after: both factors
 /// are powers of two, so the makeup undoes the pad's *scaling* bit-exactly in
 /// the graph's float samples. This is unity gain staging, not a transparent
-/// wrap — the network is nonlinear (2·F(x/2) ≠ F(x)), so it deliberately sees a
+/// wrap — the network is nonlinear (2·F(x/2) ≠ F(x)), so it sees a
 /// quieter input and denoises it slightly differently. That is the point: the
 /// headroom is what keeps its ~1.4× internal overshoot from clipping.
 /// Everything calibrated in dB — the standalone gate, the compressor, the final

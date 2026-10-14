@@ -10,7 +10,7 @@ CARGO_BUILD_JOBS=1 tools/check-release.sh --ui-only  # Python, gettext, shell, m
 CARGO_BUILD_JOBS=1 tools/check-release.sh            # includes full Rust checks
 ```
 
-`--ui-only` is deliberately narrower, not a stable-release certification. The
+`--ui-only` is narrower, not a stable-release certification. The
 full gate resolves dependencies before starting expensive Rust checks; missing
 crates leave dependent stages `NOT_RUN`. It never downloads or changes the lock.
 `CARGO_TARGET_DIR` and an already prepared Cargo home/cache are reusable.
@@ -23,7 +23,7 @@ cgroup memory/event observations; `status.tsv` summarizes results. Do not infer
 acoustic validity from a process exit or a successful settings read.
 
 `BIGMIC_PYTHON` selects the test interpreter. `BIGMIC_PYTHON_NO_SITE=1` is only
-for a deliberately prepared private test sysroot with its module paths already
+for a prepared private test sysroot with its module paths already
 set. The production launcher remains `/usr/bin/python3 -I`, never `-S`.
 
 The guard refuses overlapping validation, reserves disk space and stops at 80%

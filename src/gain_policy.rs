@@ -200,7 +200,7 @@ impl GainPolicy {
         {
             return Err("invalid configuration bounds".into());
         }
-        // This reference deliberately has no automatic expiry of manual ownership.
+        // Manual ownership never expires on its own.
         if !config.manual_hold_requires_rearm {
             return Err("manual ownership requires explicit rearm".into());
         }
@@ -599,7 +599,7 @@ impl GainPolicy {
         // for a boost far past the actuator's ceiling — so the capture pinned at
         // the top of the calibrated window and stayed there until somebody
         // spoke. `max_boost_db` is what the actuator can still give from this
-        // baseline, and the slack keeps the deliberately supported journey of a
+        // baseline, and the slack keeps the supported journey of a
         // weak capsule that needs nearly all of it.
         let reachable = features.speech_dbfs
             >= self.config.target_speech_dbfs - (self.evidence_max_boost_db + UNREACHABLE_SLACK_DB);

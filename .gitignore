@@ -63,11 +63,10 @@ scripts/calibrate/ladspa_bench/target/
 
 # cargo-mutants run artifacts
 /mutants.out*/
-docs/biglinux-microphone-agc-patches-20260916/reviewed-code/
 
 # Working notes and benchmark dumps kept beside the repo rather than in it.
-# They are investigation records, not project documentation: README.md,
-# ARCHITECTURE.md and REVIEW.md are, and stay tracked.
+# They are investigation records, not project documentation: README.md
+# and ARCHITECTURE.md are, and stay tracked.
 /ANALISE-*.md
 /PLANO-*.md
 /DENOISE-*.md

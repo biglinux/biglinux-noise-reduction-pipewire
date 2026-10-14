@@ -39,7 +39,6 @@ extend-exclude = [
     "docs/*.pt_BR.md",
     # Portuguese working notes and external review bundles. The bundles carry
     # their own .patch copies of code this gate already reads at its source.
-    "docs/biglinux-microphone-review-*/**",
     "ANALISE-*.md",
     "PLANO-*.md",
     "DENOISE-*.md",

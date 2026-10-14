@@ -14,7 +14,7 @@ than the whole spectrum does. Multiplying the analysis bins by the same filters'
 magnitude response costs one array multiply and lands within a few tenths of a
 decibel of the standard's own reference tone, which is checked in the tests.
 
-What is deliberately absent is **integrated** loudness. It is defined over a
+Integrated loudness is left out. It is defined over a
 programme with a beginning and an end; a number integrating since the window
 opened stops meaning anything within minutes. A measured span needs a start and
 a stop somebody pressed, and that belongs to the A/B capture, not to a meter.

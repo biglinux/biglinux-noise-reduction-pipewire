@@ -139,7 +139,7 @@ def table_d(cpu: dict, order: list[str]) -> list[str]:
     """Steady-state processing cost, warm and host-consistent.
 
     Total process CPU per second of audio (all threads, one thread each) is the
-    honest compute cost. LADSPA rows also carry the audio-thread per-block RTF
+    real compute cost. LADSPA rows also carry the audio-thread per-block RTF
     (p50/p99, from ladspa_bench); a worker-backed plugin shows a near-free audio
     thread but a heavy total, since the work is on a worker core. ONNX rows are
     timed with a warm session, total CPU only.
@@ -150,7 +150,7 @@ def table_d(cpu: dict, order: list[str]) -> list[str]:
         "",
         (
             "Total CPU RTF is process CPU across all threads per second of audio — the "
-            "honest compute cost. Audio-thread RTF is the per-block cost on the real-time "
+            "real compute cost. Audio-thread RTF is the per-block cost on the real-time "
             "thread; the gap between them is work a plugin pushed to a worker core."
         ),
         "",

@@ -469,7 +469,7 @@ fn sources_from_graph(graph: &[serde_json::Value]) -> (Vec<Source>, Option<u32>)
 ///
 /// PipeWire keeps a live override beside the configured value: `clock.force-quantum` is
 /// obeyed at once, by every stream, with no restart and no file — and it is forgotten when
-/// the session ends. So the honest way to choose a number that is measured in milliseconds
+/// the session ends. So the way to choose a number that is measured in milliseconds
 /// is to listen to it while a song is playing, rather than to save, restart, judge, and
 /// start again.
 ///

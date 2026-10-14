@@ -35,7 +35,6 @@ fn stage_package_recipe(root: &Path, temporary: &Path) -> PathBuf {
         "LICENSE",
         "LICENSE-MIT",
         "README.md",
-        "AGENTS.md",
         "CONTRIBUTING.md",
         "SUPPORT.md",
         "SECURITY.md",
@@ -109,15 +108,8 @@ fn packaged_wireplumber_files_are_installed_by_main_pkgbuild() {
             .unwrap(),
         b"catalog fixture\n"
     );
-    // Reviewer bundles stay out of the documentation, and leaving them out
-    // must not touch the checkout that the fixture's docs/ links to.
     let docs = package.join("usr/share/doc/biglinux-noise-reduction-pipewire/docs");
     assert!(docs.join("architecture.md").is_file());
-    assert!(!docs.join("biglinux-microphone-review-20260919").exists());
-    assert!(
-        root.join("docs/biglinux-microphone-review-20260919/README.md")
-            .is_file()
-    );
     // The front-end's own copy of big_gtk_kit, stylesheet included.
     let kit = package.join("usr/lib/biglinux-microphone/big_gtk_kit");
     assert!(kit.join("__init__.py").is_file());
