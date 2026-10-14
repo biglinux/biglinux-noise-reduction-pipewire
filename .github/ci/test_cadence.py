@@ -29,7 +29,7 @@ class CadenceTests(unittest.TestCase):
     def test_package_hook_runs_on_release_branches(self):
         text = (WORKFLOWS / "build-package.yml").read_text(encoding="utf-8")
         self.assertIn("  workflow_dispatch:", text)
-        self.assertIn('branches: [main, "stable-*", "testing-*"]', text)
+        self.assertIn('branches: [main, "testing-*", "stable-*"]', text)
         self.assertNotIn("  pull_request:", text)
         self.assertNotIn("  schedule:", text)
 
