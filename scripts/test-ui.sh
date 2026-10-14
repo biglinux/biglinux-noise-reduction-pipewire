@@ -1,8 +1,7 @@
 #!/usr/bin/env bash
 # Exercise the Python/Adw front-end's rendered control tree in a headless
-# session. The old Rust `ui::tests::gtk_*` contracts are gone with the Rust GUI;
-# the screen is now app/ (Python), so app/tests is the UI gate. The backend is
-# stubbed inside the tests, so nothing here touches PipeWire, systemd or audio.
+# session. The backend is stubbed inside the tests, so nothing here touches
+# PipeWire, systemd or audio.
 set -euo pipefail
 cd "$(dirname -- "${BASH_SOURCE[0]}")/.."
 
@@ -32,4 +31,4 @@ export LANG=C.UTF-8 LC_ALL=C.UTF-8 LANGUAGE=C
 export GDK_BACKEND=x11 GSK_RENDERER=cairo
 
 timeout --kill-after=5s 120s xvfb-run -a \
-    python3 -m unittest discover -s app/tests -t app -p 'test_*.py' -v
+    python3 -m pytest -q -p no:cacheprovider app/tests

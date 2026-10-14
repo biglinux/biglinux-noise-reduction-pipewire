@@ -80,7 +80,7 @@ jobs:
       run:
         shell: bash
     steps:
-      - run: pacman -Syu --noconfirm --needed git xorg-server-xvfb xorg-xauth dbus ttf-dejavu python pipewire-audio swh-plugins
+      - run: pacman -Syu --noconfirm --needed git xorg-server-xvfb xorg-xauth dbus ttf-dejavu python python-gobject python-numpy python-cairo python-pytest pipewire-audio swh-plugins
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
         with:
           persist-credentials: false
@@ -163,7 +163,7 @@ jobs:
       run:
         shell: bash
     steps:
-      - run: pacman -Syu --noconfirm --needed git rsync python gettext desktop-file-utils appstream
+      - run: pacman -Syu --noconfirm --needed git rsync python python-gobject python-numpy python-cairo gettext desktop-file-utils appstream
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
         with:
           persist-credentials: false
