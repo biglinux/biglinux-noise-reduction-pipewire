@@ -1,6 +1,7 @@
 [Unit]
 Description=Filter noise — mic-side filter chain (pwloader)
 Documentation=https://github.com/biglinux/biglinux-noise-reduction-pipewire
+ConditionUser=!@system
 PartOf=pipewire.service
 # `After=` orders the mic loader behind the AEC loader *when both are
 # being started*: the AEC source must already exist by the time the

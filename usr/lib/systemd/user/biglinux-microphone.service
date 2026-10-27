@@ -1,6 +1,7 @@
 [Unit]
 Description=Filter noise — reconcile PipeWire filter chain with saved settings
 Documentation=https://github.com/biglinux/biglinux-noise-reduction-pipewire
+ConditionUser=!@system
 After=pipewire.service wireplumber.service
 Wants=pipewire.service wireplumber.service
 # No start limit. systemd counts every start, not just the failed ones, and

@@ -1,6 +1,7 @@
 [Unit]
 Description=Filter noise — output-side noise-reduction filter (pwloader)
 Documentation=https://github.com/biglinux/biglinux-noise-reduction-pipewire
+ConditionUser=!@system
 PartOf=pipewire.service
 After=pipewire.service wireplumber.service
 Requisite=pipewire.service
