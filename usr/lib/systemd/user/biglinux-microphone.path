@@ -1,6 +1,7 @@
 [Unit]
 Description=Filter noise — apply saved settings when they change
 Documentation=https://github.com/biglinux/biglinux-noise-reduction-pipewire
+ConditionUser=!@system
 # No ordering against pipewire here. Path units are pulled in by paths.target,
 # which runs before basic.target, so ordering this after a regular service makes
 # a cycle that systemd breaks by dropping paths.target — silently disarming the

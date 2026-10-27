@@ -1,6 +1,7 @@
 [Unit]
 Description=BigLinux persistent microphone presentation endpoint (opt-in)
 Documentation=https://docs.pipewire.org/page_module_loopback.html
+ConditionUser=!@system
 After=pipewire.service wireplumber.service
 Wants=pipewire.service wireplumber.service
 # The server's own restart is NOT covered by endpoint persistence. Deliberately
