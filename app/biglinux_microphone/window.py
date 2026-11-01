@@ -29,6 +29,8 @@ class MicrophoneWindow(Adw.ApplicationWindow):
         super().__init__(application=application)
         self.set_title(_("BigLinux Microphone"))
         self.set_default_size(1040, 720)
+        # Opt in to optional Big Gnome Center background styling.
+        self.add_css_class("biglinux-microphone")
 
         self._toast_overlay = Adw.ToastOverlay()
         self._view = MicrophoneView(on_toast=weak_callback(self, type(self).show_toast))
